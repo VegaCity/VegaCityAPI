@@ -1,0 +1,15 @@
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\bin\Debug\net6.0\VegaCityApp.Repository.deps.json
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\bin\Debug\net6.0\VegaCityApp.Repository.dll
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\bin\Debug\net6.0\VegaCityApp.Repository.pdb
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\bin\Debug\net6.0\VegaCityApp.Domain.dll
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\bin\Debug\net6.0\VegaCityApp.Domain.pdb
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\obj\Debug\net6.0\VegaCityApp.Repository.csproj.AssemblyReference.cache
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\obj\Debug\net6.0\VegaCityApp.Repository.GeneratedMSBuildEditorConfig.editorconfig
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\obj\Debug\net6.0\VegaCityApp.Repository.AssemblyInfoInputs.cache
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\obj\Debug\net6.0\VegaCityApp.Repository.AssemblyInfo.cs
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\obj\Debug\net6.0\VegaCityApp.Repository.csproj.CoreCompileInputs.cache
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\obj\Debug\net6.0\VegaCityApp.Repository.csproj.CopyComplete
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\obj\Debug\net6.0\VegaCityApp.Repository.dll
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\obj\Debug\net6.0\refint\VegaCityApp.Repository.dll
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\obj\Debug\net6.0\VegaCityApp.Repository.pdb
+D:\LEARNING\codeForMe\C#\VegaCityApp\VegaCityApp.Repository\obj\Debug\net6.0\ref\VegaCityApp.Repository.dll
