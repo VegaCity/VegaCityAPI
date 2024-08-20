@@ -8,10 +8,9 @@ namespace VegaCityApp.Domain.Models
         public Store()
         {
             Menus = new HashSet<Menu>();
-            OwnerStores = new HashSet<OwnerStore>();
-            StoreSessions = new HashSet<StoreSession>();
-            Transactions = new HashSet<Transaction>();
-            UserActions = new HashSet<UserAction>();
+            Orders = new HashSet<Order>();
+            ProductCategories = new HashSet<ProductCategory>();
+            Users = new HashSet<User>();
         }
 
         public Guid Id { get; set; }
@@ -24,14 +23,15 @@ namespace VegaCityApp.Domain.Models
         public string? PhoneNumber { get; set; }
         public string? ShortName { get; set; }
         public string? Email { get; set; }
+        public Guid? HouseId { get; set; }
         public Guid? MarketZoneId { get; set; }
         public string? Description { get; set; }
 
+        public virtual House? House { get; set; }
         public virtual MarketZone? MarketZone { get; set; }
         public virtual ICollection<Menu> Menus { get; set; }
-        public virtual ICollection<OwnerStore> OwnerStores { get; set; }
-        public virtual ICollection<StoreSession> StoreSessions { get; set; }
-        public virtual ICollection<Transaction> Transactions { get; set; }
-        public virtual ICollection<UserAction> UserActions { get; set; }
+        public virtual ICollection<Order> Orders { get; set; }
+        public virtual ICollection<ProductCategory> ProductCategories { get; set; }
+        public virtual ICollection<User> Users { get; set; }
     }
 }

@@ -34,8 +34,14 @@ public static class DependencyServices
 
     private static string CreateConnectionString(IConfiguration configuration)
     {
+        //string connectionString =
+        //    $"Server={configuration.GetValue<string>(DatabaseConstant.Host)},{configuration.GetValue<string>(DatabaseConstant.Port)};User Id={configuration.GetValue<string>(DatabaseConstant.UserName)};Password={configuration.GetValue<string>(DatabaseConstant.Password)};Database={configuration.GetValue<string>(DatabaseConstant.Database)}";
+        string Host = "LAPTOP-R0K7KBGI\\TRANGQUOCDAT";
+        string UserName = "sa";
+        string Password = "12345";
+        string Database = "VegaCityApp";
         string connectionString =
-            $"Server={configuration.GetValue<string>(DatabaseConstant.Host)},{configuration.GetValue<string>(DatabaseConstant.Port)};User Id={configuration.GetValue<string>(DatabaseConstant.UserName)};Password={configuration.GetValue<string>(DatabaseConstant.Password)};Database={configuration.GetValue<string>(DatabaseConstant.Database)}";
+            $"Server={Host},{configuration.GetValue<string>(DatabaseConstant.Port)};User Id={UserName};Password={Password};Database={Database}";
         return connectionString;
     }
 

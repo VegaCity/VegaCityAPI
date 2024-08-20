@@ -7,12 +7,10 @@ namespace VegaCityApp.Domain.Models
     {
         public MarketZone()
         {
-            MarketZoneCardTypes = new HashSet<MarketZoneCardType>();
-            MarketZoneCards = new HashSet<MarketZoneCard>();
+            Etags = new HashSet<Etag>();
+            Packages = new HashSet<Package>();
             Stores = new HashSet<Store>();
-            Transactions = new HashSet<Transaction>();
-            UserActionTypes = new HashSet<UserActionType>();
-            WalletTypes = new HashSet<WalletType>();
+            Zones = new HashSet<Zone>();
         }
 
         public Guid Id { get; set; }
@@ -28,11 +26,9 @@ namespace VegaCityApp.Domain.Models
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
 
-        public virtual ICollection<MarketZoneCardType> MarketZoneCardTypes { get; set; }
-        public virtual ICollection<MarketZoneCard> MarketZoneCards { get; set; }
+        public virtual ICollection<Etag> Etags { get; set; }
+        public virtual ICollection<Package> Packages { get; set; }
         public virtual ICollection<Store> Stores { get; set; }
-        public virtual ICollection<Transaction> Transactions { get; set; }
-        public virtual ICollection<UserActionType> UserActionTypes { get; set; }
-        public virtual ICollection<WalletType> WalletTypes { get; set; }
+        public virtual ICollection<Zone> Zones { get; set; }
     }
 }

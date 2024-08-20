@@ -5,12 +5,6 @@ namespace VegaCityApp.Domain.Models
 {
     public partial class Menu
     {
-        public Menu()
-        {
-            OrderDetails = new HashSet<OrderDetail>();
-            ProductCategories = new HashSet<ProductCategory>();
-        }
-
         public Guid Id { get; set; }
         public string? Name { get; set; }
         public DateTime? CrDate { get; set; }
@@ -21,7 +15,5 @@ namespace VegaCityApp.Domain.Models
         public string? PhoneNumber { get; set; }
 
         public virtual Store? Store { get; set; }
-        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
-        public virtual ICollection<ProductCategory> ProductCategories { get; set; }
     }
 }

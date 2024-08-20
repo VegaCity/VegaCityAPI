@@ -3,15 +3,17 @@ using System.Collections.Generic;
 
 namespace VegaCityApp.Domain.Models
 {
-    public partial class MarketZoneCard
+    public partial class Etag
     {
-        public MarketZoneCard()
+        public Etag()
         {
+            Orders = new HashSet<Order>();
             Transactions = new HashSet<Transaction>();
-            UserActions = new HashSet<UserAction>();
+            UserWallets = new HashSet<UserWallet>();
         }
 
         public Guid Id { get; set; }
+        public Guid? UserId { get; set; }
         public string? FullName { get; set; }
         public string? PhoneNumber { get; set; }
         public Guid? MarketZoneId { get; set; }
@@ -24,11 +26,13 @@ namespace VegaCityApp.Domain.Models
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
         public bool? Deflag { get; set; }
-        public Guid? MarketZoneCardTypeId { get; set; }
+        public Guid? EtagTypeId { get; set; }
 
+        public virtual EtagType? EtagType { get; set; }
         public virtual MarketZone? MarketZone { get; set; }
-        public virtual MarketZoneCardType? MarketZoneCardType { get; set; }
+        public virtual User? User { get; set; }
+        public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<Transaction> Transactions { get; set; }
-        public virtual ICollection<UserAction> UserActions { get; set; }
+        public virtual ICollection<UserWallet> UserWallets { get; set; }
     }
 }

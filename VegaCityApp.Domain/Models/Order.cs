@@ -7,9 +7,7 @@ namespace VegaCityApp.Domain.Models
     {
         public Order()
         {
-            OrderDetails = new HashSet<OrderDetail>();
             Transactions = new HashSet<Transaction>();
-            UserActions = new HashSet<UserAction>();
         }
 
         public Guid Id { get; set; }
@@ -20,14 +18,15 @@ namespace VegaCityApp.Domain.Models
         public string? Status { get; set; }
         public Guid? StoreId { get; set; }
         public Guid? UserId { get; set; }
-        public Guid? MarketZoneCardId { get; set; }
+        public Guid? EtagId { get; set; }
         public string? PaymentType { get; set; }
         public string? InvoiceId { get; set; }
         public double? Vatrate { get; set; }
         public Guid? StoreSessionId { get; set; }
 
-        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
+        public virtual Etag? Etag { get; set; }
+        public virtual Store? Store { get; set; }
+        public virtual User? User { get; set; }
         public virtual ICollection<Transaction> Transactions { get; set; }
-        public virtual ICollection<UserAction> UserActions { get; set; }
     }
 }

@@ -7,8 +7,8 @@ namespace VegaCityApp.Domain.Models
     {
         public User()
         {
-            Accounts = new HashSet<Account>();
-            OwnerStores = new HashSet<OwnerStore>();
+            Etags = new HashSet<Etag>();
+            Orders = new HashSet<Order>();
             UserWallets = new HashSet<UserWallet>();
         }
 
@@ -16,6 +16,7 @@ namespace VegaCityApp.Domain.Models
         public string? FullName { get; set; }
         public string? PhoneNumber { get; set; }
         public DateTime? Birthday { get; set; }
+        public Guid? StoreId { get; set; }
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
         public int? Gender { get; set; }
@@ -24,9 +25,13 @@ namespace VegaCityApp.Domain.Models
         public string? PinCode { get; set; }
         public Guid? MarketZoneId { get; set; }
         public string? Email { get; set; }
+        public string? Password { get; set; }
+        public Guid? RoleId { get; set; }
 
-        public virtual ICollection<Account> Accounts { get; set; }
-        public virtual ICollection<OwnerStore> OwnerStores { get; set; }
+        public virtual Role? Role { get; set; }
+        public virtual Store? Store { get; set; }
+        public virtual ICollection<Etag> Etags { get; set; }
+        public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<UserWallet> UserWallets { get; set; }
     }
 }

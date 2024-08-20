@@ -7,13 +7,13 @@ namespace VegaCityApp.Domain.Models
     {
         public Role()
         {
-            Accounts = new HashSet<Account>();
+            Users = new HashSet<User>();
         }
 
         public Guid Id { get; set; }
         public string? Name { get; set; }
         public bool? Deflag { get; set; }
 
-        public virtual ICollection<Account> Accounts { get; set; }
+        public virtual ICollection<User> Users { get; set; }
     }
 }
