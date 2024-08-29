@@ -12,6 +12,7 @@ namespace VegaCityApp.Domain.Models
         }
 
         public Guid Id { get; set; }
+        public int? WalletType { get; set; }
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
         public int? Balance { get; set; }

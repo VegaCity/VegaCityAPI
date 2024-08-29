@@ -40,8 +40,9 @@ public static class DependencyServices
         string UserName = "sa";
         string Password = "12345";
         string Database = "VegaCityApp";
+        string Port = "1433";
         string connectionString =
-            $"Server={Host},{configuration.GetValue<string>(DatabaseConstant.Port)};User Id={UserName};Password={Password};Database={Database}";
+            $"Server={Host},{Port};User Id={UserName};Password={Password};Database={Database}";
         return connectionString;
     }
 
@@ -61,6 +62,8 @@ public static class DependencyServices
 
     public static IServiceCollection AddJwtValidation(this IServiceCollection services)
     {
+        string issuer = "VegaCityApp";
+        string secretKey = "VegaCityApp";
         IConfiguration configuration = new ConfigurationBuilder()
             .AddEnvironmentVariables(EnvironmentVariableConstant.Prefix).Build();
         services.AddAuthentication(options =>
@@ -71,13 +74,13 @@ public static class DependencyServices
         {
             options.TokenValidationParameters = new TokenValidationParameters()
             {
-                ValidIssuer = configuration.GetValue<string>(JwtConstant.Issuer),
+                ValidIssuer = issuer,
                 ValidateIssuer = true,
                 ValidateAudience = false,
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey =
                     new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(configuration.GetValue<string>(JwtConstant.SecretKey)))
+                        Encoding.UTF8.GetBytes(secretKey))
             };
         });
         return services;

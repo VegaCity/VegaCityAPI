@@ -5,6 +5,11 @@ namespace VegaCityApp.Domain.Models
 {
     public partial class Transaction
     {
+        public Transaction()
+        {
+            DisputeReports = new HashSet<DisputeReport>();
+        }
+
         public Guid Id { get; set; }
         public Guid? UserWalletId { get; set; }
         public Guid? StoreId { get; set; }
@@ -18,11 +23,13 @@ namespace VegaCityApp.Domain.Models
         public Guid? MarketZoneId { get; set; }
         public Guid? EtagId { get; set; }
         public DateTime? CrDate { get; set; }
+        public int? Amount { get; set; }
         public string? Currency { get; set; }
 
         public virtual Etag? Etag { get; set; }
         public virtual Order? Order { get; set; }
         public virtual Deposit? UserWallet { get; set; }
         public virtual UserWallet? UserWalletNavigation { get; set; }
+        public virtual ICollection<DisputeReport> DisputeReports { get; set; }
     }
 }

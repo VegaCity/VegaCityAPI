@@ -23,6 +23,7 @@ namespace VegaCityApp.Domain.Models
         public string? InvoiceId { get; set; }
         public double? Vatrate { get; set; }
         public Guid? StoreSessionId { get; set; }
+        public string? ProductJson { get; set; }
 
         public virtual Etag? Etag { get; set; }
         public virtual Store? Store { get; set; }

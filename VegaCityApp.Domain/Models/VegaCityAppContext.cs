@@ -17,6 +17,8 @@ namespace VegaCityApp.Domain.Models
         }
 
         public virtual DbSet<Deposit> Deposits { get; set; } = null!;
+        public virtual DbSet<DisputeReport> DisputeReports { get; set; } = null!;
+        public virtual DbSet<ENotification> ENotifications { get; set; } = null!;
         public virtual DbSet<Etag> Etags { get; set; } = null!;
         public virtual DbSet<EtagType> EtagTypes { get; set; } = null!;
         public virtual DbSet<House> Houses { get; set; } = null!;
@@ -48,7 +50,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Deposit");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")
@@ -73,11 +75,77 @@ namespace VegaCityApp.Domain.Models
                     .HasConstraintName("FK_Deposit_UserWallet");
             });
 
+            modelBuilder.Entity<DisputeReport>(entity =>
+            {
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate")
+                    .HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.Description)
+                    .HasMaxLength(500)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.IssueType)
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Resolution).IsUnicode(false);
+
+                entity.Property(e => e.ResolvedBy)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.ResolvedDate).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Store)
+                    .WithMany(p => p.DisputeReports)
+                    .HasForeignKey(d => d.StoreId)
+                    .HasConstraintName("FK__DisputeRe__Store__245D67DE");
+
+                entity.HasOne(d => d.Transaction)
+                    .WithMany(p => p.DisputeReports)
+                    .HasForeignKey(d => d.TransactionId)
+                    .HasConstraintName("FK__DisputeRe__Trans__236943A5");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.DisputeReports)
+                    .HasForeignKey(d => d.UserId)
+                    .HasConstraintName("FK__DisputeRe__UserI__22751F6C");
+            });
+
+            modelBuilder.Entity<ENotification>(entity =>
+            {
+                entity.ToTable("E_Notification");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate")
+                    .HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.EtagId).HasColumnName("ETagId");
+
+                entity.Property(e => e.ExpireDate).HasColumnType("datetime");
+
+                entity.Property(e => e.Name)
+                    .HasMaxLength(200)
+                    .IsUnicode(false);
+
+                entity.HasOne(d => d.Etag)
+                    .WithMany(p => p.ENotifications)
+                    .HasForeignKey(d => d.EtagId)
+                    .HasConstraintName("FK__E_Notific__ETagI__1EA48E88");
+            });
+
             modelBuilder.Entity<Etag>(entity =>
             {
                 entity.ToTable("ETag");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Birthday).HasColumnType("date");
 
@@ -91,6 +159,10 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnType("datetime")
                     .HasColumnName("crDate")
                     .HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.EtagCode)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.EtagTypeId).HasColumnName("ETagTypeId");
 
@@ -132,7 +204,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("ETagType");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.ImageUrl).IsUnicode(false);
 
@@ -143,7 +215,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("House");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Address).HasMaxLength(50);
 
@@ -172,7 +244,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("MarketZone");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Address).HasMaxLength(100);
 
@@ -210,7 +282,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Menu");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Address).HasMaxLength(100);
 
@@ -220,6 +292,8 @@ namespace VegaCityApp.Domain.Models
                     .HasDefaultValueSql("(getdate())");
 
                 entity.Property(e => e.ImageUrl).IsUnicode(false);
+
+                entity.Property(e => e.MenuJson).IsUnicode(false);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
 
@@ -238,7 +312,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Order");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")
@@ -256,6 +330,8 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.PaymentType)
                     .HasMaxLength(50)
                     .IsUnicode(false);
+
+                entity.Property(e => e.ProductJson).IsUnicode(false);
 
                 entity.Property(e => e.Status)
                     .HasMaxLength(20)
@@ -288,7 +364,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Package");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")
@@ -324,7 +400,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("PackageE-TagTypeMapping");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")
@@ -353,7 +429,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("ProductCategory");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")
@@ -377,7 +453,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Role");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Name)
                     .HasMaxLength(50)
@@ -388,7 +464,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Store");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Address).HasMaxLength(100);
 
@@ -438,7 +514,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Transaction");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")
@@ -446,8 +522,9 @@ namespace VegaCityApp.Domain.Models
                     .HasDefaultValueSql("(getdate())");
 
                 entity.Property(e => e.Currency)
-                    .HasMaxLength(10)
-                    .IsUnicode(false);
+                    .HasMaxLength(3)
+                    .IsUnicode(false)
+                    .IsFixedLength();
 
                 entity.Property(e => e.Description).HasMaxLength(200);
 
@@ -492,7 +569,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("User");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Birthday).HasColumnType("date");
 
@@ -548,7 +625,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("UserWallet");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")
@@ -577,7 +654,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Zone");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")
