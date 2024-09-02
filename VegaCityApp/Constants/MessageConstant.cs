@@ -81,11 +81,18 @@ public static class MessageConstant
         public const string InvalidUsernameOrPassword = "Tên đăng nhập hoặc mật khẩu không chính xác";
         public const string DeactivatedAccount = "Tài khoản đang bị vô hiệu hoá";
     }
-    public static class WalletTypeMessage
+    public static class EtagTypeMessage
     {
-        public const string CreateSuccessFully = "Create WalletType Successfully !!";
-        public const string CreateFail = "Create WalletType Fail :( !!";
-        public const string NotFoundWalletType = "Not Found WalletType !!";
-        public const string DeleteWalletTypeSuccessfully = "Delete WalletType Successfully !!";
+        public const string CreateSuccessFully = "Create EtagType Successfully !!";
+        public const string CreateFail = "Create EtagType Fail :( !!";
+        public const string NotFoundEtagType = "Not Found EtagType !!";
+        public const string DeleteEtagTypeSuccessfully = "Delete EtagType Successfully !!";
+    }
+    public static class EtagMessage
+    {
+        public const string UserNotFound = "User Not Found !!";
+        public const string EtagTypeNotFound = "EtagType Not Found !!";
+        public const string CreateFail = "Create Etag Fail :( !!";
+        public const string MarketZoneNotFound = "MarketZone Not Found !!";
     }
 }

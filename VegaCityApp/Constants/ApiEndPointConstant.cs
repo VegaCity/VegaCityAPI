@@ -15,9 +15,14 @@ public static class ApiEndPointConstant
         public const string AuthenticationEndpoint = ApiEndpoint + "/auth";
         public const string Login = AuthenticationEndpoint + "/login";
     }
-    public static class WalletTypeEndpoint
+    public static class EtagTypeEndpoint
     {
-        public const string CreateWalletType = ApiEndpoint + "/wallet-type";
-        public const string DeleteWalletType = ApiEndpoint + "/wallet-type";
+        public const string CreateEtagType = ApiEndpoint + "/etag-type";
+        public const string DeleteEtagType = ApiEndpoint + "/etag-type";
+    }
+    public static class EtagEndpoint
+    {
+        public const string CreateEtag = ApiEndpoint + "/etag";
+        public const string DeleteEtag = ApiEndpoint + "/etag";
     }
 }

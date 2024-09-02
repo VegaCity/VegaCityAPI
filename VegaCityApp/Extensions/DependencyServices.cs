@@ -14,6 +14,8 @@ using System.Reflection;
 using VegaCityApp.Service.Interface;
 using VegaCityApp.Service.Implement;
 using Microsoft.Extensions.Configuration;
+using VegaCityApp.API.Services.Interface;
+using VegaCityApp.API.Services.Implement;
 
 namespace VegaCityApp.API.Extensions;
 public static class DependencyServices
@@ -36,11 +38,13 @@ public static class DependencyServices
     {
         //string connectionString =
         //    $"Server={configuration.GetValue<string>(DatabaseConstant.Host)},{configuration.GetValue<string>(DatabaseConstant.Port)};User Id={configuration.GetValue<string>(DatabaseConstant.UserName)};Password={configuration.GetValue<string>(DatabaseConstant.Password)};Database={configuration.GetValue<string>(DatabaseConstant.Database)}";
-        string Host = "LAPTOP-R0K7KBGI\\TRANGQUOCDAT";
-        string UserName = "sa";
-        string Password = "12345";
+        #region varDb
+        string Host = "14.225.204.144";
+        string UserName = "vegadb";
+        string Password = "vega12345";
         string Database = "VegaCityApp";
         string Port = "1433";
+        #endregion
         string connectionString =
             $"Server={Host},{Port};User Id={UserName};Password={Password};Database={Database}";
         return connectionString;
@@ -48,22 +52,27 @@ public static class DependencyServices
 
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration config)
     {
+        #region Firebase
         //string firebaseCred = config.GetValue<string>("Authentication:FirebaseKey");
         //// string firebaseCred = config.GetValue<string>("AIzaSyCFJOGAnHOQaWntVhN1a16QINIAjVpWaXI");
         //FirebaseApp.Create(new AppOptions()
         //{
         //    Credential = GoogleCredential.FromJson(firebaseCred)
         //}, "[DEFAULT]");
+        #endregion
         #region addScope
         services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<IEtagService, EtagService>();
         #endregion
         return services;
     }
 
     public static IServiceCollection AddJwtValidation(this IServiceCollection services)
     {
+        #region varKey
         string issuer = "VegaCityApp";
         string secretKey = "VegaCityApp";
+        #endregion
         IConfiguration configuration = new ConfigurationBuilder()
             .AddEnvironmentVariables(EnvironmentVariableConstant.Prefix).Build();
         services.AddAuthentication(options =>

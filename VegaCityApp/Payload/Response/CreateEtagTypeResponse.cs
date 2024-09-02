@@ -1,9 +1,9 @@
 ﻿namespace VegaCityApp.API.Payload.Response
 {
-    public class CreateWalletTypeResponse
+    public class CreateEtagTypeResponse
     {
         public int StatusCode { get; set; }
         public string Message { get; set; }
-        public Guid? WalletTypeId { get; set; }
+        public Guid? EtagTypeId { get; set; }
     }
 }

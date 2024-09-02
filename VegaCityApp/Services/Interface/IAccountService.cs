@@ -7,7 +7,5 @@ namespace VegaCityApp.Service.Interface
     public interface IAccountService
     {
         Task<CreateAccountResponse> CreateAccount(CreateAccountRequest req);
-        Task<CreateWalletTypeResponse> CreateWalletType(WalletTypeRequest req);
-        Task<CreateWalletTypeResponse> DeleteWalletType(Guid WalleTypeId);
     }
 }
