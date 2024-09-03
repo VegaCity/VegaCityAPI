@@ -7,6 +7,7 @@ namespace VegaCityApp.Domain.Models
     {
         public MarketZone()
         {
+            EtagTypes = new HashSet<EtagType>();
             Etags = new HashSet<Etag>();
             Packages = new HashSet<Package>();
             Stores = new HashSet<Store>();
@@ -26,6 +27,7 @@ namespace VegaCityApp.Domain.Models
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
 
+        public virtual ICollection<EtagType> EtagTypes { get; set; }
         public virtual ICollection<Etag> Etags { get; set; }
         public virtual ICollection<Package> Packages { get; set; }
         public virtual ICollection<Store> Stores { get; set; }

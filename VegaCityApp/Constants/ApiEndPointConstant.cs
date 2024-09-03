@@ -10,10 +10,12 @@ public static class ApiEndPointConstant
     public const string ApiVersion = "/v1";
     public const string ApiEndpoint = RootEndPoint + ApiVersion;
 
-    public static class Authentication
+    public static class AuthenticationEndpoint
     {
-        public const string AuthenticationEndpoint = ApiEndpoint + "/auth";
-        public const string Login = AuthenticationEndpoint + "/login";
+        public const string Authentication = ApiEndpoint + "/auth";
+        public const string Login = Authentication + "/login";
+        public const string Register = Authentication + "/sign-up/landing-page";
+        public const string ChangePassword = Authentication + "/change-password";
     }
     public static class EtagTypeEndpoint
     {
@@ -24,5 +26,9 @@ public static class ApiEndPointConstant
     {
         public const string CreateEtag = ApiEndpoint + "/etag";
         public const string DeleteEtag = ApiEndpoint + "/etag";
+    }
+    public static class UserEndpoint
+    {
+        public const string ApproveUser = ApiEndpoint + "/approve-user";
     }
 }

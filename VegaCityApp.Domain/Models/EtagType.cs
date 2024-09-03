@@ -16,6 +16,7 @@ namespace VegaCityApp.Domain.Models
         public Guid? MarketZoneId { get; set; }
         public string? ImageUrl { get; set; }
 
+        public virtual MarketZone? MarketZone { get; set; }
         public virtual ICollection<Etag> Etags { get; set; }
         public virtual ICollection<PackageETagTypeMapping> PackageETagTypeMappings { get; set; }
     }

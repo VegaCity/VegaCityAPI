@@ -1,4 +1,4 @@
-﻿namespace Pos_System.API.Constants;
+﻿namespace VegaCityApp.API.Constants;
 
 public static class MessageConstant
 {
@@ -94,5 +94,28 @@ public static class MessageConstant
         public const string EtagTypeNotFound = "EtagType Not Found !!";
         public const string CreateFail = "Create Etag Fail :( !!";
         public const string MarketZoneNotFound = "MarketZone Not Found !!";
+    }
+    public static class UserMessage
+    {
+        public const string EmailExistOrPhoneOrCCCDExit = "Email or PhoneNumber or CCCD already exist !!";
+        public const string Ban = "Email is banned !!";
+        public const string CreateUserFail = "Create User Fail !!";
+        public const string InvalidEmail = "Invalid Email !!";
+        public const string InvalidPhoneNumber = "Invalid PhoneNumber !!";
+        public const string InvalidCCCD = "Invalid CCCD !!";
+        public const string CreateSuccessfully = "Create User Successfully !!";
+        public const string UserNotFound = "User Not Found !!";
+        public const string ApproveSuccessfully = "Approve User Successfully !!";
+        public const string ApproveFail = "Approve User Fail !!";
+        public const string ApproveReject = "Approve User Reject !!";
+        public const string Approved = "User is approved !!";
+        public const string PendingVerify = "User is pending verify !!";
+        public const string UserDisable = "User is disable !!";
+        public const string UserBan = "User is ban !!";
+        public const string WrongPassword = "Wrong Password !!";
+        public const string LoginSuccessfully = "Login Successfully !!";
+        public const string LoginFail = "Login Fail !!";
+        public const string ChangePasswordSuccessfully = "Change Password Successfully !!";
+        public const string OldPasswordNotDuplicate = "Old Password is not duplicate !!";
     }
 }

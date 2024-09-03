@@ -11,17 +11,12 @@ namespace VegaCityApp.API.Services
 		protected ILogger<T> _logger;
 		protected IMapper _mapper;
 		protected IHttpContextAccessor _httpContextAccessor;
-		public BaseService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<T> logger, IHttpContextAccessor httpContextAccessor)
+		public BaseService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<T> logger, IHttpContextAccessor httpContextAccessor,IMapper mapper)
 		{
 			_unitOfWork = unitOfWork;
 			_logger = logger;
 			_httpContextAccessor = httpContextAccessor;
-		}
-
-		protected string GetUsernameFromJwt()
-		{
-			string username = _httpContextAccessor?.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
-			return username;
+			_mapper = mapper;
 		}
 
 		protected string GetRoleFromJwt()
@@ -30,21 +25,9 @@ namespace VegaCityApp.API.Services
 			return role;
 		}
 
-		//Use for employee and store manager
-		//protected async Task<bool> CheckIsUserInStore(Account account, Store store)
-		//{
-		//	ICollection<StoreAccount> storeAccount = await _unitOfWork.GetRepository<StoreAccount>()
-		//		.GetListAsync(predicate: s => s.StoreId.Equals(store.Id));
-		//	return storeAccount.Select(x => x.AccountId).Contains(account.Id);
-		//}
-
-		//protected string GetBrandIdFromJwt()
-		//{
-		//	return _httpContextAccessor?.HttpContext?.User?.FindFirstValue("brandId");
-		//}
-		//protected string GetStoreIdFromJwt()
-		//{
-		//	return _httpContextAccessor?.HttpContext?.User?.FindFirstValue("storeId");
-		//}
+		protected string GetMarketZoneIdFromJwt()
+		{
+			return _httpContextAccessor?.HttpContext?.User?.FindFirstValue("MarketZoneId");
+		}
 	}
 }

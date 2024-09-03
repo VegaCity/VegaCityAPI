@@ -5,7 +5,7 @@ namespace VegaCityApp.API.Services.Interface
 {
     public interface IEtagService
     {
-        Task<CreateEtagTypeResponse> CreateEtagType(EtagTypeRequest req);
-        Task<CreateEtagResponse> CreateEtag(EtagRequest req);
+        Task<ResponseAPI> CreateEtagType(EtagTypeRequest req);
+        Task<ResponseAPI> CreateEtag(EtagRequest req);
     }
 }
