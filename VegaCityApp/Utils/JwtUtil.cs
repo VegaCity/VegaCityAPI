@@ -16,13 +16,19 @@ public class JwtUtil
 
     public static string GenerateJwtToken(User user, Tuple<string, Guid> guidClaim)
     {
+        #region varKey
+        string issuerKey = "VegaCityApp";
+        string secretKey = "VegaCityApp";
+        #endregion
         IConfiguration configuration = new ConfigurationBuilder()
             .AddEnvironmentVariables(EnvironmentVariableConstant.Prefix).Build();
         JwtSecurityTokenHandler jwtHandler = new JwtSecurityTokenHandler();
         SymmetricSecurityKey secrectKey =
-            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>(JwtConstant.SecretKey)));
-        var credentials = new SigningCredentials(secrectKey, SecurityAlgorithms.HmacSha256Signature);
-        string issuer = configuration.GetValue<string>(JwtConstant.Issuer);
+            //new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>(JwtConstant.SecretKey)));
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        //var credentials = new SigningCredentials(secrectKey, SecurityAlgorithms.HmacSha256Signature);
+        //string issuer = configuration.GetValue<string>(JwtConstant.Issuer);
+        string issuer = issuerKey;
         List<Claim> claims = new List<Claim>()
         {
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
