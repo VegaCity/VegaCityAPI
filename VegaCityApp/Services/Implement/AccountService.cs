@@ -258,7 +258,7 @@ namespace VegaCityApp.Service.Implement
                     if(user != null)
                     {
                         var subject = UserMessage.ApproveSuccessfully;
-                        var body = $"Your account has been approved. Your password is: {user.Password}";
+                        var body = "Your account has been approved. Your password is: " + user.Password;
                         await MailUtil.SendMailAsync(user.Email, subject, body);
                     }
                     return  new ResponseAPI
