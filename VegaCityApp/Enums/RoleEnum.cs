@@ -2,5 +2,9 @@
 {
     public enum RoleEnum
     {
+        Admin,
+        CashierWeb,
+        Store,
+        CashierApp
     }
 }

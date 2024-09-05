@@ -18,7 +18,6 @@ namespace VegaCityApp.Domain.Models
         public int? StoreType { get; set; }
         public string? Name { get; set; }
         public string? Address { get; set; }
-        public string? Status { get; set; }
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
         public bool? Deflag { get; set; }
@@ -28,6 +27,7 @@ namespace VegaCityApp.Domain.Models
         public Guid? HouseId { get; set; }
         public Guid? MarketZoneId { get; set; }
         public string? Description { get; set; }
+        public int? Status { get; set; }
 
         public virtual House? House { get; set; }
         public virtual MarketZone? MarketZone { get; set; }

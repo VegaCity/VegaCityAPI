@@ -13,5 +13,15 @@ namespace VegaCityApp.API.Utils
 				return Convert.ToBase64String(bytes);
 			}
 		}
-	}
+        public static string GenerateCharacter(int length)
+        {
+            // Chuỗi chứa các ký tự có thể có trong ETag
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            Random random = new Random();
+
+            // Tạo chuỗi ngẫu nhiên từ các ký tự đã định nghĩa
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+    }
 }

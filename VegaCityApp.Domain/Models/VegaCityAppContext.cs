@@ -40,7 +40,7 @@ namespace VegaCityApp.Domain.Models
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=LAPTOP-R0K7KBGI\\TRANGQUOCDAT;Database=VegaCityApp;User Id=sa;Password=12345;Encrypt=True;TrustServerCertificate=True");
+                optionsBuilder.UseSqlServer("Server=14.225.204.144;Database=VegaCityApp;User Id=vegadb;Password=vega12345;Encrypt=True;TrustServerCertificate=True");
             }
         }
 
@@ -103,17 +103,17 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.DisputeReports)
                     .HasForeignKey(d => d.StoreId)
-                    .HasConstraintName("FK__DisputeRe__Store__245D67DE");
+                    .HasConstraintName("FK__DisputeRe__Store__151B244E");
 
                 entity.HasOne(d => d.Transaction)
                     .WithMany(p => p.DisputeReports)
                     .HasForeignKey(d => d.TransactionId)
-                    .HasConstraintName("FK__DisputeRe__Trans__236943A5");
+                    .HasConstraintName("FK__DisputeRe__Trans__160F4887");
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.DisputeReports)
                     .HasForeignKey(d => d.UserId)
-                    .HasConstraintName("FK__DisputeRe__UserI__22751F6C");
+                    .HasConstraintName("FK__DisputeRe__UserI__17036CC0");
             });
 
             modelBuilder.Entity<ENotification>(entity =>
@@ -138,7 +138,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Etag)
                     .WithMany(p => p.ENotifications)
                     .HasForeignKey(d => d.EtagId)
-                    .HasConstraintName("FK__E_Notific__ETagI__1EA48E88");
+                    .HasConstraintName("FK__E_Notific__ETagI__17F790F9");
             });
 
             modelBuilder.Entity<Etag>(entity =>
@@ -209,6 +209,11 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.ImageUrl).IsUnicode(false);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
+
+                entity.HasOne(d => d.MarketZone)
+                    .WithMany(p => p.EtagTypes)
+                    .HasForeignKey(d => d.MarketZoneId)
+                    .HasConstraintName("FK_ETagType_MarketZone");
             });
 
             modelBuilder.Entity<House>(entity =>
@@ -490,10 +495,6 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.ShortName).HasMaxLength(50);
 
-                entity.Property(e => e.Status)
-                    .HasMaxLength(20)
-                    .IsUnicode(false);
-
                 entity.Property(e => e.UpsDate)
                     .HasColumnType("datetime")
                     .HasColumnName("upsDate")
@@ -571,6 +572,8 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.Address).HasMaxLength(200);
+
                 entity.Property(e => e.Birthday).HasColumnType("date");
 
                 entity.Property(e => e.Cccd)
@@ -583,6 +586,10 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnType("datetime")
                     .HasColumnName("crDate")
                     .HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.Description)
+                    .HasMaxLength(400)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.Email)
                     .HasMaxLength(100)
@@ -601,9 +608,7 @@ namespace VegaCityApp.Domain.Models
                     .IsUnicode(false)
                     .IsFixedLength();
 
-                entity.Property(e => e.PinCode)
-                    .IsUnicode(false)
-                    .HasColumnName("pinCode");
+                entity.Property(e => e.PinCode).IsUnicode(false);
 
                 entity.Property(e => e.UpsDate)
                     .HasColumnType("datetime")

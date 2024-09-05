@@ -2855,21 +2855,19 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\LEARNING\\codeForMe\\C#\\VegaCityApp\\VegaCityApp.Domain\\VegaCityApp.Domain.csproj",
+      "projectUniqueName": "D:\\LEARNING\\codeForMe\\Final-Capstone\\VegaCityAPI\\VegaCityApp.Domain\\VegaCityApp.Domain.csproj",
       "projectName": "VegaCityApp.Domain",
-      "projectPath": "D:\\LEARNING\\codeForMe\\C#\\VegaCityApp\\VegaCityApp.Domain\\VegaCityApp.Domain.csproj",
+      "projectPath": "D:\\LEARNING\\codeForMe\\Final-Capstone\\VegaCityAPI\\VegaCityApp.Domain\\VegaCityApp.Domain.csproj",
       "packagesPath": "C:\\Users\\meryc\\.nuget\\packages\\",
-      "outputPath": "D:\\LEARNING\\codeForMe\\C#\\VegaCityApp\\VegaCityApp.Domain\\obj\\",
+      "outputPath": "D:\\LEARNING\\codeForMe\\Final-Capstone\\VegaCityAPI\\VegaCityApp.Domain\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\meryc\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\meryc\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net6.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
