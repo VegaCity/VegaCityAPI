@@ -7,5 +7,6 @@ namespace VegaCityApp.API.Services.Interface
     {
         Task<ResponseAPI> CreateEtagType(EtagTypeRequest req);
         Task<ResponseAPI> CreateEtag(EtagRequest req);
+
     }
 }

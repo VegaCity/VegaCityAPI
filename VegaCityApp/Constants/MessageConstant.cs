@@ -94,9 +94,10 @@ public static class MessageConstant
         public const string EtagTypeNotFound = "EtagType Not Found !!";
         public const string CreateFail = "Create Etag Fail :( !!";
         public const string MarketZoneNotFound = "MarketZone Not Found !!";
+        public const string GetEtagsSuccess = "Get List Etags Successfully !!";
     }
     public static class UserMessage
-    {
+    {   public const string UnauthorizedAccess = "Unauthorized Access !!";
         public const string EmailExistOrPhoneOrCCCDExit = "Email or PhoneNumber or CCCD already exist !!";
         public const string Ban = "Email is banned !!";
         public const string CreateUserFail = "Create User Fail !!";
@@ -117,5 +118,45 @@ public static class MessageConstant
         public const string LoginFail = "Login Fail !!";
         public const string ChangePasswordSuccessfully = "Change Password Successfully !!";
         public const string OldPasswordNotDuplicate = "Old Password is not duplicate !!";
+        public const string GetListSuccess = "Get User List Successfully !!";
+        public const string NotFoundUser = "Not Found User !!";
+        public const string UpdateUserSuccessfully = "Update User Successfully !!";
+    }
+
+    public static class RoleMessage
+    {
+        public const string GetListByRoleSuccessfully = "Get List User By Role Successfully !!";
+        public const string GetListByRoleFail = "Get List User By Role Fail !!";
+        public const string GetListByRoleNotFound = "Not Found User By Role !!";
+    }
+
+    public static class walletMessage
+    {
+        public const string CreateWalletSuccessfully = "Create Wallet Successfully !!";
+        public const string NotFound = "Not Found Wallet !!";
+        public const string FoundSuccess = "Get Wallet Successfully !!";
+    }
+
+    public static class OrderMessage
+    {
+        public const string CreateOrderSuccessfully = "Create Order Successfully !!";
+        public const string CreateOrderFail = "Create Order Fail !!";
+        public const string GetOrdersSuccessfully = "Get Orders Successfully !!";
+        public const string GetOrdersFail = "Get Orders Fail !!";
+    }
+
+    public static class PackageMessage
+    {
+        public const string CreatePackageSuccessfully = "Create Package Successfully !!";
+        public const string CreatePackageFail = "Create Package Fail !!";
+        public const string GetPackagesSuccessfully = "Get Packages Successfully !!";
+        public const string GetPackagesFail = "Get Packages Fail !!";
+        public const string NotFoundPackage = "Not Found Package !!";
+        public const string FoundPackage = "Get Package Successfully !!";
+        public const string UpdatePackageSuccessfully = "Update Package Successfully !!";
+        public const string MKZoneNotFound = "MarketZone Was Not Found !!";
+        public const string ExistedPackageName = "Package Name is existed !!";
+        public const string NotFoundETagType = "ETagType Was Not Found !!";
+        public const string UpdatePackageFailed = "Update Package Failed !!";
     }
 }

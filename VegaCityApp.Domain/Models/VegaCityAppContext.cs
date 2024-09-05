@@ -206,6 +206,8 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.BonusRate).HasColumnType("decimal(18, 2)");
+
                 entity.Property(e => e.ImageUrl).IsUnicode(false);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
@@ -213,6 +215,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.MarketZone)
                     .WithMany(p => p.EtagTypes)
                     .HasForeignKey(d => d.MarketZoneId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ETagType_MarketZone");
             });
 
@@ -484,9 +487,7 @@ namespace VegaCityApp.Domain.Models
                     .HasMaxLength(100)
                     .IsUnicode(false);
 
-                entity.Property(e => e.Name)
-                    .HasMaxLength(100)
-                    .IsUnicode(false);
+                entity.Property(e => e.Name).HasMaxLength(100);
 
                 entity.Property(e => e.PhoneNumber)
                     .HasMaxLength(10)
@@ -508,6 +509,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.MarketZone)
                     .WithMany(p => p.Stores)
                     .HasForeignKey(d => d.MarketZoneId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Store_MarketZone");
             });
 
