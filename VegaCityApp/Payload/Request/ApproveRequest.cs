@@ -9,10 +9,4 @@
         public string StoreEmail { get; set; }
         public string ApprovalStatus { get; set; }
     }
-
-    public class UpdateUserApprovingRequest
-    {
-        public string StoreId { get; set; }
-        public string UserId { get; set; }
-    }
 }

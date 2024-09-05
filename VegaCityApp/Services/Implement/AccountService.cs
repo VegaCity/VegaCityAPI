@@ -247,11 +247,7 @@ namespace VegaCityApp.Service.Implement
                 await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
                 await _unitOfWork.CommitAsync();
                 //update user
-                var result = await UpdateUserApproving(new UpdateUserApprovingRequest
-                {
-                    StoreId = newStore.Id.ToString(),
-                    UserId = req.UserId
-                });
+                var result = await UpdateUserApproving(user, newStore.Id);
                 if (result != Guid.Empty)
                 {
                     //send mail
@@ -279,19 +275,12 @@ namespace VegaCityApp.Service.Implement
                 MessageResponse = UserMessage.ApproveFail
             };
         }
-        private async Task<Guid> UpdateUserApproving(UpdateUserApprovingRequest req)
+        private async Task<Guid> UpdateUserApproving(User user, Guid storeId)
         {
-            Guid guidUserId = Guid.Parse(req.UserId);
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == guidUserId);
-            if(user == null)
-            {
-                return Guid.Empty;
-            }
             user.Status = (int)UserStatusEnum.Active;
             user.IsChange = false;
             user.Password = PasswordUtil.GenerateCharacter(10);
-            Guid guidStoreId = Guid.Parse(req.StoreId);
-            user.StoreId = guidStoreId;
+            user.StoreId = storeId;
             _unitOfWork.GetRepository<User>().UpdateAsync(user);
             await _unitOfWork.CommitAsync();
             return user.Id;

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "SaYulh2o5OWHJGgN0OM7QJ+iUsTabAJWjr1RaHTiS2w9pj9itnMqB+OfGw5DPIi9GBvlvlOZxfqRSBTFwjVE/g==",
+  "dgSpecHash": "GpDpc6X6nfxtMdqqtqmsdpt/TY6N2U9wndfmjDdMCPkVxdSq4pSK1lxfxxvFvS/RI/gBqynk2Fl6YbRT8yT0xg==",
   "success": true,
-  "projectFilePath": "D:\\LEARNING\\codeForMe\\C#\\VegaCityApp\\VegaCityApp\\VegaCityApp.API.csproj",
+  "projectFilePath": "D:\\LEARNING\\codeForMe\\Final-Capstone\\VegaCityAPI\\VegaCityApp\\VegaCityApp.API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\meryc\\.nuget\\packages\\automapper\\12.0.0\\automapper.12.0.0.nupkg.sha512",
     "C:\\Users\\meryc\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.0\\automapper.extensions.microsoft.dependencyinjection.12.0.0.nupkg.sha512",
