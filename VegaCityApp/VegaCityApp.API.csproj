@@ -33,10 +33,4 @@
     <ProjectReference Include="..\VegaCityApp.Repository\VegaCityApp.Repository.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\CashierWeb\" />
-    <Folder Include="Controllers\CashierApp\" />
-    <Folder Include="Controllers\OwnerStore\" />
-  </ItemGroup>
-
 </Project>

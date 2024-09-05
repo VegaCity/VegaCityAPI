@@ -28,6 +28,38 @@ namespace VegaCityApp.API.Controllers.Admin
         public async Task<IActionResult> CreateEtagType([FromBody] EtagTypeRequest request)
         {
             var result = await _etagService.CreateEtagType(request);
+            return result.StatusCode == HttpStatusCodes.Created ? Created("", result) : BadRequest(result);
+        }
+        [HttpPatch(EtagTypeEndpoint.UpdateEtagType)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.BadRequest)]
+        public async Task<IActionResult> UpdateEtagType([FromBody] UpdateEtagTypeRequest request)
+        {
+            var result = await _etagService.UpdateEtagType(request);
+            return result.StatusCode == HttpStatusCodes.OK? Ok(result): BadRequest(result);
+        }
+        [HttpDelete(EtagTypeEndpoint.DeleteEtagType)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.BadRequest)]
+        public async Task<IActionResult> DeleteEtagType([FromQuery] Guid etagTypeId)
+        {
+            var result = await _etagService.DeleteEtagType(etagTypeId);
+            return result.StatusCode == HttpStatusCodes.OK ? Ok(result) : BadRequest(result);
+        }
+        [HttpGet(EtagTypeEndpoint.SearchEtagType)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.BadRequest)]
+        public async Task<IActionResult> SearchEtagType([FromQuery] Guid etagTypeId)
+        {
+            var result = await _etagService.SearchEtagType(etagTypeId);
+            return result.StatusCode == HttpStatusCodes.OK ? Ok(result) : BadRequest(result);
+        }
+        [HttpGet(EtagTypeEndpoint.SearchAllEtagType)]
+        [ProducesResponseType(typeof(EtagTypeResponse), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(EtagTypeResponse), HttpStatusCodes.BadRequest)]
+        public async Task<IActionResult> SearchAllEtagType([FromQuery] int size, [FromQuery] int page)
+        {
+            var result = await _etagService.SearchAllEtagType(size, page);
             return Ok(result);
         }
         [HttpPost(EtagEndpoint.CreateEtag)]

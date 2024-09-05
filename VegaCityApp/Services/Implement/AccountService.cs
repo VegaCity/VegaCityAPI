@@ -188,7 +188,7 @@ namespace VegaCityApp.Service.Implement
                     }
                 }; 
             }
-            if (req.ApprovalStatus == "REJECT")
+            if (req.ApprovalStatus.Equals("REJECT"))
             {
                 if (user == null)
                 {
@@ -211,7 +211,7 @@ namespace VegaCityApp.Service.Implement
                     }
                 };
             }
-            else if(req.ApprovalStatus == "APPROVED")
+            else if(req.ApprovalStatus.Equals("APPROVED"))
             {
                 //check phone, email
                 if (!ValidationUtils.IsEmail(req.StoreEmail))

@@ -87,6 +87,9 @@ public static class MessageConstant
         public const string CreateFail = "Create EtagType Fail :( !!";
         public const string NotFoundEtagType = "Not Found EtagType !!";
         public const string DeleteEtagTypeSuccessfully = "Delete EtagType Successfully !!";
+        public const string DeleteEtagTypeFail = "Delete EtagType Fail :( !!";
+        public const string UpdateSuccessFully = "Update EtagType Successfully !!";
+        public const string UpdateFail = "Update EtagType Fail :( !!";
     }
     public static class EtagMessage
     {

@@ -12,11 +12,13 @@ namespace VegaCityApp.Domain.Models
         }
 
         public Guid Id { get; set; }
-        public string? Name { get; set; }
-        public Guid? MarketZoneId { get; set; }
+        public string Name { get; set; } = null!;
+        public Guid MarketZoneId { get; set; }
         public string? ImageUrl { get; set; }
+        public decimal? BonusRate { get; set; }
+        public bool Deflag { get; set; }
 
-        public virtual MarketZone? MarketZone { get; set; }
+        public virtual MarketZone MarketZone { get; set; } = null!;
         public virtual ICollection<Etag> Etags { get; set; }
         public virtual ICollection<PackageETagTypeMapping> PackageETagTypeMappings { get; set; }
     }

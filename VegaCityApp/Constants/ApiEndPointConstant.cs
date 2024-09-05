@@ -21,6 +21,9 @@ public static class ApiEndPointConstant
     {
         public const string CreateEtagType = ApiEndpoint + "/etag-type";
         public const string DeleteEtagType = ApiEndpoint + "/etag-type";
+        public const string UpdateEtagType = ApiEndpoint + "/etag-type";
+        public const string SearchEtagType = ApiEndpoint + "/etag-type";
+        public const string SearchAllEtagType = ApiEndpoint + "/etag-types";
     }
     public static class EtagEndpoint
     {
