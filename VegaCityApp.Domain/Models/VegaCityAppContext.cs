@@ -206,7 +206,7 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
-                entity.Property(e => e.BonusRate).HasColumnType("decimal(18, 18)");
+                entity.Property(e => e.BonusRate).HasColumnType("decimal(18, 2)");
 
                 entity.Property(e => e.ImageUrl).IsUnicode(false);
 

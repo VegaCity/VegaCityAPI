@@ -26,7 +26,8 @@ namespace VegaCityApp.API.Services.Implement
                 ImageUrl = req.ImageUrl,
                 MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId),
                 BonusRate = req.BonusRate,
-                Deflag = false
+                Deflag = false,
+                Amount = req.Amount
             };
             await _unitOfWork.GetRepository<EtagType>().InsertAsync(newEtagType);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
@@ -56,6 +57,7 @@ namespace VegaCityApp.API.Services.Implement
             etagType.Name = req.Name;
             etagType.ImageUrl = req.ImageUrl?? etagType.ImageUrl;
             etagType.BonusRate = req.BonusRate?? etagType.BonusRate;
+            etagType.Amount = req.Amount?? etagType.Amount;
             _unitOfWork.GetRepository<EtagType>().UpdateAsync(etagType);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
@@ -95,7 +97,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> SearchEtagType(Guid etagTypeId)
         {
             var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag,
-                include: etag => etag.Include(y => y.Etags), selector: z => new { z.Id, z.BonusRate, z.Name, z.Etags });
+                include: etag => etag.Include(y => y.Etags), selector: z => new { z.Id, z.BonusRate, z.Name, z.Etags, z.Amount });
             if(etagType == null)
             {
                 return new ResponseAPI()
@@ -122,7 +124,8 @@ namespace VegaCityApp.API.Services.Implement
                     MarketZoneId = x.MarketZoneId,
                     ImageUrl = x.ImageUrl,
                     BonusRate = x.BonusRate,
-                    Deflag = x.Deflag
+                    Deflag = x.Deflag,
+                    Amount = x.Amount
                 },
                 page: page,
                 size: size,

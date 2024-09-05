@@ -16,5 +16,6 @@ namespace VegaCityApp.API.Payload.Response
         public string? ImageUrl { get; set; }
         public decimal? BonusRate { get; set; }
         public bool Deflag { get; set; }
+        public int Amount { get; set; }
     }
 }
