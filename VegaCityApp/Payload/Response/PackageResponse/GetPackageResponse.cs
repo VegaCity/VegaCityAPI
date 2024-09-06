@@ -13,8 +13,7 @@ namespace VegaCityApp.API.Payload.Response.PackageResponse
         public Guid? MarketZoneId { get; set; }
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
-        public Guid? EtagTypeId { get; set; }
-
+        public bool? Deflag {get; set; }
         public virtual MarketZone? MarketZone { get; set; }
         public List<PackageETagTypeMapping> PackageETagTypeMappings { get; set; }
 

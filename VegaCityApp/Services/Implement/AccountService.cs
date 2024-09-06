@@ -4,19 +4,18 @@ using VegaCityApp.API.Constants;
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request;
 using VegaCityApp.API.Payload.Response;
-using VegaCityApp.API.Payload.Response.ETagResponse;
-using VegaCityApp.API.Payload.Response.OrderResponse;
 using VegaCityApp.API.Payload.Response.RoleResponse;
 using VegaCityApp.API.Payload.Response.StoreResponse;
-using VegaCityApp.API.Payload.Response.UserResponse;
 using VegaCityApp.API.Payload.Response.WalletResponse;
 using VegaCityApp.API.Services;
 using VegaCityApp.API.Utils;
 using VegaCityApp.Domain.Models;
+using VegaCityApp.Domain.Paginate;
 using VegaCityApp.Payload.Request;
 using VegaCityApp.Repository.Interfaces;
 using VegaCityApp.Service.Interface;
 using static VegaCityApp.API.Constants.MessageConstant;
+using GetUserResponse = VegaCityApp.API.Payload.Response.GetUserResponse;
 
 namespace VegaCityApp.Service.Implement
 {
@@ -389,222 +388,164 @@ namespace VegaCityApp.Service.Implement
 
         //nguyentppse161945
 
-        public async Task<GetListUserResponse> GetUserList(GetListParameterRequest req)
+        public async Task<IPaginate<GetUserResponse>> SearchAllUser(int size, int page)
         {
-            var userRepo = _unitOfWork.GetRepository<User>();
-            var allUsers = await userRepo.GetListAsync();
-            var response = new GetListUserResponse();
-            try
-            {
-                IEnumerable<User> filteredUsers = allUsers;
-
-                if (req != null)
+            IPaginate<GetUserResponse> data = await _unitOfWork.GetRepository<User>().GetPagingListAsync(
+                selector: x => new GetUserResponse()
                 {
-                    if (!string.IsNullOrEmpty(req.Search))
-                    {
-                        filteredUsers = filteredUsers
-                            .Where(x => x.FullName.Contains(req.Search) || x.Address.Contains(req.Search));
-                    }
+                    Id = x.Id,
+                    FullName = x.FullName,
+                    Email = x.Email,
+                    Address = x.Address,
+                    PhoneNumber = x.PhoneNumber,
+                    Birthday = x.Birthday,
+                    Description = x.Description,
+                    Cccd = x.Cccd,
+                    Gender = x.Gender,
+                    ImageUrl = x.ImageUrl,
+                    StoreId = x.StoreId,
+                    CrDate = x.CrDate,
+                    UpsDate = x.UpsDate,
+                    RoleId = x.RoleId,
+                    IsChange = x.IsChange,
+                    Status = x.Status
+                },
+                page: page,
+                size: size,
+                orderBy: x => x.OrderByDescending(z => z.FullName),
+                predicate: x => x.Status != 2
+            );
+            return data;
 
-                    if (req.Page.HasValue && req.PageSize.HasValue)
-                    {
-                        var skip = (req.Page.Value - 1) * req.PageSize.Value;
-                        filteredUsers = filteredUsers.Skip(skip).Take(req.PageSize.Value);
-                    }
-                }
+           
 
-                if (!filteredUsers.Any())
-                {
-                    response.StatusCode = MessageConstant.HttpStatusCodes.NotFound;
-                    response.MessageResponse = UserMessage.NotFoundUser;
-                    return response;
-                }
-
-                response.StatusCode = MessageConstant.HttpStatusCodes.OK;
-                response.MessageResponse = UserMessage.GetListSuccess;
-                response.Users = filteredUsers.ToList();
-
-            }
-            catch (Exception ex)
-            {
-                response.StatusCode = MessageConstant.HttpStatusCodes.InternalServerError;
-                response.MessageResponse = $"An error occurred: {ex.Message}";
-            }
-
-            return response;
         }
 
-        public async Task<GetListUserResponse> GetListUserByUserRoleId(Guid RoleId)
+
+        public async Task<ResponseAPI> SearchUser(Guid UserId)
         {
-            var response = new GetListUserResponse();
-            //get users with RoleId through <User>
-            var result = await _unitOfWork.GetRepository<User>().GetListAsync(predicate: x => x.RoleId == RoleId);
-            var role = await _unitOfWork.GetRepository<Role>().SingleOrDefaultAsync(predicate: x => x.Id == RoleId);
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
+                predicate: x => x.Id == UserId,
+                include: user => user
+                    .Include(y => y.Orders)
+                    .Include(y => y.UserWallets)
+                    .Include(y => y.Etags)
+            );
 
-            if (result != null && result.Any())
-            {
-                response.StatusCode = HttpStatusCodes.OK;
-                response.MessageResponse = RoleMessage.GetListByRoleSuccessfully;
-                response.Users = result.ToList();
-            }
-            else
-            {
-                response.StatusCode = 404;
-                response.MessageResponse = RoleMessage.GetListByRoleNotFound;
-                response.Users = new List<User>(); // Empty list instead of null
-            }
-
-            return response;
-        } //assign role id to test in user
-
-        public async Task<GetUserResponse> GetUserDetail(Guid UserId)
-        {
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == UserId);
             if (user == null)
             {
-                return new GetUserResponse()
+                return new ResponseAPI()
                 {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = UserMessage.UserNotFound
+                    MessageResponse = MessageConstant.UserMessage.NotFoundUser,
+                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
                 };
             }
 
-            var userRole = (await _unitOfWork.GetRepository<Role>()
-                .SingleOrDefaultAsync(predicate: x => x.Id == user.RoleId))?.Name;
-            var userStore = (await _unitOfWork.GetRepository<Store>()
-                .SingleOrDefaultAsync(predicate: x => x.Id == user.StoreId))?.Name;
-            var userStoreShortName =
-                (await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == user.StoreId))
-                ?.ShortName;
-            var userHouseId = (await _unitOfWork.GetRepository<Store>()
-                .SingleOrDefaultAsync(predicate: x => x.Id == user.StoreId))?.HouseId;
-            var userHouseName =
-                (await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(predicate: x => x.Id == userHouseId))
-                ?.HouseName;
-            var userMarketZone = (await _unitOfWork.GetRepository<MarketZone>()
-                .SingleOrDefaultAsync(predicate: x => x.Id == user.MarketZoneId))?.Name;
-            var userStoreType =
-                (await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == user.StoreId))
-                ?.StoreType;
-            var userWallets = await _unitOfWork.GetRepository<UserWallet>()
-                .GetListAsync(predicate: x => x.UserId == UserId);
-            var userETags = await _unitOfWork.GetRepository<Etag>().GetListAsync(predicate: x => x.UserId == UserId);
-            var userOrders = await _unitOfWork.GetRepository<Order>().GetListAsync(predicate: x => x.UserId == UserId);
-            var walletResponses = new List<GetWalletResponse>();
-            var etagResponses = new List<GetETagResponse>();
-            var orderResponses = new List<GetOrderResponse>();
-            foreach (var wallet in userWallets)
+            return new ResponseAPI()
             {
-                walletResponses.Add(new GetWalletResponse()
-                {
-                    WalletId = wallet.Id,
-                    Balance = wallet.Balance,
-                    WalletType = wallet.WalletType,
-                    StatusCode = HttpStatusCodes.OK,
-                    MessageResponse = walletMessage.FoundSuccess
-                });
-            }
-
-            foreach (var etag in userETags)
-            {
-                etagResponses.Add(new GetETagResponse()
-                {
-                    EtagTypeId = etag.EtagTypeId,
-                    MarketZoneId = etag.MarketZoneId,
-                    Qrcode = etag.Qrcode,
-                    StatusCode = HttpStatusCodes.OK,
-                    MessageResponse = EtagMessage.GetEtagsSuccess
-                });
-            }
-
-            foreach (var order in userOrders)
-            {
-                orderResponses.Add(new GetOrderResponse()
-                {
-                    Name = order.Name,
-                    UserId = order.UserId,
-                    TotalAmount = order.TotalAmount,
-                    CrDate = order.CrDate,
-                    UpsDate = order.UpsDate,
-                    StoreId = order.StoreId,
-                    EtagId = order.EtagId,
-                    PaymentType = order.PaymentType,
-                    InvoiceId = order.InvoiceId,
-                    StatusCode = HttpStatusCodes.OK,
-                    MessageResponse = OrderMessage.GetOrdersSuccessfully
-                });
-            }
-
-            var storeIsDeflag = await _unitOfWork.GetRepository<Store>()
-                .SingleOrDefaultAsync(predicate: x => x.Id == user.Id && x.Deflag == true);
-            var response = new GetUserResponse()
-            {
-                StatusCode = HttpStatusCodes.OK,
                 MessageResponse = UserMessage.GetListSuccess,
-                FullName = user.FullName,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                Birthday = user.Birthday,
-                Gender = user.Gender,
-                Description = user.Description,
-                Cccd = user.Cccd,
-                Address = user.Address,
-                ImageUrl = user.ImageUrl,
-                PinCode = user.PinCode,
-                MarketZoneId = user.MarketZoneId,
-                StoreId = user.StoreId,
-                RoleId = user.RoleId,
-                Role = new GetRoleResponse()
+                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                Data = new
                 {
-                    Id = user.RoleId,
-                    Name = userRole
-                },
-                Store = new GetStoreResponse()
-                {
-                    Id = user.StoreId,
-                    StoreType = userStoreType,
-                    Name = userStore,
-                    Address = user.Address,
-                    CrDate = user.CrDate,
-                    UpsDate = user.UpsDate,
-                    Deflag = storeIsDeflag?.Deflag,
-                    PhoneNumber = user.PhoneNumber,
-                    ShortName = userStoreShortName,
-                    Email = user.Email,
-                    HouseId = userHouseId,
-                    MarketZoneId = user.MarketZoneId,
-                    Description = user.Description,
-                    Status = user.Status,
-                    //House =  
-                    //MarketZone =  
-                    DisputeReports = new List<DisputeReport>(),
-                    Menus = new List<Menu>(),
-                    Orders = new List<Order>(),
-                    ProductCategories = new List<ProductCategory>(),
-                    Users = new List<User>()
-
-                },
-
-                orders = orderResponses,
-                userWallets = walletResponses, // Assign the list of wallet responses
-                Etags = etagResponses
+                    User = new
+                    {
+                        user.Id,
+                        user.FullName,
+                        user.PhoneNumber,
+                        user.Birthday,
+                        user.StoreId,
+                        user.CrDate,
+                        user.UpsDate,
+                        user.Gender,
+                        user.Cccd,
+                        user.ImageUrl,
+                        user.PinCode,
+                        user.MarketZoneId,
+                        user.Email,
+                        user.Password,
+                        user.RoleId,
+                        user.Description,
+                        user.IsChange,
+                        user.Address,
+                        user.Status
+                    },
+                    Orders = user.Orders.Select(o => new
+                    {
+                        o.Id,
+                        o.Status,
+                        o.TotalAmount
+                    }),
+                    UserWallets = user.UserWallets.Select(w => new
+                    {
+                        w.Id,
+                        w.WalletType,
+                        w.CrDate,
+                        w.UpsDate,
+                        w.Balance,
+                        w.BalanceHistory,
+                        w.Deflag,
+                        w.EtagId
+                    }),
+                    Etags = user.Etags.Select(e => new
+                    {
+                        e.Id,
+                        e.EtagType,
+                    })
+                }
             };
-            return response;
-
         }
 
-        public async Task<GetUserResponse> UpdateUserById(UpdateUserAccountRequest req, Guid userId)
+        //public async Task<GetUserResponse> UpdateUserById(UpdateUserAccountRequest req, Guid userId)
+        //{
+        //    var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == userId);
+        //    if (user == null)
+        //    {
+        //        return new GetUserResponse()
+        //        {
+        //            StatusCode = HttpStatusCodes.NotFound,
+        //            MessageResponse = UserMessage.NotFoundUser
+        //        };
+        //    }
+
+        //    user.FullName = req.FullName;
+        //    user.PhoneNumber = req.PhoneNumber;
+        //    user.Birthday = req.Birthday;
+        //    user.Gender = req.Gender;
+        //    user.ImageUrl = req.ImageUrl;
+        //    user.Address = req.Address;
+        //    user.Description = req.Description;
+        //    _unitOfWork.GetRepository<User>().UpdateAsync(user);
+        //    await _unitOfWork.CommitAsync();
+        //    return new GetUserResponse()
+        //    {
+        //        StatusCode = HttpStatusCodes.OK,
+        //        MessageResponse = UserMessage.UpdateUserSuccessfully,
+        //        Email = user.Email,
+        //        FullName = user.FullName,
+        //        Address = user.Address,
+        //        RoleId = user.RoleId,
+        //        userWallets = new List<GetWalletResponse>(),
+        //        PhoneNumber = user.PhoneNumber,
+        //        Birthday = user.Birthday,
+        //        Gender = user.Gender,
+        //        ImageUrl = user.ImageUrl,
+        //        Cccd = user.Cccd,
+        //        MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId),
+
+        //    };
+
+        //}
+        public async Task<ResponseAPI> UpdateUser(UpdateUserAccountRequest req)
         {
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == userId);
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == req.UserId);
             if (user == null)
             {
-                return new GetUserResponse()
+                return new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NotFound,
                     MessageResponse = UserMessage.NotFoundUser
                 };
             }
-
             user.FullName = req.FullName;
             user.PhoneNumber = req.PhoneNumber;
             user.Birthday = req.Birthday;
@@ -613,47 +554,45 @@ namespace VegaCityApp.Service.Implement
             user.Address = req.Address;
             user.Description = req.Description;
             _unitOfWork.GetRepository<User>().UpdateAsync(user);
-            await _unitOfWork.CommitAsync();
-            return new GetUserResponse()
-            {
-                StatusCode = HttpStatusCodes.OK,
-                MessageResponse = UserMessage.UpdateUserSuccessfully,
-                Email = user.Email,
-                FullName = user.FullName,
-                Address = user.Address,
-                RoleId = user.RoleId,
-                userWallets = new List<GetWalletResponse>(),
-                PhoneNumber = user.PhoneNumber,
-                Birthday = user.Birthday,
-                Gender = user.Gender,
-                ImageUrl = user.ImageUrl,
-                Cccd = user.Cccd,
-                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId),
-
-            };
-
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = MessageConstant.UserMessage.UpdateUserSuccessfully
+                }
+                : new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = MessageConstant.UserMessage.FailedToUpdate
+                };
         }
 
-        //public async Task<ResponseAPI> DeleteUserById(Guid UserId)
-        //{
-        //    var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == UserId);
-        //    if (user == null)
-        //    {
-        //        return new ResponseAPI()
-        //        {
-        //            StatusCode = HttpStatusCodes.NotFound,
-        //            MessageResponse = UserMessage.NotFoundUser
-        //        };
-        //    }
+        public async Task<ResponseAPI> DeleteUser(Guid UserId)
+        {
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == UserId);
+            if (user == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = MessageConstant.UserMessage.NotFoundUser
+                };
+            }
 
-        //    _unitOfWork.GetRepository<User>().DeleteAsync(user);
-        //    await _unitOfWork.CommitAsync();
-        //    return new ResponseAPI()
-        //    {
-        //        StatusCode = HttpStatusCodes.OK,
-        //        MessageResponse = UserMessage.UpdateUserSuccessfully
-        //    };
-        //}
+            user.Status = 1;
+            _unitOfWork.GetRepository<User>().UpdateAsync(user);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    MessageResponse = MessageConstant.UserMessage.DeleteUserSuccess,
+                    StatusCode = HttpStatusCodes.OK
+                }
+                : new ResponseAPI()
+                {
+                    MessageResponse = MessageConstant.UserMessage.DeleteUserFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+        }
 
 
     }

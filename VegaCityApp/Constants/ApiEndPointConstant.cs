@@ -30,19 +30,20 @@ public static class ApiEndPointConstant
     public static class UserEndpoint
     {
         public const string ApproveUser = ApiEndpoint + "/approve-user";
-        public const string GetListUser = ApiEndpoint + "/get-list-user";
-        public const string GetListUserByRoleId = ApiEndpoint + "/get-list-user-by-role-id";
-        public const string UpdateUserRoleById = ApiEndpoint + "/update-user-role-by-id";
-        public const string GetUserInfo = ApiEndpoint + "/get-user-info";
-        public const string UpdateUserProfile = ApiEndpoint + "/update-user-profile";
-        public const string DeleteUser = ApiEndpoint + "/Delete-user";
+        public const string GetListUser = ApiEndpoint + "/users";
+        public const string GetListUserByRoleId = ApiEndpoint + "/users";
+        public const string UpdateUserRoleById = ApiEndpoint + "/user";
+        public const string GetUserInfo = ApiEndpoint + "/user";
+        public const string UpdateUserProfile = ApiEndpoint + "/user";
+        public const string DeleteUser = ApiEndpoint + "/user";
     }
 
     public static class packageEndpoint
     {
-        public const string CreatePackage = ApiEndpoint + "/create-package";
-        public const string UpdatePackage = ApiEndpoint + "/update-package";
-        public const string GetListPackage = ApiEndpoint + "/get-list-package";
-        public const string GetPackageById = ApiEndpoint + "/get-package-by-id";
+        public const string CreatePackage = ApiEndpoint + "/package";
+        public const string UpdatePackage = ApiEndpoint + "/package";
+        public const string GetListPackage = ApiEndpoint + "/packages";
+        public const string GetPackageById = ApiEndpoint + "/package";
+        public const string DeletePackage = ApiEndpoint + "/package";
     }
 }

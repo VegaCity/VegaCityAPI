@@ -121,6 +121,9 @@ public static class MessageConstant
         public const string GetListSuccess = "Get User List Successfully !!";
         public const string NotFoundUser = "Not Found User !!";
         public const string UpdateUserSuccessfully = "Update User Successfully !!";
+        public const string FailedToUpdate = "Update User Failed :(!";
+        public const string DeleteUserSuccess = "Delete User Successfully!";
+        public const string DeleteUserFail = "Delete User Fail!";
     }
 
     public static class RoleMessage
@@ -158,5 +161,11 @@ public static class MessageConstant
         public const string ExistedPackageName = "Package Name is existed !!";
         public const string NotFoundETagType = "ETagType Was Not Found !!";
         public const string UpdatePackageFailed = "Update Package Failed !!";
+        public const string EndateInThePast = "End date cannot be in the past.";
+        public const string SameStrAndEndDate = "StartDate and EndDate must Not be Same";
+        public const string durationLimit = "The duration between start and end date must be at least 48 hours.";
+        public const string InvalidDuration = "Invalid DateTime Duration";
+        public const string DeleteSuccess = "Delete Package Successfully!";
+        public const string DeleteFail = "Delete Package Failed!";
     }
 }

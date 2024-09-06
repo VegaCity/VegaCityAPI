@@ -1,7 +1,7 @@
 ﻿
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Request;
-using VegaCityApp.API.Payload.Response.UserResponse;
+using VegaCityApp.Domain.Paginate;
 using VegaCityApp.Payload.Request;
 
 namespace VegaCityApp.Service.Interface
@@ -16,15 +16,14 @@ namespace VegaCityApp.Service.Interface
 
         Task<ResponseAPI> ChangePassword (ChangePasswordRequest req);
 
-        Task<GetListUserResponse> GetUserList(GetListParameterRequest req);
+        Task<IPaginate<GetUserResponse>> SearchAllUser(int size, int page);
 
-        Task<GetListUserResponse> GetListUserByUserRoleId(Guid RoleId);
+        //Task<GetListUserResponse> GetListUserByUserRoleId(Guid RoleId);
 
-        Task<GetUserResponse> GetUserDetail(Guid UserId);
+        Task<ResponseAPI> SearchUser(Guid UserId);
 
-        Task<GetUserResponse> UpdateUserById(UpdateUserAccountRequest req, Guid UserId);
+        Task<ResponseAPI> UpdateUser(UpdateUserAccountRequest req);
 
-       // Task<ResponseAPI> DeleteUserById(Guid UserId);
-
+        Task<ResponseAPI> DeleteUser(Guid UserId);
     }
 }

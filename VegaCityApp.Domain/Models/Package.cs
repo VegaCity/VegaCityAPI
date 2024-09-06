@@ -19,7 +19,7 @@ namespace VegaCityApp.Domain.Models
         public Guid? MarketZoneId { get; set; }
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
-        public Guid? EtagTypeId { get; set; }
+        public bool? Deflag { get; set; }
 
         public virtual MarketZone? MarketZone { get; set; }
         public virtual ICollection<PackageETagTypeMapping> PackageETagTypeMappings { get; set; }

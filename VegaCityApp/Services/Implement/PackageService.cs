@@ -1,13 +1,14 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Pos_System.API.Constants;
 using VegaCityApp.API.Constants;
 using VegaCityApp.API.Payload.Request;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.PackageResponse;
-using VegaCityApp.API.Payload.Response.UserResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
 using VegaCityApp.Domain.Models;
+using VegaCityApp.Domain.Paginate;
 using VegaCityApp.Repository.Interfaces;
 using static VegaCityApp.API.Constants.MessageConstant;
 
@@ -19,102 +20,7 @@ namespace VegaCityApp.API.Services.Implement
         {
         }
 
-        //public async Task<ResponseAPI> CreateEtagType(EtagTypeRequest req)
-        //{
-        //    var newEtagType = new EtagType
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        Name = req.Name,
-        //        ImageUrl = req.ImageUrl,
-        //        MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId)
-        //    };
-        //    await _unitOfWork.GetRepository<EtagType>().InsertAsync(newEtagType);
-        //    return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
-        //    {
-        //        MessageResponse = MessageConstant.EtagTypeMessage.CreateSuccessFully,
-        //        StatusCode = MessageConstant.HttpStatusCodes.Created,
-        //        Data = new {
-        //            EtagTypeId = newEtagType.Id,
-        //        }
-        //    } : new ResponseAPI()
-        //    {
-        //        MessageResponse = MessageConstant.EtagTypeMessage.CreateFail,
-        //        StatusCode = MessageConstant.HttpStatusCodes.BadRequest
-        //    };
-        //}
-        //public async Task<ResponseAPI> CreatePackage(CreatePackageRequest req, Guid UserId)
-        //{
-        //    var adminId = Guid.Parse(EnvironmentVariableConstant.AdminId);
-        //    var isAdmin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == UserId && x.RoleId == adminId);
-        //    var existedPackageName = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Name == req.Name);
-        //    if(existedPackageName != null)
-        //    {
-        //        return new ResponseAPI()
-        //        {
-        //            MessageResponse = MessageConstant.PackageMessage.ExistedPackageName,
-        //            StatusCode = MessageConstant.HttpStatusCodes.BadRequest
-        //        };
-        //    }
-
-        //    if(isAdmin == null)
-        //    {
-        //        return new ResponseAPI
-        //        {
-        //            MessageResponse = MessageConstant.UserMessage.UnauthorizedAccess,
-        //            StatusCode = MessageConstant.HttpStatusCodes.Unauthorized
-        //        };
-
-        //    }
-        //    var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == req.ETagTypeId);
-        //    if (etagType == null)
-        //    {
-        //        return new ResponseAPI()
-        //        {
-        //            MessageResponse = MessageConstant.PackageMessage.NotFoundETagType,
-        //            StatusCode = MessageConstant.HttpStatusCodes.NotFound
-        //        };
-        //    }
-        //    var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate:x => x.Id == etagType.MarketZoneId);
-        //    if (marketZone == null)
-        //    {
-        //        return new ResponseAPI
-        //        {
-        //            MessageResponse = MessageConstant.PackageMessage.MKZoneNotFound,
-        //            StatusCode = MessageConstant.HttpStatusCodes.NotFound
-        //        };
-        //    }
-
-        //    var newPackage = new Package()
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        Name = req.Name,
-        //        Description = req.Description,
-        //        Price = req.Price,
-        //        EtagTypeId = req.ETagTypeId,
-        //        StartDate = req.StartDate,
-        //        EndDate = req.EndDate,
-        //        MarketZoneId = req.MarketZoneId,
-        //        CrDate = TimeUtils.GetCurrentSEATime(),
-        //        UpsDate = TimeUtils.GetCurrentSEATime(),
-        //    };
-
-        //    await _unitOfWork.GetRepository<Package>().InsertAsync(newPackage);
-        //    var result = await _unitOfWork.CommitAsync();
-
-        //    return result > 0
-        //        ? new ResponseAPI
-        //        {
-        //            MessageResponse = MessageConstant.PackageMessage.CreatePackageSuccessfully,
-        //            StatusCode = MessageConstant.HttpStatusCodes.Created,
-        //            Data = new { packageId = newPackage.Id }
-        //        }
-        //        : new ResponseAPI
-        //        {
-        //            MessageResponse = MessageConstant.PackageMessage.CreatePackageFail,
-        //            StatusCode = MessageConstant.HttpStatusCodes.BadRequest
-        //        };
-        //}
-        public async Task<ResponseAPI> CreatePackage(CreatePackageRequest req, Guid UserId)
+        public async Task<ResponseAPI> CreatePackage(CreatePackageRequest req)
         {
             var result = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Name == req.Name);
             if (result != null)
@@ -125,44 +31,64 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = MessageConstant.HttpStatusCodes.BadRequest
                 };
             }
-            var marketZoneIsReal = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == req.MarketZoneId);
-            if (marketZoneIsReal == null)
+            DateTime currentDate = DateTime.UtcNow;
+            if (req.EndDate < currentDate)
             {
                 return new ResponseAPI()
                 {
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound,
-                    MessageResponse = MessageConstant.PackageMessage.MKZoneNotFound
+                    MessageResponse = MessageConstant.PackageMessage.EndateInThePast,
+                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
                 };
             }
-            var ETagTypeIdIsReal = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == req.ETagTypeId);
-            if (ETagTypeIdIsReal == null)
+            if (req.EndDate == req.StartDate)
             {
                 return new ResponseAPI()
                 {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = MessageConstant.PackageMessage.NotFoundETagType
+                    MessageResponse = MessageConstant.PackageMessage.SameStrAndEndDate,
+                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
                 };
             }
-            var adminId = Guid.Parse(EnvironmentVariableConstant.AdminId);
-            var isAdmin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == UserId && x.RoleId == adminId);
-            if (isAdmin == null)
+
+            TimeSpan? duration = req.EndDate - req.StartDate;
+            if (duration.HasValue)
             {
-                return new ResponseAPI
+                double totalHours = duration.Value.TotalHours;
+                if (totalHours < 48)
                 {
-                    MessageResponse = MessageConstant.UserMessage.UnauthorizedAccess,
-                    StatusCode = MessageConstant.HttpStatusCodes.Unauthorized
+                    return new ResponseAPI()
+                    {
+                        MessageResponse = MessageConstant.PackageMessage.durationLimit,
+                        StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    };
+                }
+            }
+            else
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = MessageConstant.PackageMessage.InvalidDuration,
+                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
                 };
             }
+            //var adminId = Guid.Parse(EnvironmentVariableConstant.AdminId);
+            //var isAdmin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == UserId && x.RoleId == adminId);
+            //if (isAdmin == null)
+            //{
+            //    return new ResponseAPI
+            //    {
+            //        MessageResponse = MessageConstant.UserMessage.UnauthorizedAccess,
+            //        StatusCode = MessageConstant.HttpStatusCodes.Unauthorized
+            //    };
+            //}
             var newPackage = new Package()
             {
                 Id = Guid.NewGuid(),
                 Name = req.Name,
                 Description = req.Description,
                 Price = req.Price,
-                EtagTypeId = req.ETagTypeId,
                 StartDate = req.StartDate,
                 EndDate = req.EndDate,
-                MarketZoneId = req.MarketZoneId,
+                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
             };
@@ -183,18 +109,9 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
 
-        public async Task<ResponseAPI> UpdatePackage(UpddatePackageRequest req ,Guid UserId)
+        public async Task<ResponseAPI> UpdatePackage(UpdatePackageRequest req)
         {
-            var adminId = Guid.Parse(EnvironmentVariableConstant.AdminId);
-            var isAdmin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.RoleId == adminId );
-            if (isAdmin == null)
-            {
-                return new ResponseAPI
-                {
-                    MessageResponse = MessageConstant.UserMessage.UnauthorizedAccess,
-                    StatusCode = MessageConstant.HttpStatusCodes.Unauthorized
-                };
-            }
+          
             var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageId);
             if (package == null)
             {
@@ -204,36 +121,57 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = MessageConstant.PackageMessage.NotFoundPackage
                 };
             }
-            var marketZoneIsReal = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == req.MarketZoneId);
-            if (marketZoneIsReal == null)
+            DateTime currentDate = DateTime.UtcNow;
+            if (req.EndDate < currentDate)
             {
                 return new ResponseAPI()
                 {
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound,
-                    MessageResponse = MessageConstant.PackageMessage.MKZoneNotFound
+                    MessageResponse = MessageConstant.PackageMessage.EndateInThePast,
+                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
                 };
             }
-            var ETagTypeIdIsReal = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == req.ETagTypeId);
-            if (ETagTypeIdIsReal == null)
+            if (req.EndDate == req.StartDate)
             {
                 return new ResponseAPI()
                 {
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound,
-                    MessageResponse = MessageConstant.PackageMessage.NotFoundETagType
+                    MessageResponse = MessageConstant.PackageMessage.SameStrAndEndDate,
+                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                };
+            }
+
+            TimeSpan? duration = req.EndDate - req.StartDate;
+            if (duration.HasValue)
+            {
+                double totalHours = duration.Value.TotalHours;
+                if (totalHours < 48)
+                {
+                    return new ResponseAPI()
+                    {
+                        MessageResponse = MessageConstant.PackageMessage.durationLimit,
+                        StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    };
+                }
+            }
+            else
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = MessageConstant.PackageMessage.InvalidDuration,
+                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
                 };
             }
             package.Name = req.Name;
             package.Description = req.Description;
             package.Price = req.Price;
             package.StartDate = req.StartDate;
-
+            package.EndDate = req.EndDate;
             _unitOfWork.GetRepository<Package>().UpdateAsync(package);
             var result = await _unitOfWork.CommitAsync();
             if (result > 0)
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = "Package updated successfully",
+                    MessageResponse = MessageConstant.PackageMessage.UpdatePackageSuccessfully,
                     StatusCode = HttpStatusCodes.OK,
                     
                 };
@@ -248,79 +186,182 @@ namespace VegaCityApp.API.Services.Implement
             }
         }
 
-        public async Task<GetListPackageResponse> GetListPackage(GetListParameterRequest req)
+        public async Task<IPaginate<GetPackageResponse>> SearchAllPackage(int size, int page)
         {
-            var packageRepo = _unitOfWork.GetRepository<Package>();
-            var allPackages = await packageRepo.GetListAsync();
-            var response = new GetListPackageResponse();
-            try
-            {
-                IEnumerable<Package> filtereds = allPackages;
-                if (req != null)
+            IPaginate<GetPackageResponse> data = await _unitOfWork.GetRepository<Package>().GetPagingListAsync(
+
+                selector: x => new GetPackageResponse()
                 {
-                    if (!string.IsNullOrEmpty(req.Search))
-                    {
-                        filtereds = filtereds
-                            .Where(x => x.Name.Contains(req.Search) || x.Description.Contains(req.Search));
-                    }
-                    if (req.Page.HasValue && req.PageSize.HasValue)
-                    {
-                        var skip = (req.Page.Value - 1) * req.PageSize.Value;
-                        filtereds = filtereds.Skip(skip).Take(req.PageSize.Value);
-                    }
-                }
+                    Id = x.Id,
+                    Name = x.Name,
+                    Description = x.Description,
+                    Price = x.Price,
+                    StartDate = x.StartDate,
+                    EndDate = x.EndDate,
+                    MarketZoneId = x.MarketZoneId,
+                    CrDate = x.CrDate,
+                    UpsDate = x.UpsDate,
+                    Deflag = x.Deflag,
+                    
+                },
+                page: page,
+                size: size,
+                orderBy: x => x.OrderByDescending(z => z.Name),
+                predicate: x => x.Deflag == false
+            );
+            return data;
+        }
+        //public async Task<GetListPackageResponse> GetListPackage(GetListParameterRequest req)
+        //{
+        //    var packageRepo = _unitOfWork.GetRepository<Package>();
+        //    var allPackages = await packageRepo.GetListAsync();
+        //    var response = new GetListPackageResponse();
+        //    try
+        //    {
+        //        IEnumerable<Package> filtereds = allPackages;
+        //        if (req != null)
+        //        {
+        //            if (!string.IsNullOrEmpty(req.Search))
+        //            {
+        //                filtereds = filtereds
+        //                    .Where(x => x.Name.Contains(req.Search) || x.Description.Contains(req.Search));
+        //            }
+        //            if (req.Page.HasValue && req.PageSize.HasValue)
+        //            {
+        //                var skip = (req.Page.Value - 1) * req.PageSize.Value;
+        //                filtereds = filtereds.Skip(skip).Take(req.PageSize.Value);
+        //            }
+        //        }
 
-               
 
-                if (!filtereds.Any())
-                {
-                    response.StatusCode = MessageConstant.HttpStatusCodes.NotFound;
-                    response.MessageResponse = UserMessage.NotFoundUser;
-                    return response;
-                }
-                response.StatusCode = MessageConstant.HttpStatusCodes.OK;
-                response.MessageResponse = UserMessage.GetListSuccess;
-                response.Packages = filtereds.ToList();
 
-            }
-            catch (Exception ex)
+        //        if (!filtereds.Any())
+        //        {
+        //            response.StatusCode = MessageConstant.HttpStatusCodes.NotFound;
+        //            response.MessageResponse = UserMessage.NotFoundUser;
+        //            return response;
+        //        }
+        //        response.StatusCode = MessageConstant.HttpStatusCodes.OK;
+        //        response.MessageResponse = UserMessage.GetListSuccess;
+        //        response.Packages = filtereds.ToList();
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        response.StatusCode = MessageConstant.HttpStatusCodes.InternalServerError;
+        //        response.MessageResponse = $"An error occurred: {ex.Message}";
+        //    }
+
+        //    return response;
+        //}
+
+        //public async Task<GetPackageResponse> GetPackageDetail(Guid PackageId)
+        //{
+        //    var isPackage = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == PackageId);
+        //    if (isPackage == null)
+        //    {
+        //        return new GetPackageResponse()
+        //        {
+        //            StatusCode = HttpStatusCodes.NotFound,
+        //            MessageResponse = MessageConstant.PackageMessage.NotFoundPackage
+        //        };
+        //    }
+
+        //    return new GetPackageResponse()
+        //    {
+        //        Id = isPackage.Id,
+        //        Name = isPackage.Name,
+        //        Description = isPackage.Description,
+        //        Price = isPackage.Price,
+        //        StartDate = isPackage.StartDate,
+        //        EndDate = isPackage.EndDate,
+        //        MarketZoneId = isPackage.MarketZoneId,
+        //        CrDate = isPackage.CrDate,
+        //        UpsDate = isPackage.UpsDate,
+        //        MarketZone = isPackage.MarketZone,
+        //        PackageETagTypeMappings = isPackage.PackageETagTypeMappings.ToList(),
+        //        StatusCode = HttpStatusCodes.Found,
+        //        MessageResponse = MessageConstant.PackageMessage.FoundPackage,
+        //    };
+        //}
+        public async Task<ResponseAPI> SearchPackage(Guid PackageId)
+        {
+            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
+                predicate: x => x.Id == PackageId,
+                include: user => user
+                    .Include(y => y.PackageETagTypeMappings)
+                    .Include(y => y.MarketZone)
+            );
+
+            if (package == null)
             {
-                response.StatusCode = MessageConstant.HttpStatusCodes.InternalServerError;
-                response.MessageResponse = $"An error occurred: {ex.Message}";
+                return new ResponseAPI()
+                {
+                    MessageResponse = MessageConstant.PackageMessage.NotFoundPackage,
+                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                };
             }
 
-            return response;
+            return new ResponseAPI()
+            {
+                MessageResponse = PackageMessage.GetPackagesSuccessfully,
+                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                Data = new
+                {
+                    Package = new
+                    {
+                      package.Id,
+                      package.Name,
+                      package.Description,
+                      package.Price,
+                      package.StartDate,
+                      package.EndDate,
+                      package.MarketZoneId,
+                      package.CrDate,
+                      package.UpsDate,
+                      package.Deflag,
+                      
+                    },
+                   
+                    PackageETagTypeMapping = package.PackageETagTypeMappings.Select(w => new
+                    {
+                        w.Id,
+                        w.PackageId,
+                        w.EtagTypeId,
+                        w.CrDate,
+                        w.UpsDate,
+                        
+                    }),
+                   
+                }
+            };
         }
 
-        public async Task<GetPackageResponse> GetPackageDetail(Guid PackageId)
+        public async Task<ResponseAPI> DeletePackage(Guid PackageId)
         {
-            var isPackage = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == PackageId);
-            if (isPackage == null)
+            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == PackageId);
+            if (package == null)
             {
-                return new GetPackageResponse()
+                return new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NotFound,
                     MessageResponse = MessageConstant.PackageMessage.NotFoundPackage
                 };
             }
 
-            return new GetPackageResponse()
-            {
-                Id = isPackage.Id,
-                Name = isPackage.Name,
-                Description = isPackage.Description,
-                Price = isPackage.Price,
-                StartDate = isPackage.StartDate,
-                EndDate = isPackage.EndDate,
-                MarketZoneId = isPackage.MarketZoneId,
-                CrDate = isPackage.CrDate,
-                UpsDate = isPackage.UpsDate,
-                EtagTypeId = isPackage.EtagTypeId,
-                MarketZone = isPackage.MarketZone,
-                PackageETagTypeMappings = isPackage.PackageETagTypeMappings.ToList(),
-                StatusCode = HttpStatusCodes.Found,
-                MessageResponse = MessageConstant.PackageMessage.FoundPackage,
-            };
+            package.Deflag = true;
+            _unitOfWork.GetRepository<Package>().UpdateAsync(package);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    MessageResponse = MessageConstant.PackageMessage.DeleteSuccess,
+                    StatusCode = HttpStatusCodes.OK
+                }
+                : new ResponseAPI()
+                {
+                    MessageResponse = MessageConstant.PackageMessage.DeleteFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
         }
     }
 }
