@@ -17,12 +17,14 @@ namespace VegaCityApp.API.Controllers.Admin
         private readonly IAccountService _service;
         private readonly IEtagService _etagService;
         private readonly IPackageService _packageService;
+        private readonly IStoreService _storeService;
 
-        public AdminController(ILogger<AdminController> logger, IAccountService accountService, IEtagService etagService, IPackageService packgeService) : base(logger)
+        public AdminController(ILogger<AdminController> logger, IAccountService accountService, IEtagService etagService, IPackageService packgeService, IStoreService storeService) : base(logger)
         {
             _service = accountService;
             _etagService = etagService;
             _packageService = packgeService;
+            _storeService = storeService;
         }
 
         [HttpPost(EtagTypeEndpoint.CreateEtagType)]
@@ -134,6 +136,37 @@ namespace VegaCityApp.API.Controllers.Admin
         public async Task<IActionResult> DeletePackage(Guid PackageId)
         {
             var result = await _packageService.DeletePackage(PackageId);
+            return Ok(result);
+        }
+
+        [HttpGet(storeEndpoint.GetListStore)]
+        //[Authorize]
+        public async Task<IActionResult> SearchAllStore(int size, int page)
+        {
+            var result = await _storeService.SearchAllStore(size, page);
+            return Ok(result);
+        }
+        [HttpGet(storeEndpoint.GetStore)]
+        //[Authorize]
+        public async Task<IActionResult> SearchStore(Guid StoreId)
+        {
+            var result = await _storeService.SearchStore(StoreId);
+            return Ok(result);
+        }
+     
+        [HttpPut(storeEndpoint.UpdateStore)]
+        //[Authorize]
+        public async Task<IActionResult> UpdateStore(UpdateStoreRequest req)
+        {
+            var result = await _storeService.UpdateStore(req);
+            return Ok(result);
+        }
+
+        [HttpDelete(storeEndpoint.DeleteStore)]
+        //  [Authorize]
+        public async Task<IActionResult> DeleteStore(Guid StoreId)
+        {
+            var result = await _storeService.DeleteStore(StoreId);
             return Ok(result);
         }
     }

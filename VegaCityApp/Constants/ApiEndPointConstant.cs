@@ -46,4 +46,16 @@ public static class ApiEndPointConstant
         public const string GetPackageById = ApiEndpoint + "/package";
         public const string DeletePackage = ApiEndpoint + "/package";
     }
+
+    public static class storeEndpoint
+    {
+        //store crud endponit like above
+
+        public const string UpdateStore = ApiEndpoint + "/store";
+        public const string GetListStore = ApiEndpoint + "/stores";
+        public const string GetStore = ApiEndpoint + "/store";
+
+        public const string DeleteStore = ApiEndpoint + "/store";
+
+    }
 }

@@ -168,4 +168,17 @@ public static class MessageConstant
         public const string DeleteSuccess = "Delete Package Successfully!";
         public const string DeleteFail = "Delete Package Failed!";
     }
+
+    public static class StoreMessage
+    {
+        public const string UpdateStoreSuccesss = "Update Store Successfully!";
+        public const string UpdateStoreFailed = "Update Store Failed";
+        public const string GetListStoreSuccess = "Get List Store Successfully!";
+        public const string GetListStoreFailed = "Get List Store Failed";
+        public const string GetStoreSuccess = "Get Store Successfully!";
+        public const string GetStoreFail = "Get Store Detail Failed!";
+        public const string NotFoundStore = "Not Found Store";
+        public const string DeletedSuccess = "Delete Store Successfully!";
+        public const string DeleteFailed = "Delete Store Failed";
+    }
 }
