@@ -33,5 +33,20 @@ public static class ApiEndPointConstant
     public static class UserEndpoint
     {
         public const string ApproveUser = ApiEndpoint + "/approve-user";
+        public const string GetListUser = ApiEndpoint + "/users";
+        public const string GetListUserByRoleId = ApiEndpoint + "/users";
+        public const string UpdateUserRoleById = ApiEndpoint + "/user";
+        public const string GetUserInfo = ApiEndpoint + "/user";
+        public const string UpdateUserProfile = ApiEndpoint + "/user";
+        public const string DeleteUser = ApiEndpoint + "/user";
+    }
+
+    public static class packageEndpoint
+    {
+        public const string CreatePackage = ApiEndpoint + "/package";
+        public const string UpdatePackage = ApiEndpoint + "/package";
+        public const string GetListPackage = ApiEndpoint + "/packages";
+        public const string GetPackageById = ApiEndpoint + "/package";
+        public const string DeletePackage = ApiEndpoint + "/package";
     }
 }

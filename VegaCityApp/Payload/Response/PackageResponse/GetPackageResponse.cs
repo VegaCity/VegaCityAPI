@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using VegaCityApp.Domain.Models;
 
-namespace VegaCityApp.Domain.Models
+namespace VegaCityApp.API.Payload.Response.PackageResponse
 {
-    public partial class Package
+    public class GetPackageResponse : ResponseAPI
     {
-        public Package()
-        {
-            PackageETagTypeMappings = new HashSet<PackageETagTypeMapping>();
-        }
-
         public Guid Id { get; set; }
         public string? Name { get; set; }
         public string? Description { get; set; }
@@ -19,9 +13,9 @@ namespace VegaCityApp.Domain.Models
         public Guid? MarketZoneId { get; set; }
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
-        public bool? Deflag { get; set; }
-
+        public bool? Deflag {get; set; }
         public virtual MarketZone? MarketZone { get; set; }
-        public virtual ICollection<PackageETagTypeMapping> PackageETagTypeMappings { get; set; }
+        public List<PackageETagTypeMapping> PackageETagTypeMappings { get; set; }
+
     }
 }

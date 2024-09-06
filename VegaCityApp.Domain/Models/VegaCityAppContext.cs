@@ -385,8 +385,6 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnType("datetime")
                     .HasColumnName("endDate");
 
-                entity.Property(e => e.EtagTypeId).HasColumnName("ETagTypeId");
-
                 entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.Property(e => e.StartDate)
