@@ -17,7 +17,7 @@ namespace VegaCityApp.API.Payload.Response
         public decimal? BonusRate { get; set; }
         public bool Deflag { get; set; }
         public int Amount { get; set; }
-
+    }
     public class GetUserResponse
     {
         public Guid Id { get; set; }
@@ -41,3 +41,4 @@ namespace VegaCityApp.API.Payload.Response
         public int? Status { get; set; }
     }
 }
+
