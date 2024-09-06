@@ -413,7 +413,7 @@ namespace VegaCityApp.Service.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.FullName),
-                predicate: x => x.Status != 2
+                predicate: x => x.Status == 0
             );
             return data;
 
