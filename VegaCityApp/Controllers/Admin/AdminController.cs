@@ -7,6 +7,9 @@ using VegaCityApp.API.Services.Interface;
 using VegaCityApp.Service.Interface;
 using static VegaCityApp.API.Constants.MessageConstant;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
+using VegaCityApp.API.Validators;
+using VegaCityApp.API.Enums;
+using Microsoft.AspNetCore.Authorization;
 
 namespace VegaCityApp.API.Controllers.Admin
 {
@@ -21,10 +24,11 @@ namespace VegaCityApp.API.Controllers.Admin
             _service = accountService;
             _etagService = etagService;
         }
-
+        
         [HttpPost(EtagTypeEndpoint.CreateEtagType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.BadRequest)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> CreateEtagType([FromBody] EtagTypeRequest request)
         {
             var result = await _etagService.CreateEtagType(request);

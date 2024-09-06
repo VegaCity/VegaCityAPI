@@ -125,7 +125,7 @@ namespace VegaCityApp.API.Services.Implement
                     ImageUrl = x.ImageUrl,
                     BonusRate = x.BonusRate,
                     Deflag = x.Deflag,
-                    Amount = x.Amount
+                    Amount = (int)x.Amount
                 },
                 page: page,
                 size: size,

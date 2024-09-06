@@ -16,6 +16,7 @@ using VegaCityApp.Service.Implement;
 using Microsoft.Extensions.Configuration;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Services.Implement;
+using Newtonsoft.Json;
 
 namespace VegaCityApp.API.Extensions;
 public static class DependencyServices
@@ -71,7 +72,7 @@ public static class DependencyServices
     {
         #region varKey
         string issuer = "VegaCityApp";
-        string secretKey = "VegaCityApp";
+        string secretKey = "VegaCityAppsecretKey";
         #endregion
         IConfiguration configuration = new ConfigurationBuilder()
             .AddEnvironmentVariables(EnvironmentVariableConstant.Prefix).Build();
@@ -90,6 +91,34 @@ public static class DependencyServices
                 IssuerSigningKey =
                     new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(secretKey))
+            };
+            options.Events = new JwtBearerEvents
+            {
+                OnAuthenticationFailed = context =>
+                {
+                    if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+                    {
+                        context.Response.Headers.Add("Token-Expired", "true");
+                    }
+                    return Task.CompletedTask;
+                },
+                OnChallenge = context =>
+                {
+                    context.HandleResponse();
+                    context.Response.StatusCode = 401;
+                    context.Response.ContentType = "application/json";
+                    context.Response.WriteAsync(JsonConvert.SerializeObject(new
+                    {
+                        StatusCode = 401,
+                        Message = "Unauthorized",
+                    }));
+                    return Task.CompletedTask;
+                },
+                OnTokenValidated = context =>
+                {
+                    context.Response.Headers.Add("Token-Valid", "true");
+                    return Task.CompletedTask;
+                }
             };
         });
         return services;

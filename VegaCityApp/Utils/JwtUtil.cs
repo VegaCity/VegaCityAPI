@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Principal;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using VegaCityApp.API.Constants;
@@ -18,7 +19,7 @@ public class JwtUtil
     {
         #region varKey
         string issuerKey = "VegaCityApp";
-        string secretKey = "VegaCityApp";
+        string secretKey = "VegaCityAppsecretKey";
         #endregion
         IConfiguration configuration = new ConfigurationBuilder()
             .AddEnvironmentVariables(EnvironmentVariableConstant.Prefix).Build();
@@ -26,7 +27,7 @@ public class JwtUtil
         SymmetricSecurityKey secrectKey =
             //new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>(JwtConstant.SecretKey)));
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-        //var credentials = new SigningCredentials(secrectKey, SecurityAlgorithms.HmacSha256Signature);
+        var credentials = new SigningCredentials(secrectKey, SecurityAlgorithms.HmacSha256Signature);
         //string issuer = configuration.GetValue<string>(JwtConstant.Issuer);
         string issuer = issuerKey;
         List<Claim> claims = new List<Claim>()
@@ -39,7 +40,7 @@ public class JwtUtil
         var expires = user.Role.Name.Equals(RoleEnum.Admin.GetDescriptionFromEnum())
             ? DateTime.Now.AddDays(1)
             : DateTime.Now.AddDays(30);
-        var token = new JwtSecurityToken(issuer, null, claims, notBefore: DateTime.Now, expires);
+        var token = new JwtSecurityToken(issuer, null, claims, notBefore: DateTime.Now, expires, credentials);
         return jwtHandler.WriteToken(token);
     }
 }
