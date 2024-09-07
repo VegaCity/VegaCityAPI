@@ -65,6 +65,7 @@ public static class DependencyServices
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IEtagService, EtagService>();
         services.AddScoped<IPackageService, PackageService>();
+        services.AddScoped<IStoreService, StoreService>();
         #endregion
         return services;
     }

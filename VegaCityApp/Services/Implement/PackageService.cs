@@ -290,7 +290,6 @@ namespace VegaCityApp.API.Services.Implement
                 predicate: x => x.Id == PackageId && x.Deflag==false,
                 include: user => user
                     .Include(y => y.PackageETagTypeMappings)
-                    .Include(y => y.MarketZone)
             );
 
             if (package == null)

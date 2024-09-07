@@ -21,11 +21,11 @@ namespace VegaCityApp.API.Controllers.Admin
         private readonly IPackageService _packageService;
         private readonly IStoreService _storeService;
 
-        public AdminController(ILogger<AdminController> logger, IAccountService accountService, IEtagService etagService, IPackageService packgeService, IStoreService storeService) : base(logger)
+        public AdminController(ILogger<AdminController> logger, IAccountService accountService, IEtagService etagService, IPackageService packageService, IStoreService storeService) : base(logger)
         {
             _service = accountService;
             _etagService = etagService;
-            _packageService = packgeService;
+            _packageService = packageService;
             _storeService = storeService;
         }
         

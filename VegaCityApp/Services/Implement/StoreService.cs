@@ -129,7 +129,8 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = StoreMessage.GetStoreSuccess,
                 StatusCode = MessageConstant.HttpStatusCodes.OK,
                 Data = new
-                { store
+                {
+                    store,
                 }
             };
         }

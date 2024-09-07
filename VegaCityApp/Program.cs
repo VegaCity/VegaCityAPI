@@ -23,6 +23,7 @@ try
     {
         x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         x.JsonSerializerOptions.Converters.Add(new TimeOnlyJsonConverter());
+        x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
     builder.Services.AddDatabase();
     builder.Services.AddUnitOfWork();
