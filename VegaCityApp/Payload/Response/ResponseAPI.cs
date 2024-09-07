@@ -30,13 +30,9 @@ namespace VegaCityApp.API.Payload.Response
         public int? Gender { get; set; }
         public string? Cccd { get; set; }
         public string? ImageUrl { get; set; }
-        public string? PinCode { get; set; }
-        public Guid? MarketZoneId { get; set; }
         public string? Email { get; set; }
-        public string? Password { get; set; }
         public Guid? RoleId { get; set; }
         public string? Description { get; set; }
-        public bool? IsChange { get; set; }
         public string? Address { get; set; }
         public int? Status { get; set; }
     }

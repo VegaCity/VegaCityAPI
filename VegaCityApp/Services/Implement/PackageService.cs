@@ -287,7 +287,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> SearchPackage(Guid PackageId)
         {
             var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
-                predicate: x => x.Id == PackageId,
+                predicate: x => x.Id == PackageId && x.Deflag==false,
                 include: user => user
                     .Include(y => y.PackageETagTypeMappings)
                     .Include(y => y.MarketZone)
@@ -308,30 +308,7 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = MessageConstant.HttpStatusCodes.OK,
                 Data = new
                 {
-                    Package = new
-                    {
-                      package.Id,
-                      package.Name,
-                      package.Description,
-                      package.Price,
-                      package.StartDate,
-                      package.EndDate,
-                      package.MarketZoneId,
-                      package.CrDate,
-                      package.UpsDate,
-                      package.Deflag,
-                      
-                    },
-                   
-                    PackageETagTypeMapping = package.PackageETagTypeMappings.Select(w => new
-                    {
-                        w.Id,
-                        w.PackageId,
-                        w.EtagTypeId,
-                        w.CrDate,
-                        w.UpsDate,
-                        
-                    }),
+                   package
                    
                 }
             };

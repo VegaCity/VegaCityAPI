@@ -118,7 +118,7 @@ namespace VegaCityApp.API.Controllers.Admin
             var result = await _service.SearchUser(UserId);
             return Ok(result);
         }
-        [HttpPut(UserEndpoint.UpdateUserProfile)]
+        [HttpPatch(UserEndpoint.UpdateUserProfile)]
         //[Authorize]
         public async Task<IActionResult> UpdateUser([FromBody] UpdateUserAccountRequest request)
         {
@@ -157,7 +157,7 @@ namespace VegaCityApp.API.Controllers.Admin
             return Ok(result);
         }
 
-        [HttpPut(packageEndpoint.UpdatePackage)]
+        [HttpPatch(packageEndpoint.UpdatePackage)]
         //[Authorize]
         public async Task<IActionResult> UpdatePackage([FromBody] UpdatePackageRequest request)
         {
@@ -169,6 +169,37 @@ namespace VegaCityApp.API.Controllers.Admin
         public async Task<IActionResult> DeletePackage(Guid PackageId)
         {
             var result = await _packageService.DeletePackage(PackageId);
+            return Ok(result);
+        }
+
+        [HttpGet(storeEndpoint.GetListStore)]
+        //[Authorize]
+        public async Task<IActionResult> SearchAllStore(int size, int page)
+        {
+            var result = await _storeService.SearchAllStore(size, page);
+            return Ok(result);
+        }
+        [HttpGet(storeEndpoint.GetStore)]
+        //[Authorize]
+        public async Task<IActionResult> SearchStore(Guid StoreId)
+        {
+            var result = await _storeService.SearchStore(StoreId);
+            return Ok(result);
+        }
+     
+        [HttpPatch(storeEndpoint.UpdateStore)]
+        //[Authorize]
+        public async Task<IActionResult> UpdateStore(UpdateStoreRequest req)
+        {
+            var result = await _storeService.UpdateStore(req);
+            return Ok(result);
+        }
+
+        [HttpDelete(storeEndpoint.DeleteStore)]
+        //  [Authorize]
+        public async Task<IActionResult> DeleteStore(Guid StoreId)
+        {
+            var result = await _storeService.DeleteStore(StoreId);
             return Ok(result);
         }
     }

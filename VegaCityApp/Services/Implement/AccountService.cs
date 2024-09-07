@@ -15,7 +15,6 @@ using VegaCityApp.Payload.Request;
 using VegaCityApp.Repository.Interfaces;
 using VegaCityApp.Service.Interface;
 using static VegaCityApp.API.Constants.MessageConstant;
-using GetUserResponse = VegaCityApp.API.Payload.Response.GetUserResponse;
 
 namespace VegaCityApp.Service.Implement
 {
@@ -406,13 +405,12 @@ namespace VegaCityApp.Service.Implement
                     CrDate = x.CrDate,
                     UpsDate = x.UpsDate,
                     RoleId = x.RoleId,
-                    IsChange = x.IsChange,
                     Status = x.Status
                 },
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.FullName),
-                predicate: x => x.Status != 2
+                predicate: x => x.Status == (int)UserStatusEnum.Active
             );
             return data;
 
@@ -446,50 +444,7 @@ namespace VegaCityApp.Service.Implement
                 StatusCode = MessageConstant.HttpStatusCodes.OK,
                 Data = new
                 {
-                    User = new
-                    {
-                        user.Id,
-                        user.FullName,
-                        user.PhoneNumber,
-                        user.Birthday,
-                        user.StoreId,
-                        user.CrDate,
-                        user.UpsDate,
-                        user.Gender,
-                        user.Cccd,
-                        user.ImageUrl,
-                        user.PinCode,
-                        user.MarketZoneId,
-                        user.Email,
-                        user.Password,
-                        user.RoleId,
-                        user.Description,
-                        user.IsChange,
-                        user.Address,
-                        user.Status
-                    },
-                    Orders = user.Orders.Select(o => new
-                    {
-                        o.Id,
-                        o.Status,
-                        o.TotalAmount
-                    }),
-                    UserWallets = user.UserWallets.Select(w => new
-                    {
-                        w.Id,
-                        w.WalletType,
-                        w.CrDate,
-                        w.UpsDate,
-                        w.Balance,
-                        w.BalanceHistory,
-                        w.Deflag,
-                        w.EtagId
-                    }),
-                    Etags = user.Etags.Select(e => new
-                    {
-                        e.Id,
-                        e.EtagType,
-                    })
+                    user
                 }
             };
         }
@@ -578,7 +533,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
 
-            user.Status = 1;
+            user.Status = (int)UserStatusEnum.Disable;
             _unitOfWork.GetRepository<User>().UpdateAsync(user);
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
