@@ -198,6 +198,11 @@ namespace VegaCityApp.Domain.Models
                     .WithMany(p => p.Etags)
                     .HasForeignKey(d => d.UserId)
                     .HasConstraintName("FK_ETag_User");
+
+                entity.HasOne(d => d.UserWallet)
+                    .WithMany(p => p.Etags)
+                    .HasForeignKey(d => d.UserWalletId)
+                    .HasConstraintName("FK_ETag_UserWallet");
             });
 
             modelBuilder.Entity<EtagType>(entity =>
@@ -637,17 +642,10 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("crDate")
                     .HasDefaultValueSql("(getdate())");
 
-                entity.Property(e => e.EtagId).HasColumnName("ETagId");
-
                 entity.Property(e => e.UpsDate)
                     .HasColumnType("datetime")
                     .HasColumnName("upsDate")
                     .HasDefaultValueSql("(getdate())");
-
-                entity.HasOne(d => d.Etag)
-                    .WithMany(p => p.UserWallets)
-                    .HasForeignKey(d => d.EtagId)
-                    .HasConstraintName("FK_UserWallet_Etag");
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.UserWallets)

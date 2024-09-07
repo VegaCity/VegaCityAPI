@@ -1,10 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Pos_System.API.Constants;
 using VegaCityApp.API.Constants;
+using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request;
 using VegaCityApp.API.Payload.Response;
-using VegaCityApp.API.Payload.Response.PackageResponse;
 using VegaCityApp.API.Payload.Response.StoreResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
@@ -24,7 +23,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> UpdateStore(UpdateStoreRequest req)
         {
           
-            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == req.StoreId);
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == req.StoreId && !x.Deflag);
             if (store == null)
             {
                 return new ResponseAPI()
@@ -33,11 +32,19 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = MessageConstant.StoreMessage.NotFoundStore
                 };
             }
-
+            //check enum
+            if (!Enum.IsDefined(typeof(StoreTypeEnum), req.StoreType))
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = MessageConstant.StoreMessage.InvalidStoreType
+                };
+            }
             store.Id = store.Id;
             store.Name = req.Name;
             store.Status = req.StoreStatus;
-            store.StoreType = int.Parse(EnvironmentVariableConstant.StoreSellerType);
+            store.StoreType = req.StoreType;
             store.Address = req.Address;
             store.CrDate = TimeUtils.GetCurrentSEATime();
             store.PhoneNumber = req.PhoneNumber;
@@ -91,7 +98,7 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => x.Deflag == false
+                predicate: x => !x.Deflag 
             );
             return data;
         }
@@ -129,7 +136,7 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> DeleteStore(Guid StoreId)
         {
-            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == StoreId);
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == StoreId && !x.Deflag);
             if (store == null)
             {
                 return new ResponseAPI()

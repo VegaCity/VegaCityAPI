@@ -10,7 +10,6 @@ namespace VegaCityApp.Domain.Models
             ENotifications = new HashSet<ENotification>();
             Orders = new HashSet<Order>();
             Transactions = new HashSet<Transaction>();
-            UserWallets = new HashSet<UserWallet>();
         }
 
         public Guid Id { get; set; }
@@ -29,13 +28,14 @@ namespace VegaCityApp.Domain.Models
         public bool? Deflag { get; set; }
         public Guid? EtagTypeId { get; set; }
         public string? EtagCode { get; set; }
+        public Guid? UserWalletId { get; set; }
 
         public virtual EtagType? EtagType { get; set; }
         public virtual MarketZone? MarketZone { get; set; }
         public virtual User? User { get; set; }
+        public virtual UserWallet? UserWallet { get; set; }
         public virtual ICollection<ENotification> ENotifications { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<Transaction> Transactions { get; set; }
-        public virtual ICollection<UserWallet> UserWallets { get; set; }
     }
 }

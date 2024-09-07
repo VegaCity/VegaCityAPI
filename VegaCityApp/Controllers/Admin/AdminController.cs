@@ -19,12 +19,14 @@ namespace VegaCityApp.API.Controllers.Admin
         private readonly IAccountService _service;
         private readonly IEtagService _etagService;
         private readonly IPackageService _packageService;
+        private readonly IStoreService _storeService;
 
-        public AdminController(ILogger<AdminController> logger, IAccountService accountService, IEtagService etagService, IPackageService packgeService) : base(logger)
+        public AdminController(ILogger<AdminController> logger, IAccountService accountService, IEtagService etagService, IPackageService packgeService, IStoreService storeService) : base(logger)
         {
             _service = accountService;
             _etagService = etagService;
             _packageService = packgeService;
+            _storeService = storeService;
         }
         
         [HttpPost(EtagTypeEndpoint.CreateEtagType)]
@@ -132,7 +134,7 @@ namespace VegaCityApp.API.Controllers.Admin
             var result = await _service.DeleteUser(UserId);
             return Ok(result);
         }
-        [HttpPost(packageEndpoint.CreatePackage)]
+        [HttpPost(PackageEndpoint.CreatePackage)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.BadRequest)]
         public async Task<IActionResult> CreatePackage([FromBody] CreatePackageRequest request)
@@ -140,7 +142,7 @@ namespace VegaCityApp.API.Controllers.Admin
             var result = await _packageService.CreatePackage(request);
             return Ok(result);
         }
-        [HttpGet(packageEndpoint.GetListPackage)]
+        [HttpGet(PackageEndpoint.GetListPackage)]
         //[Authorize]
         public async Task<IActionResult> SearchAllPackage(int size, int page)
         {
@@ -149,7 +151,7 @@ namespace VegaCityApp.API.Controllers.Admin
         }
 
 
-        [HttpGet(packageEndpoint.GetPackageById)]
+        [HttpGet(PackageEndpoint.GetPackageById)]
         //[Authorize]
         public async Task<IActionResult> SearchPackage(Guid PackageId)
         {
@@ -157,14 +159,14 @@ namespace VegaCityApp.API.Controllers.Admin
             return Ok(result);
         }
 
-        [HttpPatch(packageEndpoint.UpdatePackage)]
+        [HttpPatch(PackageEndpoint.UpdatePackage)]
         //[Authorize]
         public async Task<IActionResult> UpdatePackage([FromBody] UpdatePackageRequest request)
         {
             var result = await _packageService.UpdatePackage(request);
             return Ok(result);
         }
-        [HttpDelete(packageEndpoint.DeletePackage)]
+        [HttpDelete(PackageEndpoint.DeletePackage)]
         //  [Authorize]
         public async Task<IActionResult> DeletePackage(Guid PackageId)
         {
@@ -172,14 +174,14 @@ namespace VegaCityApp.API.Controllers.Admin
             return Ok(result);
         }
 
-        [HttpGet(storeEndpoint.GetListStore)]
+        [HttpGet(StoreEndpoint.GetListStore)]
         //[Authorize]
         public async Task<IActionResult> SearchAllStore(int size, int page)
         {
             var result = await _storeService.SearchAllStore(size, page);
             return Ok(result);
         }
-        [HttpGet(storeEndpoint.GetStore)]
+        [HttpGet(StoreEndpoint.GetStore)]
         //[Authorize]
         public async Task<IActionResult> SearchStore(Guid StoreId)
         {
@@ -187,7 +189,7 @@ namespace VegaCityApp.API.Controllers.Admin
             return Ok(result);
         }
      
-        [HttpPatch(storeEndpoint.UpdateStore)]
+        [HttpPatch(StoreEndpoint.UpdateStore)]
         //[Authorize]
         public async Task<IActionResult> UpdateStore(UpdateStoreRequest req)
         {
@@ -195,7 +197,7 @@ namespace VegaCityApp.API.Controllers.Admin
             return Ok(result);
         }
 
-        [HttpDelete(storeEndpoint.DeleteStore)]
+        [HttpDelete(StoreEndpoint.DeleteStore)]
         //  [Authorize]
         public async Task<IActionResult> DeleteStore(Guid StoreId)
         {

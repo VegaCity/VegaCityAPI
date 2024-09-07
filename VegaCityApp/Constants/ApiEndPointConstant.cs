@@ -41,12 +41,23 @@ public static class ApiEndPointConstant
         public const string DeleteUser = ApiEndpoint + "/user";
     }
 
-    public static class packageEndpoint
+    public static class PackageEndpoint
     {
         public const string CreatePackage = ApiEndpoint + "/package";
         public const string UpdatePackage = ApiEndpoint + "/package";
         public const string GetListPackage = ApiEndpoint + "/packages";
         public const string GetPackageById = ApiEndpoint + "/package";
         public const string DeletePackage = ApiEndpoint + "/package";
+    }
+    public static class StoreEndpoint
+    {
+        //store crud endponit like above
+
+        public const string UpdateStore = ApiEndpoint + "/store";
+        public const string GetListStore = ApiEndpoint + "/stores";
+        public const string GetStore = ApiEndpoint + "/store";
+
+        public const string DeleteStore = ApiEndpoint + "/store";
+
     }
 }
