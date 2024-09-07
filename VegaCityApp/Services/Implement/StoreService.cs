@@ -36,6 +36,7 @@ namespace VegaCityApp.API.Services.Implement
 
             store.Id = store.Id;
             store.Name = req.Name;
+            store.Status = req.StoreStatus;
             store.StoreType = int.Parse(EnvironmentVariableConstant.StoreSellerType);
             store.Address = req.Address;
             store.CrDate = TimeUtils.GetCurrentSEATime();
