@@ -114,7 +114,20 @@ namespace VegaCityApp.API.Services.Implement
                     .Include(y => y.ProductCategories)
                     .Include(y => y.Users)
             );
-
+            store.Users = store.Users.Select(x => new User{ 
+                Id = x.Id,
+                FullName = x.FullName,
+                IsChange = x.IsChange,
+                PhoneNumber = x.PhoneNumber,
+                Address = x.Address,
+                Email = x.Email,
+                Gender = x.Gender,
+                Birthday = x.Birthday,
+                Cccd = x.Cccd,
+                Description = x.Description,
+                ImageUrl = x.ImageUrl,
+                Status = x.Status
+            }).ToList();
             if (store == null)
             {
                 return new ResponseAPI()
