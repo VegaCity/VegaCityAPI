@@ -9,7 +9,7 @@ namespace VegaCityApp.API.Services.Interface
     {
        // Task<ResponseAPI> CreateEtagType(EtagTypeRequest req);
         Task<ResponseAPI> CreatePackage(CreatePackageRequest req);
-        Task<ResponseAPI> UpdatePackage(UpdatePackageRequest req);
+        Task<ResponseAPI> UpdatePackage(Guid packageId, UpdatePackageRequest req);
 
         Task<IPaginate<GetPackageResponse>> SearchAllPackage(int size, int page);
 

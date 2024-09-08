@@ -43,9 +43,9 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = MessageConstant.HttpStatusCodes.BadRequest
             };
         }
-        public async Task<ResponseAPI> UpdateEtagType(UpdateEtagTypeRequest req)
+        public async Task<ResponseAPI> UpdateEtagType(Guid etagTypeId,UpdateEtagTypeRequest req)
         {
-            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagTypeId && !x.Deflag);
+            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag);
             if(etagType == null)
             {
                 return new ResponseAPI()

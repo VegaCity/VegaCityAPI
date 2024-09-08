@@ -20,16 +20,16 @@ namespace VegaCityApp.API.Services.Implement
         {
         }
 
-        public async Task<ResponseAPI> UpdateStore(UpdateStoreRequest req)
+        public async Task<ResponseAPI> UpdateStore(Guid storeId,UpdateStoreRequest req)
         {
           
-            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == req.StoreId && !x.Deflag);
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == storeId && !x.Deflag);
             if (store == null)
             {
                 return new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = MessageConstant.StoreMessage.NotFoundStore
+                    MessageResponse = StoreMessage.NotFoundStore
                 };
             }
             //check enum
@@ -38,7 +38,7 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = MessageConstant.StoreMessage.InvalidStoreType
+                    MessageResponse = StoreMessage.InvalidStoreType
                 };
             }
             store.Id = store.Id;
@@ -58,7 +58,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.StoreMessage.UpdateStoreSuccesss,
+                    MessageResponse = StoreMessage.UpdateStoreSuccesss,
                     StatusCode = HttpStatusCodes.OK,
                     
                 };
@@ -67,7 +67,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.StoreMessage.UpdateStoreSuccesss,
+                    MessageResponse = StoreMessage.UpdateStoreSuccesss,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
@@ -132,15 +132,15 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.StoreMessage.NotFoundStore,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = StoreMessage.NotFoundStore,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
 
             return new ResponseAPI()
             {
                 MessageResponse = StoreMessage.GetStoreSuccess,
-                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                StatusCode = HttpStatusCodes.OK,
                 Data = new
                 {
                     store,
@@ -156,7 +156,7 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = MessageConstant.StoreMessage.NotFoundStore
+                    MessageResponse = StoreMessage.NotFoundStore
                 };
             }
 
@@ -165,12 +165,12 @@ namespace VegaCityApp.API.Services.Implement
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.StoreMessage.DeletedSuccess,
+                    MessageResponse = StoreMessage.DeletedSuccess,
                     StatusCode = HttpStatusCodes.OK
                 }
                 : new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.StoreMessage.DeleteFailed,
+                    MessageResponse = StoreMessage.DeleteFailed,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }

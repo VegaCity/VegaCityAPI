@@ -4,7 +4,6 @@ namespace VegaCityApp.API.Payload.Request
 {
     public class UpdateStoreRequest
     {
-        public Guid StoreId { get; set; }
         public string Name { get; set; }
         public string Address { get; set; }
         public string PhoneNumber { get; set; }

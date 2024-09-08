@@ -186,15 +186,36 @@ namespace VegaCityApp.Service.Implement
                 Gender = (int)GenderEnum.Other,
                 Status = (int)UserStatusEnum.PendingVerify
             };
+            //create wallet for user
+            bool check = await CreateUserWallet(newUser.Id);
+            if (!check)
+            {
+                return Guid.Empty;
+            }
             await _unitOfWork.GetRepository<User>().InsertAsync(newUser);
-            await _unitOfWork.CommitAsync();
-            return newUser.Id;
+            return await _unitOfWork.CommitAsync() > 0 ? newUser.Id : Guid.Empty;
+        }
+        private async Task<bool> CreateUserWallet(Guid userId)
+        {
+            var newWallet = new Wallet
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                WalletType = (int) WalletTypeEnum.StoreWallet,
+                Balance = 0,
+                BalanceHistory = 0,
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                Deflag = false
+            };
+            await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
+            return await _unitOfWork.CommitAsync() > 0;
         }
 
-        public async Task<ResponseAPI> ApproveUser(ApproveRequest req)
+        public async Task<ResponseAPI> ApproveUser(Guid userId, ApproveRequest req)
         {
             var user = await _unitOfWork.GetRepository<User>()
-                .SingleOrDefaultAsync(predicate: x => x.Id == Guid.Parse(req.UserId));
+                .SingleOrDefaultAsync(predicate: x => x.Id == userId);
             if (user.Status == (int)UserStatusEnum.Active)
             {
                 return new ResponseAPI
@@ -447,50 +468,10 @@ namespace VegaCityApp.Service.Implement
                 }
             };
         }
-
-        //public async Task<GetUserResponse> UpdateUserById(UpdateUserAccountRequest req, Guid userId)
-        //{
-        //    var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == userId);
-        //    if (user == null)
-        //    {
-        //        return new GetUserResponse()
-        //        {
-        //            StatusCode = HttpStatusCodes.NotFound,
-        //            MessageResponse = UserMessage.NotFoundUser
-        //        };
-        //    }
-
-        //    user.FullName = req.FullName;
-        //    user.PhoneNumber = req.PhoneNumber;
-        //    user.Birthday = req.Birthday;
-        //    user.Gender = req.Gender;
-        //    user.ImageUrl = req.ImageUrl;
-        //    user.Address = req.Address;
-        //    user.Description = req.Description;
-        //    _unitOfWork.GetRepository<User>().UpdateAsync(user);
-        //    await _unitOfWork.CommitAsync();
-        //    return new GetUserResponse()
-        //    {
-        //        StatusCode = HttpStatusCodes.OK,
-        //        MessageResponse = UserMessage.UpdateUserSuccessfully,
-        //        Email = user.Email,
-        //        FullName = user.FullName,
-        //        Address = user.Address,
-        //        RoleId = user.RoleId,
-        //        userWallets = new List<GetWalletResponse>(),
-        //        PhoneNumber = user.PhoneNumber,
-        //        Birthday = user.Birthday,
-        //        Gender = user.Gender,
-        //        ImageUrl = user.ImageUrl,
-        //        Cccd = user.Cccd,
-        //        MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId),
-
-        //    };
-
-        //}
-        public async Task<ResponseAPI> UpdateUser(UpdateUserAccountRequest req)
+        public async Task<ResponseAPI> UpdateUser(Guid userId, UpdateUserAccountRequest req)
         {
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == req.UserId);
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
+                    (predicate: x => x.Id == userId && x.Status.Equals(UserStatusEnum.Active));
             if (user == null)
             {
                 return new ResponseAPI()
@@ -511,18 +492,19 @@ namespace VegaCityApp.Service.Implement
                 ? new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.OK,
-                    MessageResponse = MessageConstant.UserMessage.UpdateUserSuccessfully
+                    MessageResponse = UserMessage.UpdateUserSuccessfully
                 }
                 : new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = MessageConstant.UserMessage.FailedToUpdate
+                    MessageResponse = UserMessage.FailedToUpdate
                 };
         }
 
         public async Task<ResponseAPI> DeleteUser(Guid UserId)
         {
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == UserId);
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
+                (predicate: x => x.Id == UserId && x.Status.Equals(UserStatusEnum.Active));
             if (user == null)
             {
                 return new ResponseAPI()
@@ -531,22 +513,40 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = MessageConstant.UserMessage.NotFoundUser
                 };
             }
-
-            user.Status = (int)UserStatusEnum.Disable;
-            _unitOfWork.GetRepository<User>().UpdateAsync(user);
-            return await _unitOfWork.CommitAsync() > 0
-                ? new ResponseAPI()
-                {
-                    MessageResponse = MessageConstant.UserMessage.DeleteUserSuccess,
-                    StatusCode = HttpStatusCodes.OK
-                }
-                : new ResponseAPI()
-                {
-                    MessageResponse = MessageConstant.UserMessage.DeleteUserFail,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
+            switch (user.Status)
+            {
+                case (int)UserStatusEnum.Active:
+                    user.Status = (int)UserStatusEnum.Disable;
+                    _unitOfWork.GetRepository<User>().UpdateAsync(user);
+                    return await _unitOfWork.CommitAsync() > 0
+                        ? new ResponseAPI()
+                        {
+                            MessageResponse = UserMessage.DeleteUserSuccess,
+                            StatusCode = HttpStatusCodes.OK
+                        }
+                        : new ResponseAPI()
+                        {
+                            MessageResponse = UserMessage.DeleteUserFail,
+                            StatusCode = HttpStatusCodes.BadRequest
+                        };
+                case (int)UserStatusEnum.Ban:
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = UserMessage.UserBan
+                    };
+                case (int)UserStatusEnum.Disable:
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = UserMessage.UserDisable
+                    };
+            }
+            return new ResponseAPI()
+            {
+                StatusCode = HttpStatusCodes.BadRequest,
+                MessageResponse = UserMessage.DeleteUserFail
+            };
         }
-
-
     }
 }

@@ -41,25 +41,25 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpPatch(EtagTypeEndpoint.UpdateEtagType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.BadRequest)]
-        public async Task<IActionResult> UpdateEtagType([FromBody] UpdateEtagTypeRequest request)
+        public async Task<IActionResult> UpdateEtagType(Guid id,[FromBody] UpdateEtagTypeRequest request)
         {
-            var result = await _etagService.UpdateEtagType(request);
+            var result = await _etagService.UpdateEtagType(id,request);
             return result.StatusCode == HttpStatusCodes.OK? Ok(result): BadRequest(result);
         }
         [HttpDelete(EtagTypeEndpoint.DeleteEtagType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.BadRequest)]
-        public async Task<IActionResult> DeleteEtagType([FromQuery] Guid etagTypeId)
+        public async Task<IActionResult> DeleteEtagType([FromQuery] Guid id)
         {
-            var result = await _etagService.DeleteEtagType(etagTypeId);
+            var result = await _etagService.DeleteEtagType(id);
             return result.StatusCode == HttpStatusCodes.OK ? Ok(result) : BadRequest(result);
         }
         [HttpGet(EtagTypeEndpoint.SearchEtagType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.BadRequest)]
-        public async Task<IActionResult> SearchEtagType([FromQuery] Guid etagTypeId)
+        public async Task<IActionResult> SearchEtagType([FromQuery] Guid id)
         {
-            var result = await _etagService.SearchEtagType(etagTypeId);
+            var result = await _etagService.SearchEtagType(id);
             return result.StatusCode == HttpStatusCodes.OK ? Ok(result) : BadRequest(result);
         }
         [HttpGet(EtagTypeEndpoint.SearchAllEtagType)]
@@ -81,9 +81,9 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpPost(UserEndpoint.ApproveUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.BadRequest)]
-        public async Task<IActionResult> ApproveUser([FromBody] ApproveRequest request)
+        public async Task<IActionResult> ApproveUser(Guid userId,[FromBody] ApproveRequest request)
         {
-            var result = await _service.ApproveUser(request);
+            var result = await _service.ApproveUser(userId,request);
             return Ok(result);
         }
 
@@ -96,35 +96,17 @@ namespace VegaCityApp.API.Controllers.Admin
             var result = await _service.SearchAllUser(size, page);
             return Ok(result);
         }
-        // [HttpGet(UserEndpoint.GetListUserByRoleId)]
-        // //[Authorize]
-        // public async Task<IActionResult> GetListUserByUserRoleId(Guid RoleId)
-        // {
-        //     var result = await _service.GetListUserByUserRoleId(RoleId);
-        //     return Ok(result);
-        // }
-        // //[HttpPut(UserEndpoint.UpdateUserRoleById)]
-        // //[Authorize]
-        // //[ProducesResponseType(typeof(UpdateUserRoleResponse), HttpStatusCodes.Created)]
-        // //[ProducesResponseType(typeof(UpdateUserRoleResponse), HttpStatusCodes.BadRequest)]
-        // //public async Task<IActionResult> UpdateUserRoleById([FromBody] UpdateUserRoleByIdRequest request)
-        // //{
-        // //    var result = await _service.UpdateUserRoleById(request);
-        // //    return Ok(result);
-        // //}
-        // ////user
         [HttpGet(UserEndpoint.GetUserInfo)]
-        // [Authorize]
-        public async Task<IActionResult> SearchUser(Guid UserId)
+        public async Task<IActionResult> SearchUser(Guid id)
         {
-            var result = await _service.SearchUser(UserId);
+            var result = await _service.SearchUser(id);
             return Ok(result);
         }
         [HttpPatch(UserEndpoint.UpdateUserProfile)]
         //[Authorize]
-        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserAccountRequest request)
+        public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserAccountRequest request)
         {
-            var result = await _service.UpdateUser(request);
+            var result = await _service.UpdateUser(id, request);
             return Ok(result);
         }
         [HttpDelete(UserEndpoint.DeleteUser)]
@@ -153,55 +135,49 @@ namespace VegaCityApp.API.Controllers.Admin
 
         [HttpGet(PackageEndpoint.GetPackageById)]
         //[Authorize]
-        public async Task<IActionResult> SearchPackage(Guid PackageId)
+        public async Task<IActionResult> SearchPackage(Guid id)
         {
-            var result = await _packageService.SearchPackage(PackageId);
+            var result = await _packageService.SearchPackage(id);
             return Ok(result);
         }
 
         [HttpPatch(PackageEndpoint.UpdatePackage)]
-        //[Authorize]
-        public async Task<IActionResult> UpdatePackage([FromBody] UpdatePackageRequest request)
+        public async Task<IActionResult> UpdatePackage(Guid id,[FromBody] UpdatePackageRequest request)
         {
-            var result = await _packageService.UpdatePackage(request);
+            var result = await _packageService.UpdatePackage(id, request);
             return Ok(result);
         }
         [HttpDelete(PackageEndpoint.DeletePackage)]
-        //  [Authorize]
-        public async Task<IActionResult> DeletePackage(Guid PackageId)
+        public async Task<IActionResult> DeletePackage(Guid id)
         {
-            var result = await _packageService.DeletePackage(PackageId);
+            var result = await _packageService.DeletePackage(id);
             return Ok(result);
         }
 
         [HttpGet(StoreEndpoint.GetListStore)]
-        //[Authorize]
         public async Task<IActionResult> SearchAllStore(int size, int page)
         {
             var result = await _storeService.SearchAllStore(size, page);
             return Ok(result);
         }
         [HttpGet(StoreEndpoint.GetStore)]
-        //[Authorize]
-        public async Task<IActionResult> SearchStore(Guid StoreId)
+        public async Task<IActionResult> SearchStore(Guid id)
         {
-            var result = await _storeService.SearchStore(StoreId);
+            var result = await _storeService.SearchStore(id);
             return Ok(result);
         }
      
         [HttpPatch(StoreEndpoint.UpdateStore)]
-        //[Authorize]
-        public async Task<IActionResult> UpdateStore(UpdateStoreRequest req)
+        public async Task<IActionResult> UpdateStore(Guid id,UpdateStoreRequest req)
         {
-            var result = await _storeService.UpdateStore(req);
+            var result = await _storeService.UpdateStore(id,req);
             return Ok(result);
         }
 
         [HttpDelete(StoreEndpoint.DeleteStore)]
-        //  [Authorize]
-        public async Task<IActionResult> DeleteStore(Guid StoreId)
+        public async Task<IActionResult> DeleteStore(Guid id)
         {
-            var result = await _storeService.DeleteStore(StoreId);
+            var result = await _storeService.DeleteStore(id);
             return Ok(result);
         }
     }

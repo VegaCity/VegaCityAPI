@@ -27,8 +27,8 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.ExistedPackageName, 
-                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    MessageResponse = PackageMessage.ExistedPackageName, 
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
             DateTime currentDate = DateTime.UtcNow;
@@ -36,16 +36,16 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.EndateInThePast,
-                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    MessageResponse = PackageMessage.EndateInThePast,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
             if (req.EndDate == req.StartDate)
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.SameStrAndEndDate,
-                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    MessageResponse = PackageMessage.SameStrAndEndDate,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
 
@@ -57,8 +57,8 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     return new ResponseAPI()
                     {
-                        MessageResponse = MessageConstant.PackageMessage.durationLimit,
-                        StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                        MessageResponse = PackageMessage.durationLimit,
+                        StatusCode = HttpStatusCodes.BadRequest
                     };
                 }
             }
@@ -66,20 +66,10 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.InvalidDuration,
-                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    MessageResponse = PackageMessage.InvalidDuration,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            //var adminId = Guid.Parse(EnvironmentVariableConstant.AdminId);
-            //var isAdmin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == UserId && x.RoleId == adminId);
-            //if (isAdmin == null)
-            //{
-            //    return new ResponseAPI
-            //    {
-            //        MessageResponse = MessageConstant.UserMessage.UnauthorizedAccess,
-            //        StatusCode = MessageConstant.HttpStatusCodes.Unauthorized
-            //    };
-            //}
             var newPackage = new Package()
             {
                 Id = Guid.NewGuid(),
@@ -95,7 +85,7 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.GetRepository<Package>().InsertAsync(newPackage);
             var response = new ResponseAPI()
             {
-                MessageResponse = MessageConstant.PackageMessage.CreatePackageSuccessfully,
+                MessageResponse = PackageMessage.CreatePackageSuccessfully,
                 StatusCode = HttpStatusCodes.Created,
                 Data = newPackage.Id
 
@@ -109,16 +99,16 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
 
-        public async Task<ResponseAPI> UpdatePackage(UpdatePackageRequest req)
+        public async Task<ResponseAPI> UpdatePackage(Guid packageId, UpdatePackageRequest req)
         {
           
-            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageId);
+            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageId && !x.Deflag);
             if (package == null)
             {
                 return new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = MessageConstant.PackageMessage.NotFoundPackage
+                    MessageResponse = PackageMessage.NotFoundPackage
                 };
             }
             DateTime currentDate = DateTime.UtcNow;
@@ -126,16 +116,16 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.EndateInThePast,
-                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    MessageResponse = PackageMessage.EndateInThePast,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
             if (req.EndDate == req.StartDate)
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.SameStrAndEndDate,
-                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    MessageResponse = PackageMessage.SameStrAndEndDate,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
 
@@ -147,8 +137,8 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     return new ResponseAPI()
                     {
-                        MessageResponse = MessageConstant.PackageMessage.durationLimit,
-                        StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                        MessageResponse = PackageMessage.durationLimit,
+                        StatusCode = HttpStatusCodes.BadRequest
                     };
                 }
             }
@@ -156,8 +146,8 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.InvalidDuration,
-                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    MessageResponse = PackageMessage.InvalidDuration,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
             package.Name = req.Name;
@@ -171,7 +161,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.UpdatePackageSuccessfully,
+                    MessageResponse = PackageMessage.UpdatePackageSuccessfully,
                     StatusCode = HttpStatusCodes.OK,
                     
                 };
@@ -180,7 +170,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.UpdatePackageFailed,
+                    MessageResponse = PackageMessage.UpdatePackageFailed,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
@@ -211,79 +201,6 @@ namespace VegaCityApp.API.Services.Implement
             );
             return data;
         }
-        //public async Task<GetListPackageResponse> GetListPackage(GetListParameterRequest req)
-        //{
-        //    var packageRepo = _unitOfWork.GetRepository<Package>();
-        //    var allPackages = await packageRepo.GetListAsync();
-        //    var response = new GetListPackageResponse();
-        //    try
-        //    {
-        //        IEnumerable<Package> filtereds = allPackages;
-        //        if (req != null)
-        //        {
-        //            if (!string.IsNullOrEmpty(req.Search))
-        //            {
-        //                filtereds = filtereds
-        //                    .Where(x => x.Name.Contains(req.Search) || x.Description.Contains(req.Search));
-        //            }
-        //            if (req.Page.HasValue && req.PageSize.HasValue)
-        //            {
-        //                var skip = (req.Page.Value - 1) * req.PageSize.Value;
-        //                filtereds = filtereds.Skip(skip).Take(req.PageSize.Value);
-        //            }
-        //        }
-
-
-
-        //        if (!filtereds.Any())
-        //        {
-        //            response.StatusCode = MessageConstant.HttpStatusCodes.NotFound;
-        //            response.MessageResponse = UserMessage.NotFoundUser;
-        //            return response;
-        //        }
-        //        response.StatusCode = MessageConstant.HttpStatusCodes.OK;
-        //        response.MessageResponse = UserMessage.GetListSuccess;
-        //        response.Packages = filtereds.ToList();
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        response.StatusCode = MessageConstant.HttpStatusCodes.InternalServerError;
-        //        response.MessageResponse = $"An error occurred: {ex.Message}";
-        //    }
-
-        //    return response;
-        //}
-
-        //public async Task<GetPackageResponse> GetPackageDetail(Guid PackageId)
-        //{
-        //    var isPackage = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == PackageId);
-        //    if (isPackage == null)
-        //    {
-        //        return new GetPackageResponse()
-        //        {
-        //            StatusCode = HttpStatusCodes.NotFound,
-        //            MessageResponse = MessageConstant.PackageMessage.NotFoundPackage
-        //        };
-        //    }
-
-        //    return new GetPackageResponse()
-        //    {
-        //        Id = isPackage.Id,
-        //        Name = isPackage.Name,
-        //        Description = isPackage.Description,
-        //        Price = isPackage.Price,
-        //        StartDate = isPackage.StartDate,
-        //        EndDate = isPackage.EndDate,
-        //        MarketZoneId = isPackage.MarketZoneId,
-        //        CrDate = isPackage.CrDate,
-        //        UpsDate = isPackage.UpsDate,
-        //        MarketZone = isPackage.MarketZone,
-        //        PackageETagTypeMappings = isPackage.PackageETagTypeMappings.ToList(),
-        //        StatusCode = HttpStatusCodes.Found,
-        //        MessageResponse = MessageConstant.PackageMessage.FoundPackage,
-        //    };
-        //}
         public async Task<ResponseAPI> SearchPackage(Guid PackageId)
         {
             var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
@@ -296,15 +213,15 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.NotFoundPackage,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = PackageMessage.NotFoundPackage,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
 
             return new ResponseAPI()
             {
                 MessageResponse = PackageMessage.GetPackagesSuccessfully,
-                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                StatusCode = HttpStatusCodes.OK,
                 Data = new
                 {
                    package
@@ -321,7 +238,7 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = MessageConstant.PackageMessage.NotFoundPackage
+                    MessageResponse = PackageMessage.NotFoundPackage
                 };
             }
 
@@ -330,12 +247,12 @@ namespace VegaCityApp.API.Services.Implement
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.DeleteSuccess,
+                    MessageResponse = PackageMessage.DeleteSuccess,
                     StatusCode = HttpStatusCodes.OK
                 }
                 : new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.DeleteFail,
+                    MessageResponse = PackageMessage.DeleteFail,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }

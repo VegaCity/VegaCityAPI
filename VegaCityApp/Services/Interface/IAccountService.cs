@@ -12,7 +12,7 @@ namespace VegaCityApp.Service.Interface
 
         Task<ResponseAPI> Register (RegisterRequest req);
 
-        Task<ResponseAPI> ApproveUser (ApproveRequest req);
+        Task<ResponseAPI> ApproveUser (Guid userId, ApproveRequest req);
 
         Task<ResponseAPI> ChangePassword (ChangePasswordRequest req);
 
@@ -22,7 +22,7 @@ namespace VegaCityApp.Service.Interface
 
         Task<ResponseAPI> SearchUser(Guid UserId);
 
-        Task<ResponseAPI> UpdateUser(UpdateUserAccountRequest req);
+        Task<ResponseAPI> UpdateUser(Guid userId, UpdateUserAccountRequest req);
 
         Task<ResponseAPI> DeleteUser(Guid UserId);
     }
