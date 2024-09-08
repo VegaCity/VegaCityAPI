@@ -1,4 +1,4 @@
-﻿namespace VegaCityApp.API.Payload.Request
+﻿namespace VegaCityApp.API.Payload.Request.Auth
 {
     public class RegisterRequest
     {

@@ -1,4 +1,4 @@
-﻿using VegaCityApp.API.Payload.Request;
+﻿using VegaCityApp.API.Payload.Request.Etag;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.Domain.Paginate;
 

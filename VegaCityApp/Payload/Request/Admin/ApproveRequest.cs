@@ -1,6 +1,6 @@
 ﻿using VegaCityApp.API.Enums;
 
-namespace VegaCityApp.API.Payload.Request
+namespace VegaCityApp.API.Payload.Request.Admin
 {
     public class ApproveRequest
     {

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace VegaCityApp.Payload.Request
+namespace VegaCityApp.API.Payload.Request.Auth
 {
     public class LoginRequest
     {

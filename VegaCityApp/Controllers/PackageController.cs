@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VegaCityApp.API.Controllers.Admin;
-using VegaCityApp.API.Payload.Request;
+using VegaCityApp.API.Payload.Request.Package;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.PackageResponse;
 using VegaCityApp.API.Services.Interface;

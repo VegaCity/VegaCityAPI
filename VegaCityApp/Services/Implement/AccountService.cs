@@ -2,7 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using VegaCityApp.API.Constants;
 using VegaCityApp.API.Enums;
-using VegaCityApp.API.Payload.Request;
+using VegaCityApp.API.Payload.Request.Admin;
+using VegaCityApp.API.Payload.Request.Auth;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.RoleResponse;
 using VegaCityApp.API.Payload.Response.StoreResponse;
@@ -11,7 +12,6 @@ using VegaCityApp.API.Services;
 using VegaCityApp.API.Utils;
 using VegaCityApp.Domain.Models;
 using VegaCityApp.Domain.Paginate;
-using VegaCityApp.Payload.Request;
 using VegaCityApp.Repository.Interfaces;
 using VegaCityApp.Service.Interface;
 using static VegaCityApp.API.Constants.MessageConstant;

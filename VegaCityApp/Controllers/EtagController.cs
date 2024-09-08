@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VegaCityApp.API.Enums;
-using VegaCityApp.API.Payload.Request;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Services.Implement;
 using VegaCityApp.API.Services.Interface;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
 using VegaCityApp.API.Validators;
+using VegaCityApp.API.Payload.Request.Etag;
 
 namespace VegaCityApp.API.Controllers
 {

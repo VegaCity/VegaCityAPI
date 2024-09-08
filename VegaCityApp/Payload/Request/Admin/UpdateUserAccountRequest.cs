@@ -1,6 +1,6 @@
-﻿namespace VegaCityApp.API.Payload.Request
+﻿namespace VegaCityApp.API.Payload.Request.Admin
 {
-    public class UpdateUserAccountRequest 
+    public class UpdateUserAccountRequest
     {
         public string FullName { get; set; }
         public string Address { get; set; }

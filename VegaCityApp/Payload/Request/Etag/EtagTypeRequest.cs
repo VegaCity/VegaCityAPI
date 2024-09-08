@@ -1,4 +1,4 @@
-﻿namespace VegaCityApp.API.Payload.Request
+﻿namespace VegaCityApp.API.Payload.Request.Etag
 {
     public class EtagTypeRequest
     {

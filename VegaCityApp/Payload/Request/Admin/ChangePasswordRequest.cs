@@ -1,4 +1,4 @@
-﻿namespace VegaCityApp.API.Payload.Request
+﻿namespace VegaCityApp.API.Payload.Request.Admin
 {
     public class ChangePasswordRequest
     {

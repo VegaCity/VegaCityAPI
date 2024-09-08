@@ -1,8 +1,8 @@
 ﻿
 using VegaCityApp.API.Payload.Response;
-using VegaCityApp.API.Payload.Request;
 using VegaCityApp.Domain.Paginate;
-using VegaCityApp.Payload.Request;
+using VegaCityApp.API.Payload.Request.Admin;
+using VegaCityApp.API.Payload.Request.Auth;
 
 namespace VegaCityApp.Service.Interface
 {

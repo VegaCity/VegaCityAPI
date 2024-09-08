@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using VegaCityApp.API.Payload.Request;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.Service.Interface;
@@ -11,6 +10,7 @@ using VegaCityApp.API.Validators;
 using VegaCityApp.API.Enums;
 using Microsoft.AspNetCore.Authorization;
 using VegaCityApp.Domain.Paginate;
+using VegaCityApp.API.Payload.Request.Admin;
 
 namespace VegaCityApp.API.Controllers.Admin
 {

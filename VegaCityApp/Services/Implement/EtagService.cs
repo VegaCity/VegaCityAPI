@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using VegaCityApp.API.Constants;
-using VegaCityApp.API.Payload.Request;
+using VegaCityApp.API.Payload.Request.Etag;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
