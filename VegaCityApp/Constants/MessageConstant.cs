@@ -185,6 +185,7 @@ public static class MessageConstant
         public const string DeleteZoneSuccess = "Delete Zone Successfully!";
         public const string DeleteZoneFailed = "Failed To Delete Zone";
         public const string HouseStillExist = "Failed To Update Location Since House Still Intact!";
+        public const string ZoneExisted = "Zone Name Existed!";
     }
     public static class StoreMessage
     {

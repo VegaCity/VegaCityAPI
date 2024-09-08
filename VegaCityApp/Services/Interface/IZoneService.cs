@@ -14,6 +14,6 @@ namespace VegaCityApp.API.Services.Interface
 
         Task<IPaginate<Zone>> SearchZones(int size, int page);
         Task<ResponseAPI> SearchZone(Guid ZoneId);
-        //Task<ResponseAPI> DeletePackage(Guid PackageId);
+        Task<ResponseAPI> DeleteZone(Guid ZoneId);
     }
 }

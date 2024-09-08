@@ -182,6 +182,12 @@ namespace VegaCityApp.API.Controllers.Admin
             var result = await _zoneService.UpdateZone(id, request);
             return Ok(result);
         }
+        [HttpDelete(ZoneEndPoint.DeleteZone)]
+        public async Task<IActionResult> DeleteZone(Guid id)
+        {
+            var result = await _zoneService.DeleteZone(id);
+            return Ok(result);
+        }
         [HttpGet(StoreEndpoint.GetListStore)]
         public async Task<IActionResult> SearchAllStore(int size, int page)
         {

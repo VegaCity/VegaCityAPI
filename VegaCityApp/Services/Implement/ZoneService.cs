@@ -22,14 +22,24 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> CreateZone(CreateZoneRequest req)
         {
-           
-           
+
+            var zoneExisted = await _unitOfWork.GetRepository<Zone>()
+                .SingleOrDefaultAsync(predicate: x => x.Name == req.Name);
+            if (zoneExisted != null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.Conflict,
+                    MessageResponse = ZoneMessage.ZoneExisted
+                };
+            }
             var newZone = new Zone()
             {
                 Id = Guid.NewGuid(),
                 Name = req.Name,
                 Location = req.Location,
                 MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId),
+                Deflag = false,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
             };
@@ -53,7 +63,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> UpdateZone(Guid Id, UpdateZoneRequest req)
         {
           
-            var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == Id, include: z=>z.Include(zone=>zone.Houses) );
+            var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == Id && x.Deflag == false, include: z=>z.Include(zone=>zone.Houses) );
             if (zone == null)
             {
                 return new ResponseAPI()
@@ -63,7 +73,7 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             zone.Name = req.ZoneName;
-            if (zone.Houses.Any())
+            if (zone.Houses.Any(h => h.Deflag == false))
             {
                 return new ResponseAPI()
                 {
@@ -107,20 +117,22 @@ namespace VegaCityApp.API.Services.Implement
                     MarketZoneId = x.MarketZoneId,
                     CrDate = x.CrDate,
                     UpsDate = x.UpsDate,
+                    Deflag = x.Deflag
                     
                 },
                 page: page,
                 size: size,
-                orderBy: x => x.OrderByDescending(z => z.Name)
+                orderBy: x => x.OrderByDescending(z => z.Name),
+                predicate: x => x.Deflag == false
             );
             return data;
         }
         public async Task<ResponseAPI> SearchZone(Guid ZoneId)
         {
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(
-                predicate: x => x.Id == ZoneId,
+                predicate: x => x.Id == ZoneId &&  x.Deflag == false,
                 include: zone => zone
-                    .Include(y => y.Houses)
+                    .Include(y => y.Houses) 
             );
 
             if (zone == null)
@@ -144,10 +156,10 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
 
-        public async Task<ResponseAPI> DeletePackage(Guid PackageId)
+        public async Task<ResponseAPI> DeleteZone(Guid ZoneId)
         {
-            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == PackageId);
-            if (package == null)
+            var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == ZoneId && x.Deflag == false, include: z => z.Include(zone => zone.Houses));
+            if (zone == null)
             {
                 return new ResponseAPI()
                 {
@@ -155,18 +167,25 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = PackageMessage.NotFoundPackage
                 };
             }
-
-            package.Deflag = true;
-            _unitOfWork.GetRepository<Package>().UpdateAsync(package);
+            if (zone.Houses.Any())
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = ZoneMessage.HouseStillExist,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            zone.Deflag = true;
+            _unitOfWork.GetRepository<Zone>().UpdateAsync(zone);
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
-                    MessageResponse = PackageMessage.DeleteSuccess,
+                    MessageResponse = ZoneMessage.DeleteZoneSuccess,
                     StatusCode = HttpStatusCodes.OK
                 }
                 : new ResponseAPI()
                 {
-                    MessageResponse = PackageMessage.DeleteFail,
+                    MessageResponse = ZoneMessage.DeleteZoneFailed,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
