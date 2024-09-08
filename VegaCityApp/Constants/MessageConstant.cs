@@ -171,6 +171,21 @@ public static class MessageConstant
         public const string DeleteSuccess = "Delete Package Successfully!";
         public const string DeleteFail = "Delete Package Failed!";
     }
+
+    public static class ZoneMessage
+    {
+        public const string CreateZoneSuccess = "A New Zone Has Created Successfully!";
+        public const string CreateZoneFail = "Failed To Create New Zone";
+        public const string UpdateZoneSuccess = "Update Zone Successfully!";
+        public const string UpdateZoneFail = "Failed To Update Zone";
+        public const string SearchZonesSuccess = "Get List Zones Successfully!";
+        public const string SearchZonesFail = "Get List Zones Failed";
+        public const string SearchZoneSuccess = "Get Zone Successfully!";
+        public const string SearchZoneFail = "Get Zone Failed";
+        public const string DeleteZoneSuccess = "Delete Zone Successfully!";
+        public const string DeleteZoneFailed = "Failed To Delete Zone";
+        public const string HouseStillExist = "Failed To Update Location Since House Still Intact!";
+    }
     public static class StoreMessage
     {
         public const string UpdateStoreSuccesss = "Update Store Successfully!";

@@ -20,13 +20,15 @@ namespace VegaCityApp.API.Controllers.Admin
         private readonly IEtagService _etagService;
         private readonly IPackageService _packageService;
         private readonly IStoreService _storeService;
+        private readonly IZoneService _zoneService;
 
-        public AdminController(ILogger<AdminController> logger, IAccountService accountService, IEtagService etagService, IPackageService packageService, IStoreService storeService) : base(logger)
+        public AdminController(ILogger<AdminController> logger, IAccountService accountService, IEtagService etagService, IPackageService packageService, IStoreService storeService, IZoneService zoneService) : base(logger)
         {
             _service = accountService;
             _etagService = etagService;
             _packageService = packageService;
             _storeService = storeService;
+            _zoneService = zoneService;
         }
         
         [HttpPost(EtagTypeEndpoint.CreateEtagType)]
@@ -154,6 +156,32 @@ namespace VegaCityApp.API.Controllers.Admin
             return Ok(result);
         }
 
+        [HttpPost(ZoneEndPoint.CreateZone)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.BadRequest)]
+        public async Task<IActionResult> CreateZone([FromBody] CreateZoneRequest request)
+        {
+            var result = await _zoneService.CreateZone(request);
+            return Ok(result);
+        }
+        [HttpGet(ZoneEndPoint.SearchAllZone)]
+        public async Task<IActionResult> SearchZones(int size, int page)
+        {
+            var result = await _zoneService.SearchZones(size, page);
+            return Ok(result);
+        }
+        [HttpGet(ZoneEndPoint.SearchZone)]
+        public async Task<IActionResult> SearchZone(Guid ZoneId)
+        {
+            var result = await _zoneService.SearchZone(ZoneId);
+            return Ok(result);
+        }
+        [HttpPatch(ZoneEndPoint.UpdateZone)]
+        public async Task<IActionResult> UpdateZone(Guid id ,[FromBody] UpdateZoneRequest request)
+        {
+            var result = await _zoneService.UpdateZone(id, request);
+            return Ok(result);
+        }
         [HttpGet(StoreEndpoint.GetListStore)]
         public async Task<IActionResult> SearchAllStore(int size, int page)
         {
