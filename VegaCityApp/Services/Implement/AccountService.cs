@@ -207,7 +207,7 @@ namespace VegaCityApp.Service.Implement
                     }
                 };
             }
-            if (req.ApprovalStatus.Equals("REJECT"))
+            if (req.ApprovalStatus.Equals(ApproveStatus.REJECT))
             {
                 if (user == null)
                 {
@@ -231,7 +231,7 @@ namespace VegaCityApp.Service.Implement
                     }
                 };
             }
-            else if(req.ApprovalStatus.Equals("APPROVED"))
+            else if(req.ApprovalStatus.Equals(ApproveStatus.APPROVED))
             {
                 //check phone, email
                 if (!ValidationUtils.IsEmail(req.StoreEmail))
@@ -424,9 +424,8 @@ namespace VegaCityApp.Service.Implement
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
                 predicate: x => x.Id == UserId,
                 include: user => user
-                    .Include(y => y.Orders)
-                    .Include(y => y.UserWallets)
-                    .Include(y => y.Etags)
+                        .Include(y => y.Wallets)
+                        .Include(y => y.Store)
             );
 
             if (user == null)

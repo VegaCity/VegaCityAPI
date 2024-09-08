@@ -32,7 +32,7 @@ namespace VegaCityApp.Domain.Models
         public virtual DbSet<Store> Stores { get; set; } = null!;
         public virtual DbSet<Transaction> Transactions { get; set; } = null!;
         public virtual DbSet<User> Users { get; set; } = null!;
-        public virtual DbSet<UserWallet> UserWallets { get; set; } = null!;
+        public virtual DbSet<Wallet> Wallets { get; set; } = null!;
         public virtual DbSet<Zone> Zones { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -57,22 +57,35 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("crDate")
                     .HasDefaultValueSql("(getdate())");
 
-                entity.Property(e => e.FullName).HasMaxLength(50);
-
                 entity.Property(e => e.IsIncrease)
                     .HasMaxLength(20)
-                    .IsUnicode(false)
-                    .HasColumnName("isIncrease");
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
+
+                entity.Property(e => e.PaymentType)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.UpsDate)
                     .HasColumnType("datetime")
                     .HasColumnName("upsDate")
                     .HasDefaultValueSql("(getdate())");
 
-                entity.HasOne(d => d.UserWallet)
+                entity.HasOne(d => d.Etag)
                     .WithMany(p => p.Deposits)
-                    .HasForeignKey(d => d.UserWalletId)
-                    .HasConstraintName("FK_Deposit_UserWallet");
+                    .HasForeignKey(d => d.EtagId)
+                    .HasConstraintName("FK_Deposit_ETag");
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.Deposits)
+                    .HasForeignKey(d => d.OrderId)
+                    .HasConstraintName("FK_Deposit_Order");
+
+                entity.HasOne(d => d.Wallet)
+                    .WithMany(p => p.Deposits)
+                    .HasForeignKey(d => d.WalletId)
+                    .HasConstraintName("FK_Deposit_Wallet");
             });
 
             modelBuilder.Entity<DisputeReport>(entity =>
@@ -103,17 +116,12 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.DisputeReports)
                     .HasForeignKey(d => d.StoreId)
-                    .HasConstraintName("FK__DisputeRe__Store__151B244E");
-
-                entity.HasOne(d => d.Transaction)
-                    .WithMany(p => p.DisputeReports)
-                    .HasForeignKey(d => d.TransactionId)
-                    .HasConstraintName("FK__DisputeRe__Trans__160F4887");
+                    .HasConstraintName("FK_DisputeReports_Store");
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.DisputeReports)
                     .HasForeignKey(d => d.UserId)
-                    .HasConstraintName("FK__DisputeRe__UserI__17036CC0");
+                    .HasConstraintName("FK_DisputeReports_User");
             });
 
             modelBuilder.Entity<ENotification>(entity =>
@@ -194,15 +202,10 @@ namespace VegaCityApp.Domain.Models
                     .HasForeignKey(d => d.MarketZoneId)
                     .HasConstraintName("FK_ETag_MarketZone");
 
-                entity.HasOne(d => d.User)
+                entity.HasOne(d => d.Wallet)
                     .WithMany(p => p.Etags)
-                    .HasForeignKey(d => d.UserId)
-                    .HasConstraintName("FK_ETag_User");
-
-                entity.HasOne(d => d.UserWallet)
-                    .WithMany(p => p.Etags)
-                    .HasForeignKey(d => d.UserWalletId)
-                    .HasConstraintName("FK_ETag_UserWallet");
+                    .HasForeignKey(d => d.WalletId)
+                    .HasConstraintName("FK_ETag_Wallet");
             });
 
             modelBuilder.Entity<EtagType>(entity =>
@@ -366,11 +369,6 @@ namespace VegaCityApp.Domain.Models
                     .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.StoreId)
                     .HasConstraintName("FK_Order_Store");
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.Orders)
-                    .HasForeignKey(d => d.UserId)
-                    .HasConstraintName("FK_Order_User");
             });
 
             modelBuilder.Entity<Package>(entity =>
@@ -534,14 +532,6 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Description).HasMaxLength(200);
 
-                entity.Property(e => e.EtagId).HasColumnName("ETagId");
-
-                entity.Property(e => e.MarketZoneEtagId).HasColumnName("MarketZoneETagId");
-
-                entity.Property(e => e.PaymentType)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
-
                 entity.Property(e => e.Status)
                     .HasMaxLength(20)
                     .IsUnicode(false);
@@ -550,25 +540,15 @@ namespace VegaCityApp.Domain.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.HasOne(d => d.Etag)
+                entity.HasOne(d => d.Store)
                     .WithMany(p => p.Transactions)
-                    .HasForeignKey(d => d.EtagId)
-                    .HasConstraintName("FK_Transaction_ETag");
+                    .HasForeignKey(d => d.StoreId)
+                    .HasConstraintName("FK_Transaction_Store");
 
-                entity.HasOne(d => d.Order)
+                entity.HasOne(d => d.Wallet)
                     .WithMany(p => p.Transactions)
-                    .HasForeignKey(d => d.OrderId)
-                    .HasConstraintName("FK_Transaction_Order");
-
-                entity.HasOne(d => d.UserWallet)
-                    .WithMany(p => p.Transactions)
-                    .HasForeignKey(d => d.UserWalletId)
-                    .HasConstraintName("FK_Transaction_Deposit");
-
-                entity.HasOne(d => d.UserWalletNavigation)
-                    .WithMany(p => p.Transactions)
-                    .HasForeignKey(d => d.UserWalletId)
-                    .HasConstraintName("FK_Transaction_UserWallet");
+                    .HasForeignKey(d => d.WalletId)
+                    .HasConstraintName("FK_Transaction_Wallet");
             });
 
             modelBuilder.Entity<User>(entity =>
@@ -631,9 +611,9 @@ namespace VegaCityApp.Domain.Models
                     .HasConstraintName("FK_User_Store");
             });
 
-            modelBuilder.Entity<UserWallet>(entity =>
+            modelBuilder.Entity<Wallet>(entity =>
             {
-                entity.ToTable("UserWallet");
+                entity.ToTable("Wallet");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
@@ -648,9 +628,9 @@ namespace VegaCityApp.Domain.Models
                     .HasDefaultValueSql("(getdate())");
 
                 entity.HasOne(d => d.User)
-                    .WithMany(p => p.UserWallets)
+                    .WithMany(p => p.Wallets)
                     .HasForeignKey(d => d.UserId)
-                    .HasConstraintName("FK_UserWallet_User");
+                    .HasConstraintName("FK_Wallet_User");
             });
 
             modelBuilder.Entity<Zone>(entity =>

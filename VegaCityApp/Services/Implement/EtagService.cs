@@ -170,9 +170,7 @@ namespace VegaCityApp.API.Services.Implement
                 var newEtag = new Etag
                 {
                     Id = Guid.NewGuid(),
-                    UserId = user.Id,
                     EtagTypeId = etagType.Id,
-                    Balance = req.Balance ?? 0,
                     Birthday = req.Birthday,
                     Cccd = req.Cccd,
                     CrDate = TimeUtils.GetCurrentSEATime(),

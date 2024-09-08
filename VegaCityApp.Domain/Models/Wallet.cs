@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace VegaCityApp.Domain.Models
 {
-    public partial class UserWallet
+    public partial class Wallet
     {
-        public UserWallet()
+        public Wallet()
         {
             Deposits = new HashSet<Deposit>();
             Etags = new HashSet<Etag>();

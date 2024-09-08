@@ -7,8 +7,6 @@ namespace VegaCityApp.Domain.Models
     {
         public Guid Id { get; set; }
         public Guid? UserId { get; set; }
-        public Guid? TransactionId { get; set; }
-        public Guid? StoreId { get; set; }
         public string? IssueType { get; set; }
         public string? Description { get; set; }
         public string? Resolution { get; set; }
@@ -16,9 +14,9 @@ namespace VegaCityApp.Domain.Models
         public DateTime? CrDate { get; set; }
         public int? Status { get; set; }
         public DateTime? ResolvedDate { get; set; }
+        public Guid? StoreId { get; set; }
 
         public virtual Store? Store { get; set; }
-        public virtual Transaction? Transaction { get; set; }
         public virtual User? User { get; set; }
     }
 }
