@@ -155,39 +155,6 @@ namespace VegaCityApp.API.Controllers.Admin
             var result = await _packageService.DeletePackage(id);
             return Ok(result);
         }
-
-        [HttpPost(ZoneEndPoint.CreateZone)]
-        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
-        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.BadRequest)]
-        public async Task<IActionResult> CreateZone([FromBody] CreateZoneRequest request)
-        {
-            var result = await _zoneService.CreateZone(request);
-            return Ok(result);
-        }
-        [HttpGet(ZoneEndPoint.SearchAllZone)]
-        public async Task<IActionResult> SearchZones(int size, int page)
-        {
-            var result = await _zoneService.SearchZones(size, page);
-            return Ok(result);
-        }
-        [HttpGet(ZoneEndPoint.SearchZone)]
-        public async Task<IActionResult> SearchZone(Guid ZoneId)
-        {
-            var result = await _zoneService.SearchZone(ZoneId);
-            return Ok(result);
-        }
-        [HttpPatch(ZoneEndPoint.UpdateZone)]
-        public async Task<IActionResult> UpdateZone(Guid id ,[FromBody] UpdateZoneRequest request)
-        {
-            var result = await _zoneService.UpdateZone(id, request);
-            return Ok(result);
-        }
-        [HttpDelete(ZoneEndPoint.DeleteZone)]
-        public async Task<IActionResult> DeleteZone(Guid id)
-        {
-            var result = await _zoneService.DeleteZone(id);
-            return Ok(result);
-        }
         [HttpGet(StoreEndpoint.GetListStore)]
         public async Task<IActionResult> SearchAllStore(int size, int page)
         {
@@ -212,6 +179,38 @@ namespace VegaCityApp.API.Controllers.Admin
         public async Task<IActionResult> DeleteStore(Guid id)
         {
             var result = await _storeService.DeleteStore(id);
+            return Ok(result);
+        }
+        [HttpPost(ZoneEndPoint.CreateZone)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.BadRequest)]
+        public async Task<IActionResult> CreateZone([FromBody] CreateZoneRequest request)
+        {
+            var result = await _zoneService.CreateZone(request);
+            return Ok(result);
+        }
+        [HttpPatch(ZoneEndPoint.UpdateZone)]
+        public async Task<IActionResult> UpdateZone(Guid id, [FromBody] UpdateZoneRequest request)
+        {
+            var result = await _zoneService.UpdateZone(id, request);
+            return Ok(result);
+        }
+        [HttpGet(ZoneEndPoint.SearchAllZone)]
+        public async Task<IActionResult> SearchZones(int size, int page)
+        {
+            var result = await _zoneService.SearchZones(size, page);
+            return Ok(result);
+        }
+        [HttpGet(ZoneEndPoint.SearchZone)]
+        public async Task<IActionResult> SearchZone(Guid id)
+        {
+            var result = await _zoneService.SearchZone(id);
+            return Ok(result);
+        }
+        [HttpDelete(ZoneEndPoint.DeleteZone)]
+        public async Task<IActionResult> DeleteZone(Guid id)
+        {
+            var result = await _zoneService.DeleteZone(id);
             return Ok(result);
         }
     }

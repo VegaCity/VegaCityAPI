@@ -55,8 +55,8 @@ public static class ApiEndPointConstant
         public const string CreateZone = ApiEndpoint + "/zone";
         public const string UpdateZone = ApiEndpoint + "/zone/{id}";
         public const string SearchAllZone = ApiEndpoint + "/zones";
-        public const string SearchZone = ApiEndpoint + "/zone";
-        public const string DeleteZone = ApiEndpoint + "/zone";
+        public const string SearchZone = ApiEndpoint + "/zone/{id}";
+        public const string DeleteZone = ApiEndpoint + "/zone/{id}";
     }
     public static class StoreEndpoint
     {
