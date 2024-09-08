@@ -41,16 +41,16 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(HouseEndpoint.GetHouse)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchHouse(Guid houseId)
+        public async Task<IActionResult> SearchHouse(Guid id)
         {
-            var result = await _service.SearchHouse(houseId);
+            var result = await _service.SearchHouse(id);
             return StatusCode(result.StatusCode, result);
         }
         [HttpDelete(HouseEndpoint.DeleteHouse)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> DeleteHouse(Guid houseId)
+        public async Task<IActionResult> DeleteHouse(Guid id)
         {
-            var result = await _service.DeleteHouse(houseId);
+            var result = await _service.DeleteHouse(id);
             return StatusCode(result.StatusCode, result);
         }
     }

@@ -4,6 +4,7 @@ using Pos_System.API.Constants;
 using VegaCityApp.API.Constants;
 using VegaCityApp.API.Payload.Request;
 using VegaCityApp.API.Payload.Response;
+using VegaCityApp.API.Payload.Response.GetZoneResponse;
 using VegaCityApp.API.Payload.Response.PackageResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
@@ -105,25 +106,23 @@ namespace VegaCityApp.API.Services.Implement
             }
         }
 
-        public async Task<IPaginate<Zone>> SearchZones(int size, int page)
+        public async Task<IPaginate<GetZoneResponse>> SearchZones(int size, int page)
         {
-            IPaginate<Zone> data = await _unitOfWork.GetRepository<Zone>().GetPagingListAsync(
+            var data = await _unitOfWork.GetRepository<Zone>().GetPagingListAsync(
 
-                selector: x => new Zone()
+                selector: x => new GetZoneResponse()
                 {
-                    Id = x.Id,
                     Name = x.Name,
                     Location = x.Location,
                     MarketZoneId = x.MarketZoneId,
                     CrDate = x.CrDate,
                     UpsDate = x.UpsDate,
                     Deflag = x.Deflag
-                    
                 },
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => x.Deflag == false
+                predicate: x => !x.Deflag
             );
             return data;
         }

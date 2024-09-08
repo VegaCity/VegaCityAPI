@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using VegaCityApp.API.Payload.Request.House;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.HouseResponse;
@@ -125,7 +126,9 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> SearchHouse(Guid HouseId)
         {
-            var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(predicate: x => x.Id == HouseId && !x.Deflag);
+            var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(
+                predicate: x => x.Id == HouseId && !x.Deflag,
+                include: house => house.Include(x => x.Stores));
             if (house == null)
             {
                 return new ResponseAPI()
