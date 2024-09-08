@@ -51,13 +51,17 @@ public static class ApiEndPointConstant
     }
     public static class StoreEndpoint
     {
-        //store crud endponit like above
-
         public const string UpdateStore = ApiEndpoint + "/store/{id}";
         public const string GetListStore = ApiEndpoint + "/stores";
         public const string GetStore = ApiEndpoint + "/store/{id}";
-
         public const string DeleteStore = ApiEndpoint + "/store/{id}";
-
+    }
+    public static class HouseEndpoint
+    {
+        public const string UpdateHouse = ApiEndpoint + "/house/{id}";
+        public const string GetListHouse = ApiEndpoint + "/houses";
+        public const string GetHouse = ApiEndpoint + "/house/{id}";
+        public const string DeleteHouse = ApiEndpoint + "/house/{id}";
+        public const string CreateHouse = ApiEndpoint + "/house";
     }
 }

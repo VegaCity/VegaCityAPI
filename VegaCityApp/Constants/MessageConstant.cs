@@ -184,4 +184,21 @@ public static class MessageConstant
         public const string DeleteFailed = "Delete Store Failed";
         public const string InvalidStoreType = "Invalid Store Type";
     }
+    public static class HouseMessage
+    {
+        public const string CreateHouseSuccessfully = "Create House Successfully !!";
+        public const string CreateHouseFail = "Create House Fail !!";
+        public const string GetHousesSuccessfully = "Get Houses Successfully !!";
+        public const string GetHousesFail = "Get Houses Fail !!";
+        public const string NotFoundHouse = "Not Found House !!";
+        public const string FoundHouse = "Get House Successfully !!";
+        public const string UpdateHouseSuccessfully = "Update House Successfully !!";
+        public const string MKZoneNotFound = "MarketZone Was Not Found !!";
+        public const string ExistedHouseName = "House Name is existed !!";
+        public const string UpdateHouseFailed = "Update House Failed !!";
+        public const string DeleteSuccess = "Delete House Successfully!";
+        public const string DeleteFail = "Delete House Failed!";
+        public const string NotFoundZone = "Zone Not Found!";
+        public const string HouseDeleted = "House is deleted!";
+    }
 }
