@@ -1,4 +1,4 @@
-﻿namespace Pos_System.API.Constants;
+﻿namespace VegaCityApp.API.Constants;
 
 public static class CorsConstant
 {

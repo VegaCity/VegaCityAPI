@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using NLog;
 using NLog.Web;
-using Pos_System.API.Constants;
+using VegaCityApp.API.Constants;
 using VegaCityApp.API.Converter;
 using VegaCityApp.API.Extensions;
 using VegaCityApp.API.Middlewares;

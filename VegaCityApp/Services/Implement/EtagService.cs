@@ -203,5 +203,70 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = MessageConstant.HttpStatusCodes.BadRequest
             };
         }
+
+        public async Task<ResponseAPI> AddEtagTypeToPackage(Guid etagTypeId, Guid packageId)
+        {
+            var etag = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag);
+            if(etag == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = MessageConstant.EtagTypeMessage.NotFoundEtagType,
+                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                };
+            }
+            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == packageId && !x.Deflag);
+            if(package == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = MessageConstant.PackageMessage.NotFoundPackage,
+                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                };
+            }
+            var etagPackage = new PackageETagTypeMapping() 
+            {
+                Id = Guid.NewGuid(),
+                EtagTypeId = etag.Id,
+                PackageId = package.Id,
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime()
+            };
+            await _unitOfWork.GetRepository<PackageETagTypeMapping>().InsertAsync(etagPackage);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            {
+                MessageResponse = MessageConstant.EtagTypeMessage.CreateSuccessFully,
+                StatusCode = MessageConstant.HttpStatusCodes.Created,
+                Data = new { etagPackageId = etagPackage.Id }
+            } : new ResponseAPI()
+            {
+                MessageResponse = MessageConstant.EtagTypeMessage.CreateFail,
+                StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+            };
+        }
+        public async Task<ResponseAPI> RemoveEtagTypeFromPackage(Guid etagId, Guid packageId)
+        {
+            var packageEtagType = await _unitOfWork.GetRepository<PackageETagTypeMapping>().SingleOrDefaultAsync
+                (predicate: x => x.EtagTypeId == etagId && x.PackageId == packageId);
+            if(packageEtagType == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = MessageConstant.EtagTypeMessage.NotFoundEtagType,
+                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                };
+            }
+            _unitOfWork.GetRepository<PackageETagTypeMapping>().DeleteAsync(packageEtagType);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            {
+                MessageResponse = MessageConstant.EtagTypeMessage.DeleteEtagTypeSuccessfully,
+                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                Data = new { etagPackageId = packageEtagType.Id }
+            } : new ResponseAPI()
+            {
+                MessageResponse = MessageConstant.EtagTypeMessage.DeleteEtagTypeFail,
+                StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+            };
+        }
     }
 }

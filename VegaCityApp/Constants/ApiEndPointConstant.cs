@@ -24,6 +24,8 @@ public static class ApiEndPointConstant
         public const string UpdateEtagType = ApiEndpoint + "/etag-type/{id}";
         public const string SearchEtagType = ApiEndpoint + "/etag-type/{id}";
         public const string SearchAllEtagType = ApiEndpoint + "/etag-types";
+        public const string AddEtagTypeToPackage = ApiEndpoint + "/etag-type/{etagTypeId}/package/{packageId}";
+        public const string RemoveEtagTypeFromPackage = ApiEndpoint + "/etag-type/{etagTypeId}/package/{packageId}";
     }
     public static class EtagEndpoint
     {

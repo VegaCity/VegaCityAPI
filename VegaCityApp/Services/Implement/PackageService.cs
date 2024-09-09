@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Pos_System.API.Constants;
 using VegaCityApp.API.Constants;
 using VegaCityApp.API.Payload.Request.Package;
 using VegaCityApp.API.Payload.Response;
@@ -207,6 +206,7 @@ namespace VegaCityApp.API.Services.Implement
                 predicate: x => x.Id == PackageId && x.Deflag==false,
                 include: user => user
                     .Include(y => y.PackageETagTypeMappings)
+                    .ThenInclude(y => y.EtagType)
             );
 
             if (package == null)

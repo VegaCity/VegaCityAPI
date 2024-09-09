@@ -12,5 +12,7 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> DeleteEtagType(Guid etagTypeId);
         Task<ResponseAPI> SearchEtagType(Guid etagTypeId);
         Task<IPaginate<EtagTypeResponse>> SearchAllEtagType(int size, int page);
+        Task<ResponseAPI> AddEtagTypeToPackage(Guid etagId, Guid packageId);
+        Task<ResponseAPI> RemoveEtagTypeFromPackage(Guid etagId, Guid packageId);
     }
 }
