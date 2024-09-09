@@ -40,7 +40,7 @@ public static class ApiEndPointConstant
         public const string UpdateUserRoleById = ApiEndpoint + "/user";
         public const string GetUserInfo = ApiEndpoint + "/user/{id}";
         public const string UpdateUserProfile = ApiEndpoint + "/user/{id}";
-        public const string DeleteUser = ApiEndpoint + "/user";
+        public const string DeleteUser = ApiEndpoint + "/user/{id}";
     }
 
     public static class PackageEndpoint

@@ -54,9 +54,9 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpDelete(UserEndpoint.DeleteUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> DeleteUser(Guid UserId)
+        public async Task<IActionResult> DeleteUser(Guid id)
         {
-            var result = await _service.DeleteUser(UserId);
+            var result = await _service.DeleteUser(id);
             return StatusCode(result.StatusCode, result);
         }
     }
