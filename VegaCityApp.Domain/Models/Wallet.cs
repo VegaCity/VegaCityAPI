@@ -13,15 +13,15 @@ namespace VegaCityApp.Domain.Models
         }
 
         public Guid Id { get; set; }
-        public int? WalletType { get; set; }
-        public DateTime? CrDate { get; set; }
-        public DateTime? UpsDate { get; set; }
-        public int? Balance { get; set; }
-        public int? BalanceHistory { get; set; }
-        public bool? Deflag { get; set; }
-        public Guid? UserId { get; set; }
+        public int WalletType { get; set; }
+        public DateTime CrDate { get; set; }
+        public DateTime UpsDate { get; set; }
+        public int Balance { get; set; }
+        public int BalanceHistory { get; set; }
+        public bool Deflag { get; set; }
+        public Guid UserId { get; set; }
 
-        public virtual User? User { get; set; }
+        public virtual User User { get; set; } = null!;
         public virtual ICollection<Deposit> Deposits { get; set; }
         public virtual ICollection<Etag> Etags { get; set; }
         public virtual ICollection<Transaction> Transactions { get; set; }

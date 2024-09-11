@@ -5,9 +5,6 @@ using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Admin;
 using VegaCityApp.API.Payload.Request.Auth;
 using VegaCityApp.API.Payload.Response;
-using VegaCityApp.API.Payload.Response.RoleResponse;
-using VegaCityApp.API.Payload.Response.StoreResponse;
-using VegaCityApp.API.Payload.Response.WalletResponse;
 using VegaCityApp.API.Services;
 using VegaCityApp.API.Utils;
 using VegaCityApp.Domain.Models;
@@ -40,7 +37,7 @@ namespace VegaCityApp.Service.Implement
             }
 
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                predicate: x => x.Email == req.Email,
+                predicate: x => x.Email == req.Email && x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
                 include: User => User.Include(y => y.Role));
             if (user == null)
             {
@@ -150,6 +147,16 @@ namespace VegaCityApp.Service.Implement
             var newUser = await CreateUserRegister(req);
             if (newUser != Guid.Empty)
             {
+                //create wallet
+                var result = await CreateUserWallet(newUser);
+                if (!result)
+                {
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = UserMessage.CreateWalletFail
+                    };
+                }
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.Created,
@@ -160,7 +167,6 @@ namespace VegaCityApp.Service.Implement
                     }
                 };
             }
-
             return new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.BadRequest,
@@ -179,19 +185,13 @@ namespace VegaCityApp.Service.Implement
                 Address = req.Address,
                 Email = req.Email,
                 Description = req.Description,
-                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId),
+                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
                 RoleId = Guid.Parse(EnvironmentVariableConstant.StoreId),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Gender = (int)GenderEnum.Other,
                 Status = (int)UserStatusEnum.PendingVerify
             };
-            //create wallet for user
-            bool check = await CreateUserWallet(newUser.Id);
-            if (!check)
-            {
-                return Guid.Empty;
-            }
             await _unitOfWork.GetRepository<User>().InsertAsync(newUser);
             return await _unitOfWork.CommitAsync() > 0 ? newUser.Id : Guid.Empty;
         }
@@ -210,7 +210,7 @@ namespace VegaCityApp.Service.Implement
             };
             await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
             return await _unitOfWork.CommitAsync() > 0;
-        }
+    }
 
         public async Task<ResponseAPI> ApproveUser(Guid userId, ApproveRequest req)
         {
@@ -284,7 +284,7 @@ namespace VegaCityApp.Service.Implement
                     Status = (int)StoreStatusEnum.Closed,
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
-                    MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId),
+                    MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
                     Deflag = false,
                 };
                 await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
@@ -331,7 +331,6 @@ namespace VegaCityApp.Service.Implement
             await _unitOfWork.CommitAsync();
             return user.Id;
         }
-
         public async Task<ResponseAPI> ChangePassword(ChangePasswordRequest req)
         {
             if (!ValidationUtils.IsEmail(req.Email))
@@ -356,57 +355,66 @@ namespace VegaCityApp.Service.Implement
 
             if (user.IsChange == false)
             {
-                if (user.Password == req.OldPassword)
+                if(user.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierWebId) || user.RoleId == Guid.Parse(EnvironmentVariableConstant.StoreId))
                 {
-                    user.Password = PasswordUtil.HashPassword(req.NewPassword);
-                    user.IsChange = true;
-                    _unitOfWork.GetRepository<User>().UpdateAsync(user);
-                    await _unitOfWork.CommitAsync();
-                    return new ResponseAPI
+                    if (user.Password == req.OldPassword)
                     {
-                        StatusCode = HttpStatusCodes.OK,
-                        MessageResponse = UserMessage.ChangePasswordSuccessfully,
-                        Data = new
+                        user.Password = PasswordUtil.HashPassword(req.NewPassword);
+                        user.IsChange = true;
+                        _unitOfWork.GetRepository<User>().UpdateAsync(user);
+                        await _unitOfWork.CommitAsync();
+                        return new ResponseAPI
                         {
-                            UserId = user.Id
-                        }
-                    };
-                }
-                else
-                {
-                    return new ResponseAPI
+                            StatusCode = HttpStatusCodes.OK,
+                            MessageResponse = UserMessage.ChangePasswordSuccessfully,
+                            Data = new
+                            {
+                                UserId = user.Id
+                            }
+                        };
+                    }
+                    else
                     {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.OldPasswordNotDuplicate
-                    };
-                }
+                        return new ResponseAPI
+                        {
+                            StatusCode = HttpStatusCodes.BadRequest,
+                            MessageResponse = UserMessage.OldPasswordNotDuplicate
+                        };
+                    }
+                }else if(user.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierAppId))
+                {
+                    if (user.PinCode == req.OldPassword)
+                    {
+                        user.PinCode = PasswordUtil.HashPassword(req.NewPassword);
+                        user.IsChange = true;
+                        _unitOfWork.GetRepository<User>().UpdateAsync(user);
+                        await _unitOfWork.CommitAsync();
+                        return new ResponseAPI
+                        {
+                            StatusCode = HttpStatusCodes.OK,
+                            MessageResponse = UserMessage.ChangePasswordSuccessfully,
+                            Data = new
+                            {
+                                UserId = user.Id
+                            }
+                        };
+                    }
+                    else
+                    {
+                        return new ResponseAPI
+                        {
+                            StatusCode = HttpStatusCodes.BadRequest,
+                            MessageResponse = UserMessage.OldPasswordNotDuplicate
+                        };
+                    }
+                }   
             }
-            else
+            return new ResponseAPI
             {
-                if (user.Password == PasswordUtil.HashPassword(req.OldPassword))
-                {
-                    user.Password = PasswordUtil.HashPassword(req.NewPassword);
-                    _unitOfWork.GetRepository<User>().UpdateAsync(user);
-                    await _unitOfWork.CommitAsync();
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.OK,
-                        MessageResponse = UserMessage.OldPasswordNotDuplicate
-                    };
-                }
-                else
-                {
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.OldPasswordNotDuplicate
-                    };
-                }
-            }
+                StatusCode = HttpStatusCodes.BadRequest,
+                MessageResponse = UserMessage.PasswordIsChanged
+            };
         }
-
-        //nguyentppse161945
-
         public async Task<IPaginate<GetUserResponse>> SearchAllUser(int size, int page)
         {
             IPaginate<GetUserResponse> data = await _unitOfWork.GetRepository<User>().GetPagingListAsync(
@@ -438,8 +446,6 @@ namespace VegaCityApp.Service.Implement
            
 
         }
-
-
         public async Task<ResponseAPI> SearchUser(Guid UserId)
         {
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(

@@ -11,8 +11,8 @@ namespace VegaCityApp.Domain.Models
         }
 
         public Guid Id { get; set; }
-        public string? Name { get; set; }
-        public bool? Deflag { get; set; }
+        public string Name { get; set; } = null!;
+        public bool Deflag { get; set; }
 
         public virtual ICollection<User> Users { get; set; }
     }

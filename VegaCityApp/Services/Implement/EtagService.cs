@@ -24,7 +24,7 @@ namespace VegaCityApp.API.Services.Implement
                 Id = Guid.NewGuid(),
                 Name = req.Name,
                 ImageUrl = req.ImageUrl,
-                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId),
+                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
                 BonusRate = req.BonusRate,
                 Deflag = false,
                 Amount = req.Amount
