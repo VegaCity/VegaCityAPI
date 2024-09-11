@@ -77,7 +77,7 @@ namespace VegaCityApp.API.Services.Implement
                 Price = req.Price,
                 StartDate = req.StartDate,
                 EndDate = req.EndDate,
-                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId),
+                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
             };

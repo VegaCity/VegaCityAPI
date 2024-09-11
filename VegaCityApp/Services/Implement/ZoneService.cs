@@ -37,7 +37,7 @@ namespace VegaCityApp.API.Services.Implement
                 Id = Guid.NewGuid(),
                 Name = req.Name,
                 Location = req.Location,
-                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId),
+                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
                 Deflag = false,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),

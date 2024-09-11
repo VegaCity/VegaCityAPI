@@ -127,6 +127,9 @@ public static class MessageConstant
         public const string FailedToUpdate = "Update User Failed :(!";
         public const string DeleteUserSuccess = "Delete User Successfully!";
         public const string DeleteUserFail = "Delete User Fail!";
+        public const string VegaCityResponse = "VegaCity Response";
+        public const string PasswordIsChanged = "Password is changed!";
+        public const string CreateWalletFail = "Create Wallet Fail !!";
     }
 
     public static class RoleMessage

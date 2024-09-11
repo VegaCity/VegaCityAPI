@@ -50,7 +50,7 @@ namespace VegaCityApp.API.Services.Implement
             store.PhoneNumber = req.PhoneNumber;
             store.ShortName = req.ShortName;
             store.Email = req.Email;
-            store.MarketZoneId = Guid.Parse(EnvironmentVariableConstant.ZoneId);
+            store.MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId);
             store.Description = req.Description;
             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
             var result = await _unitOfWork.CommitAsync();

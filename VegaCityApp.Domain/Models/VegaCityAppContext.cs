@@ -195,16 +195,19 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.EtagType)
                     .WithMany(p => p.Etags)
                     .HasForeignKey(d => d.EtagTypeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ETag_ETagType");
 
                 entity.HasOne(d => d.MarketZone)
                     .WithMany(p => p.Etags)
                     .HasForeignKey(d => d.MarketZoneId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ETag_MarketZone");
 
                 entity.HasOne(d => d.Wallet)
                     .WithMany(p => p.Etags)
                     .HasForeignKey(d => d.WalletId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ETag_Wallet");
             });
 
@@ -388,6 +391,8 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnType("datetime")
                     .HasColumnName("endDate");
 
+                entity.Property(e => e.ImageUrl).IsUnicode(false);
+
                 entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.Property(e => e.StartDate)
@@ -402,6 +407,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.MarketZone)
                     .WithMany(p => p.Packages)
                     .HasForeignKey(d => d.MarketZoneId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Package_MarketZone");
             });
 
@@ -426,11 +432,13 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.EtagType)
                     .WithMany(p => p.PackageETagTypeMappings)
                     .HasForeignKey(d => d.EtagTypeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PackageE-TagTypeMapping_ETagType");
 
                 entity.HasOne(d => d.Package)
                     .WithMany(p => p.PackageETagTypeMappings)
                     .HasForeignKey(d => d.PackageId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PackageE-TagTypeMapping_package");
             });
 
@@ -603,6 +611,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Role)
                     .WithMany(p => p.Users)
                     .HasForeignKey(d => d.RoleId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_User_Role");
 
                 entity.HasOne(d => d.Store)
@@ -630,6 +639,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Wallets)
                     .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Wallet_User");
             });
 
