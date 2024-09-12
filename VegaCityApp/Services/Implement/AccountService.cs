@@ -179,7 +179,6 @@ namespace VegaCityApp.Service.Implement
                             MessageResponse = UserMessage.SaveRefreshTokenFail
                         };
                     }
-
                     return new ResponseAPI
                     {
                         StatusCode = HttpStatusCodes.BadRequest,
