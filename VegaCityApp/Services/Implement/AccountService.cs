@@ -230,7 +230,7 @@ namespace VegaCityApp.Service.Implement
             if(refreshToken == null)
             {
                 var check = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
-                                                  predicate: x => x.Name == user.Role.Name);
+                                                  predicate: x => x.Name == user.Role.Name && x.UserId == user.Id);
                 if(check != null)
                 {
                     return new ResponseAPI
