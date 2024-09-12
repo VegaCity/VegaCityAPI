@@ -224,7 +224,7 @@ namespace VegaCityApp.Service.Implement
             }
 
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Email == req.Email && x.PhoneNumber == req.PhoneNumber && x.Cccd == req.Cccd);
+                x.Email == req.Email &&x.Status ==(int)UserStatusEnum.Active && x.PhoneNumber == req.PhoneNumber && x.Cccd == req.Cccd);
             if (user != null)
             {
                 return new ResponseAPI()

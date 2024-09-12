@@ -29,7 +29,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(PackageEndpoint.GetListPackage)]
-        [CustomAuthorize(RoleEnum.Admin)]
+        [CustomAuthorize(RoleEnum.Admin,RoleEnum.CashierApp,RoleEnum.CashierWeb)]
         [ProducesResponseType(typeof(IPaginate<GetPackageResponse>), HttpStatusCodes.OK)]
         public async Task<IActionResult> SearchAllPackage(int size, int page)
         {
@@ -37,7 +37,7 @@ namespace VegaCityApp.API.Controllers
             return Ok(result);
         }
         [HttpGet(PackageEndpoint.GetPackageById)]
-        [CustomAuthorize(RoleEnum.Admin)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> SearchPackage(Guid id)
         {

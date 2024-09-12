@@ -41,7 +41,7 @@ public static class ApiEndPointConstant
         public const string GetUserInfo = ApiEndpoint + "/user/{id}";
         public const string UpdateUserProfile = ApiEndpoint + "/user/{id}";
         public const string DeleteUser = ApiEndpoint + "/user/{id}";
-        public const string CreateUser = ApiEndpoint + "/create-user";
+        public const string CreateUser = ApiEndpoint + "/user";
 
     }
 
