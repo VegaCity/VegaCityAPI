@@ -32,6 +32,7 @@ namespace VegaCityApp.Domain.Models
         public virtual DbSet<Store> Stores { get; set; } = null!;
         public virtual DbSet<Transaction> Transactions { get; set; } = null!;
         public virtual DbSet<User> Users { get; set; } = null!;
+        public virtual DbSet<UserRefreshToken> UserRefreshTokens { get; set; } = null!;
         public virtual DbSet<Wallet> Wallets { get; set; } = null!;
         public virtual DbSet<Zone> Zones { get; set; } = null!;
 
@@ -601,8 +602,6 @@ namespace VegaCityApp.Domain.Models
                     .IsUnicode(false)
                     .IsFixedLength();
 
-                entity.Property(e => e.PinCode).IsUnicode(false);
-
                 entity.Property(e => e.UpsDate)
                     .HasColumnType("datetime")
                     .HasColumnName("upsDate")
@@ -618,6 +617,33 @@ namespace VegaCityApp.Domain.Models
                     .WithMany(p => p.Users)
                     .HasForeignKey(d => d.StoreId)
                     .HasConstraintName("FK_User_Store");
+            });
+
+            modelBuilder.Entity<UserRefreshToken>(entity =>
+            {
+                entity.ToTable("UserRefreshToken");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate");
+
+                entity.Property(e => e.Name)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Token).IsUnicode(false);
+
+                entity.Property(e => e.UpsDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("upsDate");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.UserRefreshTokens)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_UserRefreshToken_User");
             });
 
             modelBuilder.Entity<Wallet>(entity =>

@@ -38,9 +38,37 @@ public class JwtUtil
         };
         if (guidClaim != null) claims.Add(new Claim(guidClaim.Item1, guidClaim.Item2.ToString()));
         var expires = user.Role.Name.Equals(RoleEnum.Admin.GetDescriptionFromEnum())
-            ? DateTime.Now.AddDays(1)
-            : DateTime.Now.AddDays(30);
-        var token = new JwtSecurityToken(issuer, null, claims, notBefore: DateTime.Now, expires, credentials);
+            ? TimeUtils.GetCurrentSEATime().AddDays(1)
+            : TimeUtils.GetCurrentSEATime().AddMinutes(60);
+        var token = new JwtSecurityToken(issuer, null, claims, notBefore: TimeUtils.GetCurrentSEATime(), expires, credentials);
         return jwtHandler.WriteToken(token);
+    }
+    public static string GenerateRefreshToken(User user, Tuple<string, Guid> guidClaim, DateTime? expireDay)
+    {
+        #region varKey
+        string issuerKey = "VegaCityApp";
+        string secretKey = "VegaCityAppsecretKey";
+        #endregion
+        JwtSecurityTokenHandler jwtHandler = new JwtSecurityTokenHandler();
+        SymmetricSecurityKey secrectKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        var credentials = new SigningCredentials(secrectKey, SecurityAlgorithms.HmacSha256Signature);
+        string issuer = issuerKey;
+        List<Claim> claims = new List<Claim>()
+        {
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role.Name),
+        };
+        if (guidClaim != null) claims.Add(new Claim(guidClaim.Item1, guidClaim.Item2.ToString()));
+        var expires = expireDay;
+        var token = new JwtSecurityToken(issuer, null, claims, notBefore: TimeUtils.GetCurrentSEATime(), expires, credentials);
+        return jwtHandler.WriteToken(token);
+    }
+    //function decode jwt token to get expire date
+    public static DateTime GetExpireDate(string token)
+    {
+        JwtSecurityTokenHandler jwtHandler = new JwtSecurityTokenHandler();
+        JwtSecurityToken jwtToken = jwtHandler.ReadJwtToken(token);
+        return TimeUtils.ConvertToSEATime(jwtToken.ValidTo);
     }
 }

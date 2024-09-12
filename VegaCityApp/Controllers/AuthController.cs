@@ -40,5 +40,12 @@ namespace VegaCityApp.API.Controllers
             var result = await _accountService.ChangePassword(request);
             return StatusCode(result.StatusCode, result);
         }
+        [HttpPost(AuthenticationEndpoint.RefreshToken)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> RefreshToken([FromBody] ReFreshTokenRequest request)
+        {
+            var result = await _accountService.RefreshToken(request);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }

@@ -27,7 +27,7 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpPost(UserEndpoint.CreateUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> AdminCreateUser([FromBody] CreateUserRequest request)
+        public async Task<IActionResult> AdminCreateUser([FromBody] RegisterRequest request)
         {
             var result = await _service.AdminCreateUser(request);
             return StatusCode(result.StatusCode, result);

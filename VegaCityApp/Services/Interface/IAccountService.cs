@@ -10,9 +10,11 @@ namespace VegaCityApp.Service.Interface
     {
         Task<ResponseAPI> Login(LoginRequest req);
 
+        Task<ResponseAPI> RefreshToken(ReFreshTokenRequest req);
+
         Task<ResponseAPI> Register (RegisterRequest req);
 
-        Task<ResponseAPI> AdminCreateUser(CreateUserRequest req);
+        Task<ResponseAPI> AdminCreateUser(RegisterRequest req);
 
         Task<ResponseAPI> ApproveUser (Guid userId, ApproveRequest req);
 
@@ -20,13 +22,10 @@ namespace VegaCityApp.Service.Interface
 
         Task<IPaginate<GetUserResponse>> SearchAllUser(int size, int page);
 
-        //Task<GetListUserResponse> GetListUserByUserRoleId(Guid RoleId);
-
         Task<ResponseAPI> SearchUser(Guid UserId);
 
         Task<ResponseAPI> UpdateUser(Guid userId, UpdateUserAccountRequest req);
 
         Task<ResponseAPI> DeleteUser(Guid UserId);
-        //Task<ResponseAPI> CreateUser(CreateUserRequest req);
     }
 }

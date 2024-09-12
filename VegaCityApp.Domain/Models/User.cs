@@ -8,6 +8,7 @@ namespace VegaCityApp.Domain.Models
         public User()
         {
             DisputeReports = new HashSet<DisputeReport>();
+            UserRefreshTokens = new HashSet<UserRefreshToken>();
             Wallets = new HashSet<Wallet>();
         }
 
@@ -21,7 +22,6 @@ namespace VegaCityApp.Domain.Models
         public int Gender { get; set; }
         public string Cccd { get; set; } = null!;
         public string? ImageUrl { get; set; }
-        public string? PinCode { get; set; }
         public Guid MarketZoneId { get; set; }
         public string Email { get; set; } = null!;
         public string? Password { get; set; }
@@ -34,6 +34,7 @@ namespace VegaCityApp.Domain.Models
         public virtual Role Role { get; set; } = null!;
         public virtual Store? Store { get; set; }
         public virtual ICollection<DisputeReport> DisputeReports { get; set; }
+        public virtual ICollection<UserRefreshToken> UserRefreshTokens { get; set; }
         public virtual ICollection<Wallet> Wallets { get; set; }
     }
 }

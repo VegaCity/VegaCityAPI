@@ -100,7 +100,13 @@ public static class MessageConstant
         public const string GetEtagsSuccess = "Get List Etags Successfully !!";
     }
     public static class UserMessage
-    {   public const string UnauthorizedAccess = "Unauthorized Access !!";
+    {   
+        public const string UserHadToken = "User Had Token !!";
+        public const string RefreshTokenSuccessfully = "Refresh Token Successfully !!";
+        public const string RefreshTokenFail = "Refresh Token Fail !!";
+        public const string SessionExpired = "Session Expired !!";
+        public const string YourPasswordToChange = "Your Password To Change";
+        public const string UnauthorizedAccess = "Unauthorized Access !!";
         public const string EmailExistOrPhoneOrCCCDExit = "Email or PhoneNumber or CCCD already exist !!";
         public const string Ban = "Email is banned !!";
         public const string CreateUserFail = "Create User Fail !!";
@@ -132,6 +138,7 @@ public static class MessageConstant
         public const string CreateWalletFail = "Create Wallet Fail !!";
         public const string InvalidRoleName = "Created fail! Please check the Role Name!";
         public const string YourPinCode = "Your Verify Pin Code ";
+        public const string SaveRefreshTokenFail = "Save Refresh Token Fail !!";
     }
 
     public static class RoleMessage
