@@ -287,11 +287,6 @@ namespace VegaCityApp.Service.Implement
                     }
                 };
             }
-            return new ResponseAPI
-            {
-                StatusCode = HttpStatusCodes.BadRequest,
-                MessageResponse = UserMessage.RefreshTokenFail,
-            };
         }
         public async Task<ResponseAPI> Register(RegisterRequest req)
         {
@@ -363,7 +358,7 @@ namespace VegaCityApp.Service.Implement
                     Data = new
                     {
                         UserId = newUser.Id,
-                        RefreshToken = token.Data
+                        token.Data
                     }
                 };
             }
