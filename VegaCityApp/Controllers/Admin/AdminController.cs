@@ -11,6 +11,8 @@ using VegaCityApp.API.Enums;
 using Microsoft.AspNetCore.Authorization;
 using VegaCityApp.Domain.Paginate;
 using VegaCityApp.API.Payload.Request.Admin;
+using VegaCityApp.API.Payload.Request.Auth;
+using VegaCityApp.Service.Implement;
 
 namespace VegaCityApp.API.Controllers.Admin
 {
@@ -22,6 +24,13 @@ namespace VegaCityApp.API.Controllers.Admin
         public AdminController(ILogger<AdminController> logger, IAccountService service) : base(logger)
         {
             _service = service;
+        }
+        [HttpPost(UserEndpoint.CreateUser)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> AdminCreateUser([FromBody] CreateUserRequest request)
+        {
+            var result = await _service.AdminCreateUser(request);
+            return StatusCode(result.StatusCode, result);
         }
         [HttpPost(UserEndpoint.ApproveUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]

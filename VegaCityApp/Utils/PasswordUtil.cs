@@ -30,5 +30,10 @@ namespace VegaCityApp.API.Utils
             return new string(Enumerable.Repeat(chars, length)
                                .Select(s => s[random.Next(s.Length)]).ToArray());
         }
+        public static string GeneratePinCode()
+        {
+            var random = new Random();
+            return random.Next(100000, 999999).ToString();
+        }
     }
 }

@@ -12,6 +12,8 @@ namespace VegaCityApp.Service.Interface
 
         Task<ResponseAPI> Register (RegisterRequest req);
 
+        Task<ResponseAPI> AdminCreateUser(CreateUserRequest req);
+
         Task<ResponseAPI> ApproveUser (Guid userId, ApproveRequest req);
 
         Task<ResponseAPI> ChangePassword (ChangePasswordRequest req);

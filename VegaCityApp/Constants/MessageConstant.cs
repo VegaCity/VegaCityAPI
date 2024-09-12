@@ -130,6 +130,8 @@ public static class MessageConstant
         public const string VegaCityResponse = "VegaCity Response";
         public const string PasswordIsChanged = "Password is changed!";
         public const string CreateWalletFail = "Create Wallet Fail !!";
+        public const string InvalidRoleName = "Created fail! Please check the Role Name!";
+        public const string YourPinCode = "Your Verify Pin Code ";
     }
 
     public static class RoleMessage

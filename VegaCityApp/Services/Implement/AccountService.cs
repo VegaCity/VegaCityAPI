@@ -51,7 +51,27 @@ namespace VegaCityApp.Service.Implement
             switch (user.Status)
             {
                 case (int)UserStatusEnum.Active:
-                    if (user.Password == PasswordUtil.HashPassword(req.Password))
+                    if (user.RoleId != Guid.Parse(EnvironmentVariableConstant.CashierAppId))
+                        
+                    {
+                        if (user.Password == PasswordUtil.HashPassword(req.Password))
+                        {
+                            guidClaim = new Tuple<string, Guid>("MarketZoneId", (Guid)user.MarketZoneId);
+                            //generate token
+                            var token = JwtUtil.GenerateJwtToken(user, guidClaim);
+                            return new ResponseAPI
+                            {
+                                StatusCode = HttpStatusCodes.OK,
+                                MessageResponse = UserMessage.LoginSuccessfully,
+                                Data = new
+                                {
+                                    UserId = user.Id,
+                                    AccessToken = token
+                                }
+                            };
+                        }
+                    }
+                    if (user.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierAppId) && user.PinCode == (req.Password))
                     {
                         guidClaim = new Tuple<string, Guid>("MarketZoneId", (Guid)user.MarketZoneId);
                         //generate token
@@ -174,6 +194,77 @@ namespace VegaCityApp.Service.Implement
             };
         }
 
+        public async Task<ResponseAPI> AdminCreateUser(CreateUserRequest req)
+        {
+            if (!ValidationUtils.IsEmail(req.Email))
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.InvalidEmail,
+                };
+            }
+
+            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.InvalidPhoneNumber,
+                };
+            }
+
+            if (!ValidationUtils.IsCCCD(req.Cccd))
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.InvalidCCCD,
+                };
+            }
+
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
+                x.Email == req.Email && x.PhoneNumber == req.PhoneNumber && x.Cccd == req.Cccd);
+            if (user != null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.EmailExistOrPhoneOrCCCDExit
+                };
+            }
+
+            var newUser = await CreateUserRole(req);
+            if (newUser != Guid.Empty)
+            {
+                var result = await CreateUserWallet(newUser);
+                if (!result)
+                {
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = UserMessage.CreateWalletFail
+                    };
+                }
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.Created,
+                    MessageResponse = UserMessage.CreateSuccessfully,
+                    Data = new
+                    {
+                        UserId = newUser
+                        
+                    }
+                };
+            }
+            return new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.BadRequest,
+                MessageResponse = UserMessage.CreateUserFail
+            };
+
+        }
+
         private async Task<Guid> CreateUserRegister(RegisterRequest req)
         {
             var newUser = new User
@@ -195,6 +286,32 @@ namespace VegaCityApp.Service.Implement
             await _unitOfWork.GetRepository<User>().InsertAsync(newUser);
             return await _unitOfWork.CommitAsync() > 0 ? newUser.Id : Guid.Empty;
         }
+
+        private async Task<Guid> CreateUserRole(CreateUserRequest req)
+        {;
+            var role = await _unitOfWork.GetRepository<Role>()
+                .SingleOrDefaultAsync(predicate: r => r.Name == req.RoleName.Replace(" ", string.Empty));
+            var newUser = new User()
+            {
+                Id = Guid.NewGuid(),
+                FullName = req.FullName,
+                PhoneNumber = req.PhoneNumber,
+                Cccd = req.Cccd,
+                Address = req.Address,
+                Email = req.Email,
+                Birthday = req.Birthday,
+                Gender = (int)GenderEnum.Other,
+                Description = req.Description,
+                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
+                RoleId = role.Id,
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                Status = (int)UserStatusEnum.PendingVerify
+            };
+            await _unitOfWork.GetRepository<User>().InsertAsync(newUser);
+            return await _unitOfWork.CommitAsync() > 0 ? newUser.Id : Guid.Empty;
+        }
+     
         private async Task<bool> CreateUserWallet(Guid userId)
         {
             var newWallet = new Wallet
@@ -272,46 +389,104 @@ namespace VegaCityApp.Service.Implement
                         MessageResponse = UserMessage.InvalidPhoneNumber
                     };
                 }
-
-                //create store
-                var newStore = new Store
+                if(user.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierWebId))
                 {
-                    Id = Guid.NewGuid(),
-                    Name = req.StoreName,
-                    Address = req.StoreAddress,
-                    PhoneNumber = req.PhoneNumber,
-                    Email = req.StoreEmail,
-                    Status = (int)StoreStatusEnum.Closed,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
-                    Deflag = false,
-                };
-                await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
-                await _unitOfWork.CommitAsync();
-                //update user
-                var result = await UpdateUserApproving(user, newStore.Id);
-                if (result != Guid.Empty)
-                {
-                    //send mail
-                    if (user != null)
+                    var result = await UpdateOtherUserApproving(user, user.RoleId);
+                    if (result != Guid.Empty)
                     {
-                        var subject = UserMessage.ApproveSuccessfully;
-                        var body = "Your account has been approved. Your password is: " + user.Password;
-                        await MailUtil.SendMailAsync(user.Email, subject, body);
+
+                        //send mail
+                        if (user != null)
+                        {
+                            var subject = UserMessage.ApproveSuccessfully;
+                            var body = "Your account has been approved. Your password is: " + user.Password;
+                            await MailUtil.SendMailAsync(user.Email, subject, body);
+                        }
+
+                        return new ResponseAPI
+                        {
+                            StatusCode = HttpStatusCodes.Created,
+                            MessageResponse = UserMessage.ApproveSuccessfully,
+                            Data = new
+                            {
+                                UserId = result,
+                            }
+                        };
+                    }
+                }
+                if (user.RoleId == Guid.Parse(EnvironmentVariableConstant.StoreId))
+                {
+                    var newStore = new Store
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = req.StoreName,
+                        Address = req.StoreAddress,
+                        PhoneNumber = req.PhoneNumber,
+                        Email = req.StoreEmail,
+                        Status = (int)StoreStatusEnum.Closed,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
+                        Deflag = false,
+                    };
+                    await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
+                    await _unitOfWork.CommitAsync();
+                    //update user
+                    var result = await UpdateUserApproving(user, newStore.Id);
+                    if (result != Guid.Empty)
+                    {
+
+                        //send mail
+                        if (user != null)
+                        {
+                            var subject = UserMessage.ApproveSuccessfully;
+                            var body = "Your account has been approved. Your password is: " + user.Password;
+                            await MailUtil.SendMailAsync(user.Email, subject, body);
+                        }
+
+                        return new ResponseAPI
+                        {
+                            StatusCode = HttpStatusCodes.Created,
+                            MessageResponse = UserMessage.ApproveSuccessfully,
+                            Data = new
+                            {
+                                UserId = result,
+                                StoreId = newStore.Id
+                            }
+                        };
+                    }
+                }
+
+                else
+                {
+                    if (user.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierAppId))
+                    {
+                        var result = await UpdateOtherUserApproving(user, user.RoleId);
+                        if (result != Guid.Empty)
+                        {
+
+                            //send mail
+                            if (user != null)
+                            {
+                                var subject = UserMessage.ApproveSuccessfully;
+                                var body = "Your account has been approved. Your SignIn Pin Code is: " + user.PinCode;
+                                await MailUtil.SendMailAsync(user.Email, subject, body);
+                            }
+
+                            return new ResponseAPI
+                            {
+                                StatusCode = HttpStatusCodes.Created,
+                                MessageResponse = UserMessage.ApproveSuccessfully,
+                                Data = new
+                                {
+                                    UserId = result,
+                                }
+                            };
+                        }
                     }
 
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.Created,
-                        MessageResponse = UserMessage.ApproveSuccessfully,
-                        Data = new
-                        {
-                            UserId = result,
-                            StoreId = newStore.Id
-                        }
-                    };
                 }
+    
             }
 
             return new ResponseAPI
@@ -331,6 +506,27 @@ namespace VegaCityApp.Service.Implement
             await _unitOfWork.CommitAsync();
             return user.Id;
         }
+
+        private async Task<Guid> UpdateOtherUserApproving(User user, Guid RoleId)
+        {
+            user.Status = (int)UserStatusEnum.Active;
+            user.IsChange = false;
+            if (RoleId == Guid.Parse(EnvironmentVariableConstant.CashierWebId))
+            {
+                user.Password = PasswordUtil.GenerateCharacter(10);
+
+            }
+
+            if (RoleId == Guid.Parse(EnvironmentVariableConstant.CashierAppId))
+            {
+                user.PinCode = PasswordUtil.GeneratePinCode();
+            }
+            _unitOfWork.GetRepository<User>().UpdateAsync(user);
+            await _unitOfWork.CommitAsync();
+            return user.Id;
+        }
+      
+
         public async Task<ResponseAPI> ChangePassword(ChangePasswordRequest req)
         {
             if (!ValidationUtils.IsEmail(req.Email))

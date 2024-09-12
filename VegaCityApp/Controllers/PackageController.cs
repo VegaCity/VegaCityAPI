@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Package;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.PackageResponse;
 using VegaCityApp.API.Services.Interface;
+using VegaCityApp.API.Validators;
 using VegaCityApp.Domain.Paginate;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
@@ -19,6 +21,7 @@ namespace VegaCityApp.API.Controllers
             _packageService = packageService;
         }
         [HttpPost(PackageEndpoint.CreatePackage)]
+        [CustomAuthorize(RoleEnum.Admin)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         public async Task<IActionResult> CreatePackage([FromBody] CreatePackageRequest request)
         {
@@ -26,6 +29,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(PackageEndpoint.GetListPackage)]
+        [CustomAuthorize(RoleEnum.Admin)]
         [ProducesResponseType(typeof(IPaginate<GetPackageResponse>), HttpStatusCodes.OK)]
         public async Task<IActionResult> SearchAllPackage(int size, int page)
         {
@@ -33,6 +37,7 @@ namespace VegaCityApp.API.Controllers
             return Ok(result);
         }
         [HttpGet(PackageEndpoint.GetPackageById)]
+        [CustomAuthorize(RoleEnum.Admin)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> SearchPackage(Guid id)
         {
@@ -40,6 +45,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpPatch(PackageEndpoint.UpdatePackage)]
+        [CustomAuthorize(RoleEnum.Admin)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> UpdatePackage(Guid id, [FromBody] UpdatePackageRequest request)
         {
@@ -47,6 +53,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpDelete(PackageEndpoint.DeletePackage)]
+        [CustomAuthorize(RoleEnum.Admin)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> DeletePackage(Guid id)
         {
