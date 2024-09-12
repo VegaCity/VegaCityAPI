@@ -616,7 +616,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.Users)
                     .HasForeignKey(d => d.StoreId)
-                    .HasConstraintName("FK_User_Store");
+                    .HasConstraintName("FK_User_Store1");
             });
 
             modelBuilder.Entity<UserRefreshToken>(entity =>
