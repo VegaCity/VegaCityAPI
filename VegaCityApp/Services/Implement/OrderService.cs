@@ -35,6 +35,16 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagId && !x.Deflag);
+            foreach (var item in req.ProductData) {
+                if(item.Quantity <= 0)
+                {
+                    return new ResponseAPI()
+                    {
+                        MessageResponse = OrderMessage.QuantityInvalid,
+                        StatusCode = HttpStatusCodes.BadRequest
+                    };
+                }
+            }
             string json = JsonConvert.SerializeObject(req.ProductData);
             var newOrder = new Order()
             {
@@ -121,7 +131,7 @@ namespace VegaCityApp.API.Services.Implement
         }
 
 
-        public async Task<ResponseAPI> UpdateOrder(string InvoiceId, UpdateOrderRequest req)
+        public async Task<ResponseAPI> UpdateOrder(string InvoiceId, UpdateOrderRequest  req)
         {
             var order = await _unitOfWork.GetRepository<Order>()
                 .SingleOrDefaultAsync(predicate: x =>
@@ -142,6 +152,17 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = OrderMessage.OrderCompleted,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
+            }
+            foreach (var item in req.NewProducts)
+            {
+                if (item.Quantity <= 0)
+                {
+                    return new ResponseAPI()
+                    {
+                        MessageResponse = OrderMessage.QuantityInvalid,
+                        StatusCode = HttpStatusCodes.BadRequest
+                    };
+                }
             }
             order.ProductJson = JsonConvert.SerializeObject(req.NewProducts);
             order.TotalAmount = req.TotalAmount;

@@ -176,7 +176,7 @@ public static class MessageConstant
         public const string OrderExisted = "Order with InvoiceId Existed";
         public const string CancelOrderSuccess = "Cancel Order Successfully";
         public const string CancelFail = "Failed To Cancel Order";
-
+        public const string QuantityInvalid = "Quantity Invalid";
     }
 
     public static class PackageMessage
