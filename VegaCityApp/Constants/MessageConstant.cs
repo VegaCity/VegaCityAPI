@@ -159,7 +159,7 @@ public static class MessageConstant
     {
         public const string CreateOrderSuccessfully = "Create Order Successfully !!";
         public const string CreateOrderFail = "Create Order Fail !!";
-        public const string NotFoundOrder = "Order Was Not Found!!";
+        public const string NotFoundOrder = "Order was canceled!!";
         public const string GetOrdersSuccessfully = "Get Orders Successfully !!";
         public const string GetOrdersFail = "Get Orders Fail !!";
         public const string NotFoundStore = "Store was not found!";
@@ -174,8 +174,8 @@ public static class MessageConstant
         public const string UpdateOrderFailed = "Failed To Update Order";
         public const string NotFoundWallet = "WalletId is missing for the given Etag.";
         public const string OrderExisted = "Order with InvoiceId Existed";
-        public const string DeleteSuccess = "Delete Order Successfully";
-        public const string DeleteFail = "Failed To Delete Order";
+        public const string CancelOrderSuccess = "Cancel Order Successfully";
+        public const string CancelFail = "Failed To Cancel Order";
 
     }
 

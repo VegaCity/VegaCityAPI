@@ -47,13 +47,13 @@ namespace VegaCityApp.API.Controllers
 
         [HttpPatch(OrderEndpoint.UpdateOrder)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> UpdateOrder(Guid id, UpdateOrderRequest req)
+        public async Task<IActionResult> UpdateOrder([FromQuery]string InvoiceId, UpdateOrderRequest req)
         {
-            var result = await _orderService.UpdateOrder(id, req);
+            var result = await _orderService.UpdateOrder(InvoiceId, req);
             return StatusCode(result.StatusCode, result);
         }
 
-        [HttpDelete(OrderEndpoint.DeleteOrder)]
+        [HttpDelete(OrderEndpoint.CancelOrder)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> DeleteOrder(Guid id)
         {

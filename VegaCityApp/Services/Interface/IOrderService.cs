@@ -11,7 +11,7 @@ namespace VegaCityApp.API.Services.Interface
         Task<IPaginate<GetOrderResponse>> SearchAllOrders(int size, int page);
 
         Task<ResponseAPI> SearchOrder(Guid OrderId);
-        Task<ResponseAPI> UpdateOrder(Guid OrderId, UpdateOrderRequest req);
+        Task<ResponseAPI> UpdateOrder(string InvoiceId, UpdateOrderRequest req);
         Task<ResponseAPI> DeleteOrder(Guid OrderId);
         //Task<ResponseAPI> RemoveEtagTypeFromPackage(Guid etagId, Guid packageId);
     }

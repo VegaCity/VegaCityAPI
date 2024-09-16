@@ -47,7 +47,7 @@ namespace VegaCityApp.API.Services.Implement
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = OrderStatus.Pending,
-                InvoiceId = TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"),
+                InvoiceId = req.InvoiceId,
                 Vatrate = (double)EnvironmentVariableConstant.VATRate / 100,
                 ProductJson = json//
             };
@@ -57,7 +57,11 @@ namespace VegaCityApp.API.Services.Implement
             {
                 MessageResponse = OrderMessage.CreateOrderSuccessfully,
                 StatusCode = HttpStatusCodes.Created,
-                Data = newOrder.Id
+                Data = new
+                {
+                    OrderId = newOrder.Id,
+                    invoiceId = newOrder.InvoiceId
+                }
             } : new ResponseAPI()
             {
                 MessageResponse = OrderMessage.CreateOrderFail,
@@ -69,13 +73,13 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> DeleteOrder(Guid OrderId)
         {
             var orderExisted = await _unitOfWork.GetRepository<Order>()
-                .SingleOrDefaultAsync(predicate: x => x.Id == OrderId);
+                .SingleOrDefaultAsync(predicate: x => x.Id == OrderId && x.Status == OrderStatus.Pending);
             if (orderExisted == null)
             {
                 return new ResponseAPI()
                 {
                     MessageResponse = OrderMessage.NotFoundOrder,
-                    StatusCode = HttpStatusCodes.NotFound
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
             orderExisted.Status = OrderStatus.Canceled;
@@ -83,12 +87,12 @@ namespace VegaCityApp.API.Services.Implement
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
-                    MessageResponse = OrderMessage.DeleteSuccess,
+                    MessageResponse = OrderMessage.CancelOrderSuccess,
                     StatusCode = HttpStatusCodes.OK
                 }
                 : new ResponseAPI()
                 {
-                    MessageResponse = OrderMessage.DeleteFail,
+                    MessageResponse = OrderMessage.CancelFail,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
@@ -112,19 +116,16 @@ namespace VegaCityApp.API.Services.Implement
                 },
                 page: page,
                 size: size,
-                orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => x.Status != OrderStatus.Canceled);
-
-
+                orderBy: x => x.OrderByDescending(z => z.Name));
             return orders;
         }
 
 
-        public async Task<ResponseAPI> UpdateOrder(Guid OrderId, UpdateOrderRequest req)
+        public async Task<ResponseAPI> UpdateOrder(string InvoiceId, UpdateOrderRequest req)
         {
             var order = await _unitOfWork.GetRepository<Order>()
                 .SingleOrDefaultAsync(predicate: x =>
-                    x.Id == OrderId && x.Status != OrderStatus.Canceled);
+                    x.InvoiceId == InvoiceId && x.Status == OrderStatus.Pending);
             if (order == null)
             {
                 return new ResponseAPI()
@@ -142,60 +143,23 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            //deposit check 
-            var deposit = await _unitOfWork.GetRepository<Deposit>()
-                .SingleOrDefaultAsync(predicate: x => x.EtagId == req.EtagId && x.OrderId == OrderId);
-
-            if (deposit == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = OrderMessage.DepositNotFound,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
-            var currentProductList = JsonConvert.DeserializeObject<List<OrderPosResponse>>(order.ProductJson) ?? new List<OrderPosResponse>();
-            foreach (var newProduct in req.NewProducts)
-            {
-                var existingProducts = currentProductList.FirstOrDefault(p => p.Id == newProduct.Id);
-                if (existingProducts != null)
-                {
-                    existingProducts.Quantity += newProduct.Quantity;
-                }
-                else
-                {
-                    //Add new Product
-                    currentProductList.Add(new OrderPosResponse()
-                    {
-                        Id = newProduct.Id,
-                        Quantity = newProduct.Quantity,
-                        Name = newProduct.Name,
-                        ProductCategory = newProduct.ProductCategory,
-                        Price = newProduct.Price
-                    });
-                }
-            }
-            order.Vatrate = req.VATRate;
-
-            double? totalAmount = currentProductList.Sum(p => p.Price * p.Quantity);
-            double? vatAmount = totalAmount * (order.Vatrate ?? 0);
-            double? finalAmount = totalAmount + vatAmount;
-            int roundedFinalAmount = (int)Math.Ceiling(finalAmount ?? 0);
-            order.ProductJson = JsonConvert.SerializeObject(currentProductList);
-            order.TotalAmount = roundedFinalAmount;
+            order.ProductJson = JsonConvert.SerializeObject(req.NewProducts);
+            order.TotalAmount = req.TotalAmount;
+            order.PaymentType = req.PaymentType;
+            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagId && !x.Deflag);
+            order.EtagId = etag != null ? etag.Id : null;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
-
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-
-            deposit.Amount = roundedFinalAmount;
-            deposit.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Deposit>().UpdateAsync(deposit);
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
                     MessageResponse = OrderMessage.UpdateOrderSuccess,
                     StatusCode = HttpStatusCodes.OK,
-                    Data = order
+                    Data = new
+                    {
+                        OrderId = order.Id,
+                        invoiceId = order.InvoiceId
+                    }
                 }
                 : new ResponseAPI()
                 {

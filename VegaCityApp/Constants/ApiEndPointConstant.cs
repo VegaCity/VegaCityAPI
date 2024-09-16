@@ -84,9 +84,9 @@ public static class ApiEndPointConstant
     {
         public const string GetListOrder = ApiEndpoint + "/orders";
         public const string GetOrder = ApiEndpoint + "/order/{id}";
-        public const string DeleteOrder = ApiEndpoint + "/order/{id}";
+        public const string CancelOrder = ApiEndpoint + "/order/{id}";
         public const string CreateOrder = ApiEndpoint + "/order";
-        public const string UpdateOrder = ApiEndpoint + "/order/{id}";
+        public const string UpdateOrder = ApiEndpoint + "/order";
 
 
     }
