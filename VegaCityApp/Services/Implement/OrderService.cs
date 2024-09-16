@@ -34,6 +34,14 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
+            if(!ValidationUtils.CheckNumber(req.TotalAmount))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.TotalAmountInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagId && !x.Deflag);
             foreach (var item in req.ProductData) {
                 if(item.Quantity <= 0)
@@ -142,6 +150,14 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     MessageResponse = OrderMessage.NotFoundOrder,
                     StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+            if(!ValidationUtils.CheckNumber(req.TotalAmount))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.TotalAmountInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
 

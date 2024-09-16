@@ -18,5 +18,9 @@ namespace VegaCityApp.API.Utils
         {
             return Regex.IsMatch(cccd, @"^\d{12}$");
         }
+        public static bool CheckNumber(int number)
+        {
+            return number >= 0;
+        }
     }
 }

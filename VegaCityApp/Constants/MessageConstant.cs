@@ -177,6 +177,7 @@ public static class MessageConstant
         public const string CancelOrderSuccess = "Cancel Order Successfully";
         public const string CancelFail = "Failed To Cancel Order";
         public const string QuantityInvalid = "Quantity Invalid";
+        public const string TotalAmountInvalid = "Total Amount Invalid";
     }
 
     public static class PackageMessage
