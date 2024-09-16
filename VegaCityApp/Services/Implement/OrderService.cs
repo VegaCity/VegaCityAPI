@@ -145,7 +145,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             order.ProductJson = JsonConvert.SerializeObject(req.NewProducts);
             order.TotalAmount = req.TotalAmount;
-            order.PaymentType = req.PaymentType;
+            order.PaymentType = req.PaymentType?? order.PaymentType;
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagId && !x.Deflag);
             order.EtagId = etag != null ? etag.Id : null;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
