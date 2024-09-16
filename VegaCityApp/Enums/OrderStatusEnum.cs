@@ -6,10 +6,10 @@
         Canceled,
         Pending
     }
-    public class RoleOrName
+    public class OrderStatus
     {
-        public const string Complete = "Complete";
-        public const string Canceled = "Canceled";
-        public const string Pending = "Pending";
+        public const string Pending = "PENDING";
+        public const string Completed = "COMPLETED";
+        public const string Canceled = "CANCELED";
     }
 }

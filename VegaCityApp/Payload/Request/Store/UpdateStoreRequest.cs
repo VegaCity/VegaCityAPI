@@ -1,6 +1,4 @@
-﻿using VegaCityApp.API.Enums;
-
-namespace VegaCityApp.API.Payload.Request.Store
+﻿namespace VegaCityApp.API.Payload.Request.Store
 {
     public class UpdateStoreRequest
     {
