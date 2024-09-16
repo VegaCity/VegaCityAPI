@@ -69,6 +69,7 @@ public static class ApiEndPointConstant
         public const string GetListStore = ApiEndpoint + "/stores";
         public const string GetStore = ApiEndpoint + "/store/{id}";
         public const string DeleteStore = ApiEndpoint + "/store/{id}";
+        public const string GetMenu = ApiEndpoint + "/store/menu/{id}";
     }
     public static class HouseEndpoint
     {
@@ -77,5 +78,16 @@ public static class ApiEndPointConstant
         public const string GetHouse = ApiEndpoint + "/house/{id}";
         public const string DeleteHouse = ApiEndpoint + "/house/{id}";
         public const string CreateHouse = ApiEndpoint + "/house";
+    }
+    //order endpoit
+    public static class OrderEndpoint
+    {
+        public const string GetListOrder = ApiEndpoint + "/orders";
+        public const string GetOrder = ApiEndpoint + "/order/{id}";
+        public const string DeleteOrder = ApiEndpoint + "/order/{id}";
+        public const string CreateOrder = ApiEndpoint + "/order";
+        public const string UpdateOrder = ApiEndpoint + "/order/{id}";
+
+
     }
 }

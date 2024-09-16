@@ -68,6 +68,7 @@ public static class DependencyServices
         services.AddScoped<IStoreService, StoreService>();
         services.AddScoped<IZoneService,ZoneService>();
         services.AddScoped<IHouseService, HouseService>();
+        services.AddScoped<IOrderService, OrderService>();
         #endregion
         return services;
     }

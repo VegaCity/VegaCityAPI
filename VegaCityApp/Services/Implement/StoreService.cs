@@ -1,8 +1,10 @@
-﻿using AutoMapper;
+﻿using System.Text.Json.Nodes;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using VegaCityApp.API.Constants;
 using VegaCityApp.API.Enums;
-using VegaCityApp.API.Payload.Request;
+using VegaCityApp.API.Payload.Request.Store;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.StoreResponse;
 using VegaCityApp.API.Services.Interface;
@@ -173,6 +175,139 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = StoreMessage.DeleteFailed,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
+        }
+
+        public async Task<ResponseAPI> GetMenuFromPos(Guid id)
+        {
+             //call api pos - take n parse into Object Menu
+             var data = await CallApiUtils.CallApiGetEndpoint(
+                 "https://6504066dc8869921ae2466d4.mockapi.io/api/Product");
+             var productsPosResponse = await CallApiUtils.GenerateObjectFromResponse<List<ProductsPosResponse>>(data);
+             //lưu chuỗi json này
+             //parse object list sang json
+             string json = JsonConvert.SerializeObject(productsPosResponse);
+             //check menu
+             var checkMenu = await _unitOfWork.GetRepository<Menu>()
+                 .SingleOrDefaultAsync(predicate: x => x.StoreId == id && !x.Deflag);
+             var store = await _unitOfWork.GetRepository<Store>()
+                 .SingleOrDefaultAsync(predicate: x => x.Id == id && !x.Deflag);
+            if (checkMenu == null)
+            {
+                var newMenu = new Menu()
+                {
+                    Id = Guid.NewGuid(),
+                    StoreId = id,
+                    Deflag = false,
+                    Address = store.Address,
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    ImageUrl = "string",
+                    MenuJson = json,
+                    Name = store.ShortName + "Menu",
+                    PhoneNumber = store.PhoneNumber
+                };
+                await _unitOfWork.GetRepository<Menu>().InsertAsync(newMenu);
+                await _unitOfWork.CommitAsync();
+                // tim productcategory, insert vao
+                bool check = await InsertProductCategory(productsPosResponse, id);
+                return check?new ResponseAPI()
+                {
+                    MessageResponse = "Get Successfully!!",
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = productsPosResponse
+                }: new ResponseAPI()
+                {
+                    MessageResponse = "Fail add product category",
+                    StatusCode = HttpStatusCodes.BadRequest,
+                };
+            }
+            else
+            {
+                checkMenu.MenuJson = json;
+                _unitOfWork.GetRepository<Menu>().UpdateAsync(checkMenu);
+                await _unitOfWork.CommitAsync();
+                bool check = await InsertProductCategory(productsPosResponse, id);
+                return check ? new ResponseAPI()
+                {
+                    MessageResponse = "Get Successfully!!",
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = productsPosResponse
+                } : new ResponseAPI()
+                {
+                    MessageResponse = "Fail add product category",
+                    StatusCode = HttpStatusCodes.BadRequest,
+                };
+            }
+        }
+
+        private async Task<bool> InsertProductCategory(List<ProductsPosResponse> listProduct, Guid storeId)
+        {
+            List<ProductFromPos> products = new List<ProductFromPos>();
+            //chay ham for cho productCate name
+            var selectField = listProduct.Select(p => new
+            {
+                p.ProductCategory
+            }).Distinct().ToList();
+            foreach (var Category in selectField)
+            {
+                var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
+                    predicate: x=> x.Name == Category.ProductCategory&& x.StoreId == storeId);
+                if (productCategory == null)
+                {
+                    foreach (var product in listProduct)
+                    {
+                        if (product.ProductCategory == Category.ProductCategory)
+                        {
+                            products.Add(new ProductFromPos()
+                            {
+                                Name = product.Name,
+                                Id = product.Id,
+                                ImgUrl = product.ImgUrl,
+                                Price = product.Price
+                            });
+                        }
+                    }
+
+                    var json = JsonConvert.SerializeObject(products);
+                    var newProductCateGory = new ProductCategory()
+                    {
+                        Id = Guid.NewGuid(),
+                        StoreId = storeId,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        Name = Category.ProductCategory,
+                        ProductJson = json,
+                        UpsDate = TimeUtils.GetCurrentSEATime()
+                    };
+                    await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCateGory);
+                    await _unitOfWork.CommitAsync();
+                    //xoa product
+                    products.Clear();
+                }
+                else
+                {
+                    foreach (var product in listProduct)
+                    {
+                        if (product.ProductCategory == Category.ProductCategory)
+                        {
+                            products.Add(new ProductFromPos()
+                            {
+                                Name = product.Name,
+                                Id = product.Id,
+                                ImgUrl = product.ImgUrl,
+                                Price = product.Price
+                            });
+                        }
+                    }
+
+                    var json = JsonConvert.SerializeObject(products);
+                    productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
+                    productCategory.ProductJson = json;
+                    _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
+                    await _unitOfWork.CommitAsync();
+                    //xoa product
+                    products.Clear();
+                }
+            }
+            return true;
         }
     }
 }

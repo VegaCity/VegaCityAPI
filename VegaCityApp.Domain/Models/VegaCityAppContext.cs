@@ -313,8 +313,6 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.ImageUrl).IsUnicode(false);
 
-                entity.Property(e => e.MenuJson).IsUnicode(false);
-
                 entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.Property(e => e.PhoneNumber)
@@ -325,6 +323,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.Menus)
                     .HasForeignKey(d => d.StoreId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Menu_Store");
             });
 
@@ -464,6 +463,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.ProductCategories)
                     .HasForeignKey(d => d.StoreId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ProductCategory_Store");
             });
 

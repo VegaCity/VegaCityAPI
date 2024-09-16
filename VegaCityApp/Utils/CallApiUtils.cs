@@ -13,6 +13,13 @@ namespace VegaCityApp.API.Utils
             var response = await httpClient.PostAsync(url, content);
             return response;
         }
+
+        public static async Task<HttpResponseMessage> CallApiGetEndpoint(string url)
+        {
+            var httpClient = new HttpClient();
+            var response = await httpClient.GetAsync(url);
+            return response;
+        }
         
         public static async Task<Object> GenerateObjectFromResponse(HttpResponseMessage response)
         {
@@ -20,5 +27,12 @@ namespace VegaCityApp.API.Utils
             var responseObject = JsonConvert.DeserializeObject<Object>(responseString);
             return responseObject;
         }
+        public static async Task<T> GenerateObjectFromResponse<T>(HttpResponseMessage response)
+        {
+            var responseString = await response.Content.ReadAsStringAsync();
+            var responseObject = JsonConvert.DeserializeObject<T>(responseString);
+            return responseObject;
+        }
+
     }
 }

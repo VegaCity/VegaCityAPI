@@ -1,4 +1,4 @@
-﻿using VegaCityApp.API.Payload.Request;
+﻿using VegaCityApp.API.Payload.Request.Store;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.StoreResponse;
 using VegaCityApp.Domain.Paginate;
@@ -11,5 +11,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<IPaginate<GetStoreResponse>> SearchAllStore(int size, int page);
         Task<ResponseAPI> DeleteStore(Guid StoreId);
         Task<ResponseAPI> SearchStore(Guid StoreId);
+        Task<ResponseAPI> GetMenuFromPos(Guid id);
     }
 }

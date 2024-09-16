@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using VegaCityApp.API.Payload.Request;
+using VegaCityApp.API.Payload.Request.Store;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.StoreResponse;
 using VegaCityApp.API.Services.Interface;
@@ -46,6 +46,13 @@ namespace VegaCityApp.API.Controllers
         public async Task<IActionResult> DeleteStore(Guid id)
         {
             var result = await _storeService.DeleteStore(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(StoreEndpoint.GetMenu)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> GetMenu(Guid id)
+        {
+            var result = await _storeService.GetMenuFromPos(id);
             return StatusCode(result.StatusCode, result);
         }
     }

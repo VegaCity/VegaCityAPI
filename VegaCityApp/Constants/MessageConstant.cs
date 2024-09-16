@@ -159,8 +159,24 @@ public static class MessageConstant
     {
         public const string CreateOrderSuccessfully = "Create Order Successfully !!";
         public const string CreateOrderFail = "Create Order Fail !!";
+        public const string NotFoundOrder = "Order Was Not Found!!";
         public const string GetOrdersSuccessfully = "Get Orders Successfully !!";
         public const string GetOrdersFail = "Get Orders Fail !!";
+        public const string NotFoundStore = "Store was not found!";
+        public const string NotFoundETag = "ETag was not found!";
+        public const string MissingInvoiceId = "InvoiceId was not found!";
+        public const string NotFoundMenu = "Menu was not Found!";
+        public const string NotFoundProduct = "Not Found Product!";
+        public const string NotFoundCategory = "Not Found Category!";
+        public const string OrderCompleted = "Order Already Completed";
+        public const string DepositNotFound = "Deposit Was Not Found Or UnPaid!";
+        public const string UpdateOrderSuccess = "Update Order Successfully";
+        public const string UpdateOrderFailed = "Failed To Update Order";
+        public const string NotFoundWallet = "WalletId is missing for the given Etag.";
+        public const string OrderExisted = "Order with InvoiceId Existed";
+        public const string DeleteSuccess = "Delete Order Successfully";
+        public const string DeleteFail = "Failed To Delete Order";
+
     }
 
     public static class PackageMessage

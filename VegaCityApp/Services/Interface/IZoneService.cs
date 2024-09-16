@@ -1,4 +1,4 @@
-﻿using VegaCityApp.API.Payload.Request;
+﻿using VegaCityApp.API.Payload.Request.Zone;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.GetZoneResponse;
 using VegaCityApp.Domain.Paginate;
