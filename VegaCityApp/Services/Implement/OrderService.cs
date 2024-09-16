@@ -57,7 +57,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 MessageResponse = OrderMessage.CreateOrderSuccessfully,
                 StatusCode = HttpStatusCodes.Created,
-                Data = newOrder
+                Data = newOrder.Id
             } : new ResponseAPI()
             {
                 MessageResponse = OrderMessage.CreateOrderFail,
