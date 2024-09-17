@@ -39,9 +39,9 @@ namespace VegaCityApp.API.Controllers
 
         [HttpGet(OrderEndpoint.GetOrder)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchOrder(Guid id)
+        public async Task<IActionResult> SearchOrder(Guid? id,  string? InvoiceId)
         {
-            var result = await _orderService.SearchOrder(id);
+            var result = await _orderService.SearchOrder(id, InvoiceId);
             return StatusCode(result.StatusCode, result);
         }
 

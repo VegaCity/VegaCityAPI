@@ -206,10 +206,10 @@ namespace VegaCityApp.API.Services.Implement
 
         }
 
-        public async Task<ResponseAPI> SearchOrder(Guid OrderId)
+        public async Task<ResponseAPI> SearchOrder(Guid? OrderId, string? InvoiceId)
         {
             var orderExist = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
-                predicate: x => x.Id == OrderId && x.Status != OrderStatus.Canceled,
+                predicate: x => (x.Id == OrderId || x.InvoiceId == InvoiceId)&& x.Status != OrderStatus.Canceled,
                 include: order => order.Include(o => o.Etag)
                     .Include(o => o.Store)
                     .Include(o => o.Deposits));
