@@ -87,7 +87,12 @@ public static class ApiEndPointConstant
         public const string CancelOrder = ApiEndpoint + "/order/{id}";
         public const string CreateOrder = ApiEndpoint + "/order";
         public const string UpdateOrder = ApiEndpoint + "/order";
-
-
+    }
+    public static class PaymentEndpoint
+    {
+        public const string MomoPayment = ApiEndpoint + "/payment/momo";
+        public const string ZaloPayment = ApiEndpoint + "/payment/zalo";
+        public const string VnPayPayment = ApiEndpoint + "/payment/vnpay";
+        public const string VisaCardPayment = ApiEndpoint + "/payment/visa";
     }
 }
