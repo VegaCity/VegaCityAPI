@@ -101,7 +101,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> UpdatePackage(Guid packageId, UpdatePackageRequest req)
         {
           
-            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageId && !x.Deflag);
+            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == packageId && !x.Deflag);
             if (package == null)
             {
                 return new ResponseAPI()
