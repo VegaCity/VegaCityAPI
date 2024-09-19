@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using VegaCityApp.API.Payload.Request.Payment;
 using VegaCityApp.API.Payload.Response;
+using VegaCityApp.API.Services.Implement;
 using VegaCityApp.API.Services.Interface;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
@@ -23,5 +24,20 @@ namespace VegaCityApp.API.Controllers
             var result = await _service.MomoPayment(request);
             return StatusCode(result.StatusCode, result);
         }
+
+        [HttpPost(PaymentEndpoint.VnPayPayment)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        public async Task<IActionResult> CreateVnPayUrl([FromBody] PaymentRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var result = await _service.CreateVnPayUrl(request, HttpContext);
+            return StatusCode(result.StatusCode, result);
+
+        }
+    
+      
     }
 }

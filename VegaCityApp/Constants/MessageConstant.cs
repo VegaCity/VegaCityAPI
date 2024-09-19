@@ -246,4 +246,10 @@ public static class MessageConstant
         public const string NotFoundZone = "Zone Not Found!";
         public const string HouseDeleted = "House is deleted!";
     }
+
+    public static class PaymentMessage
+    {
+        public const string PaymentSuccess = "Successfully Created Url with VnPay !!";
+        public const string PaymentFail = "Failed Payment with VnPay !!";
+    }
 }

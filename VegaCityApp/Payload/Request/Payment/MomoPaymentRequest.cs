@@ -18,6 +18,15 @@
         public string lang { get; set; }
         public string signature { get; set; }
     }
+
+    public class VnPaymentRequestModel
+    {
+        public Guid OrderId { get; set; }
+        public string FullName { get; set; }
+        public string Description { get; set; }
+        public double Amount { get; set; }
+        public DateTime CreatedDate { get; set; }
+    }
     public class PaymentRequest
     {
         public string InvoiceId { get; set; }
