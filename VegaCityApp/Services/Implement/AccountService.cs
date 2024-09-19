@@ -447,9 +447,20 @@ namespace VegaCityApp.Service.Implement
                     //send mail
                     if (newUser != null)
                     {
-                        var subject = UserMessage.YourPasswordToChange;
-                        var body = "Your Your Password To Change. Your password is: " + newUser.Password;
-                        await MailUtil.SendMailAsync(newUser.Email, subject, body);
+                        try
+                        {
+                            var subject = UserMessage.YourPasswordToChange;
+                            var body = "Your Your Password To Change. Your password is: " + newUser.Password;
+                            await MailUtil.SendMailAsync(newUser.Email, subject, body);
+                        }catch(Exception ex)
+                        {
+                            return new ResponseAPI
+                            {
+                                StatusCode = HttpStatusCodes.BadRequest,
+                                MessageResponse = UserMessage.SendMailFail
+                            };
+                        }
+
                     }
                     return new ResponseAPI
                     {
@@ -539,10 +550,23 @@ namespace VegaCityApp.Service.Implement
                         //send mail
                         if (user != null)
                         {
-                            var subject = UserMessage.ApproveSuccessfully;
-                            var body = "Your account has been approved. Your password is: " + user.Password;
-                            await MailUtil.SendMailAsync(user.Email, subject, body);
+                            try
+                            {
+                                var subject = UserMessage.ApproveSuccessfully;
+                                var body = "Your account has been approved. Your password is: " + user.Password;
+                                await MailUtil.SendMailAsync(user.Email, subject, body);
+                            }
+                            catch (Exception ex)
+                            {
+                                return new ResponseAPI
+                                {
+                                    StatusCode = HttpStatusCodes.BadRequest,
+                                    MessageResponse = UserMessage.SendMailFail
+                                };
+                            }
+
                         }
+                    }
 
                         return new ResponseAPI
                         {
@@ -580,10 +604,21 @@ namespace VegaCityApp.Service.Implement
                         //send mail
                         if (user != null)
                         {
-                            var subject = UserMessage.ApproveSuccessfully;
-                            var body = "Your account has been approved. Your password is: " + user.Password;
-                            await MailUtil.SendMailAsync(user.Email, subject, body);
-                        }
+                            try
+                            {
+                                var subject = UserMessage.ApproveSuccessfully;
+                                var body = "Your account has been approved. Your password is: " + user.Password;
+                                await MailUtil.SendMailAsync(user.Email, subject, body);
+                            }
+                            catch (Exception ex)
+                            {
+                                return new ResponseAPI
+                                {
+                                    StatusCode = HttpStatusCodes.BadRequest,
+                                    MessageResponse = UserMessage.SendMailFail
+                                };
+
+                            }
 
                         return new ResponseAPI
                         {

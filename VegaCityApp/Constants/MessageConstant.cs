@@ -101,6 +101,7 @@ public static class MessageConstant
     }
     public static class UserMessage
     {   
+        public const string SendMailFail = "Send Mail Fail !!";
         public const string UserHadToken = "User Had Token !!";
         public const string RefreshTokenSuccessfully = "Refresh Token Successfully !!";
         public const string RefreshTokenFail = "Refresh Token Fail !!";

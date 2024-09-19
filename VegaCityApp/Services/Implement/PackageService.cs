@@ -86,7 +86,10 @@ namespace VegaCityApp.API.Services.Implement
             {
                 MessageResponse = PackageMessage.CreatePackageSuccessfully,
                 StatusCode = HttpStatusCodes.Created,
-                Data = newPackage.Id
+                Data = new
+                {
+                    PackageId = newPackage.Id
+                }
 
             };
             int check = await _unitOfWork.CommitAsync();
@@ -162,7 +165,7 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     MessageResponse = PackageMessage.UpdatePackageSuccessfully,
                     StatusCode = HttpStatusCodes.OK,
-                    
+                    Data = new { PackageId = package.Id }
                 };
             }
             else
@@ -225,7 +228,6 @@ namespace VegaCityApp.API.Services.Implement
                 Data = new
                 {
                    package
-                   
                 }
             };
         }
@@ -248,7 +250,11 @@ namespace VegaCityApp.API.Services.Implement
                 ? new ResponseAPI()
                 {
                     MessageResponse = PackageMessage.DeleteSuccess,
-                    StatusCode = HttpStatusCodes.OK
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = new
+                    {
+                        PackageId = package.Id
+                    }
                 }
                 : new ResponseAPI()
                 {
