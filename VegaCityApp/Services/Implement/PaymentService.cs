@@ -130,7 +130,17 @@
                     {
                         StatusCode = HttpStatusCodes.OK,
                         MessageResponse = PaymentMessage.PaymentSuccess,
-                        Data = paymentUrl
+                        Data = new VnPaymentResponse()
+                        {   
+                            Success =  true,
+                            PaymentMethod = "VnPay",
+                            OrderDescription = "Thanh toán VnPay cho đơn hàng :" + request.InvoiceId,
+                            OrderId = request.InvoiceId,
+                            Amount = checkOrder.TotalAmount,
+                            VnPayResponse = paymentUrl,
+                            CrDate = TimeUtils.GetCurrentSEATime()
+
+                        }
                     };
 
                 }
