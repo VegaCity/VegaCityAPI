@@ -135,6 +135,7 @@ public static class DependencyServices
         services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo() { Title = "Vega City App", Version = "v1" });
+            options.EnableAnnotations();
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
             {
                 In = ParameterLocation.Header,

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using VegaCityApp.API.Payload.Request.Payment;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Services.Interface;
@@ -17,6 +18,7 @@ namespace VegaCityApp.API.Controllers
         }
 
         [HttpPost(PaymentEndpoint.MomoPayment)]
+        [SwaggerOperation(Summary = "Api đang trong quá trình test và phát triển ")]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         public async Task<IActionResult> MomoPayment([FromBody] PaymentRequest request)
         {
