@@ -726,7 +726,7 @@ namespace VegaCityApp.Service.Implement
         public async Task<ResponseAPI> UpdateUser(Guid userId, UpdateUserAccountRequest req)
         {
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
-                    (predicate: x => x.Id == userId && x.Status.Equals(UserStatusEnum.Active));
+                    (predicate: x => x.Id == userId && x.Status == (int)UserStatusEnum.Active);
             if (user == null)
             {
                 return new ResponseAPI()
@@ -758,7 +758,7 @@ namespace VegaCityApp.Service.Implement
         public async Task<ResponseAPI> DeleteUser(Guid UserId)
         {
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
-                (predicate: x => x.Id == UserId && x.Status.Equals(UserStatusEnum.Active));
+                (predicate: x => x.Id == UserId && x.Status ==(int) UserStatusEnum.Active);
             if (user == null)
             {
                 return new ResponseAPI()
