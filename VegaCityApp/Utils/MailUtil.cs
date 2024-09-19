@@ -7,8 +7,12 @@ namespace VegaCityApp.API.Utils
     {
         private const string _smtpServer = "smtp.gmail.com";
         private const int _port = 587;
-        private const string _fromEmail = "dattqse161488@fpt.edu.vn";
-        private const string _password = "brly rgxt xnql przk";
+        private const string _fromEmail = "khangnhse161460@fpt.edu.vn";
+        private const string _password = "ljei leab sygd radq";
+        #region email sercure
+        //private const string _fromEmail = "hoangthse161468@fpt.edu.vn";
+        //private const string _password = "qbsg kyos lceg pxzu";
+        #endregion
         public static async Task SendMailAsync(string to, string subject, string body)
         {
             //Send mail
