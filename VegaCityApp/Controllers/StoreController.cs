@@ -20,7 +20,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(StoreEndpoint.GetListStore)]
         [ProducesResponseType(typeof(IPaginate<GetStoreResponse>), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchAllStore(int size, int page)
+        public async Task<IActionResult> SearchAllStore([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _storeService.SearchAllStore(size, page);
             return Ok(result);

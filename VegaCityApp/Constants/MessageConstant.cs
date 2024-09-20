@@ -2,6 +2,8 @@
 
 public static class MessageConstant
 {
+    public static int size = 10;
+    public static int page = 1;
     public static class HttpStatusCodes
     {
         // 1xx Informational

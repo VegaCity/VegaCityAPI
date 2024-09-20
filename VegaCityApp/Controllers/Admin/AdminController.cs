@@ -42,7 +42,7 @@ namespace VegaCityApp.API.Controllers.Admin
 
         [HttpGet(UserEndpoint.GetListUser)]
         [ProducesResponseType(typeof(IPaginate<GetUserResponse>), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchAllUser([FromQuery] int size, [FromQuery] int page )
+        public async Task<IActionResult> SearchAllUser([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _service.SearchAllUser(size, page);
             return Ok(result);

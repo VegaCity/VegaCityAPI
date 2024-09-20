@@ -35,7 +35,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(ZoneEndPoint.SearchAllZone)]
         [ProducesResponseType(typeof(IPaginate<GetZoneResponse>), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchZones(int size, int page)
+        public async Task<IActionResult> SearchZones([FromQuery]int size = 10,[FromQuery] int page = 1)
         {
             var result = await _zoneService.SearchZones(size, page);
             return Ok(result);

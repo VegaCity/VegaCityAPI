@@ -31,7 +31,7 @@ namespace VegaCityApp.API.Controllers
         [HttpGet(PackageEndpoint.GetListPackage)]
         [CustomAuthorize(RoleEnum.Admin,RoleEnum.CashierApp,RoleEnum.CashierWeb)]
         [ProducesResponseType(typeof(IPaginate<GetPackageResponse>), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchAllPackage(int size, int page)
+        public async Task<IActionResult> SearchAllPackage([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _packageService.SearchAllPackage(size, page);
             return Ok(result);

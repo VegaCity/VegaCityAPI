@@ -34,7 +34,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(HouseEndpoint.GetListHouse)]
         [ProducesResponseType(typeof(IPaginate<GetHouseResponse>), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchAllHouse(int size, int page)
+        public async Task<IActionResult> SearchAllHouse([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _service.SearchAllHouse(size, page);
             return Ok(result);

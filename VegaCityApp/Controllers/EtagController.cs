@@ -51,7 +51,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(EtagTypeEndpoint.SearchAllEtagType)]
         [ProducesResponseType(typeof(EtagTypeResponse), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchAllEtagType([FromQuery] int size, [FromQuery] int page)
+        public async Task<IActionResult> SearchAllEtagType([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _service.SearchAllEtagType(size, page);
             return Ok(result);
