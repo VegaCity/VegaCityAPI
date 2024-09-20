@@ -618,7 +618,7 @@ namespace VegaCityApp.Service.Implement
             }
 
             var user = await _unitOfWork.GetRepository<User>()
-                .SingleOrDefaultAsync(predicate: x => x.Email == req.Email);
+                .SingleOrDefaultAsync(predicate: x => x.Email == req.Email, include: user => user.Include(x => x.Role));
             if (user == null)
             {
                 return new ResponseAPI
@@ -630,7 +630,10 @@ namespace VegaCityApp.Service.Implement
 
             if (user.IsChange == false)
             {
-                if(user.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierWebId) || user.RoleId == Guid.Parse(EnvironmentVariableConstant.StoreId))
+                if(user.Role.Name == RoleEnum.CashierWeb.GetDescriptionFromEnum() 
+                    || user.Role.Name == RoleEnum.Store.GetDescriptionFromEnum() 
+                    || user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum()
+                    || user.Role.Name == RoleEnum.CashierApp.GetDescriptionFromEnum())
                 {
                     if (user.Password == req.OldPassword)
                     {
