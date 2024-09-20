@@ -103,7 +103,15 @@ namespace VegaCityApp.Service.Implement
             return await _unitOfWork.CommitAsync() > 0;
         }
         #endregion
-        public async Task<ResponseAPI> Login(LoginRequest req)
+        #region private variable
+        private readonly string[] allowedRoles = {
+            RoleEnum.CashierWeb.GetDescriptionFromEnum(),
+            RoleEnum.Store.GetDescriptionFromEnum(),
+            RoleEnum.Admin.GetDescriptionFromEnum(),
+            RoleEnum.CashierApp.GetDescriptionFromEnum()
+        };
+        #endregion
+    public async Task<ResponseAPI> Login(LoginRequest req)
         {
             Tuple<string, Guid> guidClaim = null;
             if (!ValidationUtils.IsEmail(req.Email))
@@ -665,10 +673,7 @@ namespace VegaCityApp.Service.Implement
 
             if (user.IsChange == false)
             {
-                if(user.Role.Name == RoleEnum.CashierWeb.GetDescriptionFromEnum() 
-                    || user.Role.Name == RoleEnum.Store.GetDescriptionFromEnum() 
-                    || user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum()
-                    || user.Role.Name == RoleEnum.CashierApp.GetDescriptionFromEnum())
+                if(allowedRoles.Contains(user.Role.Name))
                 {
                     if (user.Password == req.OldPassword)
                     {
