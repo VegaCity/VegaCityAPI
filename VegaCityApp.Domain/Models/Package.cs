@@ -17,12 +17,10 @@ namespace VegaCityApp.Domain.Models
         public int? Price { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
-        public Guid MarketZoneId { get; set; }
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
 
-        public virtual MarketZone MarketZone { get; set; } = null!;
         public virtual ICollection<PackageETagTypeMapping> PackageETagTypeMappings { get; set; }
     }
 }

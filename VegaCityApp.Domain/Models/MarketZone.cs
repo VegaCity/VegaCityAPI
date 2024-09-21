@@ -9,7 +9,6 @@ namespace VegaCityApp.Domain.Models
         {
             EtagTypes = new HashSet<EtagType>();
             Etags = new HashSet<Etag>();
-            Packages = new HashSet<Package>();
             Stores = new HashSet<Store>();
             Zones = new HashSet<Zone>();
         }
@@ -29,7 +28,6 @@ namespace VegaCityApp.Domain.Models
 
         public virtual ICollection<EtagType> EtagTypes { get; set; }
         public virtual ICollection<Etag> Etags { get; set; }
-        public virtual ICollection<Package> Packages { get; set; }
         public virtual ICollection<Store> Stores { get; set; }
         public virtual ICollection<Zone> Zones { get; set; }
     }

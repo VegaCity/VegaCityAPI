@@ -77,7 +77,7 @@ namespace VegaCityApp.API.Services.Implement
                 Price = req.Price,
                 StartDate = req.StartDate,
                 EndDate = req.EndDate,
-                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
+                ImageUrl = req.ImageUrl,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
             };
@@ -157,6 +157,7 @@ namespace VegaCityApp.API.Services.Implement
             package.Price = req.Price;
             package.StartDate = req.StartDate;
             package.EndDate = req.EndDate;
+            package.ImageUrl = req.ImageUrl;
             _unitOfWork.GetRepository<Package>().UpdateAsync(package);
             var result = await _unitOfWork.CommitAsync();
             if (result > 0)
@@ -165,7 +166,10 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     MessageResponse = PackageMessage.UpdatePackageSuccessfully,
                     StatusCode = HttpStatusCodes.OK,
-                    Data = new { PackageId = package.Id }
+                    Data = new
+                    {
+                        PackageId = package.Id
+                    }
                 };
             }
             else
@@ -190,11 +194,10 @@ namespace VegaCityApp.API.Services.Implement
                     Price = x.Price,
                     StartDate = x.StartDate,
                     EndDate = x.EndDate,
-                    MarketZoneId = x.MarketZoneId,
                     CrDate = x.CrDate,
                     UpsDate = x.UpsDate,
                     Deflag = x.Deflag,
-                    
+                    ImageUrl = x.ImageUrl,
                 },
                 page: page,
                 size: size,

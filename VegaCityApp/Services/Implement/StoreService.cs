@@ -110,10 +110,8 @@ namespace VegaCityApp.API.Services.Implement
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
                 predicate: x => x.Id == StoreId && !x.Deflag,
                 include: store => store
-                    .Include(y => y.DisputeReports)
-                    .Include(y => y.Menus)
+                    .Include(y => y.Menus).ThenInclude(y => y.ProductCategories)
                     .Include(y => y.Orders)
-                    .Include(y => y.ProductCategories)
                     .Include(y => y.Users)
             );
             store.Users = store.Users.Select(x => new User{ 
@@ -250,7 +248,7 @@ namespace VegaCityApp.API.Services.Implement
             foreach (var Category in selectField)
             {
                 var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
-                    predicate: x=> x.Name == Category.ProductCategory&& x.StoreId == storeId);
+                    predicate: x=> x.Name == Category.ProductCategory);
                 if (productCategory == null)
                 {
                     foreach (var product in listProduct)
@@ -271,7 +269,6 @@ namespace VegaCityApp.API.Services.Implement
                     var newProductCateGory = new ProductCategory()
                     {
                         Id = Guid.NewGuid(),
-                        StoreId = storeId,
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         Name = Category.ProductCategory,
                         ProductJson = json,
