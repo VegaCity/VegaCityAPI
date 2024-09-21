@@ -18,7 +18,6 @@ namespace VegaCityApp.Domain.Models
 
         public virtual DbSet<Deposit> Deposits { get; set; } = null!;
         public virtual DbSet<DisputeReport> DisputeReports { get; set; } = null!;
-        public virtual DbSet<ENotification> ENotifications { get; set; } = null!;
         public virtual DbSet<Etag> Etags { get; set; } = null!;
         public virtual DbSet<EtagType> EtagTypes { get; set; } = null!;
         public virtual DbSet<House> Houses { get; set; } = null!;
@@ -123,31 +122,6 @@ namespace VegaCityApp.Domain.Models
                     .WithMany(p => p.DisputeReports)
                     .HasForeignKey(d => d.UserId)
                     .HasConstraintName("FK_DisputeReports_User");
-            });
-
-            modelBuilder.Entity<ENotification>(entity =>
-            {
-                entity.ToTable("E_Notification");
-
-                entity.Property(e => e.Id).ValueGeneratedNever();
-
-                entity.Property(e => e.CrDate)
-                    .HasColumnType("datetime")
-                    .HasColumnName("crDate")
-                    .HasDefaultValueSql("(getdate())");
-
-                entity.Property(e => e.EtagId).HasColumnName("ETagId");
-
-                entity.Property(e => e.ExpireDate).HasColumnType("datetime");
-
-                entity.Property(e => e.Name)
-                    .HasMaxLength(200)
-                    .IsUnicode(false);
-
-                entity.HasOne(d => d.Etag)
-                    .WithMany(p => p.ENotifications)
-                    .HasForeignKey(d => d.EtagId)
-                    .HasConstraintName("FK__E_Notific__ETagI__17F790F9");
             });
 
             modelBuilder.Entity<Etag>(entity =>
@@ -404,12 +378,6 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnType("datetime")
                     .HasColumnName("upsDate")
                     .HasDefaultValueSql("(getdate())");
-
-                entity.HasOne(d => d.MarketZone)
-                    .WithMany(p => p.Packages)
-                    .HasForeignKey(d => d.MarketZoneId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Package_MarketZone");
             });
 
             modelBuilder.Entity<PackageETagTypeMapping>(entity =>
@@ -461,11 +429,10 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("upsDate")
                     .HasDefaultValueSql("(getdate())");
 
-                entity.HasOne(d => d.Store)
+                entity.HasOne(d => d.Menu)
                     .WithMany(p => p.ProductCategories)
-                    .HasForeignKey(d => d.StoreId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_ProductCategory_Store");
+                    .HasForeignKey(d => d.MenuId)
+                    .HasConstraintName("FK_ProductCategory_Menu");
             });
 
             modelBuilder.Entity<Role>(entity =>
