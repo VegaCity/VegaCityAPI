@@ -77,7 +77,7 @@ namespace VegaCityApp.API.Services.Implement
                 Price = req.Price,
                 StartDate = req.StartDate,
                 EndDate = req.EndDate,
-                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
+                ImageUrl = req.ImageUrl,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
             };
@@ -86,7 +86,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 MessageResponse = PackageMessage.CreatePackageSuccessfully,
                 StatusCode = HttpStatusCodes.Created,
-                Data = newPackage.Id
+                Data = new { PackageId = newPackage.Id }
 
             };
             int check = await _unitOfWork.CommitAsync();
@@ -101,7 +101,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> UpdatePackage(Guid packageId, UpdatePackageRequest req)
         {
           
-            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageId && !x.Deflag);
+            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == packageId && !x.Deflag);
             if (package == null)
             {
                 return new ResponseAPI()
@@ -154,6 +154,7 @@ namespace VegaCityApp.API.Services.Implement
             package.Price = req.Price;
             package.StartDate = req.StartDate;
             package.EndDate = req.EndDate;
+            package.ImageUrl = req.ImageUrl;
             _unitOfWork.GetRepository<Package>().UpdateAsync(package);
             var result = await _unitOfWork.CommitAsync();
             if (result > 0)
@@ -162,7 +163,10 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     MessageResponse = PackageMessage.UpdatePackageSuccessfully,
                     StatusCode = HttpStatusCodes.OK,
-                    
+                    Data = new
+                    {
+                        PackageId = package.Id
+                    }
                 };
             }
             else
@@ -187,11 +191,10 @@ namespace VegaCityApp.API.Services.Implement
                     Price = x.Price,
                     StartDate = x.StartDate,
                     EndDate = x.EndDate,
-                    MarketZoneId = x.MarketZoneId,
                     CrDate = x.CrDate,
                     UpsDate = x.UpsDate,
                     Deflag = x.Deflag,
-                    
+                    ImageUrl = x.ImageUrl,
                 },
                 page: page,
                 size: size,
@@ -248,7 +251,11 @@ namespace VegaCityApp.API.Services.Implement
                 ? new ResponseAPI()
                 {
                     MessageResponse = PackageMessage.DeleteSuccess,
-                    StatusCode = HttpStatusCodes.OK
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = new
+                    {
+                        PackageId = package.Id
+                    }
                 }
                 : new ResponseAPI()
                 {
