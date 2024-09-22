@@ -46,7 +46,7 @@ namespace VegaCityApp.API.Services.Implement
                 orderInfo = orderInfo,
                 partnerCode = PaymentMomo.MomoPartnerCode,
                 redirectUrl = PaymentMomo.redirectUrl,
-                ipnUrl = PaymentMomo.ipnUrl,
+                ipnUrl = PaymentMomo.ipnUrl + request.InvoiceId,
                 amount = checkOrder.TotalAmount,
                 orderId = request.InvoiceId,
                 requestId = request.InvoiceId,
