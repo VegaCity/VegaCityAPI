@@ -58,7 +58,6 @@ namespace VegaCityApp.API.Services.Implement
                 autoCapture = PaymentMomo.autoCapture,
                 lang = PaymentMomo.lang,
                 signature = signature,
-
             };
             //call momo api
             var response = await CallApiUtils.CallApiEndpoint("https://test-payment.momo.vn/v2/gateway/api/create", momoPaymentRequest);
