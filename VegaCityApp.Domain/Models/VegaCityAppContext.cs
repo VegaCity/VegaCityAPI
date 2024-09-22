@@ -24,6 +24,7 @@ namespace VegaCityApp.Domain.Models
         public virtual DbSet<MarketZone> MarketZones { get; set; } = null!;
         public virtual DbSet<Menu> Menus { get; set; } = null!;
         public virtual DbSet<Order> Orders { get; set; } = null!;
+        public virtual DbSet<OrderDetail> OrderDetails { get; set; } = null!;
         public virtual DbSet<Package> Packages { get; set; } = null!;
         public virtual DbSet<PackageETagTypeMapping> PackageETagTypeMappings { get; set; } = null!;
         public virtual DbSet<ProductCategory> ProductCategories { get; set; } = null!;
@@ -287,6 +288,8 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.ImageUrl).IsUnicode(false);
 
+                entity.Property(e => e.MenuJson).IsUnicode(false);
+
                 entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.Property(e => e.PhoneNumber)
@@ -324,8 +327,6 @@ namespace VegaCityApp.Domain.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.ProductJson).IsUnicode(false);
-
                 entity.Property(e => e.Status)
                     .HasMaxLength(20)
                     .IsUnicode(false);
@@ -335,18 +336,59 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("upsDate")
                     .HasDefaultValueSql("(getdate())");
 
-                entity.Property(e => e.Vatrate).HasColumnName("VATRate");
-
                 entity.HasOne(d => d.Etag)
                     .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.EtagId)
                     .HasConstraintName("FK_Order_ETag");
 
+                entity.HasOne(d => d.EtagType)
+                    .WithMany(p => p.Orders)
+                    .HasForeignKey(d => d.EtagTypeId)
+                    .HasConstraintName("FK_Order_ETagType");
+
+                entity.HasOne(d => d.Package)
+                    .WithMany(p => p.Orders)
+                    .HasForeignKey(d => d.PackageId)
+                    .HasConstraintName("FK_Order_Package");
+
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.StoreId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Order_Store");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Orders)
+                    .HasForeignKey(d => d.UserId)
+                    .HasConstraintName("FK_Order_User");
+            });
+
+            modelBuilder.Entity<OrderDetail>(entity =>
+            {
+                entity.ToTable("OrderDetail");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate");
+
+                entity.Property(e => e.ProductJson).IsUnicode(false);
+
+                entity.Property(e => e.UpsDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("upsDate");
+
+                entity.Property(e => e.Vatrate).HasColumnName("VATRate");
+
+                entity.HasOne(d => d.Menu)
+                    .WithMany(p => p.OrderDetails)
+                    .HasForeignKey(d => d.MenuId)
+                    .HasConstraintName("FK_OrderDetail_Menu");
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.OrderDetails)
+                    .HasForeignKey(d => d.OrderId)
+                    .HasConstraintName("FK_OrderDetail_Order");
             });
 
             modelBuilder.Entity<Package>(entity =>

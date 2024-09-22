@@ -8,6 +8,7 @@ namespace VegaCityApp.Domain.Models
         public EtagType()
         {
             Etags = new HashSet<Etag>();
+            Orders = new HashSet<Order>();
             PackageETagTypeMappings = new HashSet<PackageETagTypeMapping>();
         }
 
@@ -21,6 +22,7 @@ namespace VegaCityApp.Domain.Models
 
         public virtual MarketZone MarketZone { get; set; } = null!;
         public virtual ICollection<Etag> Etags { get; set; }
+        public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<PackageETagTypeMapping> PackageETagTypeMappings { get; set; }
     }
 }

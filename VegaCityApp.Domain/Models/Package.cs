@@ -7,6 +7,7 @@ namespace VegaCityApp.Domain.Models
     {
         public Package()
         {
+            Orders = new HashSet<Order>();
             PackageETagTypeMappings = new HashSet<PackageETagTypeMapping>();
         }
 
@@ -21,6 +22,7 @@ namespace VegaCityApp.Domain.Models
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
 
+        public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<PackageETagTypeMapping> PackageETagTypeMappings { get; set; }
     }
 }

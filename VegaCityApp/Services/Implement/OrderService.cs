@@ -25,15 +25,8 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> CreateOrder(CreateOrderRequest req)
         {
             var store = await _unitOfWork.GetRepository<Store>()
-                .SingleOrDefaultAsync(predicate: x => x.Id == req.StoreId && !x.Deflag && x.Status ==(int) StoreStatusEnum.Opened);
-            if (store == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = OrderMessage.NotFoundStore,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
+                .SingleOrDefaultAsync(predicate: x => x.Id == req.StoreId && !x.Deflag && x.Status ==(int) StoreStatusEnum.Opened,
+                include: store => store.Include(y => y.Menus));
             if(!ValidationUtils.CheckNumber(req.TotalAmount))
             {
                 return new ResponseAPI()
@@ -43,6 +36,8 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagId && !x.Deflag);
+            int amount = 0;
+            int count = 0;
             foreach (var item in req.ProductData) {
                 if(item.Quantity <= 0)
                 {
@@ -52,25 +47,64 @@ namespace VegaCityApp.API.Services.Implement
                         StatusCode = HttpStatusCodes.BadRequest
                     };
                 }
+                amount += item.Price * item.Quantity;
+                count += item.Quantity;
             }
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == req.UserId && x.Status ==(int) UserStatusEnum.Active);
+            var etagType = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagId && !x.Deflag);
+            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageId && !x.Deflag);
+
             string json = JsonConvert.SerializeObject(req.ProductData);
             var newOrder = new Order()
             {
                 Id = Guid.NewGuid(),
                 PaymentType = req.PaymentType,
-                StoreId = store.Id,
+                StoreId = store != null ? store.Id : null,
                 EtagId = etag != null? etag.Id : null,
-                Name = "Order From Pos: " + TimeUtils.GetCurrentSEATime(),
+                Name = req.OrderName,
                 TotalAmount = req.TotalAmount,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = OrderStatus.Pending,
                 InvoiceId = req.InvoiceId,
-                Vatrate = (double)EnvironmentVariableConstant.VATRate / 100,
-                ProductJson = json//
+                EtagTypeId = etagType != null ? etagType.Id : null,
+                PackageId = package != null ? package.Id : null,
+                UserId = user != null ? user.Id : null,
             };
             await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
+            //create order Detail
+            if(store != null)
+            {
 
+                var orderDetail = new OrderDetail()
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = newOrder.Id,
+                    ProductJson = json,
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    TotalAmount = amount + (amount * EnvironmentVariableConstant.VATRate),
+                    MenuId = req.MenuId,
+                    Quantity = count,
+                    Vatrate = EnvironmentVariableConstant.VATRate,
+                };
+                await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
+            }
+            else
+            {
+                var orderDetail = new OrderDetail()
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = newOrder.Id,
+                    ProductJson = json,
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    TotalAmount = amount + (amount * EnvironmentVariableConstant.VATRate),
+                    Quantity = count,
+                    Vatrate = EnvironmentVariableConstant.VATRate,
+                };
+                await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
+            }
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
                 MessageResponse = OrderMessage.CreateOrderSuccessfully,
