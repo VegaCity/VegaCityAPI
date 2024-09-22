@@ -101,6 +101,8 @@ public static class MessageConstant
     }
     public static class UserMessage
     {   
+        public const string PhoneNumberExist = "Phone Number already exist !!";
+        public const string CCCDExist = "CCCD already exist !!";
         public const string SendMailFail = "Send Mail Fail !!";
         public const string UserHadToken = "User Had Token !!";
         public const string RefreshTokenSuccessfully = "Refresh Token Successfully !!";
@@ -140,6 +142,7 @@ public static class MessageConstant
         public const string InvalidRoleName = "Created fail! Please check the Role Name!";
         public const string YourPinCode = "Your Verify Pin Code ";
         public const string SaveRefreshTokenFail = "Save Refresh Token Fail !!";
+        public const string EmailExist = "Email already exist !!";
     }
 
     public static class RoleMessage

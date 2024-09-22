@@ -327,14 +327,34 @@ namespace VegaCityApp.Service.Implement
             }
 
             //check if email is already exist
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Email == req.Email
-                && x.PhoneNumber == req.PhoneNumber && x.Cccd == req.CCCD);
-            if (user != null)
+            var emailExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
+                x.Email == req.Email);
+            if (emailExist != null)
             {
-                return new ResponseAPI
+                return new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.EmailExistOrPhoneOrCCCDExit
+                    MessageResponse = UserMessage.EmailExist
+                };
+            }
+            var phoneNumberExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
+                x.PhoneNumber == req.PhoneNumber);
+            if (phoneNumberExist != null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.PhoneNumberExist
+                };
+            }
+            var cccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
+                x.Cccd == req.CCCD);
+            if (cccdExist != null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.CCCDExist
                 };
             }
 
@@ -405,14 +425,34 @@ namespace VegaCityApp.Service.Implement
                 };
             }
 
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Email == req.Email &&x.Status ==(int)UserStatusEnum.Active && x.PhoneNumber == req.PhoneNumber && x.Cccd == req.CCCD);
-            if (user != null)
+            var emailExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
+                x.Email == req.Email);
+            if (emailExist != null)
             {
                 return new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.EmailExistOrPhoneOrCCCDExit
+                    MessageResponse = UserMessage.EmailExist
+                };
+            }
+            var phoneNumberExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
+                x.PhoneNumber == req.PhoneNumber);
+            if (phoneNumberExist != null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.PhoneNumberExist
+                };
+            }
+            var cccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
+                x.Cccd == req.CCCD);
+            if (cccdExist != null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.CCCDExist
                 };
             }
 
@@ -487,7 +527,6 @@ namespace VegaCityApp.Service.Implement
                 StatusCode = HttpStatusCodes.BadRequest,
                 MessageResponse = UserMessage.CreateUserFail
             };
-
         }
         public async Task<ResponseAPI> ApproveUser(Guid userId, ApproveRequest req)
         {
