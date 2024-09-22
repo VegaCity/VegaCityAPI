@@ -46,7 +46,7 @@ namespace VegaCityApp.API.Services.Implement
                 orderInfo = orderInfo,
                 partnerCode = PaymentMomo.MomoPartnerCode,
                 redirectUrl = PaymentMomo.redirectUrl,
-                ipnUrl = PaymentMomo.ipnUrl + request.InvoiceId,
+                ipnUrl = PaymentMomo.ipnUrl,
                 amount = checkOrder.TotalAmount,
                 orderId = request.InvoiceId,
                 requestId = request.InvoiceId,
@@ -76,25 +76,19 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = "Momo payment success",
                 Data = momoPaymentResponse
-            };
-            
+            }; 
         }
-        public async Task<ResponseAPI> UpdateOrderPaid(string invoiceId)
+        public async Task<ResponseAPI> UpdateOrderPaid(IPNMomoRequest req)
         {
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                (predicate: x => x.InvoiceId == invoiceId && x.Status == OrderStatus.Pending);
+                (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending);
             order.Status = OrderStatus.Completed;
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
                     MessageResponse = OrderMessage.UpdateOrderSuccess,
-                    StatusCode = HttpStatusCodes.OK,
-                    Data = new
-                    {
-                        OrderId = order.Id,
-                        invoiceId = order.InvoiceId
-                    }
+                    StatusCode = HttpStatusCodes.NoContent,
                 }
                 : new ResponseAPI()
                 {

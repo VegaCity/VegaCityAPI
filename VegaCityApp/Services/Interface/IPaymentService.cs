@@ -6,6 +6,6 @@ namespace VegaCityApp.API.Services.Interface
     public interface IPaymentService
     {
         Task<ResponseAPI> MomoPayment(PaymentRequest request);
-        Task<ResponseAPI> UpdateOrderPaid(string invoiceId);
+        Task<ResponseAPI> UpdateOrderPaid(IPNMomoRequest req);
     }
 }
