@@ -31,7 +31,11 @@ namespace VegaCityApp.API.Controllers
         public async Task<IActionResult> UpdateOrderPaid([FromQuery] IPNMomoRequest req)
         {
             var result = await _service.UpdateOrderPaid(req);
-            return NoContent();
+            if(result.StatusCode == HttpStatusCodes.NoContent)
+            {
+                return Redirect(result.MessageResponse);
+            }
+            return BadRequest();
         }
     }
 }

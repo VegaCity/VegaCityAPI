@@ -82,11 +82,13 @@ namespace VegaCityApp.API.Services.Implement
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
                 (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending);
             order.Status = OrderStatus.Completed;
+            order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NoContent,
+                    MessageResponse = PaymentMomo.ipnUrl
                 }
                 : new ResponseAPI()
                 {
