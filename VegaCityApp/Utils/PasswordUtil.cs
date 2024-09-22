@@ -13,6 +13,22 @@ namespace VegaCityApp.API.Utils
 				return Convert.ToBase64String(bytes);
 			}
 		}
+        public static string HmacSHA512(string key, string data)
+        {
+            var hash = new StringBuilder();
+            var keyBytes = Encoding.UTF8.GetBytes(key);
+            var inputBytes = Encoding.UTF8.GetBytes(data);
+            using (var hmac = new HMACSHA512(keyBytes))
+            {
+                var hashValue = hmac.ComputeHash(inputBytes);
+                foreach (var theByte in hashValue)
+                {
+                    hash.Append(theByte.ToString("x2"));
+                }
+            }
+
+            return hash.ToString();
+        }
         public static String getSignature(String text, String key)
         {
             // change according to your needs, an UTF8Encoding

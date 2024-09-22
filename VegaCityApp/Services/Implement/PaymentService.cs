@@ -8,6 +8,8 @@ using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
 using VegaCityApp.Domain.Models;
 using VegaCityApp.Repository.Interfaces;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
 using static VegaCityApp.API.Constants.MessageConstant;
 
 namespace VegaCityApp.API.Services.Implement
@@ -94,6 +96,67 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     StatusCode = HttpStatusCodes.InternalServerError
                 };
+        }
+
+        public async Task<ResponseAPI> VnPayment(PaymentRequest req, HttpContext context)
+        {
+            var orderExisted = await _unitOfWork.GetRepository<Order>()
+                .SingleOrDefaultAsync(predicate: x =>
+                    x.InvoiceId == req.InvoiceId && x.Status == OrderStatus.Pending);
+            if (orderExisted == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = OrderMessage.NotFoundOrder
+                };
+            }
+            var tick = TimeUtils.GetCurrentSEATime().ToString();
+            var vnpay = new VnPayLibrary();
+            vnpay.AddRequestData("vnp_Version", VnPayConfig.Version);
+            vnpay.AddRequestData("vnp_Command", VnPayConfig.Command);
+            vnpay.AddRequestData("vnp_TmnCode", VnPayConfig.TmnCode);
+            vnpay.AddRequestData("vnp_Amount", (orderExisted.TotalAmount * 100).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 10000000
+
+            vnpay.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"));
+            vnpay.AddRequestData("vnp_CurrCode", VnPayConfig.CurrCode);
+            vnpay.AddRequestData("vnp_IpAddr", VnPayUtils.GetIpAddress(context));
+            vnpay.AddRequestData("vnp_Locale", VnPayConfig.Locale);
+
+            vnpay.AddRequestData("vnp_OrderInfo", "Thanh toán cho đơn hàng (InvoiceId):" + req.InvoiceId);
+            vnpay.AddRequestData("vnp_OrderType", "other"); //default value: other
+            vnpay.AddRequestData("vnp_ReturnUrl", VnPayConfig.PaymentBackReturnUrl);
+
+            vnpay.AddRequestData("vnp_TxnRef", tick); // Mã tham chiếu của giao dịch tại hệ thống của merchant. Mã này là duy nhất dùng để phân biệt các đơn hàng gửi sang VNPAY. Không được trùng lặp trong ngày
+
+            var paymentUrl = vnpay.CreateRequestUrl(VnPayConfig.BaseUrl, VnPayConfig.HashSecret);
+            //
+            if (paymentUrl == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    MessageResponse = PaymentMessage.vnPayFailed
+                };
+            }
+
+            return new ResponseAPI()
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = PaymentMessage.VnPaySuccess,
+                Data = new VnPaymentResponse()
+                {
+                    Success = true,
+                    PaymentMethod = "VnPay",
+                    OrderDescription = "Thanh toán VnPay cho đơn hàng :" + req.InvoiceId,
+                    OrderId = req.InvoiceId,
+                    Amount = orderExisted.TotalAmount,
+                    VnPayResponse = paymentUrl,
+                    CrDate = TimeUtils.GetCurrentSEATime()
+
+                }
+            };
+
         }
     }
 }

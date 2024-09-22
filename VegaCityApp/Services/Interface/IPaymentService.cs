@@ -7,5 +7,7 @@ namespace VegaCityApp.API.Services.Interface
     {
         Task<ResponseAPI> MomoPayment(PaymentRequest request);
         Task<ResponseAPI> UpdateOrderPaid(IPNMomoRequest req);
+        Task<ResponseAPI> VnPayment(PaymentRequest request, HttpContext context); //need to response api
+
     }
 }

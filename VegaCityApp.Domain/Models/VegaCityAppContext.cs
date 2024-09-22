@@ -472,6 +472,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Menu)
                     .WithMany(p => p.ProductCategories)
                     .HasForeignKey(d => d.MenuId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ProductCategory_Menu");
             });
 

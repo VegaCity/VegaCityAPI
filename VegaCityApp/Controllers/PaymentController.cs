@@ -35,5 +35,17 @@ namespace VegaCityApp.API.Controllers
             }
             return BadRequest();
         }
+        [HttpPost(PaymentEndpoint.VnPayPayment)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        public async Task<IActionResult> CreateVnPayUrl([FromBody] PaymentRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var result = await _service.VnPayment(request, HttpContext);
+            return StatusCode(result.StatusCode, result);
+
+        }
     }
 }
