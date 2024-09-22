@@ -94,6 +94,6 @@ public static class ApiEndPointConstant
         public const string ZaloPayment = ApiEndpoint + "/payment/zalo";
         public const string VnPayPayment = ApiEndpoint + "/payment/vnpay";
         public const string VisaCardPayment = ApiEndpoint + "/payment/visa";
-        public const string UpdateOrderPaid = ApiEndpoint + "/payment/order";
+        public const string UpdateOrderPaid = ApiEndpoint + "/payment/momo/order";
     }
 }
