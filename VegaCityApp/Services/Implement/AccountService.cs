@@ -780,7 +780,8 @@ namespace VegaCityApp.Service.Implement
         public async Task<ResponseAPI> SearchUser(Guid UserId)
         {
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                predicate: x => x.Id == UserId,
+                predicate: x => x.Id == UserId 
+                && (x.Status ==(int) UserStatusEnum.Active || x.Status ==(int)UserStatusEnum.PendingVerify),
                 include: user => user
                         .Include(y => y.Wallets)
                         .Include(y => y.Store)
