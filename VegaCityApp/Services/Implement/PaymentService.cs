@@ -33,7 +33,11 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = "Order not found"
                 };
             }
-            var rawSignature = "accessKey=" + PaymentMomo.MomoAccessKey + "&amount=" + checkOrder.TotalAmount + "&extraData="+ "&ipnUrl=" + PaymentMomo.ipnUrl + "&orderId=" + request.InvoiceId + "&orderInfo=" + orderInfo + "&partnerCode=" + PaymentMomo.MomoPartnerCode + "&redirectUrl=" + PaymentMomo.redirectUrl + "&requestId=" + request.InvoiceId + "&requestType=" + PaymentMomo.requestType;
+            var rawSignature = "accessKey=" + PaymentMomo.MomoAccessKey + "&amount=" + checkOrder.TotalAmount 
+                            + "&extraData="+ "&ipnUrl=" + PaymentMomo.ipnUrl + "&orderId=" + request.InvoiceId 
+                            + "&orderInfo=" + orderInfo + "&partnerCode=" + PaymentMomo.MomoPartnerCode 
+                            + "&redirectUrl=" + PaymentMomo.redirectUrl + "&requestId=" + request.InvoiceId
+                            + "&requestType=" + PaymentMomo.requestType;
             //create signature with sha256 and sercetkey
             string signature = PasswordUtil.getSignature(rawSignature, PaymentMomo.MomoSecretKey);
             //create momo payment request
@@ -74,6 +78,29 @@ namespace VegaCityApp.API.Services.Implement
                 Data = momoPaymentResponse
             };
             
+        }
+        public async Task<ResponseAPI> UpdateOrderPaid(string invoiceId)
+        {
+            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+                (predicate: x => x.InvoiceId == invoiceId && x.Status == OrderStatus.Pending);
+            order.Status = OrderStatus.Completed;
+            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.UpdateOrderSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = new
+                    {
+                        OrderId = order.Id,
+                        invoiceId = order.InvoiceId
+                    }
+                }
+                : new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.UpdateOrderFailed,
+                    StatusCode = HttpStatusCodes.InternalServerError
+                };
         }
     }
 }

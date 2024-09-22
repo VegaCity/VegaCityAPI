@@ -25,5 +25,13 @@ namespace VegaCityApp.API.Controllers
             var result = await _service.MomoPayment(request);
             return StatusCode(result.StatusCode, result);
         }
+        [HttpPatch(PaymentEndpoint.UpdateOrderPaid)]
+        [SwaggerOperation(Summary = "Api đang trong quá trình test và phát triển ")]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> UpdateOrderPaid([FromQuery] string invoiceId)
+        {
+            var result = await _service.UpdateOrderPaid(invoiceId);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }
