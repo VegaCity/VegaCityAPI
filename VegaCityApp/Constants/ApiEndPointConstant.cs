@@ -31,7 +31,11 @@ public static class ApiEndPointConstant
     public static class EtagEndpoint
     {
         public const string CreateEtag = ApiEndpoint + "/etag";
-        public const string DeleteEtag = ApiEndpoint + "/etag";
+        public const string DeleteEtag = ApiEndpoint + "/etag/{id}";
+        public const string GenerateEtag = ApiEndpoint + "/generate-etag";
+        public const string UpdateEtag = ApiEndpoint + "/etag/{id}";
+        public const string SearchEtag = ApiEndpoint + "/etag/{id}";
+        public const string SearchAllEtag = ApiEndpoint + "/etags";
     }
     public static class UserEndpoint
     {

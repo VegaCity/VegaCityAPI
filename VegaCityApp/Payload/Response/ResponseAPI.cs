@@ -18,6 +18,19 @@ namespace VegaCityApp.API.Payload.Response
         public bool Deflag { get; set; }
         public int Amount { get; set; }
     }
+    public class EtagResponse
+    {
+        public Guid Id { get; set; }
+        public string EtagCode { get; set; }
+        public string Fullname { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? CCCD { get; set; }
+        public string? ImageUrl { get; set; }
+        public int Gender { get; set; }
+        public DateTime? Birthday { get; set; }
+        public string QRCode { get; set; }
+        public bool Deflag { get; set; }
+    }
     public class GetUserResponse
     {
         public Guid Id { get; set; }

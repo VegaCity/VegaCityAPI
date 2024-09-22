@@ -86,8 +86,6 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.BadRequest
             };
         }
-
-
         public async Task<ResponseAPI> DeleteOrder(Guid OrderId)
         {
             var orderExisted = await _unitOfWork.GetRepository<Order>()
@@ -114,7 +112,6 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
-
         public async Task<IPaginate<GetOrderResponse>> SearchAllOrders(int size, int page)
         {
             var orders = await _unitOfWork.GetRepository<Order>().GetPagingListAsync(
@@ -137,8 +134,6 @@ namespace VegaCityApp.API.Services.Implement
                 orderBy: x => x.OrderByDescending(z => z.Name));
             return orders;
         }
-
-
         public async Task<ResponseAPI> UpdateOrder(string InvoiceId, UpdateOrderRequest  req)
         {
             var order = await _unitOfWork.GetRepository<Order>()

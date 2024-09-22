@@ -93,11 +93,19 @@ public static class MessageConstant
     }
     public static class EtagMessage
     {
+        public const string SearchEtagSuccess = "Search Etag Successfully !!";
         public const string UserNotFound = "User Not Found !!";
         public const string EtagTypeNotFound = "EtagType Not Found !!";
         public const string CreateFail = "Create Etag Fail :( !!";
         public const string MarketZoneNotFound = "MarketZone Not Found !!";
         public const string GetEtagsSuccess = "Get List Etags Successfully !!";
+        public const string NotFoundEtag = "Not Found Etag !!";
+        public const string UpdateSuccessFully = "Update Etag Successfully !!";
+        public const string UpdateFail = "Update Etag Fail :( !!";
+        public const string DeleteEtagSuccessfully = "Delete Etag Successfully !!";
+        public const string DeleteEtagFail = "Delete Etag Fail :( !!";
+        public const string CCCDInvalid = "CCCD Invalid !!";
+        public const string PhoneNumberInvalid = "PhoneNumber Invalid !!";
     }
     public static class UserMessage
     {   

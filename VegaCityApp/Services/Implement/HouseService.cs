@@ -68,7 +68,6 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.BadRequest
             };
         }
-
         public async Task<ResponseAPI> DeleteHouse(Guid HouseId)
         {
             var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(predicate: x => x.Id == HouseId && !x.Deflag);
@@ -102,7 +101,6 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
-
         public async Task<IPaginate<GetHouseResponse>> SearchAllHouse(int size, int page)
         {
             var houses = await _unitOfWork.GetRepository<House>().GetPagingListAsync(
@@ -123,7 +121,6 @@ namespace VegaCityApp.API.Services.Implement
                                 predicate: x => !x.Deflag);      
             return houses;
         }
-
         public async Task<ResponseAPI> SearchHouse(Guid HouseId)
         {
             var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(
@@ -147,7 +144,6 @@ namespace VegaCityApp.API.Services.Implement
                 }
             };
         }
-
         public async Task<ResponseAPI> UpdateHouse(Guid houseId, UpdateHouseRequest req)
         {
             var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(predicate: x => x.Id == houseId && !x.Deflag);

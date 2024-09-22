@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using VegaCityApp.API.Payload.Request.Admin;
 using VegaCityApp.API.Payload.Request.Auth;
 using VegaCityApp.API.Payload.Response;
@@ -28,6 +29,7 @@ namespace VegaCityApp.API.Controllers
 
         [HttpPost(AuthenticationEndpoint.Register)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [SwaggerOperation(Summary = "Register new user for Store")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             var result = await _accountService.Register(request);

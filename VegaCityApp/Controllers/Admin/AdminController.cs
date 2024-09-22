@@ -13,6 +13,7 @@ using VegaCityApp.Domain.Paginate;
 using VegaCityApp.API.Payload.Request.Admin;
 using VegaCityApp.API.Payload.Request.Auth;
 using VegaCityApp.Service.Implement;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace VegaCityApp.API.Controllers.Admin
 {
@@ -27,6 +28,7 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpPost(UserEndpoint.CreateUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [SwaggerOperation(Summary = "Create new user for cashier web, cashier app")]
         public async Task<IActionResult> AdminCreateUser([FromBody] RegisterRequest request)
         {
             var result = await _service.AdminCreateUser(request);

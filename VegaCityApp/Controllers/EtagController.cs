@@ -77,5 +77,40 @@ namespace VegaCityApp.API.Controllers
             var result = await _service.RemoveEtagTypeFromPackage(etagTypeId, packageId);
             return StatusCode(result.StatusCode, result);
         }
+        [HttpGet(EtagEndpoint.GenerateEtag)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> GenerateEtag([FromQuery]int quantity,[FromQuery] Guid etagTypeId)
+        {
+            var result = await _service.GenerateEtag(quantity, etagTypeId);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch(EtagEndpoint.UpdateEtag)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> UpdateEtag(Guid id, [FromBody] UpdateEtagRequest request)
+        {
+            var result = await _service.UpdateEtag(id, request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpDelete(EtagEndpoint.DeleteEtag)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> DeleteEtag(Guid id)
+        {
+            var result = await _service.DeleteEtag(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(EtagEndpoint.SearchEtag)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchEtag(Guid id)
+        {
+            var result = await _service.SearchEtag(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(EtagEndpoint.SearchAllEtag)]
+        [ProducesResponseType(typeof(EtagResponse), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchAllEtag([FromQuery] int size = 10, [FromQuery] int page = 1)
+        {
+            var result = await _service.SearchAllEtag(size, page);
+            return Ok(result);
+        }
     }
 }
