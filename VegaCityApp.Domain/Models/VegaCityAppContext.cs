@@ -372,8 +372,6 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnType("datetime")
                     .HasColumnName("crDate");
 
-                entity.Property(e => e.ProductJson).IsUnicode(false);
-
                 entity.Property(e => e.UpsDate)
                     .HasColumnType("datetime")
                     .HasColumnName("upsDate");

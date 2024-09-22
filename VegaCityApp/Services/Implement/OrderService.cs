@@ -62,7 +62,7 @@ namespace VegaCityApp.API.Services.Implement
                 StoreId = store != null ? store.Id : null,
                 EtagId = etag != null? etag.Id : null,
                 Name = req.OrderName,
-                TotalAmount = req.TotalAmount,
+                TotalAmount = (int)(req.TotalAmount * (1 + EnvironmentVariableConstant.VATRate)),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = OrderStatus.Pending,
