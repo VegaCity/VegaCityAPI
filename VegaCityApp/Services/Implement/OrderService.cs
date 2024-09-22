@@ -158,14 +158,17 @@ namespace VegaCityApp.API.Services.Implement
                     CrDate = x.CrDate,
                     Status = x.Status,
                     InvoiceId = x.InvoiceId,
-                    Vatrate = x.Vatrate,
-                    ProductJson = x.ProductJson,
                     StoreId = x.StoreId,
                     EtagId = x.EtagId,
+                    details = x.OrderDetails,
+                    EtagTypeId = x.EtagTypeId,
+                    PackageId = x.PackageId,
+                    UserId = x.UserId
                 },
                 page: page,
                 size: size,
-                orderBy: x => x.OrderByDescending(z => z.Name));
+                orderBy: x => x.OrderByDescending(z => z.Name),
+                include: order => order.Include(a => a.OrderDetails));
             return orders;
         }
         public async Task<ResponseAPI> UpdateOrder(string InvoiceId, UpdateOrderRequest  req)
@@ -209,13 +212,26 @@ namespace VegaCityApp.API.Services.Implement
                     };
                 }
             }
-            order.ProductJson = JsonConvert.SerializeObject(req.NewProducts);
             order.TotalAmount = req.TotalAmount;
             order.PaymentType = req.PaymentType?? order.PaymentType;
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagId && !x.Deflag);
             order.EtagId = etag != null ? etag.Id : null;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+            //update order detail
+            var orderDetail = await _unitOfWork.GetRepository<OrderDetail>().SingleOrDefaultAsync(predicate: x => x.OrderId == order.Id);
+            if (orderDetail == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.NotFoundOrderDetail,
+                    StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+            orderDetail.ProductJson = JsonConvert.SerializeObject(req.NewProducts);
+            orderDetail.TotalAmount = req.TotalAmount;
+            orderDetail.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(orderDetail);
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
