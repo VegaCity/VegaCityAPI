@@ -160,15 +160,13 @@ namespace VegaCityApp.API.Services.Implement
                     InvoiceId = x.InvoiceId,
                     StoreId = x.StoreId,
                     EtagId = x.EtagId,
-                    details = x.OrderDetails,
                     EtagTypeId = x.EtagTypeId,
                     PackageId = x.PackageId,
                     UserId = x.UserId
                 },
                 page: page,
                 size: size,
-                orderBy: x => x.OrderByDescending(z => z.Name),
-                include: order => order.Include(a => a.OrderDetails));
+                orderBy: x => x.OrderByDescending(z => z.Name));
             return orders;
         }
         public async Task<ResponseAPI> UpdateOrder(string InvoiceId, UpdateOrderRequest  req)
@@ -257,7 +255,14 @@ namespace VegaCityApp.API.Services.Implement
                 predicate: x => (x.Id == OrderId || x.InvoiceId == InvoiceId)&& x.Status != OrderStatus.Canceled,
                 include: order => order.Include(o => o.Etag)
                     .Include(o => o.Store)
-                    .Include(o => o.Deposits));
+                    .Include(o => o.Deposits)
+                    .Include(z => z.OrderDetails));
+            string json = "";
+            foreach (var item in orderExist.OrderDetails)
+            {
+                json = item.ProductJson;
+            }
+            var productJson = JsonConvert.DeserializeObject<List<OrderProductFromPosRequest>>(json);
             if (orderExist == null)
             {
                 return new ResponseAPI()
@@ -270,7 +275,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 MessageResponse = OrderMessage.GetOrdersSuccessfully,
                 StatusCode = HttpStatusCodes.OK,
-                Data = orderExist
+                Data = new { orderExist, productJson }
             };
         }
     }
