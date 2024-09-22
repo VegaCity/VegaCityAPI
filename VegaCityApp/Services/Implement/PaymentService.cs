@@ -87,12 +87,10 @@ namespace VegaCityApp.API.Services.Implement
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
-                    MessageResponse = OrderMessage.UpdateOrderSuccess,
                     StatusCode = HttpStatusCodes.NoContent,
                 }
                 : new ResponseAPI()
                 {
-                    MessageResponse = OrderMessage.UpdateOrderFailed,
                     StatusCode = HttpStatusCodes.InternalServerError
                 };
         }
