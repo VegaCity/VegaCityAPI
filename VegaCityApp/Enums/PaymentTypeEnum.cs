@@ -53,6 +53,7 @@ namespace VegaCityApp.API.Enums
         public const string Command = "pay";
         public const string CurrCode = "VND";
         public const string Locale = "vn";
-        public const string PaymentBackReturnUrl = "https://sandbox.vnpayment.vn/merchantv2/";
+       // public const string PaymentBackReturnUrl = "https://localhost:44395/api/v1/payment/vnpay/order";//redirect sau khi thanh toan
+        public const string PaymentBackReturnUrl = "https://vega.vinhuser.one/api/v1/payment/vnpay/order";
     }
 }

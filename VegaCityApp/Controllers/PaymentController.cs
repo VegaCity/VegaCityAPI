@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using VegaCityApp.API.Payload.Request.Payment;
 using VegaCityApp.API.Payload.Response;
+using VegaCityApp.API.Payload.Response.PaymentResponse;
 using VegaCityApp.API.Services.Interface;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
@@ -46,6 +47,17 @@ namespace VegaCityApp.API.Controllers
             var result = await _service.VnPayment(request, HttpContext);
             return StatusCode(result.StatusCode, result);
 
+        }
+        [HttpGet(PaymentEndpoint.UpdateVnPayOrder)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> UpdateOrderPaid([FromQuery] VnPayPaymentResponse req)
+        {
+            var result = await _service.UpdateVnPayOrder(req);
+            if (result.StatusCode == HttpStatusCodes.NoContent)
+            {
+                return Redirect(result.MessageResponse);
+            }
+            return BadRequest();
         }
     }
 }

@@ -158,5 +158,25 @@ namespace VegaCityApp.API.Services.Implement
             };
 
         }
+
+        public async Task<ResponseAPI> UpdateVnPayOrder(VnPayPaymentResponse req)
+        {
+            var invoiceId = req.vnp_OrderInfo.Split(":", 2);
+            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+                (predicate: x => x.InvoiceId == invoiceId[1] && x.Status == OrderStatus.Pending);
+            order.Status = OrderStatus.Completed;
+            order.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NoContent,
+                    MessageResponse = PaymentMomo.ipnUrl
+                }
+                : new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError
+                };
+        }
     }
 }

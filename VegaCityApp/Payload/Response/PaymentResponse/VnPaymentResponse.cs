@@ -13,4 +13,28 @@
         //public string Token { get; set; }
         public string VnPayResponse { get; set; }
     }
+
+    public class VnPayPaymentResponse
+    {
+        public int vnp_Amount { get; set; }
+        public string vnp_BankCode { get; set; }
+        public string vnp_BankTranNo { get; set; }
+
+        public string vnp_CardType { get; set; }
+
+        public string vnp_OrderInfo { get; set; }
+
+        public string vnp_PayDate { get; set; }
+
+        public int vnp_ResponseCode { get; set; }
+
+        public string vnp_TmnCode { get; set; }
+        public long vnp_TransactionNo { get; set; }
+
+        public int vnp_TransactionStatus { get; set; }
+
+        public DateTime vnp_TxnRef { get; set; }
+
+        public string vnp_SecureHash { get; set; }
+    }
 }
