@@ -25,6 +25,7 @@ namespace VegaCityApp.API.Controllers
             var result = await _service.MomoPayment(request);
             return StatusCode(result.StatusCode, result);
         }
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpGet(PaymentEndpoint.UpdateOrderPaid)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> UpdateOrderPaid([FromQuery] IPNMomoRequest req)
@@ -48,6 +49,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
 
         }
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpGet(PaymentEndpoint.UpdateVnPayOrder)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> UpdateOrderPaid([FromQuery] VnPayPaymentResponse req)
