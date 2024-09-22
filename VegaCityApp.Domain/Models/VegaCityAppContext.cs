@@ -671,6 +671,11 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("upsDate")
                     .HasDefaultValueSql("(getdate())");
 
+                entity.HasOne(d => d.Store)
+                    .WithMany(p => p.Wallets)
+                    .HasForeignKey(d => d.StoreId)
+                    .HasConstraintName("FK_Wallet_Store");
+
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Wallets)
                     .HasForeignKey(d => d.UserId)

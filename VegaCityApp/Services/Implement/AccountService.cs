@@ -58,7 +58,7 @@ namespace VegaCityApp.Service.Implement
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
-                WalletType = (int)WalletTypeEnum.StoreWallet,
+                WalletType = (int)WalletTypeEnum.UserWallet,
                 Balance = 0,
                 BalanceHistory = 0,
                 CrDate = TimeUtils.GetCurrentSEATime(),
@@ -642,6 +642,19 @@ namespace VegaCityApp.Service.Implement
                         Deflag = false,
                     };
                     await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
+                    //create store wallet
+                    var storeWallet = new Wallet
+                    {
+                        Id = Guid.NewGuid(),
+                        WalletType = (int)WalletTypeEnum.StoreWallet,
+                        Balance = 0,
+                        BalanceHistory = 0,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        Deflag = false,
+                        StoreId = newStore.Id
+                    };
+                    await _unitOfWork.GetRepository<Wallet>().InsertAsync(storeWallet);
                     await _unitOfWork.CommitAsync();
                     //update user
                     var result = await UpdateUserApproving(user, newStore.Id);

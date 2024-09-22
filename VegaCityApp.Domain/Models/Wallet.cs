@@ -20,7 +20,9 @@ namespace VegaCityApp.Domain.Models
         public int BalanceHistory { get; set; }
         public bool Deflag { get; set; }
         public Guid? UserId { get; set; }
+        public Guid? StoreId { get; set; }
 
+        public virtual Store? Store { get; set; }
         public virtual User? User { get; set; }
         public virtual ICollection<Deposit> Deposits { get; set; }
         public virtual ICollection<Etag> Etags { get; set; }

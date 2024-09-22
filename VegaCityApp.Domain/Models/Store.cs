@@ -12,6 +12,7 @@ namespace VegaCityApp.Domain.Models
             Orders = new HashSet<Order>();
             Transactions = new HashSet<Transaction>();
             Users = new HashSet<User>();
+            Wallets = new HashSet<Wallet>();
         }
 
         public Guid Id { get; set; }
@@ -36,5 +37,6 @@ namespace VegaCityApp.Domain.Models
         public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<Transaction> Transactions { get; set; }
         public virtual ICollection<User> Users { get; set; }
+        public virtual ICollection<Wallet> Wallets { get; set; }
     }
 }
