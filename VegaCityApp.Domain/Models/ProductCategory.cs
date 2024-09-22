@@ -10,8 +10,8 @@ namespace VegaCityApp.Domain.Models
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public string ProductJson { get; set; } = null!;
-        public Guid? MenuId { get; set; }
+        public Guid MenuId { get; set; }
 
-        public virtual Menu? Menu { get; set; }
+        public virtual Menu Menu { get; set; } = null!;
     }
 }

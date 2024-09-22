@@ -206,7 +206,7 @@ namespace VegaCityApp.API.Services.Implement
                 await _unitOfWork.GetRepository<Menu>().InsertAsync(newMenu);
                 await _unitOfWork.CommitAsync();
                 // tim productcategory, insert vao
-                bool check = await InsertProductCategory(productsPosResponse, id);
+                bool check = await InsertProductCategory(productsPosResponse, newMenu.Id);
                 return check?new ResponseAPI()
                 {
                     MessageResponse = "Get Successfully!!",
@@ -223,7 +223,7 @@ namespace VegaCityApp.API.Services.Implement
                 checkMenu.MenuJson = json;
                 _unitOfWork.GetRepository<Menu>().UpdateAsync(checkMenu);
                 await _unitOfWork.CommitAsync();
-                bool check = await InsertProductCategory(productsPosResponse, id);
+                bool check = await InsertProductCategory(productsPosResponse, checkMenu.Id);
                 return check ? new ResponseAPI()
                 {
                     MessageResponse = "Get Successfully!!",
@@ -237,7 +237,7 @@ namespace VegaCityApp.API.Services.Implement
             }
         }
 
-        private async Task<bool> InsertProductCategory(List<ProductsPosResponse> listProduct, Guid storeId)
+        private async Task<bool> InsertProductCategory(List<ProductsPosResponse> listProduct, Guid MenuId)
         {
             List<ProductFromPos> products = new List<ProductFromPos>();
             //chay ham for cho productCate name
@@ -272,7 +272,8 @@ namespace VegaCityApp.API.Services.Implement
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         Name = Category.ProductCategory,
                         ProductJson = json,
-                        UpsDate = TimeUtils.GetCurrentSEATime()
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        MenuId = MenuId
                     };
                     await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCateGory);
                     await _unitOfWork.CommitAsync();

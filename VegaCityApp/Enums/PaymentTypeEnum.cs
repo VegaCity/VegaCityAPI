@@ -43,4 +43,17 @@ namespace VegaCityApp.API.Enums
         public const string key2 = "trMrHtvjo6myautxDUiAcYsVtaeQ8nhf";
         public const string create_order_url = "https://sb-openapi.zalopay.vn/v2/create";
     }
+
+    public class VnPayConfig
+    {
+        public const string TmnCode = "J5WEIXD3";
+        public const string HashSecret = "NSFR5ERYRKAL2D0TWU50VWBDTJGKZX6J";
+        public const string BaseUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+        public const string Version = "2.1.0";
+        public const string Command = "pay";
+        public const string CurrCode = "VND";
+        public const string Locale = "vn";
+       // public const string PaymentBackReturnUrl = "https://localhost:44395/api/v1/payment/vnpay/order";//redirect sau khi thanh toan
+        public const string PaymentBackReturnUrl = "https://vega.vinhuser.one/api/v1/payment/vnpay/order";
+    }
 }

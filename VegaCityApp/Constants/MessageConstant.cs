@@ -263,6 +263,8 @@ public static class MessageConstant
     {
         public const string OrderNotFound = "Order Not Found";
         public const string MomoPaymentFail = "Momo Payment Fail";
+        public const string VnPaySuccess = "Successflly With VnPay";
+        public const string vnPayFailed = "Failed To Pay With VnPay";
         public const string MomoPaymentSuccess = "Momo Payment Success";
     }
 }
