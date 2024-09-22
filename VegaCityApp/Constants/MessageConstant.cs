@@ -247,4 +247,10 @@ public static class MessageConstant
         public const string NotFoundZone = "Zone Not Found!";
         public const string HouseDeleted = "House is deleted!";
     }
+    public static class PaymentMessage
+    {
+        public const string OrderNotFound = "Order Not Found";
+        public const string MomoPaymentFail = "Momo Payment Fail";
+        public const string MomoPaymentSuccess = "Momo Payment Success";
+    }
 }

@@ -21,8 +21,11 @@ namespace VegaCityApp.API.Enums
         public const string MomoAccessKey = "F8BBA842ECF85";
         public const string MomoSecretKey = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
         public const string MomoPartnerCode = "MOMO";
+        public const string orderInfo = "Vega City Payment";
+        public const string partnerName = "MoMo Payment";
+        public const int orderExpireTime = 30;
         //after success payment, redirect to this url
-        //public const string redirectUrl = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b";
+        //public const string redirectUrl = "https://localhost:44395/api/v1/payment/order";
         public const string redirectUrl = "https://vega.vinhuser.one/api/v1/payment/order";
         //after success payment, send a request to this url to update order or something
         public const string ipnUrl = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b";

@@ -22,7 +22,6 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> MomoPayment(PaymentRequest request)
         {
-            string orderInfo = "pay with MoMo";
             var checkOrder = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
                                         (predicate: x => x.InvoiceId == request.InvoiceId && x.Status == OrderStatus.Pending);
             if (checkOrder == null)
@@ -30,12 +29,12 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = "Order not found"
+                    MessageResponse = PaymentMessage.OrderNotFound
                 };
             }
             var rawSignature = "accessKey=" + PaymentMomo.MomoAccessKey + "&amount=" + checkOrder.TotalAmount 
                             + "&extraData="+ "&ipnUrl=" + PaymentMomo.ipnUrl + "&orderId=" + request.InvoiceId 
-                            + "&orderInfo=" + orderInfo + "&partnerCode=" + PaymentMomo.MomoPartnerCode 
+                            + "&orderInfo=" + PaymentMomo.orderInfo + "&partnerCode=" + PaymentMomo.MomoPartnerCode 
                             + "&redirectUrl=" + PaymentMomo.redirectUrl + "&requestId=" + request.InvoiceId
                             + "&requestType=" + PaymentMomo.requestType;
             //create signature with sha256 and sercetkey
@@ -43,7 +42,7 @@ namespace VegaCityApp.API.Services.Implement
             //create momo payment request
             var momoPaymentRequest = new MomoPaymentRequest
             {
-                orderInfo = orderInfo,
+                orderInfo = PaymentMomo.orderInfo,
                 partnerCode = PaymentMomo.MomoPartnerCode,
                 redirectUrl = PaymentMomo.redirectUrl,
                 ipnUrl = PaymentMomo.ipnUrl,
@@ -52,12 +51,13 @@ namespace VegaCityApp.API.Services.Implement
                 requestId = request.InvoiceId,
                 requestType = PaymentMomo.requestType,
                 extraData = "",
-                partnerName = "MoMo Payment",
+                partnerName = PaymentMomo.partnerName,
                 storeId = checkOrder.StoreId.ToString(),
                 orderGroupId = "",
                 autoCapture = PaymentMomo.autoCapture,
                 lang = PaymentMomo.lang,
                 signature = signature,
+                orderExpireTime = PaymentMomo.orderExpireTime
             };
             //call momo api
             var response = await CallApiUtils.CallApiEndpoint("https://test-payment.momo.vn/v2/gateway/api/create", momoPaymentRequest);
@@ -66,14 +66,14 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.InternalServerError,
-                    MessageResponse = "Momo payment failed"
+                    MessageResponse = PaymentMessage.MomoPaymentFail
                 };
             }
             var momoPaymentResponse = await CallApiUtils.GenerateObjectFromResponse<MomoPaymentResponse>(response);
             return new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.OK,
-                MessageResponse = "Momo payment success",
+                MessageResponse = PaymentMessage.MomoPaymentSuccess,
                 Data = momoPaymentResponse
             }; 
         }

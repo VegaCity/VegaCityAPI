@@ -17,6 +17,7 @@
         public bool autoCapture { get; set; }
         public string lang { get; set; }
         public string signature { get; set; }
+        public int orderExpireTime { get; set; }
     }
     public class PaymentRequest
     {

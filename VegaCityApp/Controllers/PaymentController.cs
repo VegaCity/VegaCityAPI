@@ -18,7 +18,6 @@ namespace VegaCityApp.API.Controllers
         }
 
         [HttpPost(PaymentEndpoint.MomoPayment)]
-        [SwaggerOperation(Summary = "Api đang trong quá trình test và phát triển ")]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         public async Task<IActionResult> MomoPayment([FromBody] PaymentRequest request)
         {
@@ -26,7 +25,6 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(PaymentEndpoint.UpdateOrderPaid)]
-        [SwaggerOperation(Summary = "Api đang trong quá trình test và phát triển ")]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> UpdateOrderPaid([FromQuery] IPNMomoRequest req)
         {
