@@ -144,6 +144,8 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("crDate")
                     .HasDefaultValueSql("(getdate())");
 
+                entity.Property(e => e.EndDate).HasColumnType("datetime");
+
                 entity.Property(e => e.EtagCode)
                     .HasMaxLength(50)
                     .IsUnicode(false);
@@ -162,6 +164,8 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.Qrcode)
                     .IsUnicode(false)
                     .HasColumnName("QRCode");
+
+                entity.Property(e => e.StartDate).HasColumnType("datetime");
 
                 entity.Property(e => e.UpsDate)
                     .HasColumnType("datetime")

@@ -30,6 +30,9 @@ namespace VegaCityApp.API.Payload.Response
         public DateTime? Birthday { get; set; }
         public string QRCode { get; set; }
         public bool Deflag { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public int? Status { get; set; }
     }
     public class GetUserResponse
     {

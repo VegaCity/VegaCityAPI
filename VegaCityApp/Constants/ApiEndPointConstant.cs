@@ -36,6 +36,7 @@ public static class ApiEndPointConstant
         public const string UpdateEtag = ApiEndpoint + "/etag/{id}";
         public const string SearchEtag = ApiEndpoint + "/etag/{id}";
         public const string SearchAllEtag = ApiEndpoint + "/etags";
+        public const string ActivateEtag = ApiEndpoint + "/etag/{id}/activate";
     }
     public static class UserEndpoint
     {

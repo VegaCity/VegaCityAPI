@@ -106,6 +106,8 @@ public static class MessageConstant
         public const string DeleteEtagFail = "Delete Etag Fail :( !!";
         public const string CCCDInvalid = "CCCD Invalid !!";
         public const string PhoneNumberInvalid = "PhoneNumber Invalid !!";
+        public const string ActivateEtagSuccess = "Activate Etag Successfully !!";
+        public const string ActivateEtagFail = "Activate Etag Fail :( !!";
     }
     public static class UserMessage
     {   

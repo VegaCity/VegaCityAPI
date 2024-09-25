@@ -77,11 +77,18 @@ namespace VegaCityApp.API.Controllers
             var result = await _service.RemoveEtagTypeFromPackage(etagTypeId, packageId);
             return StatusCode(result.StatusCode, result);
         }
-        [HttpGet(EtagEndpoint.GenerateEtag)]
+        [HttpPost(EtagEndpoint.GenerateEtag)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> GenerateEtag([FromQuery]int quantity,[FromQuery] Guid etagTypeId)
+        public async Task<IActionResult> GenerateEtag([FromQuery]int quantity,[FromQuery] Guid etagTypeId, [FromBody] GenerateEtagRequest req)
         {
-            var result = await _service.GenerateEtag(quantity, etagTypeId);
+            var result = await _service.GenerateEtag(quantity, etagTypeId, req);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch(EtagEndpoint.ActivateEtag)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> ActivateEtag(Guid id, [FromBody] ActivateEtagRequest request)
+        {
+            var result = await _service.ActivateEtag(id, request);
             return StatusCode(result.StatusCode, result);
         }
         [HttpPatch(EtagEndpoint.UpdateEtag)]
