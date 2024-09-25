@@ -110,6 +110,7 @@ namespace VegaCityApp.API.Services.Implement
 
                 selector: x => new GetZoneResponse()
                 {
+                    Id = x.Id,
                     Name = x.Name,
                     Location = x.Location,
                     MarketZoneId = x.MarketZoneId,

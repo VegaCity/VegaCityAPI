@@ -2,6 +2,7 @@
 {
     public class GetZoneResponse
     {
+        public Guid Id { get; set; }
         public Guid MarketZoneId { get; set; }
         public string Name { get; set; } = null!;
         public string? Location { get; set; }

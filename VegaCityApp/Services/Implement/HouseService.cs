@@ -125,7 +125,8 @@ namespace VegaCityApp.API.Services.Implement
         {
             var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(
                 predicate: x => x.Id == HouseId && !x.Deflag,
-                include: house => house.Include(x => x.Stores));
+                include: house => house.Include(x => x.Stores.Where(store => !store.Deflag))
+    );
             if (house == null)
             {
                 return new ResponseAPI()
