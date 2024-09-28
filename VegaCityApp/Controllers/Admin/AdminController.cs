@@ -29,6 +29,7 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpPost(UserEndpoint.CreateUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [SwaggerOperation(Summary = "Create new user for cashier web, cashier app")]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> AdminCreateUser([FromBody] RegisterRequest request)
         {
             var result = await _service.AdminCreateUser(request);
@@ -36,6 +37,7 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpPost(UserEndpoint.ApproveUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> ApproveUser(Guid userId,[FromBody] ApproveRequest request)
         {
             var result = await _service.ApproveUser(userId,request);
@@ -44,6 +46,7 @@ namespace VegaCityApp.API.Controllers.Admin
 
         [HttpGet(UserEndpoint.GetListUser)]
         [ProducesResponseType(typeof(IPaginate<GetUserResponse>), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> SearchAllUser([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _service.SearchAllUser(size, page);
@@ -51,6 +54,7 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpGet(UserEndpoint.GetUserInfo)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
         public async Task<IActionResult> SearchUser(Guid id)
         {
             var result = await _service.SearchUser(id);
@@ -58,6 +62,7 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpPatch(UserEndpoint.UpdateUserProfile)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
         public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserAccountRequest request)
         {
             var result = await _service.UpdateUser(id, request);
@@ -65,6 +70,7 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpDelete(UserEndpoint.DeleteUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> DeleteUser(Guid id)
         {
             var result = await _service.DeleteUser(id);
