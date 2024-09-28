@@ -124,6 +124,17 @@ public static class DependencyServices
                 {
                     context.Response.Headers.Add("Token-Valid", "true");
                     return Task.CompletedTask;
+                },
+                OnForbidden = context =>
+                {
+                    context.Response.StatusCode = 403;
+                    context.Response.ContentType = "application/json";
+                    context.Response.WriteAsync(JsonConvert.SerializeObject(new
+                    {
+                        StatusCode = 403,
+                        Message = "Forbidden: Not Allow To Access",
+                    }));
+                    return Task.CompletedTask;
                 }
             };
         });

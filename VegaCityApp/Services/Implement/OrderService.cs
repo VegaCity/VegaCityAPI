@@ -252,7 +252,7 @@ namespace VegaCityApp.API.Services.Implement
                     .Include(o => o.Deposits)
                     .Include(z => z.OrderDetails));
             string json = "";
-            string customerInfo = "";
+            string? customerInfo = "";
             foreach (var item in orderExist.OrderDetails)
             {
                 json = item.ProductJson;
@@ -261,8 +261,9 @@ namespace VegaCityApp.API.Services.Implement
             {
                 customerInfo = orderExist.CustomerInfo;
             }
-            var productJson = JsonConvert.DeserializeObject<List<OrderProductFromPosRequest>>(json);
-            var customer = JsonConvert.DeserializeObject<CustomerInfo>(customerInfo);
+            List<OrderProductFromPosRequest>? productJson = JsonConvert.DeserializeObject<List<OrderProductFromPosRequest>>(json);
+            if(customerInfo == null) customerInfo = "";
+            CustomerInfo? customer = JsonConvert.DeserializeObject<CustomerInfo>(customerInfo);
             if (orderExist == null)
             {
                 return new ResponseAPI()
