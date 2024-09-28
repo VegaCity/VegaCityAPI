@@ -99,7 +99,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> SearchEtagType(Guid etagTypeId)
         {
             var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag,
-                include: etag => etag.Include(y => y.Etags), selector: z => new { z.Id, z.BonusRate, z.Name, z.Etags, z.Amount });
+                include: etag => etag.Include(y => y.Etags), selector: z => new { z.Id, z.BonusRate, z.Name, z.Etags, z.Amount, z.ImageUrl });
             if (etagType == null)
             {
                 return new ResponseAPI()

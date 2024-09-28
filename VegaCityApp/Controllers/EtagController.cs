@@ -30,6 +30,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPatch(EtagTypeEndpoint.UpdateEtagType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> UpdateEtagType(Guid id, [FromBody] UpdateEtagTypeRequest request)
         {
             var result = await _service.UpdateEtagType(id, request);
@@ -37,6 +38,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpDelete(EtagTypeEndpoint.DeleteEtagType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> DeleteEtagType( Guid id)
         {
             var result = await _service.DeleteEtagType(id);
@@ -44,6 +46,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(EtagTypeEndpoint.SearchEtagType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         public async Task<IActionResult> SearchEtagType( Guid id)
         {
             var result = await _service.SearchEtagType(id);
@@ -51,6 +54,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(EtagTypeEndpoint.SearchAllEtagType)]
         [ProducesResponseType(typeof(EtagTypeResponse), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb)]
         public async Task<IActionResult> SearchAllEtagType([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _service.SearchAllEtagType(size, page);
@@ -58,6 +62,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(EtagEndpoint.CreateEtag)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb)]
         public async Task<IActionResult> CreateEtag([FromBody] EtagRequest request)
         {
             var result = await _service.CreateEtag(request);
@@ -65,6 +70,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(EtagTypeEndpoint.AddEtagTypeToPackage)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> AddEtagTypeToPackage(Guid etagTypeId, Guid packageId)
         {
             var result = await _service.AddEtagTypeToPackage(etagTypeId, packageId);
@@ -72,6 +78,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpDelete(EtagTypeEndpoint.RemoveEtagTypeFromPackage)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> RemoveEtagTypeFromPackage(Guid etagTypeId, Guid packageId)
         {
             var result = await _service.RemoveEtagTypeFromPackage(etagTypeId, packageId);
@@ -79,6 +86,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(EtagEndpoint.GenerateEtag)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
         public async Task<IActionResult> GenerateEtag([FromQuery]int quantity,[FromQuery] Guid etagTypeId, [FromBody] GenerateEtagRequest req)
         {
             var result = await _service.GenerateEtag(quantity, etagTypeId, req);
@@ -86,6 +94,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPatch(EtagEndpoint.ActivateEtag)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
         public async Task<IActionResult> ActivateEtag(Guid id, [FromBody] ActivateEtagRequest request)
         {
             var result = await _service.ActivateEtag(id, request);
@@ -93,6 +102,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPatch(EtagEndpoint.UpdateEtag)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        // có bug nhưng ko đáng kể, fix sau 
         public async Task<IActionResult> UpdateEtag(Guid id, [FromBody] UpdateEtagRequest request)
         {
             var result = await _service.UpdateEtag(id, request);
@@ -100,6 +110,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpDelete(EtagEndpoint.DeleteEtag)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb)]
         public async Task<IActionResult> DeleteEtag(Guid id)
         {
             var result = await _service.DeleteEtag(id);
@@ -114,6 +125,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(EtagEndpoint.SearchAllEtag)]
         [ProducesResponseType(typeof(EtagResponse), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb)]
         public async Task<IActionResult> SearchAllEtag([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _service.SearchAllEtag(size, page);

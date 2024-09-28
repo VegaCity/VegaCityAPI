@@ -14,5 +14,7 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> UpdateOrder(string InvoiceId, UpdateOrderRequest req);
         Task<ResponseAPI> DeleteOrder(Guid OrderId);
         //Task<ResponseAPI> RemoveEtagTypeFromPackage(Guid etagId, Guid packageId);
+        Task<ResponseAPI> CreateOrderForCashier(CreateOrderForCashierRequest req);
+        Task<ResponseAPI> ConfirmOrderForCashier(ConfirmOrderForCashierRequest req);
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using VegaCityApp.API.Constants;
 using VegaCityApp.API.Enums;
+using VegaCityApp.API.Payload.Request.Etag;
 using VegaCityApp.API.Payload.Request.Order;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.OrderResponse;
@@ -17,16 +18,17 @@ namespace VegaCityApp.API.Services.Implement
 {
     public class OrderService : BaseService<OrderService>, IOrderService
     {
-        public OrderService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<OrderService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper) : base(unitOfWork, logger, httpContextAccessor, mapper)
+        private readonly IEtagService _etagService;
+        public OrderService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<OrderService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper, IEtagService etagService) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
+            _etagService = etagService;
         }
 
 
         public async Task<ResponseAPI> CreateOrder(CreateOrderRequest req)
         {
             var store = await _unitOfWork.GetRepository<Store>()
-                .SingleOrDefaultAsync(predicate: x => x.Id == req.StoreId && !x.Deflag && x.Status ==(int) StoreStatusEnum.Opened,
-                include: store => store.Include(y => y.Menus));
+                .SingleOrDefaultAsync(predicate: x => x.Id == req.StoreId && !x.Deflag && x.Status ==(int) StoreStatusEnum.Opened);
             if(!ValidationUtils.CheckNumber(req.TotalAmount))
             {
                 return new ResponseAPI()
@@ -35,7 +37,16 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagId && !x.Deflag);
+            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(
+                predicate: x => x.EtagCode == req.EtagCode && !x.Deflag && x.Status ==(int) EtagStatusEnum.Active);
+            if (etag == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.NotFoundETag,
+                    StatusCode = HttpStatusCodes.NotFound
+                };
+            }
             int amount = 0;
             int count = 0;
             foreach (var item in req.ProductData) {
@@ -50,32 +61,25 @@ namespace VegaCityApp.API.Services.Implement
                 amount += item.Price * item.Quantity;
                 count += item.Quantity;
             }
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == req.UserId && x.Status ==(int) UserStatusEnum.Active);
-            var etagType = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagId && !x.Deflag);
-            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageId && !x.Deflag);
-
             string json = JsonConvert.SerializeObject(req.ProductData);
             var newOrder = new Order()
             {
                 Id = Guid.NewGuid(),
                 PaymentType = req.PaymentType,
-                StoreId = store != null ? store.Id : null,
-                EtagId = etag != null? etag.Id : null,
+                StoreId = store.Id,
+                EtagId = etag.Id,
                 Name = req.OrderName,
                 TotalAmount = (int)(req.TotalAmount * (1 + EnvironmentVariableConstant.VATRate)),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = OrderStatus.Pending,
                 InvoiceId = req.InvoiceId,
-                EtagTypeId = etagType != null ? etagType.Id : null,
-                PackageId = package != null ? package.Id : null,
-                UserId = user != null ? user.Id : null,
+                SaleType = "Store"
             };
             await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
             //create order Detail
-            if(store != null)
+            if (store != null)
             {
-
                 var orderDetail = new OrderDetail()
                 {
                     Id = Guid.NewGuid(),
@@ -92,19 +96,13 @@ namespace VegaCityApp.API.Services.Implement
             }
             else
             {
-                var orderDetail = new OrderDetail()
+                return new ResponseAPI()
                 {
-                    Id = Guid.NewGuid(),
-                    OrderId = newOrder.Id,
-                    ProductJson = json,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    TotalAmount = amount + (amount * EnvironmentVariableConstant.VATRate),
-                    Quantity = count,
-                    Vatrate = EnvironmentVariableConstant.VATRate,
+                    MessageResponse = OrderMessage.NotFoundStore,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
-                await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
             }
+
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
                 MessageResponse = OrderMessage.CreateOrderSuccessfully,
@@ -159,10 +157,7 @@ namespace VegaCityApp.API.Services.Implement
                     Status = x.Status,
                     InvoiceId = x.InvoiceId,
                     StoreId = x.StoreId,
-                    EtagId = x.EtagId,
-                    EtagTypeId = x.EtagTypeId,
-                    PackageId = x.PackageId,
-                    UserId = x.UserId
+                    EtagId = x.EtagId
                 },
                 page: page,
                 size: size,
@@ -248,7 +243,6 @@ namespace VegaCityApp.API.Services.Implement
                 };
 
         }
-
         public async Task<ResponseAPI> SearchOrder(Guid? OrderId, string? InvoiceId)
         {
             var orderExist = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
@@ -258,11 +252,17 @@ namespace VegaCityApp.API.Services.Implement
                     .Include(o => o.Deposits)
                     .Include(z => z.OrderDetails));
             string json = "";
+            string customerInfo = "";
             foreach (var item in orderExist.OrderDetails)
             {
                 json = item.ProductJson;
             }
+            if (orderExist != null)
+            {
+                customerInfo = orderExist.CustomerInfo;
+            }
             var productJson = JsonConvert.DeserializeObject<List<OrderProductFromPosRequest>>(json);
+            var customer = JsonConvert.DeserializeObject<CustomerInfo>(customerInfo);
             if (orderExist == null)
             {
                 return new ResponseAPI()
@@ -275,10 +275,159 @@ namespace VegaCityApp.API.Services.Implement
             {
                 MessageResponse = OrderMessage.GetOrdersSuccessfully,
                 StatusCode = HttpStatusCodes.OK,
-                Data = new { orderExist, productJson }
+                Data = new { orderExist, productJson, customer }
+            };
+        }
+        public async Task<ResponseAPI> CreateOrderForCashier(CreateOrderForCashierRequest req)
+        {
+            if (!ValidationUtils.CheckNumber(req.TotalAmount))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.TotalAmountInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            int amount = 0;
+            int count = 0;
+            foreach (var item in req.ProductData)
+            {
+                if (item.Quantity <= 0)
+                {
+                    return new ResponseAPI()
+                    {
+                        MessageResponse = OrderMessage.QuantityInvalid,
+                        StatusCode = HttpStatusCodes.BadRequest
+                    };
+                }
+                amount += item.Price * item.Quantity;
+                count += item.Quantity;
+            }
+            string customerInfo = JsonConvert.SerializeObject(req.CustomerInfo);
+            string json = JsonConvert.SerializeObject(req.ProductData);
+            var newOrder = new Order()
+            {
+                Id = Guid.NewGuid(),
+                PaymentType = req.PaymentType,
+                Name = "Order Selling at Vega: " + TimeUtils.GetCurrentSEATime(),
+                TotalAmount = (int)(req.TotalAmount * (1 + EnvironmentVariableConstant.VATRate)),
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                Status = OrderStatus.Pending,
+                InvoiceId = TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"),
+                CustomerInfo = customerInfo,
+                SaleType = req.SaleType
+            };
+            await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
+            //create order Detail
+            var orderDetail = new OrderDetail()
+            {
+                Id = Guid.NewGuid(),
+                OrderId = newOrder.Id,
+                ProductJson = json,
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                TotalAmount = amount + (amount * EnvironmentVariableConstant.VATRate),
+                Quantity = count,
+                Vatrate = EnvironmentVariableConstant.VATRate,
+            };
+            await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
+
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            {
+                MessageResponse = OrderMessage.CreateOrderSuccessfully,
+                StatusCode = HttpStatusCodes.Created,
+                Data = new
+                {
+                    OrderId = newOrder.Id,
+                    invoiceId = newOrder.InvoiceId
+                }
+            } : new ResponseAPI()
+            {
+                MessageResponse = OrderMessage.CreateOrderFail,
+                StatusCode = HttpStatusCodes.BadRequest
+            };
+        }
+        public async Task<ResponseAPI> ConfirmOrderForCashier(ConfirmOrderForCashierRequest req)
+        {
+            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
+                predicate: x => x.InvoiceId == req.InvoiceId && x.Status == OrderStatus.Pending,
+                include: order => order.Include(z => z.OrderDetails));
+            if(order == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.NotFoundOrder,
+                    StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+            string etagTypeName = "";
+            string packageName = "";
+            string json = "";
+            foreach (var item in order.OrderDetails)
+            {
+                json = item.ProductJson;
+            }
+            var productJson = JsonConvert.DeserializeObject<List<OrderProductFromCashierRequest>>(json);
+            int count = 0;
+            foreach(var item in productJson)
+            {
+                if(order.SaleType == "EtagType")
+                {
+                    etagTypeName = item.Name;
+                    count = item.Quantity;
+                }
+                else
+                {
+                    packageName = item.Name;
+                    count = item.Quantity;
+                }
+            }
+            if(order.SaleType == "Package")
+            {
+                var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
+                    predicate: x => x.Name == packageName && !x.Deflag,
+                    include: packageInclude => packageInclude.Include(z => z.PackageETagTypeMappings).ThenInclude(a => a.EtagType));
+                if (package == null)
+                {
+                    return new ResponseAPI()
+                    {
+                        MessageResponse = OrderMessage.NotFoundPackage,
+                        StatusCode = HttpStatusCodes.NotFound
+                    };
+                }
+                foreach (var item in package.PackageETagTypeMappings)
+                {
+                    etagTypeName = item.EtagType.Name;
+                }
+            }
+            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Name == etagTypeName && !x.Deflag);
+            //generate etag
+            var ListEtag = await _etagService.GenerateEtag(count, etagType.Id, req.GenerateEtagRequest);
+            if(ListEtag.StatusCode == HttpStatusCodes.BadRequest)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.GenerateEtagFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            order.Status = OrderStatus.Completed;
+            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            {
+                MessageResponse = OrderMessage.ConfirmOrderSuccessfully,
+                StatusCode = HttpStatusCodes.OK,
+                Data = new
+                {
+                    OrderId = order.Id,
+                    invoiceId = order.InvoiceId
+                }
+            } : new ResponseAPI()
+            {
+                MessageResponse = OrderMessage.ConfirmOrderFail,
+                StatusCode = HttpStatusCodes.BadRequest
             };
         }
     }
-
-    
 }

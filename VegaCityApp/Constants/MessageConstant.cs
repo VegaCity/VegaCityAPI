@@ -171,6 +171,10 @@ public static class MessageConstant
 
     public static class OrderMessage
     {
+        public const string NotFoundPackage = "Package Not Found";
+        public const string ConfirmOrderSuccessfully = "Confirm Order Successfully !!";
+        public const string ConfirmOrderFail = "Confirm Order Fail !!";
+        public const string GenerateEtagFail = "Generate Etag Fail !!";
         public const string NotFoundOrderDetail = "Order Detail Not Found";
         public const string CreateOrderSuccessfully = "Create Order Successfully !!";
         public const string CreateOrderFail = "Create Order Fail !!";

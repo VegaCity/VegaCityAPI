@@ -9,4 +9,12 @@
         public string? ImgUrl { get; set; }
         public int Quantity { get; set; }
     }
+    public class OrderProductFromCashierRequest
+    {
+        public string Id { get; set; } // package id, etag id
+        public string Name { get; set; } // package name, etagType name
+        public int Price { get; set; }
+        public string? ImgUrl { get; set; }
+        public int Quantity { get; set; }
+    }
 }

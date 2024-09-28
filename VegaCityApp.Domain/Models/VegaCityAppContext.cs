@@ -331,6 +331,8 @@ namespace VegaCityApp.Domain.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
+                entity.Property(e => e.SaleType).HasMaxLength(50);
+
                 entity.Property(e => e.Status)
                     .HasMaxLength(20)
                     .IsUnicode(false);
@@ -345,25 +347,10 @@ namespace VegaCityApp.Domain.Models
                     .HasForeignKey(d => d.EtagId)
                     .HasConstraintName("FK_Order_ETag");
 
-                entity.HasOne(d => d.EtagType)
-                    .WithMany(p => p.Orders)
-                    .HasForeignKey(d => d.EtagTypeId)
-                    .HasConstraintName("FK_Order_ETagType");
-
-                entity.HasOne(d => d.Package)
-                    .WithMany(p => p.Orders)
-                    .HasForeignKey(d => d.PackageId)
-                    .HasConstraintName("FK_Order_Package");
-
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.StoreId)
                     .HasConstraintName("FK_Order_Store");
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.Orders)
-                    .HasForeignKey(d => d.UserId)
-                    .HasConstraintName("FK_Order_User");
             });
 
             modelBuilder.Entity<OrderDetail>(entity =>

@@ -111,7 +111,7 @@ namespace VegaCityApp.Service.Implement
             RoleEnum.CashierApp.GetDescriptionFromEnum()
         };
         #endregion
-    public async Task<ResponseAPI> Login(LoginRequest req)
+        public async Task<ResponseAPI> Login(LoginRequest req)
         {
             Tuple<string, Guid> guidClaim = null;
             if (!ValidationUtils.IsEmail(req.Email))
@@ -798,6 +798,7 @@ namespace VegaCityApp.Service.Implement
                 include: user => user
                         .Include(y => y.Wallets)
                         .Include(y => y.Store)
+                        .Include(y => y.Role)
             );
 
             if (user == null)

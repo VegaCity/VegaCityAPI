@@ -21,15 +21,11 @@ namespace VegaCityApp.Domain.Models
         public string InvoiceId { get; set; } = null!;
         public Guid? StoreId { get; set; }
         public Guid? EtagId { get; set; }
-        public Guid? UserId { get; set; }
-        public Guid? EtagTypeId { get; set; }
-        public Guid? PackageId { get; set; }
+        public string? CustomerInfo { get; set; }
+        public string? SaleType { get; set; }
 
         public virtual Etag? Etag { get; set; }
-        public virtual EtagType? EtagType { get; set; }
-        public virtual Package? Package { get; set; }
         public virtual Store? Store { get; set; }
-        public virtual User? User { get; set; }
         public virtual ICollection<Deposit> Deposits { get; set; }
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
     }

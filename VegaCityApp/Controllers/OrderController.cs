@@ -22,11 +22,11 @@ namespace VegaCityApp.API.Controllers
         }
 
         [HttpPost(OrderEndpoint.CreateOrder)]
-        [ProducesResponseType(typeof(IPaginate<ResponseAPI>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(IPaginate<ResponseAPI>), HttpStatusCodes.Created)]
         public async Task<IActionResult> CreateOrder(CreateOrderRequest req)
         {
             var result = await _orderService.CreateOrder(req);
-            return Ok(result);
+            return StatusCode(result.StatusCode, result);
         }
 
         [HttpGet(OrderEndpoint.GetListOrder)]
@@ -58,6 +58,20 @@ namespace VegaCityApp.API.Controllers
         public async Task<IActionResult> DeleteOrder(Guid id)
         {
             var result = await _orderService.DeleteOrder(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPost(OrderEndpoint.CreateOrderForCashier)]
+        [ProducesResponseType(typeof(IPaginate<ResponseAPI>), HttpStatusCodes.Created)]
+        public async Task<IActionResult> CreateOrderForCashier(CreateOrderForCashierRequest req)
+        {
+            var result = await _orderService.CreateOrderForCashier(req);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPost(OrderEndpoint.ConfirmOrderForCashier)]
+        [ProducesResponseType(typeof(IPaginate<ResponseAPI>), HttpStatusCodes.Created)]
+        public async Task<IActionResult> ConfirmOrderForCashier(ConfirmOrderForCashierRequest req)
+        {
+            var result = await _orderService.ConfirmOrderForCashier(req);
             return StatusCode(result.StatusCode, result);
         }
     }

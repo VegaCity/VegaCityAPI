@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Zone;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.GetZoneResponse;
 using VegaCityApp.API.Services.Interface;
+using VegaCityApp.API.Validators;
 using VegaCityApp.Domain.Paginate;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
@@ -21,6 +23,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(ZoneEndPoint.CreateZone)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> CreateZone([FromBody] CreateZoneRequest request)
         {
             var result = await _zoneService.CreateZone(request);
@@ -28,6 +31,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPatch(ZoneEndPoint.UpdateZone)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> UpdateZone(Guid id, [FromBody] UpdateZoneRequest request)
         {
             var result = await _zoneService.UpdateZone(id, request);
@@ -35,6 +39,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(ZoneEndPoint.SearchAllZone)]
         [ProducesResponseType(typeof(IPaginate<GetZoneResponse>), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> SearchZones([FromQuery]int size = 10,[FromQuery] int page = 1)
         {
             var result = await _zoneService.SearchZones(size, page);
@@ -42,6 +47,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(ZoneEndPoint.SearchZone)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> SearchZone(Guid id)
         {
             var result = await _zoneService.SearchZone(id);
@@ -49,6 +55,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpDelete(ZoneEndPoint.DeleteZone)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> DeleteZone(Guid id)
         {
             var result = await _zoneService.DeleteZone(id);

@@ -87,10 +87,12 @@ public static class ApiEndPointConstant
     //order endpoit
     public static class OrderEndpoint
     {
+        public const string ConfirmOrderForCashier = ApiEndpoint + "/order/cashier/confirm";
         public const string GetListOrder = ApiEndpoint + "/orders";
         public const string GetOrder = ApiEndpoint + "/order";
         public const string CancelOrder = ApiEndpoint + "/order/{id}";
         public const string CreateOrder = ApiEndpoint + "/order";
+        public const string CreateOrderForCashier = ApiEndpoint + "/order/cashier";
         public const string UpdateOrder = ApiEndpoint + "/order";
     }
     public static class PaymentEndpoint
