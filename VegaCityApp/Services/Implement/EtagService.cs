@@ -9,6 +9,7 @@ using VegaCityApp.API.Utils;
 using VegaCityApp.Domain.Models;
 using VegaCityApp.Domain.Paginate;
 using VegaCityApp.Repository.Interfaces;
+using static VegaCityApp.API.Constants.MessageConstant;
 
 namespace VegaCityApp.API.Services.Implement
 {
@@ -479,6 +480,78 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = MessageConstant.EtagMessage.ActivateEtagFail,
                 StatusCode = MessageConstant.HttpStatusCodes.BadRequest
             };
+        }
+
+        public async Task<ResponseAPI> PrepareChargeMoneyEtag(ChargeMoneyEtagRequest req)
+        {
+            if (!ValidationUtils.CheckNumber(req.ChargeAmount))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.TotalAmountInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            var etagExist = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagCode == req.EtagCode && !x.Deflag && x.Cccd == req.CCCD,
+                 include: etag => etag.Include(y => y.Wallet) );
+            if (etagExist == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.NotFoundEtag,
+                    StatusCode = MessageConstant.HttpStatusCodes.NotFound,
+                };
+            }
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == req.UserId && x.Status == (int)UserStatusEnum.Active);
+               
+            if (user == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = UserMessage.NotFoundUser,
+                    StatusCode = MessageConstant.HttpStatusCodes.NotFound,
+                };
+            }
+           
+
+            etagExist.Wallet.Balance += req.ChargeAmount;
+            var newOrder = new Order()
+            {
+                Id = Guid.NewGuid(),
+                PaymentType = req.PaymentType,
+                Name = "Charge Money for Etag: " + etagExist.FullName,
+                TotalAmount = req.ChargeAmount,
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                Status = OrderStatus.Pending,
+                InvoiceId = TimeUtils.GetCurrentSEATime().ToString("yyyymmdd"),
+                EtagId = etagExist.Id,
+                SaleType = "Etag Charge",
+                UserId = req.UserId,
+            };
+
+            await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
+            string key = req.PaymentType + "_" + newOrder.InvoiceId;
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            {
+                MessageResponse = EtagMessage.CreateOrderForCharge,
+                StatusCode = HttpStatusCodes.OK,
+                 Data = new
+                 {
+                     InvoiceId = newOrder.InvoiceId,
+                     Balance = etagExist.Wallet.Balance,
+                     Key = key,
+                     UrlDirect = "https://localhost:44395/api/v1/payment/momo/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, https://vega.vinhuser.one/api/v1/payment/momo/order
+                     UrlIpn = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b"
+                 }
+            } : new ResponseAPI()
+            {
+                MessageResponse = EtagMessage.CreateOrderForChargeFail,
+                StatusCode = HttpStatusCodes.BadRequest
+            };
+
+
+
         }
     }
 }

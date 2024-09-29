@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Payment;
@@ -34,50 +35,109 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = PaymentMessage.OrderNotFound
                 };
             }
-            var rawSignature = "accessKey=" + PaymentMomo.MomoAccessKey + "&amount=" + checkOrder.TotalAmount 
-                            + "&extraData="+ "&ipnUrl=" + PaymentMomo.ipnUrl + "&orderId=" + request.InvoiceId 
-                            + "&orderInfo=" + PaymentMomo.orderInfo + "&partnerCode=" + PaymentMomo.MomoPartnerCode 
+            
+            //create momo payment request
+            if (request.Key != null) {
+                //checkKey
+                if (request.Key.Split("_")[0] == "Momo")
+                {
+                    var rawSignature = "accessKey=" + PaymentMomo.MomoAccessKey + "&amount=" + checkOrder.TotalAmount
+                            + "&extraData=" + "&ipnUrl=" + request.UrlIpn + "&orderId=" + request.InvoiceId
+                            + "&orderInfo=" + PaymentMomo.orderInfo + "&partnerCode=" + PaymentMomo.MomoPartnerCode
+                            + "&redirectUrl=" + request.UrlDirect + "&requestId=" + request.InvoiceId
+                            + "&requestType=" + PaymentMomo.requestType;
+                    //create signature with sha256 and sercetkey
+                    string signature = PasswordUtil.getSignature(rawSignature, PaymentMomo.MomoSecretKey);
+                    var momoPaymentRequest = new MomoPaymentRequest
+                    {
+                        orderInfo = PaymentMomo.orderInfo,
+                        partnerCode = PaymentMomo.MomoPartnerCode,
+                        redirectUrl = request.UrlDirect,
+                        ipnUrl = request.UrlIpn,
+                        amount = checkOrder.TotalAmount,
+                        orderId = request.InvoiceId,
+                        requestId = request.InvoiceId,
+                        requestType = PaymentMomo.requestType,
+                        extraData = "",
+                        partnerName = PaymentMomo.partnerName,
+                        storeId = "VegaCity",
+                        orderGroupId = "",
+                        autoCapture = PaymentMomo.autoCapture,
+                        lang = PaymentMomo.lang,
+                        signature = signature,
+                        orderExpireTime = PaymentMomo.orderExpireTime
+                    };
+                    //call momo api
+                    var response = await CallApiUtils.CallApiEndpoint("https://test-payment.momo.vn/v2/gateway/api/create", momoPaymentRequest);
+                    if (response.StatusCode != HttpStatusCode.OK)
+                    {
+                        return new ResponseAPI
+                        {
+                            StatusCode = HttpStatusCodes.InternalServerError,
+                            MessageResponse = PaymentMessage.MomoPaymentFail
+                        };
+                    }
+                    var momoPaymentResponse = await CallApiUtils.GenerateObjectFromResponse<MomoPaymentResponse>(response);
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.OK,
+                        MessageResponse = PaymentMessage.MomoPaymentSuccess,
+                        Data = momoPaymentResponse
+                    };
+                }
+            } 
+            else
+            {
+                //else
+                var rawSignature = "accessKey=" + PaymentMomo.MomoAccessKey + "&amount=" + checkOrder.TotalAmount
+                            + "&extraData=" + "&ipnUrl=" + PaymentMomo.ipnUrl + "&orderId=" + request.InvoiceId
+                            + "&orderInfo=" + PaymentMomo.orderInfo + "&partnerCode=" + PaymentMomo.MomoPartnerCode
                             + "&redirectUrl=" + PaymentMomo.redirectUrl + "&requestId=" + request.InvoiceId
                             + "&requestType=" + PaymentMomo.requestType;
-            //create signature with sha256 and sercetkey
-            string signature = PasswordUtil.getSignature(rawSignature, PaymentMomo.MomoSecretKey);
-            //create momo payment request
-            var momoPaymentRequest = new MomoPaymentRequest
-            {
-                orderInfo = PaymentMomo.orderInfo,
-                partnerCode = PaymentMomo.MomoPartnerCode,
-                redirectUrl = PaymentMomo.redirectUrl,
-                ipnUrl = PaymentMomo.ipnUrl,
-                amount = checkOrder.TotalAmount,
-                orderId = request.InvoiceId,
-                requestId = request.InvoiceId,
-                requestType = PaymentMomo.requestType,
-                extraData = "",
-                partnerName = PaymentMomo.partnerName,
-                storeId = checkOrder.StoreId.ToString(),
-                orderGroupId = "",
-                autoCapture = PaymentMomo.autoCapture,
-                lang = PaymentMomo.lang,
-                signature = signature,
-                orderExpireTime = PaymentMomo.orderExpireTime
-            };
-            //call momo api
-            var response = await CallApiUtils.CallApiEndpoint("https://test-payment.momo.vn/v2/gateway/api/create", momoPaymentRequest);
-            if (response.StatusCode != HttpStatusCode.OK)
-            {
+                //create signature with sha256 and sercetkey
+                string signature = PasswordUtil.getSignature(rawSignature, PaymentMomo.MomoSecretKey);
+                var momoPaymentRequest = new MomoPaymentRequest
+                {
+                    orderInfo = PaymentMomo.orderInfo,
+                    partnerCode = PaymentMomo.MomoPartnerCode,
+                    redirectUrl = PaymentMomo.redirectUrl,
+                    ipnUrl = PaymentMomo.ipnUrl,
+                    amount = checkOrder.TotalAmount,
+                    orderId = request.InvoiceId,
+                    requestId = request.InvoiceId,
+                    requestType = PaymentMomo.requestType,
+                    extraData = "",
+                    partnerName = PaymentMomo.partnerName,
+                    storeId = checkOrder.StoreId.ToString(),
+                    orderGroupId = "",
+                    autoCapture = PaymentMomo.autoCapture,
+                    lang = PaymentMomo.lang,
+                    signature = signature,
+                    orderExpireTime = PaymentMomo.orderExpireTime
+                };
+                //call momo api
+                var response = await CallApiUtils.CallApiEndpoint("https://test-payment.momo.vn/v2/gateway/api/create", momoPaymentRequest);
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.InternalServerError,
+                        MessageResponse = PaymentMessage.MomoPaymentFail
+                    };
+                }
+                var momoPaymentResponse = await CallApiUtils.GenerateObjectFromResponse<MomoPaymentResponse>(response);
                 return new ResponseAPI
                 {
-                    StatusCode = HttpStatusCodes.InternalServerError,
-                    MessageResponse = PaymentMessage.MomoPaymentFail
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = PaymentMessage.MomoPaymentSuccess,
+                    Data = momoPaymentResponse
                 };
             }
-            var momoPaymentResponse = await CallApiUtils.GenerateObjectFromResponse<MomoPaymentResponse>(response);
             return new ResponseAPI
             {
-                StatusCode = HttpStatusCodes.OK,
-                MessageResponse = PaymentMessage.MomoPaymentSuccess,
-                Data = momoPaymentResponse
-            }; 
+                StatusCode = HttpStatusCodes.BadRequest,
+                MessageResponse = PaymentMessage.MomoPaymentFail
+            };
         }
         public async Task<ResponseAPI> UpdateOrderPaid(IPNMomoRequest req)
         {
@@ -97,7 +157,45 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.InternalServerError
                 };
         }
-
+        public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(IPNMomoRequest req)
+        {
+            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+                (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending);
+            order.Status = OrderStatus.Completed;
+            order.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
+                (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+            //update wallet
+            etag.Wallet.Balance += (int)req.amount;
+            etag.Wallet.BalanceHistory += (int)req.amount;
+            etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+            //create deposite
+            var newDeposit = new Deposit
+            {
+                Id = Guid.NewGuid(), // Tạo ID mới
+                PaymentType = "Momo",
+                Name = "Nạp tiền vào ETag với số tiền: " + req.amount,
+                IsIncrease = "true", // Xác định rằng đây là nạp tiền
+                Amount =(int) req.amount,
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                WalletId = etag.Wallet.Id,
+                EtagId = etag.Id
+            };
+            await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NoContent,
+                    MessageResponse = PaymentMomo.ipnUrl
+                }
+                : new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError
+                };
+        }
         public async Task<ResponseAPI> VnPayment(PaymentRequest req, HttpContext context)
         {
             var orderExisted = await _unitOfWork.GetRepository<Order>()

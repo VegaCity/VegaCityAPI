@@ -22,5 +22,8 @@
     public class PaymentRequest
     {
         public string InvoiceId { get; set; }
+        public string? Key { get; set; }
+        public string? UrlDirect { get; set; }
+        public string? UrlIpn { get; set; }
     }
 }

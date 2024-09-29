@@ -108,6 +108,8 @@ public static class MessageConstant
         public const string PhoneNumberInvalid = "PhoneNumber Invalid !!";
         public const string ActivateEtagSuccess = "Activate Etag Successfully !!";
         public const string ActivateEtagFail = "Activate Etag Fail :( !!";
+        public const string CreateOrderForCharge = "Create Order For Charging Etag Money Successfully!";
+        public const string CreateOrderForChargeFail = "Create Order For Charging Etag Money Failed!";
     }
     public static class UserMessage
     {   

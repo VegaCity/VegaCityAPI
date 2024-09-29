@@ -131,5 +131,14 @@ namespace VegaCityApp.API.Controllers
             var result = await _service.SearchAllEtag(size, page);
             return Ok(result);
         }
+        [HttpPost(EtagEndpoint.ChargeMoneyETag)]
+        [ProducesResponseType(typeof(EtagResponse), HttpStatusCodes.OK)]
+        //[CustomAuthorize(RoleEnum.CashierApp, RoleEnum.CashierWeb)]
+        public async Task<IActionResult> PrepareChargeMoneyEtag([FromBody] ChargeMoneyEtagRequest req)
+        {
+            var result = await _service.PrepareChargeMoneyEtag(req);
+            return Ok(result);
+        }
+
     }
 }

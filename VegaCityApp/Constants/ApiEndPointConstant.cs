@@ -37,6 +37,7 @@ public static class ApiEndPointConstant
         public const string SearchEtag = ApiEndpoint + "/etag/{id}";
         public const string SearchAllEtag = ApiEndpoint + "/etags";
         public const string ActivateEtag = ApiEndpoint + "/etag/{id}/activate";
+        public const string ChargeMoneyETag = ApiEndpoint + "/etag/charge-money";
     }
     public static class UserEndpoint
     {
@@ -102,6 +103,7 @@ public static class ApiEndPointConstant
         public const string VnPayPayment = ApiEndpoint + "/payment/vnpay";
         public const string VisaCardPayment = ApiEndpoint + "/payment/visa";
         public const string UpdateOrderPaid = ApiEndpoint + "/payment/momo/order";
+        public const string UpdateOrderPaidForChargingMoney = ApiEndpoint + "/payment/momo/order/charge-money";
         public const string UpdateVnPayOrder = ApiEndpoint + "/payment/vnpay/order";
     }
 }
