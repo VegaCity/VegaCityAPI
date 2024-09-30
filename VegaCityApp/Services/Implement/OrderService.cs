@@ -402,6 +402,7 @@ namespace VegaCityApp.API.Services.Implement
                     etagTypeName = item.EtagType.Name;
                 }
             }
+            // fix lại cái response khi nhập saleType
             var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Name == etagTypeName && !x.Deflag);
             //generate etag
             var ListEtag = await _etagService.GenerateEtag(count, etagType.Id, req.GenerateEtagRequest);
