@@ -208,7 +208,7 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = MessageConstant.HttpStatusCodes.BadRequest
             };
         }
-        public async Task<ResponseAPI> AddEtagTypeToPackage(Guid etagTypeId, Guid packageId)
+        public async Task<ResponseAPI> AddEtagTypeToPackage(Guid etagTypeId, Guid packageId, int quantityEtagType)
         {
             var etag = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag);
             if (etag == null)
@@ -234,7 +234,8 @@ namespace VegaCityApp.API.Services.Implement
                 EtagTypeId = etag.Id,
                 PackageId = package.Id,
                 CrDate = TimeUtils.GetCurrentSEATime(),
-                UpsDate = TimeUtils.GetCurrentSEATime()
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                QuantityEtagType = quantityEtagType
             };
             await _unitOfWork.GetRepository<PackageETagTypeMapping>().InsertAsync(etagPackage);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
@@ -275,7 +276,8 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> GenerateEtag(int quantity, Guid etagTypeId, GenerateEtagRequest req)
         {
             List<Guid> listEtagCreated = new List<Guid>();
-            var checkEtagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag);
+            var checkEtagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(
+                predicate: x => x.Id == etagTypeId && !x.Deflag);
             if (checkEtagType == null)
             {
                 return new ResponseAPI()
@@ -292,8 +294,8 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     Id = Guid.NewGuid(),
                     WalletType = (int)WalletTypeEnum.EtagWallet,
-                    Balance = req.MoneyStart?? 0,
-                    BalanceHistory = req.MoneyStart??0,
+                    Balance = (int)((int)checkEtagType.Amount *(1 + checkEtagType.BonusRate)),
+                    BalanceHistory = (int)((int)checkEtagType.Amount * (1 + checkEtagType.BonusRate)),
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
                     Deflag = false

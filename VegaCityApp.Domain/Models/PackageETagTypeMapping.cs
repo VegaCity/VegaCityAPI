@@ -10,6 +10,7 @@ namespace VegaCityApp.Domain.Models
         public Guid EtagTypeId { get; set; }
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
+        public int QuantityEtagType { get; set; }
 
         public virtual EtagType EtagType { get; set; } = null!;
         public virtual Package Package { get; set; } = null!;

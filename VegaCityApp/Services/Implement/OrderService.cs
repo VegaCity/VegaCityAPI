@@ -384,7 +384,8 @@ namespace VegaCityApp.API.Services.Implement
                     count = item.Quantity;
                 }
             }
-            if(order.SaleType == "Package")
+            int quantityEtagType = 0;
+            if (order.SaleType == "Package")
             {
                 var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
                     predicate: x => x.Name == packageName && !x.Deflag,
@@ -400,36 +401,68 @@ namespace VegaCityApp.API.Services.Implement
                 foreach (var item in package.PackageETagTypeMappings)
                 {
                     etagTypeName = item.EtagType.Name;
+                    quantityEtagType = item.QuantityEtagType;
                 }
             }
             // fix lại cái response khi nhập saleType
             var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Name == etagTypeName && !x.Deflag);
             //generate etag
-            var ListEtag = await _etagService.GenerateEtag(count, etagType.Id, req.GenerateEtagRequest);
-            if(ListEtag.StatusCode == HttpStatusCodes.BadRequest)
+            if(order.SaleType == "Package")
             {
-                return new ResponseAPI()
+                var ListEtagFollowQuantity = await _etagService.GenerateEtag(quantityEtagType, etagType.Id, req.GenerateEtagRequest);
+                if (ListEtagFollowQuantity.StatusCode == HttpStatusCodes.BadRequest)
                 {
-                    MessageResponse = OrderMessage.GenerateEtagFail,
+                    return new ResponseAPI()
+                    {
+                        MessageResponse = OrderMessage.GenerateEtagFail,
+                        StatusCode = HttpStatusCodes.BadRequest
+                    };
+                }
+                order.Status = OrderStatus.Completed;
+                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.ConfirmOrderSuccessfully,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = new
+                    {
+                        OrderId = order.Id,
+                        invoiceId = order.InvoiceId
+                    }
+                } : new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.ConfirmOrderFail,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            order.Status = OrderStatus.Completed;
-            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            else
             {
-                MessageResponse = OrderMessage.ConfirmOrderSuccessfully,
-                StatusCode = HttpStatusCodes.OK,
-                Data = new
+                var ListEtag = await _etagService.GenerateEtag(count, etagType.Id, req.GenerateEtagRequest);
+                if (ListEtag.StatusCode == HttpStatusCodes.BadRequest)
                 {
-                    OrderId = order.Id,
-                    invoiceId = order.InvoiceId
+                    return new ResponseAPI()
+                    {
+                        MessageResponse = OrderMessage.GenerateEtagFail,
+                        StatusCode = HttpStatusCodes.BadRequest
+                    };
                 }
-            } : new ResponseAPI()
-            {
-                MessageResponse = OrderMessage.ConfirmOrderFail,
-                StatusCode = HttpStatusCodes.BadRequest
-            };
+                order.Status = OrderStatus.Completed;
+                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.ConfirmOrderSuccessfully,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = new
+                    {
+                        OrderId = order.Id,
+                        invoiceId = order.InvoiceId
+                    }
+                } : new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.ConfirmOrderFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
         }
     }
 }

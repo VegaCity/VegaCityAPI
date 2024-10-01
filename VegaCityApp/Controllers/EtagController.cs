@@ -71,9 +71,9 @@ namespace VegaCityApp.API.Controllers
         [HttpPost(EtagTypeEndpoint.AddEtagTypeToPackage)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]
-        public async Task<IActionResult> AddEtagTypeToPackage(Guid etagTypeId, Guid packageId)
+        public async Task<IActionResult> AddEtagTypeToPackage(Guid etagTypeId, Guid packageId,[FromQuery] int quantityEtagType)
         {
-            var result = await _service.AddEtagTypeToPackage(etagTypeId, packageId);
+            var result = await _service.AddEtagTypeToPackage(etagTypeId, packageId, quantityEtagType);
             return StatusCode(result.StatusCode, result);
         }
         [HttpDelete(EtagTypeEndpoint.RemoveEtagTypeFromPackage)]

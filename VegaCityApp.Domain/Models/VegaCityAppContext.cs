@@ -428,7 +428,7 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("crDate")
                     .HasDefaultValueSql("(getdate())");
 
-                entity.Property(e => e.Description).HasMaxLength(50);
+                entity.Property(e => e.Description).HasMaxLength(500);
 
                 entity.Property(e => e.EndDate)
                     .HasColumnType("datetime")
