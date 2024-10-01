@@ -192,7 +192,8 @@ namespace VegaCityApp.API.Services.Implement
                 EtagCode = "VGC" + TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"),
                 StartDate = req.StartDate,
                 EndDate = req.Day == null ? req.EndDate : req.StartDate.AddDays((double)req.Day),
-                Status = (int)EtagStatusEnum.Active
+                Status = (int)EtagStatusEnum.Active,
+                IsVerifyPhone = false
             };
             newEtag.Qrcode = EnCodeBase64.EncodeBase64Etag(newEtag.EtagCode);
             await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
@@ -316,7 +317,8 @@ namespace VegaCityApp.API.Services.Implement
                     WalletId = wallet.Id,
                     StartDate = req.StartDate,
                     EndDate = req.Day == null? req.EndDate: req.StartDate.AddDays((double)req.Day),
-                    Status = (int)EtagStatusEnum.Inactive
+                    Status = (int)EtagStatusEnum.Inactive,
+                    IsVerifyPhone = false,
                 };
                 newEtag.Qrcode = EnCodeBase64.EncodeBase64Etag(newEtag.EtagCode);
                 await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
