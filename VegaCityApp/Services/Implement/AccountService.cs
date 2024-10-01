@@ -28,16 +28,16 @@ namespace VegaCityApp.Service.Implement
         private async Task<User> CreateUserRegister(RegisterRequest req)
         {
             var role = await _unitOfWork.GetRepository<Role>()
-                .SingleOrDefaultAsync(predicate: r => r.Name == req.RoleName.Replace(" ", string.Empty));
+                .SingleOrDefaultAsync(predicate: r => r.Name == req.RoleName.Trim().Replace(" ", string.Empty));
             var newUser = new User
             {
                 Id = Guid.NewGuid(),
-                FullName = req.FullName,
-                PhoneNumber = req.PhoneNumber,
-                Cccd = req.CCCD,
-                Address = req.Address,
-                Email = req.Email,
-                Description = req.Description,
+                FullName = req.FullName.Trim(),
+                PhoneNumber = req.PhoneNumber.Trim(),
+                Cccd = req.CCCD.Trim(),
+                Address = req.Address.Trim(),
+                Email = req.Email.Trim(),
+                Description = req.Description.Trim(),
                 MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
                 RoleId = role != null ? role.Id : Guid.Parse(EnvironmentVariableConstant.StoreId),
                 CrDate = TimeUtils.GetCurrentSEATime(),
@@ -328,7 +328,7 @@ namespace VegaCityApp.Service.Implement
 
             //check if email is already exist
             var emailExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Email == req.Email);
+                x.Email == req.Email.Trim());
             if (emailExist != null)
             {
                 return new ResponseAPI()
@@ -338,7 +338,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var phoneNumberExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.PhoneNumber == req.PhoneNumber);
+                x.PhoneNumber == req.PhoneNumber.Trim());
             if (phoneNumberExist != null)
             {
                 return new ResponseAPI()
@@ -348,7 +348,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var cccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Cccd == req.CCCD);
+                x.Cccd == req.CCCD.Trim());
             if (cccdExist != null)
             {
                 return new ResponseAPI()
@@ -398,6 +398,7 @@ namespace VegaCityApp.Service.Implement
         }
         public async Task<ResponseAPI> AdminCreateUser(RegisterRequest req)
         {
+            #region validate form
             if (!ValidationUtils.IsEmail(req.Email))
             {
                 return new ResponseAPI()
@@ -424,7 +425,8 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.InvalidCCCD,
                 };
             }
-
+            #endregion
+            #region check exist
             var emailExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
                 x.Email == req.Email);
             if (emailExist != null)
@@ -455,83 +457,84 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.CCCDExist
                 };
             }
-
+            #endregion
+            #region create new user
             var newUser = await CreateUserRegister(req);
-            //create refesh token
+            #endregion
+            #region create refesh token
             var refresh = new ReFreshTokenRequest
             {
                 Email = newUser.Email,
                 RefreshToken = null
             };
             var token = await RefreshToken(refresh);
-            if (newUser.Id != Guid.Empty)
+            #endregion
+            #region create wallet
+            var result = await CreateUserWallet(newUser.Id);
+            if (!result)
             {
-                if (newUser.Role.Name == RoleEnum.Store.GetDescriptionFromEnum())
+                return new ResponseAPI
                 {
-                    var result = await CreateUserWallet(newUser.Id);
-
-
-                    if (!result)
-                    {
-                        return new ResponseAPI
-                        {
-                            StatusCode = HttpStatusCodes.BadRequest,
-                            MessageResponse = UserMessage.CreateWalletFail
-                        };
-                    }
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.CreateWalletFail
+                };
+            }
+            #endregion
+            #region send mail
+            if (newUser != null)
+            {
+                try
+                {
+                    var subject = UserMessage.YourPasswordToChange;
+                    var body = "Your Your Password To Change. Your password is: " + newUser.Password;
+                    await MailUtil.SendMailAsync(newUser.Email, subject, body);
+                }catch(Exception ex)
+                {
                     return new ResponseAPI
                     {
-                        StatusCode = HttpStatusCodes.Created,
-                        MessageResponse = UserMessage.CreateSuccessfully,
-                        Data = new
-                        {
-                            UserId = newUser.Id,
-                            RefreshToken = token.Data
-                        }
-                    };
-                }
-                else
-                {
-                    //send mail
-                    if (newUser != null)
-                    {
-                        try
-                        {
-                            var subject = UserMessage.YourPasswordToChange;
-                            var body = "Your Your Password To Change. Your password is: " + newUser.Password;
-                            await MailUtil.SendMailAsync(newUser.Email, subject, body);
-                        }catch(Exception ex)
-                        {
-                            return new ResponseAPI
-                            {
-                                StatusCode = HttpStatusCodes.BadRequest,
-                                MessageResponse = UserMessage.SendMailFail
-                            };
-                        }
-
-                    }
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.Created,
-                        MessageResponse = UserMessage.CreateSuccessfully,
-                        Data = new
-                        {
-                            UserId = newUser.Id,
-                            RefreshToken = token.Data
-                        }
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = UserMessage.SendMailFail
                     };
                 }
             }
+            #endregion
             return new ResponseAPI
             {
-                StatusCode = HttpStatusCodes.BadRequest,
-                MessageResponse = UserMessage.CreateUserFail
+                StatusCode = HttpStatusCodes.Created,
+                MessageResponse = UserMessage.CreateSuccessfully,
+                Data = new
+                {
+                    UserId = newUser.Id,
+                    RefreshToken = token.Data
+                }
             };
         }
+        //after register, admin will approve user
         public async Task<ResponseAPI> ApproveUser(Guid userId, ApproveRequest req)
         {
+            var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(
+                predicate: x => x.Location == req.LocationHouse.Trim() && x.Address == req.AdressHouse.Trim());
+            if (house != null)
+            {
+                if (house.Isrent)
+                {
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = UserMessage.HouseIsRent
+                    };
+                }
+            }
+            else
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.HouseNotFound
+                };
+            }
             var user = await _unitOfWork.GetRepository<User>()
-                .SingleOrDefaultAsync(predicate: x => x.Id == userId);
+            .SingleOrDefaultAsync(predicate: x => x.Id == userId);
             if (user.Status == (int)UserStatusEnum.Active)
             {
                 return new ResponseAPI
@@ -544,7 +547,15 @@ namespace VegaCityApp.Service.Implement
                     }
                 };
             }
-            if (req.ApprovalStatus.Equals(ApproveStatus.REJECT))
+            if (user.RoleId != Guid.Parse(EnvironmentVariableConstant.StoreId))
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.RoleNotAllow
+                };
+            }
+            if (req.ApprovalStatus.Trim().Equals(ApproveStatus.REJECT))
             {
                 if (user == null)
                 {
@@ -568,9 +579,9 @@ namespace VegaCityApp.Service.Implement
                     }
                 };
             }
-            else if(req.ApprovalStatus.Equals(ApproveStatus.APPROVED))
+            else if (req.ApprovalStatus.Trim().Equals(ApproveStatus.APPROVED))
             {
-                //check phone, email
+                #region check phone, email valid format
                 if (!ValidationUtils.IsEmail(req.StoreEmail))
                 {
                     return new ResponseAPI
@@ -588,80 +599,32 @@ namespace VegaCityApp.Service.Implement
                         MessageResponse = UserMessage.InvalidPhoneNumber
                     };
                 }
-                if(user.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierWebId))
-                {
-                    var result = await UpdateOtherUserApproving(user, user.RoleId);
-                    if (result != Guid.Empty)
-                    {
-
-                        //send mail
-                        if (user != null)
-                        {
-                            try
-                            {
-                                var subject = UserMessage.ApproveSuccessfully;
-                                var body = "Your account has been approved. Your password is: " + user.Password;
-                                await MailUtil.SendMailAsync(user.Email, subject, body);
-                            }
-                            catch (Exception ex)
-                            {
-                                return new ResponseAPI
-                                {
-                                    StatusCode = HttpStatusCodes.BadRequest,
-                                    MessageResponse = UserMessage.SendMailFail
-                                };
-                            }
-
-                        }
-                    }
-
-                        return new ResponseAPI
-                        {
-                            StatusCode = HttpStatusCodes.Created,
-                            MessageResponse = UserMessage.ApproveSuccessfully,
-                            Data = new
-                            {
-                                UserId = result,
-                            }
-                        };
-                    }
-                }
+                #endregion
                 if (user.RoleId == Guid.Parse(EnvironmentVariableConstant.StoreId))
                 {
+                    #region create store
                     var newStore = new Store
                     {
                         Id = Guid.NewGuid(),
-                        Name = req.StoreName,
-                        Address = req.StoreAddress,
-                        PhoneNumber = req.PhoneNumber,
-                        Email = req.StoreEmail,
+                        Name = req.StoreName.Trim(),
+                        Address = req.StoreAddress.Trim(),
+                        PhoneNumber = req.PhoneNumber.Trim(),
+                        Email = req.StoreEmail.Trim(),
                         Status = (int)StoreStatusEnum.Closed,
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         UpsDate = TimeUtils.GetCurrentSEATime(),
                         MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
                         Deflag = false,
+                        HouseId = house.Id
                     };
                     await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
-                    //create store wallet
-                    var storeWallet = new Wallet
-                    {
-                        Id = Guid.NewGuid(),
-                        WalletType = (int)WalletTypeEnum.StoreWallet,
-                        Balance = 0,
-                        BalanceHistory = 0,
-                        CrDate = TimeUtils.GetCurrentSEATime(),
-                        UpsDate = TimeUtils.GetCurrentSEATime(),
-                        Deflag = false,
-                        StoreId = newStore.Id
-                    };
-                    await _unitOfWork.GetRepository<Wallet>().InsertAsync(storeWallet);
                     await _unitOfWork.CommitAsync();
+                    #endregion
                     //update user
                     var result = await UpdateUserApproving(user, newStore.Id);
                     if (result != Guid.Empty)
                     {
-
-                        //send mail
+                        #region send mail
                         if (user != null)
                         {
                             try
@@ -680,30 +643,31 @@ namespace VegaCityApp.Service.Implement
 
                             }
 
-                        return new ResponseAPI
-                        {
-                            StatusCode = HttpStatusCodes.Created,
-                            MessageResponse = UserMessage.ApproveSuccessfully,
-                            Data = new
+                            return new ResponseAPI
                             {
-                                UserId = result,
-                                StoreId = newStore.Id
-                            }
-                        };
+                                StatusCode = HttpStatusCodes.Created,
+                                MessageResponse = UserMessage.ApproveSuccessfully,
+                                Data = new
+                                {
+                                    UserId = result,
+                                    StoreId = newStore.Id
+                                }
+                            };
+                        }
+                        #endregion
                     }
                 }
-    
             }
-
             return new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.BadRequest,
                 MessageResponse = UserMessage.ApproveFail
             };
         }
+        //after register, admin will approve user
         public async Task<ResponseAPI> ChangePassword(ChangePasswordRequest req)
         {
-            if (!ValidationUtils.IsEmail(req.Email))
+            if (!ValidationUtils.IsEmail(req.Email.Trim()))
             {
                 return new ResponseAPI
                 {
@@ -713,7 +677,7 @@ namespace VegaCityApp.Service.Implement
             }
 
             var user = await _unitOfWork.GetRepository<User>()
-                .SingleOrDefaultAsync(predicate: x => x.Email == req.Email, include: user => user.Include(x => x.Role));
+                .SingleOrDefaultAsync(predicate: x => x.Email == req.Email.Trim(), include: user => user.Include(x => x.Role));
             if (user == null)
             {
                 return new ResponseAPI
@@ -727,7 +691,7 @@ namespace VegaCityApp.Service.Implement
             {
                 if(allowedRoles.Contains(user.Role.Name))
                 {
-                    if (user.Password == req.OldPassword)
+                    if (user.Password == req.OldPassword.Trim())
                     {
                         user.Password = PasswordUtil.HashPassword(req.NewPassword);
                         user.IsChange = true;
@@ -751,12 +715,30 @@ namespace VegaCityApp.Service.Implement
                             MessageResponse = UserMessage.OldPasswordNotDuplicate
                         };
                     }
-                }   
+                }
+            }
+            else
+            {
+                if(user.Password == PasswordUtil.HashPassword(req.OldPassword.Trim()))
+                {
+                    user.Password = PasswordUtil.HashPassword(req.NewPassword.Trim());
+                    _unitOfWork.GetRepository<User>().UpdateAsync(user);
+                    await _unitOfWork.CommitAsync();
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.OK,
+                        MessageResponse = UserMessage.ChangePasswordSuccessfully,
+                        Data = new
+                        {
+                            UserId = user.Id
+                        }
+                    };
+                }
             }
             return new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.BadRequest,
-                MessageResponse = UserMessage.PasswordIsChanged
+                MessageResponse = UserMessage.PasswordIsNotChanged
             };
         }
         public async Task<IPaginate<GetUserResponse>> SearchAllUser(int size, int page)
@@ -800,20 +782,18 @@ namespace VegaCityApp.Service.Implement
                         .Include(y => y.Store)
                         .Include(y => y.Role)
             );
-
             if (user == null)
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.UserMessage.NotFoundUser,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = UserMessage.NotFoundUser,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
-
             return new ResponseAPI()
             {
                 MessageResponse = UserMessage.GetListSuccess,
-                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                StatusCode = HttpStatusCodes.OK,
                 Data = new
                 {
                     user

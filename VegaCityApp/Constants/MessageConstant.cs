@@ -113,6 +113,9 @@ public static class MessageConstant
     }
     public static class UserMessage
     {   
+        public const string RoleNotAllow = "Role Not Allow !!";
+        public const string HouseNotFound = "House Not Found !!";
+        public const string HouseIsRent = "House is renting !!";
         public const string PhoneNumberExist = "Phone Number already exist !!";
         public const string CCCDExist = "CCCD already exist !!";
         public const string SendMailFail = "Send Mail Fail !!";
@@ -149,7 +152,7 @@ public static class MessageConstant
         public const string DeleteUserSuccess = "Delete User Successfully!";
         public const string DeleteUserFail = "Delete User Fail!";
         public const string VegaCityResponse = "VegaCity Response";
-        public const string PasswordIsChanged = "Password is changed!";
+        public const string PasswordIsNotChanged = "Password is not changed!";
         public const string CreateWalletFail = "Create Wallet Fail !!";
         public const string InvalidRoleName = "Created fail! Please check the Role Name!";
         public const string YourPinCode = "Your Verify Pin Code ";

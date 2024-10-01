@@ -49,7 +49,7 @@ public static class DependencyServices
         string Host = "LAPTOP-R0K7KBGI\\TRANGQUOCDAT";
         string UserName = "sa";
         string Password = "12345";
-        string Database = "VegaCityApp2";
+        string Database = "VegaCityApp";
         string Port = "1433";
         #endregion
         string connectionString =

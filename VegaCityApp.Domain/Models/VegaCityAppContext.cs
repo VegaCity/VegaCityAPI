@@ -41,7 +41,7 @@ namespace VegaCityApp.Domain.Models
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=14.225.204.144;Database=VegaCityApp;User Id=vegadb;Password=vega12345;Encrypt=True;TrustServerCertificate=True");
+                optionsBuilder.UseSqlServer("Server=LAPTOP-R0K7KBGI\\TRANGQUOCDAT;Database=VegaCityApp;User Id=sa;Password=12345;Encrypt=True;TrustServerCertificate=True");
             }
         }
 
@@ -50,6 +50,12 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<Deposit>(entity =>
             {
                 entity.ToTable("Deposit");
+
+                entity.HasIndex(e => e.EtagId, "IX_Deposit_EtagId");
+
+                entity.HasIndex(e => e.OrderId, "IX_Deposit_OrderId");
+
+                entity.HasIndex(e => e.WalletId, "IX_Deposit_WalletId");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
@@ -91,6 +97,10 @@ namespace VegaCityApp.Domain.Models
 
             modelBuilder.Entity<DisputeReport>(entity =>
             {
+                entity.HasIndex(e => e.StoreId, "IX_DisputeReports_StoreId");
+
+                entity.HasIndex(e => e.UserId, "IX_DisputeReports_UserId");
+
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.CrDate)
@@ -128,6 +138,12 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<Etag>(entity =>
             {
                 entity.ToTable("ETag");
+
+                entity.HasIndex(e => e.EtagTypeId, "IX_ETag_ETagTypeId");
+
+                entity.HasIndex(e => e.MarketZoneId, "IX_ETag_MarketZoneId");
+
+                entity.HasIndex(e => e.WalletId, "IX_ETag_WalletId");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
@@ -195,6 +211,8 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("ETagType");
 
+                entity.HasIndex(e => e.MarketZoneId, "IX_ETagType_MarketZoneId");
+
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.BonusRate).HasColumnType("decimal(18, 2)");
@@ -213,6 +231,8 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<House>(entity =>
             {
                 entity.ToTable("House");
+
+                entity.HasIndex(e => e.ZoneId, "IX_House_ZoneId");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
@@ -281,6 +301,8 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Menu");
 
+                entity.HasIndex(e => e.StoreId, "IX_Menu_StoreId");
+
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Address).HasMaxLength(100);
@@ -311,6 +333,12 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<Order>(entity =>
             {
                 entity.ToTable("Order");
+
+                entity.HasIndex(e => e.EtagId, "IX_Order_ETagId");
+
+                entity.HasIndex(e => e.StoreId, "IX_Order_StoreId");
+
+                entity.HasIndex(e => e.UserId, "IX_Order_UserId");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
@@ -361,6 +389,10 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<OrderDetail>(entity =>
             {
                 entity.ToTable("OrderDetail");
+
+                entity.HasIndex(e => e.MenuId, "IX_OrderDetail_MenuId");
+
+                entity.HasIndex(e => e.OrderId, "IX_OrderDetail_OrderId");
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
@@ -420,6 +452,10 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("PackageE-TagTypeMapping");
 
+                entity.HasIndex(e => e.EtagTypeId, "IX_PackageE-TagTypeMapping_ETagTypeId");
+
+                entity.HasIndex(e => e.PackageId, "IX_PackageE-TagTypeMapping_PackageId");
+
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CrDate)
@@ -450,6 +486,8 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<ProductCategory>(entity =>
             {
                 entity.ToTable("ProductCategory");
+
+                entity.HasIndex(e => e.MenuId, "IX_ProductCategory_MenuId");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
@@ -486,6 +524,10 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<Store>(entity =>
             {
                 entity.ToTable("Store");
+
+                entity.HasIndex(e => e.HouseId, "IX_Store_HouseId");
+
+                entity.HasIndex(e => e.MarketZoneId, "IX_Store_MarketZoneId");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
@@ -532,6 +574,10 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Transaction");
 
+                entity.HasIndex(e => e.StoreId, "IX_Transaction_StoreId");
+
+                entity.HasIndex(e => e.WalletId, "IX_Transaction_WalletId");
+
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CrDate)
@@ -568,6 +614,10 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<User>(entity =>
             {
                 entity.ToTable("User");
+
+                entity.HasIndex(e => e.RoleId, "IX_User_RoleId");
+
+                entity.HasIndex(e => e.StoreId, "IX_User_StoreId");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
@@ -628,6 +678,8 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("UserRefreshToken");
 
+                entity.HasIndex(e => e.UserId, "IX_UserRefreshToken_UserId");
+
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.CrDate)
@@ -655,6 +707,10 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Wallet");
 
+                entity.HasIndex(e => e.StoreId, "IX_Wallet_StoreId");
+
+                entity.HasIndex(e => e.UserId, "IX_Wallet_UserId");
+
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CrDate)
@@ -681,6 +737,8 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<Zone>(entity =>
             {
                 entity.ToTable("Zone");
+
+                entity.HasIndex(e => e.MarketZoneId, "IX_Zone_MarketZoneId");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 

@@ -29,6 +29,7 @@ namespace VegaCityApp.Domain.Models
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public int? Status { get; set; }
+        public bool? IsVerifyPhone { get; set; }
 
         public virtual EtagType EtagType { get; set; } = null!;
         public virtual MarketZone MarketZone { get; set; } = null!;
