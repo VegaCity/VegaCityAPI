@@ -41,16 +41,16 @@ public static class DependencyServices
         //string connectionString =
         //    $"Server={configuration.GetValue<string>(DatabaseConstant.Host)},{configuration.GetValue<string>(DatabaseConstant.Port)};User Id={configuration.GetValue<string>(DatabaseConstant.UserName)};Password={configuration.GetValue<string>(DatabaseConstant.Password)};Database={configuration.GetValue<string>(DatabaseConstant.Database)}";
         #region varDb
-        //string Host = "14.225.204.144";
-        //string UserName = "vegadb";
-        //string Password = "vega12345";
-        //string Database = "VegaCityApp";
-        //string Port = "1433";
-        string Host = "LAPTOP-R0K7KBGI\\TRANGQUOCDAT";
+        string Host = "14.225.204.144";
         string UserName = "sa";
-        string Password = "12345";
+        string Password = "S@123456";
         string Database = "VegaCityApp";
         string Port = "1433";
+        //string Host = "LAPTOP-R0K7KBGI\\TRANGQUOCDAT";
+        //string UserName = "sa";
+        //string Password = "12345";
+        //string Database = "VegaCityApp";
+        //string Port = "1433";
         #endregion
         string connectionString =
             $"Server={Host},{Port};User Id={UserName};Password={Password};Database={Database}";
