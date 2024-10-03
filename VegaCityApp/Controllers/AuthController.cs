@@ -21,6 +21,7 @@ namespace VegaCityApp.API.Controllers
 
         [HttpPost(AuthenticationEndpoint.Login)]
         [ProducesResponseType(typeof(LoginResponse), HttpStatusCodes.OK)]
+        [SwaggerOperation(Summary = "Login for user")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var result = await _accountService.Login(request);
