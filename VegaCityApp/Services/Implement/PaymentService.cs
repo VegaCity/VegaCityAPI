@@ -177,7 +177,7 @@ namespace VegaCityApp.API.Services.Implement
                 Id = Guid.NewGuid(), // Tạo ID mới
                 PaymentType = "Momo",
                 Name = "Nạp tiền vào ETag với số tiền: " + req.amount,
-                IsIncrease = "true", // Xác định rằng đây là nạp tiền
+                IsIncrease = true, // Xác định rằng đây là nạp tiền
                 Amount =(int) req.amount,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),

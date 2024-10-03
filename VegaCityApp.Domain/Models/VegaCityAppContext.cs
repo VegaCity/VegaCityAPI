@@ -67,10 +67,6 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("crDate")
                     .HasDefaultValueSql("(getdate())");
 
-                entity.Property(e => e.IsIncrease)
-                    .HasMaxLength(20)
-                    .IsUnicode(false);
-
                 entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.Property(e => e.PaymentType)
@@ -85,16 +81,19 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Etag)
                     .WithMany(p => p.Deposits)
                     .HasForeignKey(d => d.EtagId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Deposit_ETag");
 
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.Deposits)
                     .HasForeignKey(d => d.OrderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Deposit_Order");
 
                 entity.HasOne(d => d.Wallet)
                     .WithMany(p => p.Deposits)
                     .HasForeignKey(d => d.WalletId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Deposit_Wallet");
             });
 

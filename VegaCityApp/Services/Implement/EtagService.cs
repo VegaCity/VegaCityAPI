@@ -531,9 +531,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = MessageConstant.HttpStatusCodes.NotFound,
                 };
             }
-           
 
-            etagExist.Wallet.Balance += req.ChargeAmount;
             var newOrder = new Order()
             {
                 Id = Guid.NewGuid(),
