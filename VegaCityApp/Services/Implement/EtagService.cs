@@ -555,10 +555,10 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.OK,
                  Data = new
                  {
-                     InvoiceId = newOrder.InvoiceId,
-                     Balance = etagExist.Wallet.Balance,
+                     invoiceId = newOrder.InvoiceId,
+                     balance = etagExist.Wallet.Balance,
                      Key = key,
-                     UrlDirect = "https://localhost:44395/api/v1/payment/momo/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, https://vega.vinhuser.one/api/v1/payment/momo/order
+                     UrlDirect = "http://14.225.204.144:8000/api/v1/payment/momo/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
                      UrlIpn = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b"
                  }
             } : new ResponseAPI()
