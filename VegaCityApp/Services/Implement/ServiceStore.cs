@@ -87,8 +87,7 @@ namespace VegaCityApp.API.Services.Implement
                     StoreId = z.StoreId,
                     CrDate = z.CrDate,
                     UpsDate = z.UpsDate,
-                    Deflag = z.Deflag,
-                    WalletTypeId = z.WalletTypeId
+                    Deflag = z.Deflag
                 },
                 size: size,
                 page: page,

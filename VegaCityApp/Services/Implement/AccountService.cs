@@ -58,12 +58,12 @@ namespace VegaCityApp.Service.Implement
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
-                WalletType = (int)WalletTypeEnum.UserWallet,
                 Balance = 0,
                 BalanceHistory = 0,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
-                Deflag = false
+                Deflag = false,
+                WalletTypeId = Guid.Parse(EnvironmentVariableConstant.UserWallet)
             };
             await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
             return await _unitOfWork.CommitAsync() > 0;
@@ -618,6 +618,20 @@ namespace VegaCityApp.Service.Implement
                         HouseId = house.Id
                     };
                     await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
+                    var wallet = new Wallet
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = user.Id,
+                        Balance = 0,
+                        BalanceHistory = 0,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        Deflag = false,
+                        StartDate = TimeUtils.GetCurrentSEATime(),
+                        StoreId = newStore.Id,
+                        WalletTypeId = Guid.Parse(EnvironmentVariableConstant.StoreWallet)
+                    };
+                    await _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
                     await _unitOfWork.CommitAsync();
                     #endregion
                     //update user

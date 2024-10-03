@@ -17,9 +17,11 @@ namespace VegaCityApp.Domain.Models
         public string? ImageUrl { get; set; }
         public decimal? BonusRate { get; set; }
         public bool Deflag { get; set; }
-        public int? Amount { get; set; }
+        public int Amount { get; set; }
+        public Guid WalletTypeId { get; set; }
 
         public virtual MarketZone MarketZone { get; set; } = null!;
+        public virtual WalletType WalletType { get; set; } = null!;
         public virtual ICollection<Etag> Etags { get; set; }
         public virtual ICollection<PackageETagTypeMapping> PackageETagTypeMappings { get; set; }
     }

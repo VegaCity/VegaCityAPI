@@ -8,6 +8,5 @@
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
-        public Guid? WalletTypeId { get; set; }
     }
 }

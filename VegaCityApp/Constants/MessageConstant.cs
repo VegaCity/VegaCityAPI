@@ -289,6 +289,7 @@ public static class MessageConstant
     }
     public static class WalletTypeMessage
     {
+        public const string NotFoundServiceStoreInWalletType = "ServiceStore Not Found In WalletType !!";
         public const string RemoveServiceStoreToWalletTypeSuccess = "Remove ServiceStore To WalletType Successfully !!";
         public const string RemoveServiceStoreToWalletTypeFail = "Remove ServiceStore To WalletType Fail !!";
         public const string AddServiceStoreToWalletTypeSuccess = "Add ServiceStore To WalletType Successfully !!";

@@ -6,6 +6,7 @@
         public string? ImageUrl { get; set; }
         public decimal? BonusRate { get; set; }
         public int Amount { get; set; }
+        public Guid WalletTypeId { get; set; }
     }
     public class UpdateEtagTypeRequest
     {

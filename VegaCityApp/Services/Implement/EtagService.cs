@@ -21,6 +21,16 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> CreateEtagType(EtagTypeRequest req)
         {
+            //check wallet type exist
+            var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(predicate: x => x.Id == req.WalletTypeId && !x.Deflag);
+            if (walletType == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = MessageConstant.WalletTypeMessage.NotFoundWalletType,
+                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                };
+            }
             var newEtagType = new EtagType
             {
                 Id = Guid.NewGuid(),
@@ -29,7 +39,8 @@ namespace VegaCityApp.API.Services.Implement
                 MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
                 BonusRate = req.BonusRate,
                 Deflag = false,
-                Amount = req.Amount
+                Amount = req.Amount,
+                WalletTypeId = req.WalletTypeId
             };
             await _unitOfWork.GetRepository<EtagType>().InsertAsync(newEtagType);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
@@ -100,7 +111,8 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> SearchEtagType(Guid etagTypeId)
         {
             var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag,
-                include: etag => etag.Include(y => y.Etags), selector: z => new { z.Id, z.BonusRate, z.Name, z.Etags, z.Amount, z.ImageUrl });
+                include: etag => etag.Include(y => y.Etags).Include(y => y.WalletType), 
+                selector: z => new { z.Id, z.BonusRate, z.Name, z.Etags, z.Amount, z.ImageUrl, z.WalletType });
             if (etagType == null)
             {
                 return new ResponseAPI()
@@ -168,12 +180,14 @@ namespace VegaCityApp.API.Services.Implement
             var newWallet = new Wallet
             {
                 Id = Guid.NewGuid(),
-                WalletType = (int)WalletTypeEnum.EtagWallet,
-                Balance = req.MoneyStart??0,
-                BalanceHistory = req.MoneyStart??0,
+                Balance = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
+                BalanceHistory = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
-                Deflag = false
+                Deflag = false,
+                WalletTypeId = etagType.WalletType.Id,
+                StartDate = req.StartDate,
+                ExpireDate = req.EndDate
             };
             await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
             var newEtag = new Etag
@@ -191,7 +205,7 @@ namespace VegaCityApp.API.Services.Implement
                 Gender = req.Gender,
                 EtagCode = "VGC" + TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"),
                 StartDate = req.StartDate,
-                EndDate = req.Day == null ? req.EndDate : req.StartDate.AddDays((double)req.Day),
+                EndDate = req.EndDate,
                 Status = (int)EtagStatusEnum.Active,
                 IsVerifyPhone = false
             };
@@ -277,7 +291,8 @@ namespace VegaCityApp.API.Services.Implement
         {
             List<Guid> listEtagCreated = new List<Guid>();
             var checkEtagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(
-                predicate: x => x.Id == etagTypeId && !x.Deflag);
+                predicate: x => x.Id == etagTypeId && !x.Deflag,
+                include: wallet => wallet.Include(z => z.WalletType));
             if (checkEtagType == null)
             {
                 return new ResponseAPI()
@@ -293,9 +308,9 @@ namespace VegaCityApp.API.Services.Implement
                 var wallet = new Wallet
                 {
                     Id = Guid.NewGuid(),
-                    WalletType = (int)WalletTypeEnum.EtagWallet,
-                    Balance = (int)((int)checkEtagType.Amount *(1 + checkEtagType.BonusRate)),
-                    BalanceHistory = (int)((int)checkEtagType.Amount * (1 + checkEtagType.BonusRate)),
+                    WalletTypeId = checkEtagType.WalletType.Id,
+                    Balance = (int)(checkEtagType.Amount *(1 + checkEtagType.BonusRate)),
+                    BalanceHistory = (int)(checkEtagType.Amount * (1 + checkEtagType.BonusRate)),
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
                     Deflag = false

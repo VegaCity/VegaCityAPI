@@ -58,7 +58,7 @@ namespace VegaCityApp.API.Controllers
             var result = await _walletTypeService.GetAllWalletType(size, page);
             return Ok(result);
         }
-        [HttpPut(WalletTypeEndpoint.AddServiceStoreToWalletType)]
+        [HttpPost(WalletTypeEndpoint.AddServiceStoreToWalletType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> AddServiceStoreToWalletType(Guid id, Guid serviceStoreId)
         {

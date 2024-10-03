@@ -36,6 +36,7 @@ namespace VegaCityApp.Domain.Models
         public virtual DbSet<UserRefreshToken> UserRefreshTokens { get; set; } = null!;
         public virtual DbSet<Wallet> Wallets { get; set; } = null!;
         public virtual DbSet<WalletType> WalletTypes { get; set; } = null!;
+        public virtual DbSet<WalletTypeStoreServiceMapping> WalletTypeStoreServiceMappings { get; set; } = null!;
         public virtual DbSet<Zone> Zones { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -228,6 +229,12 @@ namespace VegaCityApp.Domain.Models
                     .HasForeignKey(d => d.MarketZoneId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ETagType_MarketZone");
+
+                entity.HasOne(d => d.WalletType)
+                    .WithMany(p => p.EtagTypes)
+                    .HasForeignKey(d => d.WalletTypeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_ETagType_WalletType");
             });
 
             modelBuilder.Entity<House>(entity =>
@@ -591,11 +598,6 @@ namespace VegaCityApp.Domain.Models
                     .HasForeignKey(d => d.StoreId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_StoreServices_Store");
-
-                entity.HasOne(d => d.WalletType)
-                    .WithMany(p => p.StoreServices)
-                    .HasForeignKey(d => d.WalletTypeId)
-                    .HasConstraintName("FK_StoreServices_WalletType");
             });
 
             modelBuilder.Entity<Transaction>(entity =>
@@ -787,6 +789,33 @@ namespace VegaCityApp.Domain.Models
                     .HasForeignKey(d => d.MarketZoneId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_WalletType_MarketZone");
+            });
+
+            modelBuilder.Entity<WalletTypeStoreServiceMapping>(entity =>
+            {
+                entity.ToTable("WalletTypeStoreServiceMapping");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate");
+
+                entity.Property(e => e.UpsDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("upsDate");
+
+                entity.HasOne(d => d.StoreService)
+                    .WithMany(p => p.WalletTypeStoreServiceMappings)
+                    .HasForeignKey(d => d.StoreServiceId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_WalletTypeStoreServiceMapping_StoreServices");
+
+                entity.HasOne(d => d.WalletType)
+                    .WithMany(p => p.WalletTypeStoreServiceMappings)
+                    .HasForeignKey(d => d.WalletTypeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_WalletTypeStoreServiceMapping_WalletType");
             });
 
             modelBuilder.Entity<Zone>(entity =>
