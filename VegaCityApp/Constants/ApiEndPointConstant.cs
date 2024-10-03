@@ -106,4 +106,20 @@ public static class ApiEndPointConstant
         public const string UpdateOrderPaidForChargingMoney = ApiEndpoint + "/payment/momo/order/charge-money";
         public const string UpdateVnPayOrder = ApiEndpoint + "/payment/vnpay/order";
     }
+    public static class WalletTypeEndpoint
+    {
+        public const string CreateWalletType = ApiEndpoint + "/wallet-type";
+        public const string UpdateWalletType = ApiEndpoint + "/wallet-type/{id}";
+        public const string DeleteWalletType = ApiEndpoint + "/wallet-type/{id}";
+        public const string GetWalletTypeById = ApiEndpoint + "/wallet-type/{id}";
+        public const string GetAllWalletType = ApiEndpoint + "/wallet-types";
+    }
+    public static class ServiceStoreEndpoint
+    {
+        public const string CreateServiceStore = ApiEndpoint + "/service-store";
+        public const string UpdateServiceStore = ApiEndpoint + "/service-store/{id}";
+        public const string DeleteServiceStore = ApiEndpoint + "/service-store/{id}";
+        public const string GetServiceStoreById = ApiEndpoint + "/service-store/{id}";
+        public const string GetAllServiceStore = ApiEndpoint + "/service-stores";
+    }
 }

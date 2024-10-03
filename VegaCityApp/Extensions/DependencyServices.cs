@@ -10,10 +10,8 @@ using VegaCityApp.API.Constants;
 using VegaCityApp.Domain.Models;
 using VegaCityApp.Repository.Implement;
 using VegaCityApp.Repository.Interfaces;
-using System.Reflection;
 using VegaCityApp.Service.Interface;
 using VegaCityApp.Service.Implement;
-using Microsoft.Extensions.Configuration;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Services.Implement;
 using Newtonsoft.Json;
@@ -71,11 +69,13 @@ public static class DependencyServices
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IEtagService, EtagService>();
         services.AddScoped<IPackageService, PackageService>();
-        services.AddScoped<IStoreService, StoreService>();
+        services.AddScoped<IStoreService, Services.Implement.StoreService>();
         services.AddScoped<IZoneService,ZoneService>();
         services.AddScoped<IHouseService, HouseService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IWalletTypeService, WalletTypeService>();
+        services.AddScoped<IServiceStore, ServiceStore>();
         #endregion
         return services;
     }

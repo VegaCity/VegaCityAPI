@@ -11,4 +11,5 @@ public static class DatabaseConstant
 	public const string Password = "DATABASE_PASSWORD";
 
 	public const string Database = "DATABASE_NAME";
+	public const string SqlConnection = "VegaConnectionString";
 }

@@ -252,6 +252,15 @@ public static class MessageConstant
         public const string DeletedSuccess = "Delete Store Successfully!";
         public const string DeleteFailed = "Delete Store Failed";
         public const string InvalidStoreType = "Invalid Store Type";
+        public const string CreateStoreServiceSuccessfully = "Create Store Service Successfully !!";
+        public const string CreateStoreServiceFail = "Create Store Service Fail !!";
+        public const string NotFoundStoreService = "Not Found Store Service !!";
+        public const string UpdateStoreServiceSuccessfully = "Update Store Service Successfully !!";
+        public const string UpdateStoreServiceFail = "Update Store Service Fail !!";
+        public const string DeleteStoreServiceSuccessfully = "Delete Store Service Successfully !!";
+        public const string DeleteStoreServiceFail = "Delete Store Service Fail !!";
+        public const string StoreServiceNotFound = "Store Service Not Found";
+        public const string StoreServiceExisted = "Store Service Existed";
     }
     public static class HouseMessage
     {
@@ -277,5 +286,18 @@ public static class MessageConstant
         public const string VnPaySuccess = "Successflly With VnPay";
         public const string vnPayFailed = "Failed To Pay With VnPay";
         public const string MomoPaymentSuccess = "Momo Payment Success";
+    }
+    public static class WalletTypeMessage
+    {
+        public const string CreateWalletTypeSuccessfully = "Create WalletType Successfully !!";
+        public const string CreateWalletTypeFail = "Create WalletType Fail !!";
+        public const string GetWalletTypesSuccessfully = "Get WalletTypes Successfully !!";
+        public const string GetWalletTypesFail = "Get WalletTypes Fail !!";
+        public const string NotFoundWalletType = "Not Found WalletType !!";
+        public const string FoundWalletType = "Get WalletType Successfully !!";
+        public const string UpdateWalletTypeSuccessfully = "Update WalletType Successfully !!";
+        public const string UpdateWalletTypeFailed = "Update WalletType Failed !!";
+        public const string DeleteWalletTypeSuccess = "Delete WalletType Successfully!";
+        public const string DeleteWalletTypeFail = "Delete WalletType Failed!";
     }
 }

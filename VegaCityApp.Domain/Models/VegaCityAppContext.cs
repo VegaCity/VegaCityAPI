@@ -30,10 +30,12 @@ namespace VegaCityApp.Domain.Models
         public virtual DbSet<ProductCategory> ProductCategories { get; set; } = null!;
         public virtual DbSet<Role> Roles { get; set; } = null!;
         public virtual DbSet<Store> Stores { get; set; } = null!;
+        public virtual DbSet<StoreService> StoreServices { get; set; } = null!;
         public virtual DbSet<Transaction> Transactions { get; set; } = null!;
         public virtual DbSet<User> Users { get; set; } = null!;
         public virtual DbSet<UserRefreshToken> UserRefreshTokens { get; set; } = null!;
         public virtual DbSet<Wallet> Wallets { get; set; } = null!;
+        public virtual DbSet<WalletType> WalletTypes { get; set; } = null!;
         public virtual DbSet<Zone> Zones { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -570,6 +572,32 @@ namespace VegaCityApp.Domain.Models
                     .HasConstraintName("FK_Store_MarketZone");
             });
 
+            modelBuilder.Entity<StoreService>(entity =>
+            {
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate");
+
+                entity.Property(e => e.Name).HasMaxLength(200);
+
+                entity.Property(e => e.UpsDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("upsDate");
+
+                entity.HasOne(d => d.Store)
+                    .WithMany(p => p.StoreServices)
+                    .HasForeignKey(d => d.StoreId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_StoreServices_Store");
+
+                entity.HasOne(d => d.WalletType)
+                    .WithMany(p => p.StoreServices)
+                    .HasForeignKey(d => d.WalletTypeId)
+                    .HasConstraintName("FK_StoreServices_WalletType");
+            });
+
             modelBuilder.Entity<Transaction>(entity =>
             {
                 entity.ToTable("Transaction");
@@ -718,6 +746,10 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("crDate")
                     .HasDefaultValueSql("(getdate())");
 
+                entity.Property(e => e.ExpireDate).HasColumnType("datetime");
+
+                entity.Property(e => e.StartDate).HasColumnType("datetime");
+
                 entity.Property(e => e.UpsDate)
                     .HasColumnType("datetime")
                     .HasColumnName("upsDate")
@@ -732,6 +764,29 @@ namespace VegaCityApp.Domain.Models
                     .WithMany(p => p.Wallets)
                     .HasForeignKey(d => d.UserId)
                     .HasConstraintName("FK_Wallet_User");
+            });
+
+            modelBuilder.Entity<WalletType>(entity =>
+            {
+                entity.ToTable("WalletType");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate");
+
+                entity.Property(e => e.Name).HasMaxLength(50);
+
+                entity.Property(e => e.UpsDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("upsDate");
+
+                entity.HasOne(d => d.MarketZone)
+                    .WithMany(p => p.WalletTypes)
+                    .HasForeignKey(d => d.MarketZoneId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_WalletType_MarketZone");
             });
 
             modelBuilder.Entity<Zone>(entity =>
