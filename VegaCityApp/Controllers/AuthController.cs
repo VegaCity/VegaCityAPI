@@ -27,6 +27,10 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+
+
+
+
         [HttpPost(AuthenticationEndpoint.Register)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [SwaggerOperation(Summary = "Register new user for Store")]
