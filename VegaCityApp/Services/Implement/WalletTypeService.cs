@@ -23,6 +23,80 @@ namespace VegaCityApp.API.Services.Implement
         {
         }
 
+        public async Task<ResponseAPI> AddServiceStoreToWalletType(Guid id, Guid serviceStoreId)
+        {
+            //check wallet type
+            var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(predicate: x => x.Id == id && !x.Deflag);
+            if (walletType == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = WalletTypeMessage.NotFoundWalletType
+                };
+            }
+            //check service store
+            var serviceStore = await _unitOfWork.GetRepository<Domain.Models.StoreService>().SingleOrDefaultAsync(predicate: x => x.Id == serviceStoreId && !x.Deflag);
+            if (serviceStore == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = WalletTypeMessage.NotFoundServiceStore
+                };
+            }
+            //add service store to wallet type
+            serviceStore.WalletTypeId = id;
+            serviceStore.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Domain.Models.StoreService>().UpdateAsync(serviceStore);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = WalletTypeMessage.AddServiceStoreToWalletTypeSuccess,
+                Data = serviceStore
+            } : new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.BadRequest,
+                MessageResponse = WalletTypeMessage.AddServiceStoreToWalletTypeFail
+            };
+        }
+        public async Task<ResponseAPI> RemoveServiceStoreToWalletType(Guid id, Guid serviceStoreId)
+        {
+            //check wallet type
+            var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(predicate: x => x.Id == id && !x.Deflag);
+            if (walletType == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = WalletTypeMessage.NotFoundWalletType
+                };
+            }
+            //check service store
+            var serviceStore = await _unitOfWork.GetRepository<Domain.Models.StoreService>().SingleOrDefaultAsync(predicate: x => x.Id == serviceStoreId && !x.Deflag);
+            if (serviceStore == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = WalletTypeMessage.NotFoundServiceStore
+                };
+            }
+            //remove service store to wallet type
+            serviceStore.WalletTypeId = null;
+            serviceStore.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Domain.Models.StoreService>().UpdateAsync(serviceStore);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = WalletTypeMessage.RemoveServiceStoreToWalletTypeSuccess,
+                Data = serviceStore
+            } : new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.BadRequest,
+                MessageResponse = WalletTypeMessage.RemoveServiceStoreToWalletTypeFail
+            };
+        }
         public async Task<ResponseAPI> CreateWalletType(WalletTypeRequest walletTypeRequest)
         {
             walletTypeRequest.Name = walletTypeRequest.Name.Trim();

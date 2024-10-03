@@ -108,6 +108,8 @@ public static class ApiEndPointConstant
     }
     public static class WalletTypeEndpoint
     {
+        public const string AddServiceStoreToWalletType = ApiEndpoint + "/wallet-type/{id}/service-store/{serviceStoreId}";
+        public const string RemoveServiceStoreToWalletType = ApiEndpoint + "/wallet-type/{id}/service-store/{serviceStoreId}";
         public const string CreateWalletType = ApiEndpoint + "/wallet-type";
         public const string UpdateWalletType = ApiEndpoint + "/wallet-type/{id}";
         public const string DeleteWalletType = ApiEndpoint + "/wallet-type/{id}";

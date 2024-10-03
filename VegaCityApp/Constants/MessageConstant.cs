@@ -289,6 +289,11 @@ public static class MessageConstant
     }
     public static class WalletTypeMessage
     {
+        public const string RemoveServiceStoreToWalletTypeSuccess = "Remove ServiceStore To WalletType Successfully !!";
+        public const string RemoveServiceStoreToWalletTypeFail = "Remove ServiceStore To WalletType Fail !!";
+        public const string AddServiceStoreToWalletTypeSuccess = "Add ServiceStore To WalletType Successfully !!";
+        public const string AddServiceStoreToWalletTypeFail = "Add ServiceStore To WalletType Fail !!";
+        public const string NotFoundServiceStore = "ServiceStore Not Found";
         public const string CreateWalletTypeSuccessfully = "Create WalletType Successfully !!";
         public const string CreateWalletTypeFail = "Create WalletType Fail !!";
         public const string GetWalletTypesSuccessfully = "Get WalletTypes Successfully !!";
