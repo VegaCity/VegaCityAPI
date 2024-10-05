@@ -333,7 +333,7 @@ namespace VegaCityApp.API.Services.Implement
                     MarketZoneId = checkEtagType.MarketZoneId,
                     WalletId = wallet.Id,
                     StartDate = req.StartDate,
-                    EndDate = req.Day == null? req.EndDate: req.StartDate.AddDays((double)req.Day),
+                    EndDate = req.EndDate,
                     Status = (int)EtagStatusEnum.Inactive,
                     IsVerifyPhone = false,
                 };

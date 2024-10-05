@@ -455,7 +455,8 @@ namespace VegaCityApp.API.Services.Implement
                     Data = new
                     {
                         OrderId = order.Id,
-                        invoiceId = order.InvoiceId
+                        invoiceId = order.InvoiceId,
+                        ListEtagGenerate = ListEtag.Data
                     }
                 } : new ResponseAPI()
                 {

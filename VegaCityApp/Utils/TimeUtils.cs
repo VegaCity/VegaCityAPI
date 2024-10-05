@@ -14,7 +14,7 @@
 
         public static DateTime GetCurrentSEATime()
         {
-            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
             DateTime localTime = DateTime.Now;
             DateTime utcTime = TimeZoneInfo.ConvertTime(localTime, TimeZoneInfo.Local, tz);
             return utcTime;
@@ -22,7 +22,7 @@
 
         public static DateTime ConvertToSEATime(DateTime value)
         {
-            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
             DateTime convertedTime = TimeZoneInfo.ConvertTime(value, tz);
             return convertedTime;
         }
