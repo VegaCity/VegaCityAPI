@@ -17,8 +17,8 @@
             //TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             DateTime localTime = DateTime.UtcNow;
             //DateTime utcTime = TimeZoneInfo.ConvertTime(localTime, TimeZoneInfo.Local, tz);
-            DateTime utcTime = localTime.AddDays(7);
-            return utcTime;
+            //DateTime utcTime = localTime.AddDays(7);
+            return localTime;
         }
 
         public static DateTime ConvertToSEATime(DateTime value)
