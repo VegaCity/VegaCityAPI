@@ -22,7 +22,7 @@ namespace VegaCityApp.API.Controllers
         }
 
         [HttpPost(OrderEndpoint.CreateOrder)]
-        [ProducesResponseType(typeof(IPaginate<ResponseAPI>), HttpStatusCodes.Created)]
+        [ProducesResponseType(typeof(ResponseAPI<CreateOrderRequest>), HttpStatusCodes.Created)]
         public async Task<IActionResult> CreateOrder(CreateOrderRequest req)
         {
             var result = await _orderService.CreateOrder(req);
@@ -30,7 +30,7 @@ namespace VegaCityApp.API.Controllers
         }
 
         [HttpGet(OrderEndpoint.GetListOrder)]
-        [ProducesResponseType(typeof(IPaginate<GetOrderResponse>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<IPaginate<GetOrderResponse>>), HttpStatusCodes.OK)]
         public async Task<IActionResult> SearchAllOrder([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _orderService.SearchAllOrders(size, page);
@@ -61,14 +61,14 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpPost(OrderEndpoint.CreateOrderForCashier)]
-        [ProducesResponseType(typeof(IPaginate<ResponseAPI>), HttpStatusCodes.Created)]
+        [ProducesResponseType(typeof(ResponseAPI<CreateOrderForCashierRequest>), HttpStatusCodes.Created)]
         public async Task<IActionResult> CreateOrderForCashier(CreateOrderForCashierRequest req)
         {
             var result = await _orderService.CreateOrderForCashier(req);
             return StatusCode(result.StatusCode, result);
         }
         [HttpPost(OrderEndpoint.ConfirmOrderForCashier)]
-        [ProducesResponseType(typeof(IPaginate<ResponseAPI>), HttpStatusCodes.Created)]
+        [ProducesResponseType(typeof(ResponseAPI<ConfirmOrderForCashierRequest>), HttpStatusCodes.Created)]
         public async Task<IActionResult> ConfirmOrderForCashier(ConfirmOrderForCashierRequest req)
         {
             var result = await _orderService.ConfirmOrderForCashier(req);

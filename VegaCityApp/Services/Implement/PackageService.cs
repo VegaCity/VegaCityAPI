@@ -182,9 +182,11 @@ namespace VegaCityApp.API.Services.Implement
             }
         }
 
-        public async Task<IPaginate<GetPackageResponse>> SearchAllPackage(int size, int page)
+        public async Task<ResponseAPI> SearchAllPackage(int size, int page)
         {
-            IPaginate<GetPackageResponse> data = await _unitOfWork.GetRepository<Package>().GetPagingListAsync(
+            try
+            {
+                IPaginate<GetPackageResponse> data = await _unitOfWork.GetRepository<Package>().GetPagingListAsync(
 
                 selector: x => new GetPackageResponse()
                 {
@@ -204,7 +206,22 @@ namespace VegaCityApp.API.Services.Implement
                 orderBy: x => x.OrderByDescending(z => z.Name),
                 predicate: x => x.Deflag == false
             );
-            return data;
+                return new ResponseAPI
+                {
+                    MessageResponse = PackageMessage.GetPackagesSuccessfully,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = PackageMessage.GetPackagesFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null
+                };
+            }
         }
         public async Task<ResponseAPI> SearchPackage(Guid PackageId)
         {

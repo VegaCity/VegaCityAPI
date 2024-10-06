@@ -47,7 +47,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(ServiceStoreEndpoint.GetAllServiceStore)]
-        [ProducesResponseType(typeof(IPaginate<ServiceStoreResponse>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<IPaginate<ServiceStoreResponse>>), HttpStatusCodes.OK)]
         public async Task<IActionResult> GetAllServiceStore([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _serviceStore.GetAllServiceStore(size, page);

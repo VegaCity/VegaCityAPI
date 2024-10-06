@@ -102,25 +102,42 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
-        public async Task<IPaginate<GetHouseResponse>> SearchAllHouse(int size, int page)
+        public async Task<ResponseAPI> SearchAllHouse(int size, int page)
         {
-            var houses = await _unitOfWork.GetRepository<House>().GetPagingListAsync(
+            try
+            {
+                IPaginate<GetHouseResponse> houses = await _unitOfWork.GetRepository<House>().GetPagingListAsync(
                                selector: x => new GetHouseResponse()
                                {
-                                    Id = x.Id,
-                                    HouseName = x.HouseName,
-                                    Location = x.Location,
-                                    Address = x.Address,
-                                    ZoneId = x.ZoneId,
-                                    CrDate = x.CrDate,
-                                    UpsDate = x.UpsDate,
-                                    Deflag = x.Deflag
+                                   Id = x.Id,
+                                   HouseName = x.HouseName,
+                                   Location = x.Location,
+                                   Address = x.Address,
+                                   ZoneId = x.ZoneId,
+                                   CrDate = x.CrDate,
+                                   UpsDate = x.UpsDate,
+                                   Deflag = x.Deflag
                                },
                                 page: page,
                                 size: size,
                                 orderBy: x => x.OrderByDescending(z => z.HouseName),
-                                predicate: x => !x.Deflag);      
-            return houses;
+                                predicate: x => !x.Deflag);
+                return new ResponseAPI
+                {
+                    MessageResponse = HouseMessage.GetHousesSuccessfully,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = houses
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = HouseMessage.GetHousesFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null
+                };
+            }
         }
         public async Task<ResponseAPI> SearchHouse(Guid HouseId)
         {

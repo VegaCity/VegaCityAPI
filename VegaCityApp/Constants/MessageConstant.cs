@@ -84,6 +84,9 @@ public static class MessageConstant
     public static class EtagTypeMessage
     {
         public const string CreateSuccessFully = "Create EtagType Successfully !!";
+        public const string SearchEtagTypeSuccess = "Search EtagType Successfully !!";
+        public const string SearchAllEtagTypeSuccess = "Gell All EtagTypes Successfully !!";
+        public const string SearchAllEtagTypeFail = "Failed To Gell All EtagTypes !!";
         public const string CreateFail = "Create EtagType Fail :( !!";
         public const string NotFoundEtagType = "Not Found EtagType !!";
         public const string DeleteEtagTypeSuccessfully = "Delete EtagType Successfully !!";
@@ -94,6 +97,8 @@ public static class MessageConstant
     public static class EtagMessage
     {
         public const string SearchEtagSuccess = "Search Etag Successfully !!";
+        public const string SearchAllEtagsSuccess = "Search All Etags Successfully !!";
+        public const string SearchAllEtagsFailed = "Failed To Search All Etags !!";
         public const string UserNotFound = "User Not Found !!";
         public const string EtagTypeNotFound = "EtagType Not Found !!";
         public const string CreateFail = "Create Etag Fail :( !!";
@@ -158,6 +163,8 @@ public static class MessageConstant
         public const string YourPinCode = "Your Verify Pin Code ";
         public const string SaveRefreshTokenFail = "Save Refresh Token Fail !!";
         public const string EmailExist = "Email already exist !!";
+        public const string GetAllUser = "Get All Users Successfully!";
+        public const string GetAllUserFail = "Failed To Get All Users!";
     }
 
     public static class RoleMessage
@@ -261,6 +268,10 @@ public static class MessageConstant
         public const string DeleteStoreServiceFail = "Delete Store Service Fail !!";
         public const string StoreServiceNotFound = "Store Service Not Found";
         public const string StoreServiceExisted = "Store Service Existed";
+        public const string GetListStoreServicesSuccess = "Get List Store's Services Successfully!";
+        public const string GetListStoreServicesFail = "Failed To Get List Store's Services!";
+
+
     }
     public static class HouseMessage
     {

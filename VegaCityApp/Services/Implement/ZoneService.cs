@@ -104,9 +104,11 @@ namespace VegaCityApp.API.Services.Implement
             }
         }
 
-        public async Task<IPaginate<GetZoneResponse>> SearchZones(int size, int page)
+        public async Task<ResponseAPI> SearchZones(int size, int page)
         {
-            var data = await _unitOfWork.GetRepository<Zone>().GetPagingListAsync(
+            try
+            {
+                IPaginate<GetZoneResponse> data = await _unitOfWork.GetRepository<Zone>().GetPagingListAsync(
 
                 selector: x => new GetZoneResponse()
                 {
@@ -123,7 +125,23 @@ namespace VegaCityApp.API.Services.Implement
                 orderBy: x => x.OrderByDescending(z => z.Name),
                 predicate: x => !x.Deflag
             );
-            return data;
+                return new ResponseAPI
+                {
+                    MessageResponse = ZoneMessage.SearchZonesSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = ZoneMessage.SearchZonesFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null
+                };
+            }
+
         }
         public async Task<ResponseAPI> SearchZone(Guid ZoneId)
         {

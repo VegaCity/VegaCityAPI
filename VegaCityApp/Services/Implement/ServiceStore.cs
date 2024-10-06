@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using VegaCityApp.API.Payload.Request.Store;
 using VegaCityApp.API.Payload.Request.WalletType;
 using VegaCityApp.API.Payload.Response;
+using VegaCityApp.API.Payload.Response.PackageResponse;
 using VegaCityApp.API.Payload.Response.StoreResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
@@ -76,9 +77,11 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = StoreMessage.DeleteStoreServiceFail
             };
         }
-        public async Task<IPaginate<ServiceStoreResponse>> GetAllServiceStore(int size, int page)
+        public async Task<ResponseAPI> GetAllServiceStore(int size, int page)
         {
-            var data = await _unitOfWork.GetRepository<Domain.Models.StoreService>().GetPagingListAsync(
+            try
+            {
+                IPaginate<ServiceStoreResponse> data = await _unitOfWork.GetRepository<Domain.Models.StoreService>().GetPagingListAsync(
                 predicate: x => !x.Deflag,
                 selector: z => new ServiceStoreResponse
                 {
@@ -93,7 +96,22 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 orderBy: c => c.OrderByDescending(z => z.Name)
             );
-            return data;
+                return new ResponseAPI
+                {
+                    MessageResponse = StoreMessage.GetListStoreServicesSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = StoreMessage.GetListStoreServicesFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null
+                };
+            }
         }
 
         public async Task<ResponseAPI> GetServiceStoreById(Guid id)

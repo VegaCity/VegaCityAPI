@@ -12,6 +12,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> UpdateServiceStore(Guid Id, UpDateServiceStoreRequest serviceStoreRequest);
         Task<ResponseAPI> DeleteServiceStore(Guid id);
         Task<ResponseAPI> GetServiceStoreById(Guid id);
-        Task<IPaginate<ServiceStoreResponse>> GetAllServiceStore(int size, int page);
+        Task<ResponseAPI> GetAllServiceStore(int size, int page);
     }
 }

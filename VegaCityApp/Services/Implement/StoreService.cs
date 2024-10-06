@@ -75,9 +75,11 @@ namespace VegaCityApp.API.Services.Implement
             }
         }
 
-        public async Task<IPaginate<GetStoreResponse>> SearchAllStore(int size, int page)
+        public async Task<ResponseAPI> SearchAllStore(int size, int page)
         {
-            IPaginate<GetStoreResponse> data = await _unitOfWork.GetRepository<Store>().GetPagingListAsync(
+            try
+            {
+                IPaginate<GetStoreResponse> data = await _unitOfWork.GetRepository<Store>().GetPagingListAsync(
 
                 selector: x => new GetStoreResponse()
                 {
@@ -91,18 +93,33 @@ namespace VegaCityApp.API.Services.Implement
                     Deflag = x.Deflag,
                     PhoneNumber = x.PhoneNumber,
                     MarketZoneId = x.MarketZoneId,
-                   ShortName = x.ShortName,
-                   Email = x.Email,
-                   HouseId = x.HouseId,
-                   Status = x.Status
-                   
+                    ShortName = x.ShortName,
+                    Email = x.Email,
+                    HouseId = x.HouseId,
+                    Status = x.Status
+
                 },
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => !x.Deflag 
+                predicate: x => !x.Deflag
             );
-            return data;
+                return new ResponseAPI
+                {
+                    MessageResponse = StoreMessage.GetListStoreSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = StoreMessage.GetListStoreFailed + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null
+                };
+            }
         }
 
         public async Task<ResponseAPI> SearchStore(Guid StoreId)

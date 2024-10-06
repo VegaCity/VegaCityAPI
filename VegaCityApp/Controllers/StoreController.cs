@@ -21,7 +21,7 @@ namespace VegaCityApp.API.Controllers
             _storeService = storeService;
         }
         [HttpGet(StoreEndpoint.GetListStore)]
-        [ProducesResponseType(typeof(IPaginate<GetStoreResponse>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
         public async Task<IActionResult> SearchAllStore([FromQuery] int size = 10, [FromQuery] int page = 1)
         {

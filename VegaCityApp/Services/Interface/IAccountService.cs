@@ -8,7 +8,7 @@ namespace VegaCityApp.Service.Interface
 {
     public interface IAccountService
     {
-        Task<ResponseAPI> Login(LoginRequest req);
+        Task<LoginResponse> Login(LoginRequest req);
 
         Task<ResponseAPI> RefreshToken(ReFreshTokenRequest req);
 
@@ -20,7 +20,7 @@ namespace VegaCityApp.Service.Interface
 
         Task<ResponseAPI> ChangePassword (ChangePasswordRequest req);
 
-        Task<IPaginate<GetUserResponse>> SearchAllUser(int size, int page);
+        Task<ResponseAPI> SearchAllUser(int size, int page);
 
         Task<ResponseAPI> SearchUser(Guid UserId);
 

@@ -123,14 +123,16 @@ namespace VegaCityApp.API.Services.Implement
             }
             return new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.CreateSuccessFully,
+                MessageResponse = MessageConstant.EtagTypeMessage.SearchEtagTypeSuccess,
                 StatusCode = MessageConstant.HttpStatusCodes.OK,
                 Data = new { etagType }
             };
         }
-        public async Task<IPaginate<EtagTypeResponse>> SearchAllEtagType(int size, int page)
+        public async Task<ResponseAPI> SearchAllEtagType(int size, int page)
         {
-            IPaginate<EtagTypeResponse> data = await _unitOfWork.GetRepository<EtagType>().GetPagingListAsync(
+            try
+            {
+                IPaginate<EtagTypeResponse> data = await _unitOfWork.GetRepository<EtagType>().GetPagingListAsync(
 
                 selector: x => new EtagTypeResponse
                 {
@@ -147,8 +149,23 @@ namespace VegaCityApp.API.Services.Implement
                 orderBy: x => x.OrderByDescending(y => y.Name),
                 predicate: x => !x.Deflag
                 );
-            return data;
 
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagTypeMessage.SearchAllEtagTypeSuccess,
+                    StatusCode = MessageConstant.HttpStatusCodes.OK,
+                    Data = data
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagTypeMessage.SearchAllEtagTypeFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null
+                };
+            }
         }
         public async Task<ResponseAPI> CreateEtag(EtagRequest req)
         {
@@ -443,30 +460,47 @@ namespace VegaCityApp.API.Services.Implement
                 Data = new { etag }
             };
         }
-        public async Task<IPaginate<EtagResponse>> SearchAllEtag(int size, int page)
+        public async Task<ResponseAPI> SearchAllEtag(int size, int page)
         {
-            var data = await _unitOfWork.GetRepository<Etag>().GetPagingListAsync(
-                               selector: x => new EtagResponse()
-                               {
-                                   Id = x.Id,
-                                   Fullname = x.FullName,
-                                   PhoneNumber = x.PhoneNumber,
-                                   CCCD = x.Cccd,
-                                   ImageUrl = x.ImageUrl,
-                                   EtagCode = x.EtagCode,
-                                   QRCode = x.Qrcode,
-                                   Birthday = x.Birthday,
-                                   Gender = x.Gender,
-                                   Deflag = x.Deflag,
-                                   EndDate = x.EndDate,
-                                   StartDate = x.StartDate,
-                                   Status = x.Status
-                               },
-                                page: page,
-                                size: size,
-                                orderBy: x => x.OrderByDescending(z => z.FullName),
-                                predicate: x => !x.Deflag);
-            return data;
+            try
+            {
+                IPaginate<EtagResponse> data = await _unitOfWork.GetRepository<Etag>().GetPagingListAsync(
+                              selector: x => new EtagResponse()
+                              {
+                                  Id = x.Id,
+                                  Fullname = x.FullName,
+                                  PhoneNumber = x.PhoneNumber,
+                                  CCCD = x.Cccd,
+                                  ImageUrl = x.ImageUrl,
+                                  EtagCode = x.EtagCode,
+                                  QRCode = x.Qrcode,
+                                  Birthday = x.Birthday,
+                                  Gender = x.Gender,
+                                  Deflag = x.Deflag,
+                                  EndDate = x.EndDate,
+                                  StartDate = x.StartDate,
+                                  Status = x.Status
+                              },
+                               page: page,
+                               size: size,
+                               orderBy: x => x.OrderByDescending(z => z.FullName),
+                               predicate: x => !x.Deflag);
+                return new ResponseAPI
+                {
+                    MessageResponse = EtagMessage.SearchAllEtagsSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = EtagMessage.SearchAllEtagsFailed + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null
+                };
+            }
         }
         public async Task<ResponseAPI> ActivateEtag(Guid etagId, ActivateEtagRequest req)
         {

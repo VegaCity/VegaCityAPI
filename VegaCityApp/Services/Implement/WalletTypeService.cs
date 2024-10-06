@@ -160,9 +160,11 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
 
-        public async Task<IPaginate<WalletTypeResponse>> GetAllWalletType(int size, int page)
+        public async Task<ResponseAPI> GetAllWalletType(int size, int page)
         {
-            var data = await _unitOfWork.GetRepository<WalletType>().GetPagingListAsync(
+            try
+            {
+                IPaginate<WalletTypeResponse> data = await _unitOfWork.GetRepository<WalletType>().GetPagingListAsync(
                 predicate: x => !x.Deflag,
                 selector: z => new WalletTypeResponse
                 {
@@ -176,7 +178,22 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name));
-            return data;
+                return new ResponseAPI
+                {
+                    MessageResponse = WalletTypeMessage.GetWalletTypesSuccessfully,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = WalletTypeMessage.GetWalletTypesFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null
+                };
+            }
         }
 
         public async Task<ResponseAPI> GetWalletTypeById(Guid id)

@@ -8,6 +8,13 @@ namespace VegaCityApp.API.Payload.Response
         public string MessageResponse { get; set; }
         public Object Data { get; set; }
     }
+    //responseAPI for get list paginate 
+    public class ResponseAPI<T>
+    {
+        public int StatusCode { get; set; }
+        public string MessageResponse { get; set; }
+        public T Data { get; set; }
+    }
     public class EtagTypeResponse
     {
         public Guid Id { get; set; }

@@ -111,12 +111,12 @@ namespace VegaCityApp.Service.Implement
             RoleEnum.CashierApp.GetDescriptionFromEnum()
         };
         #endregion
-        public async Task<ResponseAPI> Login(LoginRequest req)
+        public async Task<LoginResponse> Login(LoginRequest req)
         {
             Tuple<string, Guid> guidClaim = null;
             if (!ValidationUtils.IsEmail(req.Email))
             {
-                return new ResponseAPI
+                return new LoginResponse
                 {
                     StatusCode = HttpStatusCodes.BadRequest,
                     MessageResponse = UserMessage.InvalidEmail
@@ -127,7 +127,7 @@ namespace VegaCityApp.Service.Implement
                 include: User => User.Include(y => y.Role));
             if (user == null)
             {
-                return new ResponseAPI
+                return new LoginResponse
                 {
                     StatusCode = HttpStatusCodes.NotFound,
                     MessageResponse = UserMessage.UserNotFound
@@ -146,7 +146,7 @@ namespace VegaCityApp.Service.Implement
                                                         predicate: x => x.UserId == user.Id && x.Name == user.Role.Name);
                         if (refreshToken == null)
                         {
-                            return new ResponseAPI
+                            return new LoginResponse
                             {
                                 StatusCode = HttpStatusCodes.Unauthorized,
                                 MessageResponse = UserMessage.SessionExpired
@@ -157,7 +157,7 @@ namespace VegaCityApp.Service.Implement
                         var exDay = JwtUtil.GetExpireDate(refreshToken.Token);
                         if(TimeUtils.GetCurrentSEATime() > exDay)
                         {
-                            return new ResponseAPI
+                            return new LoginResponse
                             {
                                 StatusCode = HttpStatusCodes.Unauthorized,
                                 MessageResponse = UserMessage.SessionExpired
@@ -171,48 +171,54 @@ namespace VegaCityApp.Service.Implement
                             _unitOfWork.GetRepository<UserRefreshToken>().UpdateAsync(refreshToken);
                             tokenRefresh = refreshToken.Token;
                         }
-                        return await _unitOfWork.CommitAsync() > 0? new ResponseAPI
+                        return await _unitOfWork.CommitAsync() > 0? new LoginResponse
                         {
                             StatusCode = HttpStatusCodes.OK,
                             MessageResponse = UserMessage.LoginSuccessfully,
-                            Data = new
+                            Data = new Data
                             {
                                 UserId = user.Id,
-                                AccessToken = token,
-                                RefreshToken = tokenRefresh
+                                Email = user.Email,
+                                RoleName = user.Role.Name,
+                                RoleId = user.Role.Id,
+                                Tokens = new Tokens
+                                {
+                                    AccessToken = token,
+                                    RefreshToken = tokenRefresh
+                                }
                             }
-                        }: new ResponseAPI
+                        }: new LoginResponse
                         {
                             StatusCode = HttpStatusCodes.BadRequest,
                             MessageResponse = UserMessage.SaveRefreshTokenFail
                         };
                     }
-                    return new ResponseAPI
+                    return new LoginResponse
                     {
                         StatusCode = HttpStatusCodes.BadRequest,
                         MessageResponse = UserMessage.WrongPassword
                     };
                 case (int)UserStatusEnum.PendingVerify:
-                    return new ResponseAPI
+                    return new LoginResponse
                     {
                         StatusCode = HttpStatusCodes.BadRequest,
                         MessageResponse = UserMessage.PendingVerify
                     };
                 case (int)UserStatusEnum.Disable:
-                    return new ResponseAPI
+                    return new LoginResponse
                     {
                         StatusCode = HttpStatusCodes.BadRequest,
                         MessageResponse = UserMessage.UserDisable
                     };
                 case (int)UserStatusEnum.Ban:
-                    return new ResponseAPI
+                    return new LoginResponse
                     {
                         StatusCode = HttpStatusCodes.BadRequest,
                         MessageResponse = UserMessage.UserBan
                     };
             }
 
-            return new ResponseAPI
+            return new LoginResponse
             {
                 StatusCode = HttpStatusCodes.BadRequest,
                 MessageResponse = UserMessage.LoginFail
@@ -755,9 +761,11 @@ namespace VegaCityApp.Service.Implement
                 MessageResponse = UserMessage.PasswordIsNotChanged
             };
         }
-        public async Task<IPaginate<GetUserResponse>> SearchAllUser(int size, int page)
+        public async Task<ResponseAPI> SearchAllUser(int size, int page)
         {
-            IPaginate<GetUserResponse> data = await _unitOfWork.GetRepository<User>().GetPagingListAsync(
+            try
+            {
+                IPaginate<GetUserResponse> data = await _unitOfWork.GetRepository<User>().GetPagingListAsync(
                 selector: x => new GetUserResponse()
                 {
                     Id = x.Id,
@@ -779,13 +787,26 @@ namespace VegaCityApp.Service.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.FullName),
-                predicate: x => x.Status == (int)UserStatusEnum.Active
-            );
-            return data;
+                predicate: x => x.Status == (int)UserStatusEnum.Active);
 
-           
-
+                return new ResponseAPI
+                {
+                    MessageResponse = UserMessage.GetListSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = UserMessage.GetAllUserFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null
+                };
+            }
         }
+
         public async Task<ResponseAPI> SearchUser(Guid UserId)
         {
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(

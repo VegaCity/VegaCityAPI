@@ -9,7 +9,7 @@ namespace VegaCityApp.API.Services.Interface
     {
         Task<ResponseAPI> CreateZone(CreateZoneRequest req);
         Task<ResponseAPI> UpdateZone(Guid ZoneId, UpdateZoneRequest req);
-        Task<IPaginate<GetZoneResponse>> SearchZones(int size, int page);
+        Task<ResponseAPI> SearchZones(int size, int page);
         Task<ResponseAPI> SearchZone(Guid ZoneId);
         Task<ResponseAPI> DeleteZone(Guid ZoneId);
     }

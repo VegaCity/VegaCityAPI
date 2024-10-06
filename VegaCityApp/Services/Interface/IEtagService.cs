@@ -15,8 +15,8 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> UpdateEtag(Guid etagId, UpdateEtagRequest req);
         Task<ResponseAPI> DeleteEtag(Guid etagId);
         Task<ResponseAPI> SearchEtag(Guid etagId);
-        Task<IPaginate<EtagResponse>> SearchAllEtag(int size, int page);
-        Task<IPaginate<EtagTypeResponse>> SearchAllEtagType(int size, int page);
+        Task<ResponseAPI> SearchAllEtag(int size, int page);
+        Task<ResponseAPI> SearchAllEtagType(int size, int page);
         Task<ResponseAPI> AddEtagTypeToPackage(Guid etagId, Guid packageId, int quantityEtagType);
         Task<ResponseAPI> RemoveEtagTypeFromPackage(Guid etagId, Guid packageId);
         Task<ResponseAPI> ActivateEtag(Guid etagId, ActivateEtagRequest req);

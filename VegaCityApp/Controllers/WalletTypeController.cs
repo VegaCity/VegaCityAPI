@@ -52,7 +52,7 @@ namespace VegaCityApp.API.Controllers
         }
 
         [HttpGet(WalletTypeEndpoint.GetAllWalletType)]
-        [ProducesResponseType(typeof(IPaginate<WalletTypeResponse>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<IPaginate<WalletTypeResponse>>), HttpStatusCodes.OK)]
         public async Task<IActionResult> GetAllWalletType(int size = 10, int page = 1)
         {
             var result = await _walletTypeService.GetAllWalletType(size, page);

@@ -8,6 +8,7 @@ using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
 using VegaCityApp.API.Validators;
 using VegaCityApp.API.Payload.Request.Etag;
+using VegaCityApp.Domain.Paginate;
 
 namespace VegaCityApp.API.Controllers
 {
@@ -45,7 +46,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(EtagTypeEndpoint.SearchEtagType)]
-        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(EtagTypeResponse), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         public async Task<IActionResult> SearchEtagType( Guid id)
         {
@@ -53,7 +54,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(EtagTypeEndpoint.SearchAllEtagType)]
-        [ProducesResponseType(typeof(EtagTypeResponse), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<IPaginate<EtagTypeResponse>>), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb)]
         public async Task<IActionResult> SearchAllEtagType([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
@@ -124,7 +125,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(EtagEndpoint.SearchAllEtag)]
-        [ProducesResponseType(typeof(EtagResponse), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<IPaginate<EtagResponse>>), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb)]
         public async Task<IActionResult> SearchAllEtag([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
@@ -132,7 +133,7 @@ namespace VegaCityApp.API.Controllers
             return Ok(result);
         }
         [HttpPost(EtagEndpoint.ChargeMoneyETag)]
-        [ProducesResponseType(typeof(EtagResponse), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<ChargeMoneyEtagRequest>), HttpStatusCodes.OK)]
         //[CustomAuthorize(RoleEnum.CashierApp, RoleEnum.CashierWeb)]
         public async Task<IActionResult> PrepareChargeMoneyEtag([FromBody] ChargeMoneyEtagRequest req)
         {

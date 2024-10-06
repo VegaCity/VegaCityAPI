@@ -144,9 +144,11 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
-        public async Task<IPaginate<GetOrderResponse>> SearchAllOrders(int size, int page)
+        public async Task<ResponseAPI> SearchAllOrders(int size, int page)
         {
-            var orders = await _unitOfWork.GetRepository<Order>().GetPagingListAsync(
+            try
+            {
+                IPaginate<GetOrderResponse> orders = await _unitOfWork.GetRepository<Order>().GetPagingListAsync(
                 selector: x => new GetOrderResponse()
                 {
                     Id = x.Id,
@@ -162,7 +164,22 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name));
-            return orders;
+                return new ResponseAPI
+                {
+                    MessageResponse = OrderMessage.GetOrdersSuccessfully,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = orders
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.GetOrdersFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null
+                };
+            }
         }
         public async Task<ResponseAPI> UpdateOrder(string InvoiceId, UpdateOrderRequest  req)
         {
