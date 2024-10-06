@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using VegaCityApp.API.Constants;
 using VegaCityApp.API.Payload.Request.WalletType;
 using VegaCityApp.API.Payload.Response;
+using VegaCityApp.API.Payload.Response.StoreResponse;
 using VegaCityApp.API.Payload.Response.WalletResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
@@ -160,7 +161,7 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
 
-        public async Task<ResponseAPI> GetAllWalletType(int size, int page)
+        public async Task<ResponseAPI<IEnumerable<WalletTypeResponse>>> GetAllWalletType(int size, int page)
         {
             try
             {
@@ -178,20 +179,28 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name));
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<WalletTypeResponse>>
                 {
                     MessageResponse = WalletTypeMessage.GetWalletTypesSuccessfully,
                     StatusCode = HttpStatusCodes.OK,
-                    Data = data
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
                 };
             }
             catch (Exception ex)
             {
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<WalletTypeResponse>>
                 {
                     MessageResponse = WalletTypeMessage.GetWalletTypesFail + ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError,
-                    Data = null
+                    Data = null,
+                    MetaData = null
                 };
             }
         }

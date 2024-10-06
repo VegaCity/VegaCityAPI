@@ -102,11 +102,11 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
-        public async Task<ResponseAPI> SearchAllHouse(int size, int page)
+        public async Task<ResponseAPI<IEnumerable<GetHouseResponse>>> SearchAllHouse(int size, int page)
         {
             try
             {
-                IPaginate<GetHouseResponse> houses = await _unitOfWork.GetRepository<House>().GetPagingListAsync(
+                IPaginate<GetHouseResponse> data = await _unitOfWork.GetRepository<House>().GetPagingListAsync(
                                selector: x => new GetHouseResponse()
                                {
                                    Id = x.Id,
@@ -122,20 +122,28 @@ namespace VegaCityApp.API.Services.Implement
                                 size: size,
                                 orderBy: x => x.OrderByDescending(z => z.HouseName),
                                 predicate: x => !x.Deflag);
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<GetHouseResponse>>
                 {
                     MessageResponse = HouseMessage.GetHousesSuccessfully,
                     StatusCode = HttpStatusCodes.OK,
-                    Data = houses
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
                 };
             }
             catch (Exception ex)
             {
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<GetHouseResponse>>
                 {
                     MessageResponse = HouseMessage.GetHousesFail + ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError,
-                    Data = null
+                    Data = null,
+                    MetaData=null
                 };
             }
         }

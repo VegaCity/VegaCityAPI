@@ -9,7 +9,7 @@ namespace VegaCityApp.API.Services.Interface
     {
         Task<ResponseAPI> CreateHouse(CreateHouseRequest req);
         Task<ResponseAPI> UpdateHouse(Guid houseId, UpdateHouseRequest req);
-        Task<ResponseAPI> SearchAllHouse(int size, int page);
+        Task<ResponseAPI<IEnumerable<GetHouseResponse>>> SearchAllHouse(int size, int page);
         Task<ResponseAPI> SearchHouse(Guid HouseId);
         Task<ResponseAPI> DeleteHouse(Guid HouseId);
     }

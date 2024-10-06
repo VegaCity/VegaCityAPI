@@ -14,6 +14,14 @@ namespace VegaCityApp.API.Payload.Response
         public int StatusCode { get; set; }
         public string MessageResponse { get; set; }
         public T Data { get; set; }
+        public MetaData MetaData { get; set; }
+    }
+    public class MetaData
+    {
+        public int Size { get; set; }
+        public int Page { get; set; }
+        public int Total { get; set; }
+        public int TotalPage { get; set; }
     }
     public class EtagTypeResponse
     {

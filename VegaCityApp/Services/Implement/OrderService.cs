@@ -6,6 +6,7 @@ using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Etag;
 using VegaCityApp.API.Payload.Request.Order;
 using VegaCityApp.API.Payload.Response;
+using VegaCityApp.API.Payload.Response.HouseResponse;
 using VegaCityApp.API.Payload.Response.OrderResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
@@ -144,11 +145,11 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
-        public async Task<ResponseAPI> SearchAllOrders(int size, int page)
+        public async Task<ResponseAPI<IEnumerable<GetOrderResponse>>> SearchAllOrders(int size, int page)
         {
             try
             {
-                IPaginate<GetOrderResponse> orders = await _unitOfWork.GetRepository<Order>().GetPagingListAsync(
+                IPaginate<GetOrderResponse> data = await _unitOfWork.GetRepository<Order>().GetPagingListAsync(
                 selector: x => new GetOrderResponse()
                 {
                     Id = x.Id,
@@ -164,20 +165,28 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name));
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<GetOrderResponse>>
                 {
                     MessageResponse = OrderMessage.GetOrdersSuccessfully,
                     StatusCode = HttpStatusCodes.OK,
-                    Data = orders
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
                 };
             }
             catch (Exception ex)
             {
-                return new ResponseAPI()
+                return new ResponseAPI<IEnumerable<GetOrderResponse>>
                 {
                     MessageResponse = OrderMessage.GetOrdersFail + ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError,
-                    Data = null
+                    Data = null,
+                    MetaData=null
                 };
             }
         }

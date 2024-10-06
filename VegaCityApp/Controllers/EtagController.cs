@@ -54,7 +54,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(EtagTypeEndpoint.SearchAllEtagType)]
-        [ProducesResponseType(typeof(ResponseAPI<IPaginate<EtagTypeResponse>>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<IEnumerable<EtagTypeResponse>>), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb)]
         public async Task<IActionResult> SearchAllEtagType([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
@@ -125,7 +125,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(EtagEndpoint.SearchAllEtag)]
-        [ProducesResponseType(typeof(ResponseAPI<IPaginate<EtagResponse>>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<IEnumerable<EtagResponse>>), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb)]
         public async Task<IActionResult> SearchAllEtag([FromQuery] int size = 10, [FromQuery] int page = 1)
         {

@@ -761,7 +761,7 @@ namespace VegaCityApp.Service.Implement
                 MessageResponse = UserMessage.PasswordIsNotChanged
             };
         }
-        public async Task<ResponseAPI> SearchAllUser(int size, int page)
+        public async Task<ResponseAPI<IEnumerable<GetUserResponse>>> SearchAllUser(int size, int page)
         {
             try
             {
@@ -789,20 +789,28 @@ namespace VegaCityApp.Service.Implement
                 orderBy: x => x.OrderByDescending(z => z.FullName),
                 predicate: x => x.Status == (int)UserStatusEnum.Active);
 
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<GetUserResponse>>
                 {
                     MessageResponse = UserMessage.GetListSuccess,
                     StatusCode = HttpStatusCodes.OK,
-                    Data = data
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
                 };
             }
             catch (Exception ex)
             {
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<GetUserResponse>>
                 {
                     MessageResponse = UserMessage.GetAllUserFail + ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError,
-                    Data = null
+                    Data = null,
+                    MetaData=null
                 };
             }
         }
