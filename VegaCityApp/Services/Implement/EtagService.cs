@@ -536,6 +536,7 @@ namespace VegaCityApp.API.Services.Implement
             etag.Cccd = req.CCCD;
             etag.UpsDate = TimeUtils.GetCurrentSEATime();
             etag.Gender = req.Gender;
+            etag.Birthday = req.Birthday;
             etag.StartDate = req.StartDate ?? etag.StartDate;
             etag.EndDate = req.EndDate ?? etag.EndDate;
             _unitOfWork.GetRepository<Etag>().UpdateAsync(etag);
