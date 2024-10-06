@@ -56,4 +56,14 @@ namespace VegaCityApp.API.Enums
        // public const string PaymentBackReturnUrl = "https://localhost:44395/api/v1/payment/vnpay/order";//redirect sau khi thanh toan
         public const string PaymentBackReturnUrl = "http://14.225.204.144:8000/api/v1/payment/vnpay/order";
     }
+    public class PayOSConfig //already implement direct in appsetting
+    {
+        public const string ClientId = "90c82845-c8fb-4644-912c-fcd6fb9a0b91";
+        public const string ApiKey = "6fbfc454-452d-400c-a956-60713ed63655";
+        public const string ChecksumKey = "e0df18284b37c90d88390be74568f6e0c4ff63c95cc4f1ee2eb6af30877d37a5";
+        public const string CancelUrl = "https://example.com/cancel";
+        public const string ReturnUrl = "https://example.com/cancel";
+        public const string create_order_url = "https://api-merchant.payos.vn/v2/payment-requests";
+
+    }
 }

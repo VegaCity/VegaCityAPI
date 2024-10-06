@@ -1,10 +1,14 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Net.payOS.Types;
+using Net.payOS;
+using Newtonsoft.Json;
 using System.Net;
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Payment;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.PaymentResponse;
+using VegaCityApp.API.Payload.Response.StoreResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
 using VegaCityApp.Domain.Models;
@@ -17,10 +21,12 @@ namespace VegaCityApp.API.Services.Implement
 {
     public class PaymentService : BaseService<PaymentService>, IPaymentService
     {
-        public PaymentService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<PaymentService> logger,
+        private readonly PayOS _payOs;
+        public PaymentService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<PaymentService> logger, PayOS payOs,
             IMapper mapper,
             IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
+            _payOs = payOs;
         }
 
         public async Task<ResponseAPI> MomoPayment(PaymentRequest request)
@@ -276,5 +282,90 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.InternalServerError
                 };
         }
+
+        public async Task<ResponseAPI> PayOSPayment(PaymentRequest req)
+        {
+            var checkOrder = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.InvoiceId == req.InvoiceId && x.Status == OrderStatus.Pending);
+            if (checkOrder == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.NotFoundOrder,
+                    StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+
+            var customerInfo = JsonConvert.DeserializeObject<VegaCityApp.API.Payload.Request.Payment.CustomerInfo>(checkOrder.CustomerInfo);//xiu xai
+            List<PayOSItems> items = new List<PayOSItems>(); //xiu xai
+            foreach (var orderDetail in checkOrder.OrderDetails)
+            {
+                if (!string.IsNullOrEmpty(orderDetail.ProductJson))
+                {
+                    var products = JsonConvert.DeserializeObject<List<ProductFromPos>>(orderDetail.ProductJson);
+                    var dynamicProducts = JsonConvert.DeserializeObject<List<dynamic>>(orderDetail.ProductJson);
+
+                    for (int i = 0; i < products.Count; i++)
+                    {
+                        var product = products[i];
+                        var dynamicProduct = dynamicProducts[i];
+                        int quantity = dynamicProduct.Quantity != null ? (int)dynamicProduct.Quantity : (orderDetail.Quantity ?? 1);
+
+                        items.Add(new PayOSItems
+                        {
+                            name = product.Name,
+                            quantity = quantity,
+                            price = product.Price
+                        });
+                    }
+                }
+            }
+            List<ItemData> itemDataList = items.Select(item => new ItemData(
+             item.name,   // Mapping from PayOSItems model to ItemData of pay os's model
+             item.quantity,
+             item.price
+             )).ToList();
+            //here
+            try
+            {
+                
+                var paymentData = new PaymentData(
+                    orderCode: Int64.Parse(checkOrder.InvoiceId.ToString()),  // Bạn có thể tạo mã đơn hàng tại đây
+                    amount:checkOrder.TotalAmount,
+                    description: "đơn hàng :" + req.InvoiceId,
+                    items: itemDataList,
+                    cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
+                    returnUrl: "http://yourdomain.com/payment/return",  // URL khi thanh toán thành công
+                    buyerName: customerInfo.FullName.ToString(),
+                    buyerEmail: customerInfo.Email.ToString(), // very require email here!
+                    buyerPhone: customerInfo.PhoneNumber.ToString(),
+                    buyerAddress: customerInfo.Email.ToString(),
+                    expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
+                );
+
+                // Gọi hàm createPaymentLink từ PayOS với đối tượng PaymentData
+                var paymentUrl = await _payOs.createPaymentLink(paymentData);
+
+                //return Ok(new { Url = paymentUrl });
+                return new ResponseAPI
+                {
+                    MessageResponse = PaymentMessage.PayOSPaymentSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = paymentUrl
+                };
+            }
+            catch (Exception ex)
+            {
+                //string error = ErrorUtil.GetErrorString("Exception", ex.Message);
+                //return StatusCode(StatusCodes.Status500InternalServerError, error);
+                return new ResponseAPI
+                {
+                    MessageResponse = PaymentMessage.PayOSPaymentFail + ex.Message,
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    Data = null
+                };
+            }
+
+        }
+
     }
 }

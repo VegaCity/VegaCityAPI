@@ -297,6 +297,8 @@ public static class MessageConstant
         public const string VnPaySuccess = "Successflly With VnPay";
         public const string vnPayFailed = "Failed To Pay With VnPay";
         public const string MomoPaymentSuccess = "Momo Payment Success";
+        public const string PayOSPaymentFail = "Failed To Create Payment with PayOS";
+        public const string PayOSPaymentSuccess = "Successfully Create PayOS Payment";
     }
     public static class WalletTypeMessage
     {

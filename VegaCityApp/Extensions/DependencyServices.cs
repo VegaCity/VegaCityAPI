@@ -15,6 +15,7 @@ using VegaCityApp.Service.Implement;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Services.Implement;
 using Newtonsoft.Json;
+using Net.payOS;
 
 namespace VegaCityApp.API.Extensions;
 public static class DependencyServices
@@ -185,4 +186,18 @@ public static class DependencyServices
         });
         return services;
     }
+    //PayOS
+    public static IServiceCollection AddPayOS(this IServiceCollection services, IConfiguration configuration)
+    {
+        // Read configuration values
+        string clientId = configuration["PAYOS:CLIENT_ID"];
+        string apiKey = configuration["PAYOS:API_KEY"];
+        string checksumKey = configuration["PAYOS:CHECKSUM_KEY"];
+
+        // Register PayOS as a singleton
+        services.AddSingleton(new PayOS(clientId, apiKey, checksumKey));
+
+        return services;
+    }
+
 }

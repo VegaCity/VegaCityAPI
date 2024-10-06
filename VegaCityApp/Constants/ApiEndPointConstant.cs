@@ -101,6 +101,7 @@ public static class ApiEndPointConstant
         public const string MomoPayment = ApiEndpoint + "/payment/momo";
         public const string ZaloPayment = ApiEndpoint + "/payment/zalo";
         public const string VnPayPayment = ApiEndpoint + "/payment/vnpay";
+        public const string PayOSPayment = ApiEndpoint + "/payment/payos";
         public const string VisaCardPayment = ApiEndpoint + "/payment/visa";
         public const string UpdateOrderPaid = ApiEndpoint + "/payment/momo/order";
         public const string UpdateOrderPaidForChargingMoney = ApiEndpoint + "/payment/momo/order/charge-money";
