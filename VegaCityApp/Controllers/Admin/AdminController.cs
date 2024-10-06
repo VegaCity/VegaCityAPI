@@ -45,7 +45,7 @@ namespace VegaCityApp.API.Controllers.Admin
         }
 
         [HttpGet(UserEndpoint.GetListUser)]
-        [ProducesResponseType(typeof(ResponseAPI<IPaginate<GetUserResponse>>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<IEnumerable<GetUserResponse>>), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> SearchAllUser([FromQuery] int size = 10, [FromQuery] int page = 1)
         {

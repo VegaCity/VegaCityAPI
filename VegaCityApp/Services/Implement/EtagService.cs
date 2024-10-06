@@ -128,7 +128,7 @@ namespace VegaCityApp.API.Services.Implement
                 Data = new { etagType }
             };
         }
-        public async Task<ResponseAPI> SearchAllEtagType(int size, int page)
+        public async Task<ResponseAPI<IEnumerable<EtagTypeResponse>>> SearchAllEtagType(int size, int page)
         {
             try
             {
@@ -150,20 +150,28 @@ namespace VegaCityApp.API.Services.Implement
                 predicate: x => !x.Deflag
                 );
 
-                return new ResponseAPI()
+                return new ResponseAPI<IEnumerable<EtagTypeResponse>>()
                 {
                     MessageResponse = EtagTypeMessage.SearchAllEtagTypeSuccess,
                     StatusCode = MessageConstant.HttpStatusCodes.OK,
-                    Data = data
+                    Data = data.Items,  // Danh sách EtagType trả về
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
                 };
             }
             catch (Exception ex)
             {
-                return new ResponseAPI()
+                return new ResponseAPI<IEnumerable<EtagTypeResponse>>()
                 {
                     MessageResponse = EtagTypeMessage.SearchAllEtagTypeFail + ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError,
-                    Data = null
+                    Data = null,
+                    MetaData = null // Không có metadata khi lỗi xảy ra
                 };
             }
         }
@@ -460,7 +468,7 @@ namespace VegaCityApp.API.Services.Implement
                 Data = new { etag }
             };
         }
-        public async Task<ResponseAPI> SearchAllEtag(int size, int page)
+        public async Task<ResponseAPI<IEnumerable<EtagResponse>>> SearchAllEtag(int size, int page)
         {
             try
             {
@@ -485,20 +493,28 @@ namespace VegaCityApp.API.Services.Implement
                                size: size,
                                orderBy: x => x.OrderByDescending(z => z.FullName),
                                predicate: x => !x.Deflag);
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<EtagResponse>>
                 {
                     MessageResponse = EtagMessage.SearchAllEtagsSuccess,
                     StatusCode = HttpStatusCodes.OK,
-                    Data = data
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
                 };
             }
             catch (Exception ex)
             {
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<EtagResponse>>()
                 {
                     MessageResponse = EtagMessage.SearchAllEtagsFailed + ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError,
-                    Data = null
+                    Data = null,
+                    MetaData = null
                 };
             }
         }

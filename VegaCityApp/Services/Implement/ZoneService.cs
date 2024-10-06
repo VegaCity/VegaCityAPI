@@ -4,6 +4,7 @@ using VegaCityApp.API.Constants;
 using VegaCityApp.API.Payload.Request.Zone;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.GetZoneResponse;
+using VegaCityApp.API.Payload.Response.WalletResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
 using VegaCityApp.Domain.Models;
@@ -104,7 +105,7 @@ namespace VegaCityApp.API.Services.Implement
             }
         }
 
-        public async Task<ResponseAPI> SearchZones(int size, int page)
+        public async Task<ResponseAPI<IEnumerable<GetZoneResponse>>> SearchZones(int size, int page)
         {
             try
             {
@@ -125,20 +126,28 @@ namespace VegaCityApp.API.Services.Implement
                 orderBy: x => x.OrderByDescending(z => z.Name),
                 predicate: x => !x.Deflag
             );
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<GetZoneResponse>>
                 {
                     MessageResponse = ZoneMessage.SearchZonesSuccess,
                     StatusCode = HttpStatusCodes.OK,
-                    Data = data
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
                 };
             }
             catch (Exception ex)
             {
-                return new ResponseAPI()
+                return new ResponseAPI<IEnumerable<GetZoneResponse>>
                 {
                     MessageResponse = ZoneMessage.SearchZonesFail + ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError,
-                    Data = null
+                    Data = null,
+                    MetaData = null
                 };
             }
 

@@ -30,7 +30,7 @@ namespace VegaCityApp.API.Controllers
         }
 
         [HttpGet(OrderEndpoint.GetListOrder)]
-        [ProducesResponseType(typeof(ResponseAPI<IPaginate<GetOrderResponse>>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> SearchAllOrder([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _orderService.SearchAllOrders(size, page);

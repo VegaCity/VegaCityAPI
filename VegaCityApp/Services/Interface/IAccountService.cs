@@ -20,7 +20,7 @@ namespace VegaCityApp.Service.Interface
 
         Task<ResponseAPI> ChangePassword (ChangePasswordRequest req);
 
-        Task<ResponseAPI> SearchAllUser(int size, int page);
+        Task<ResponseAPI<IEnumerable<GetUserResponse>>> SearchAllUser(int size, int page);
 
         Task<ResponseAPI> SearchUser(Guid UserId);
 

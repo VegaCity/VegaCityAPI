@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using VegaCityApp.API.Constants;
 using VegaCityApp.API.Payload.Request.Package;
 using VegaCityApp.API.Payload.Response;
+using VegaCityApp.API.Payload.Response.OrderResponse;
 using VegaCityApp.API.Payload.Response.PackageResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
@@ -182,7 +183,7 @@ namespace VegaCityApp.API.Services.Implement
             }
         }
 
-        public async Task<ResponseAPI> SearchAllPackage(int size, int page)
+        public async Task<ResponseAPI<IEnumerable<GetPackageResponse>>> SearchAllPackage(int size, int page)
         {
             try
             {
@@ -206,20 +207,28 @@ namespace VegaCityApp.API.Services.Implement
                 orderBy: x => x.OrderByDescending(z => z.Name),
                 predicate: x => x.Deflag == false
             );
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<GetPackageResponse>>
                 {
                     MessageResponse = PackageMessage.GetPackagesSuccessfully,
                     StatusCode = HttpStatusCodes.OK,
-                    Data = data
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
                 };
             }
             catch (Exception ex)
             {
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<GetPackageResponse>>
                 {
                     MessageResponse = PackageMessage.GetPackagesFail + ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError,
-                    Data = null
+                    Data = null,
+                    MetaData = null
                 };
             }
         }

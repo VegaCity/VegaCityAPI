@@ -77,7 +77,7 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = StoreMessage.DeleteStoreServiceFail
             };
         }
-        public async Task<ResponseAPI> GetAllServiceStore(int size, int page)
+        public async Task<ResponseAPI<IEnumerable<ServiceStoreResponse>>> GetAllServiceStore(int size, int page)
         {
             try
             {
@@ -96,20 +96,28 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 orderBy: c => c.OrderByDescending(z => z.Name)
             );
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<ServiceStoreResponse>>
                 {
                     MessageResponse = StoreMessage.GetListStoreServicesSuccess,
                     StatusCode = HttpStatusCodes.OK,
-                    Data = data
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
                 };
             }
             catch (Exception ex)
             {
-                return new ResponseAPI
+                return new ResponseAPI<IEnumerable<ServiceStoreResponse>>
                 {
                     MessageResponse = StoreMessage.GetListStoreServicesFail + ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError,
-                    Data = null
+                    Data = null,
+                    MetaData = null
                 };
             }
         }

@@ -38,7 +38,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(ZoneEndPoint.SearchAllZone)]
-        [ProducesResponseType(typeof(ResponseAPI<IPaginate<GetZoneResponse>>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<IEnumerable<GetZoneResponse>>), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> SearchZones([FromQuery]int size = 10,[FromQuery] int page = 1)
         {

@@ -37,7 +37,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(HouseEndpoint.GetListHouse)]
-        [ProducesResponseType(typeof(ResponseAPI<IPaginate<GetHouseResponse>>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<IEnumerable<GetHouseResponse>>), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> SearchAllHouse([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
