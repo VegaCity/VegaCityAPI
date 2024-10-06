@@ -3,6 +3,8 @@ using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.StoreResponse;
 using VegaCityApp.Domain.Paginate;
 
+// test
+
 namespace VegaCityApp.API.Services.Interface
 {
     public interface IStoreService
