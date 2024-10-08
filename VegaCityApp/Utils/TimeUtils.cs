@@ -4,25 +4,21 @@
     {
         public static string GetTimestamp(DateTime value)
         {
-            DateTime seaTime = value.AddHours(7);
-            return seaTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
+            return value.ToString("yyyyMMddHHmmssff");
         }
 
-        //public static string GetHoursTime(DateTime value)
-        //{
-        //    return value.ToString("H:mm");
-        //}
+        public static string GetHoursTime(DateTime value)
+        {
+            return value.ToString("H:mm");
+        }
 
         public static DateTime GetCurrentSEATime()
         {
             //TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
-            //DateTime localTime = DateTime.UtcNow;
-            ////DateTime utcTime = TimeZoneInfo.ConvertTime(localTime, TimeZoneInfo.Local, tz);
-            ////DateTime utcTime = localTime.AddDays(7);
-            //return localTime;
-            DateTime utcTime = DateTime.UtcNow; // Get the current UTC time
-            DateTime convertedTime = utcTime.AddHours(7); // Add 7 hours for Ho Chi Minh City's time (UTC+7)
-            return convertedTime;
+            DateTime localTime = DateTime.UtcNow;
+            //DateTime utcTime = TimeZoneInfo.ConvertTime(localTime, TimeZoneInfo.Local, tz);
+            //DateTime utcTime = localTime.AddDays(7);
+            return localTime;
         }
 
         public static DateTime ConvertToSEATime(DateTime value)
