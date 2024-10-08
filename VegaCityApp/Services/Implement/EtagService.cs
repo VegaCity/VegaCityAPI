@@ -476,7 +476,7 @@ namespace VegaCityApp.API.Services.Implement
                               selector: x => new EtagResponse()
                               {
                                   Id = x.Id,
-                                  Fullname = x.FullName,
+                                  FullName = x.FullName,
                                   PhoneNumber = x.PhoneNumber,
                                   CCCD = x.Cccd,
                                   ImageUrl = x.ImageUrl,

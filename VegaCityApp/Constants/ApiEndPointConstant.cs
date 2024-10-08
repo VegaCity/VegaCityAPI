@@ -104,6 +104,8 @@ public static class ApiEndPointConstant
         public const string VisaCardPayment = ApiEndpoint + "/payment/visa";
         public const string UpdateOrderPaid = ApiEndpoint + "/payment/momo/order";
         public const string UpdateOrderPaidForChargingMoney = ApiEndpoint + "/payment/momo/order/charge-money";
+        public const string UpdateOrderVnPaidForChargingMoney = ApiEndpoint + "/payment/vnpay/order/charge-money";
+       // public const string UpdateOrderPaidOSForChargingMoney = ApiEndpoint + "/payment/payos/order/charge-money";
         public const string UpdateVnPayOrder = ApiEndpoint + "/payment/vnpay/order";
     }
     public static class WalletTypeEndpoint
