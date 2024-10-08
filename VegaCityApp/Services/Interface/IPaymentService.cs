@@ -1,4 +1,5 @@
-﻿using VegaCityApp.API.Payload.Request.Payment;
+﻿using Microsoft.AspNetCore.Mvc;
+using VegaCityApp.API.Payload.Request.Payment;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.PaymentResponse;
 
@@ -11,5 +12,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> VnPayment(PaymentRequest request, HttpContext context); //need to response api
         Task<ResponseAPI> UpdateVnPayOrder(VnPayPaymentResponse req);
         Task<ResponseAPI> UpdateOrderPaidForChargingMoney(IPNMomoRequest req);
+        Task<ResponseAPI> UpdateOrderPaidForChargingMoney([FromQuery] VnPayPaymentResponse req);
     }
 }

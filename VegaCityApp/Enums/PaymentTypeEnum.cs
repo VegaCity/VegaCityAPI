@@ -55,7 +55,11 @@ namespace VegaCityApp.API.Enums
         public const string Command = "pay";
         public const string CurrCode = "VND";
         public const string Locale = "vn";
-       // public const string PaymentBackReturnUrl = "https://localhost:44395/api/v1/payment/vnpay/order";//redirect sau khi thanh toan
+        //public const string PaymentBackReturnUrl = "https://localhost:44395/api/v1/payment/vnpay/order";//redirect sau khi thanh toan
+        //public const string VnPaymentBackReturnUrl = "https://localhost:44395/api/v1/payment/vnpay/order/charge-money";
+        public const string ipnUrl = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b";
         public const string PaymentBackReturnUrl = "http://14.225.204.144:8000/api/v1/payment/vnpay/order";
+        public const string VnPaymentBackReturnUrl = "http://14.225.204.144:8000/api/v1/payment/vnpay/order/charge-money";
+
     }
 }

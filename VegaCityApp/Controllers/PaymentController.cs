@@ -42,7 +42,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(PaymentEndpoint.VnPayPayment)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
-        [CustomAuthorize(RoleEnum.CashierWeb, RoleEnum.CashierApp)]
+        //[CustomAuthorize(RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         public async Task<IActionResult> CreateVnPayUrl([FromBody] PaymentRequest request)
         {
             if (!ModelState.IsValid)
@@ -69,6 +69,18 @@ namespace VegaCityApp.API.Controllers
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [HttpGet(PaymentEndpoint.UpdateOrderPaidForChargingMoney)]
         public async Task<IActionResult> UpdateOrderPaidForChargingMoney([FromQuery] IPNMomoRequest req)
+        {
+            var result = await _service.UpdateOrderPaidForChargingMoney(req);
+            if (result.StatusCode == HttpStatusCodes.NoContent)
+            {
+                return Redirect(result.MessageResponse);
+            }
+            return BadRequest();
+        }
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [HttpGet(PaymentEndpoint.UpdateOrderVnPaidForChargingMoney)]
+        public async Task<IActionResult> UpdateOrderPaidForChargingMoney([FromQuery] VnPayPaymentResponse req)
         {
             var result = await _service.UpdateOrderPaidForChargingMoney(req);
             if (result.StatusCode == HttpStatusCodes.NoContent)

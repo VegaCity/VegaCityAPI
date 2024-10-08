@@ -223,6 +223,65 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = OrderMessage.NotFoundOrder
                 };
             }
+
+            if (req.Key != null && req.Key.Split('_')[0] == "vnpay")
+            {
+                try
+                {
+                   
+                        var tickCharge = TimeUtils.GetCurrentSEATime().ToString();
+                        var vnpayCharge = new VnPayLibrary();
+                        vnpayCharge.AddRequestData("vnp_Version", VnPayConfig.Version);
+                        vnpayCharge.AddRequestData("vnp_Command", VnPayConfig.Command);
+                        vnpayCharge.AddRequestData("vnp_TmnCode", VnPayConfig.TmnCode);
+                        vnpayCharge.AddRequestData("vnp_Amount", (orderExisted.TotalAmount * 100).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 
+                        vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"));
+                        vnpayCharge.AddRequestData("vnp_CurrCode", VnPayConfig.CurrCode);
+                        vnpayCharge.AddRequestData("vnp_IpAddr", VnPayUtils.GetIpAddress(context));
+                        vnpayCharge.AddRequestData("vnp_Locale", VnPayConfig.Locale);
+                        vnpayCharge.AddRequestData("vnp_OrderInfo", "Thanh toán cho đơn hàng (InvoiceId):" + req.InvoiceId);
+                        vnpayCharge.AddRequestData("vnp_OrderType", "other"); //default value: other
+                        vnpayCharge.AddRequestData("vnp_ReturnUrl", VnPayConfig.VnPaymentBackReturnUrl);
+                        vnpayCharge.AddRequestData("vnp_TxnRef", tickCharge); // Mã tham chiếu của giao dịch tại hệ thống của merchant. Mã này là duy nhất dùng để phân biệt các đơn hàng gửi sang VNPAY. Không được trùng lặp trong ngày
+
+                        var paymentUrlChargeMoney = vnpayCharge.CreateRequestUrl(VnPayConfig.BaseUrl, VnPayConfig.HashSecret);
+                        //
+                        if (paymentUrlChargeMoney == null)
+                        {
+                            return new ResponseAPI
+                            {
+                                StatusCode = HttpStatusCodes.InternalServerError,
+                                MessageResponse = PaymentMessage.vnPayFailed
+                            };
+                        }
+
+                        return new ResponseAPI()
+                        {
+                            StatusCode = HttpStatusCodes.OK,
+                            MessageResponse = PaymentMessage.VnPaySuccess,
+                            Data = new VnPaymentResponse()
+                            {
+                                Success = true,
+                                PaymentMethod = "VnPay",
+                                OrderDescription = "Thanh toán VnPay cho đơn hàng :" + req.InvoiceId,
+                                OrderId = req.InvoiceId,
+                                Amount = orderExisted.TotalAmount,
+                                VnPayResponse = paymentUrlChargeMoney,
+                                CrDate = TimeUtils.GetCurrentSEATime()
+
+                            }
+                        };
+                    
+                }
+                catch (Exception ex)
+                {
+                    return new ResponseAPI()
+                    {
+                        MessageResponse = PaymentMessage.vnPayFailed + ex.Message,
+                        StatusCode = HttpStatusCodes.InternalServerError
+                    };
+                }
+            }
             var tick = TimeUtils.GetCurrentSEATime().ToString();
             var vnpay = new VnPayLibrary();
             vnpay.AddRequestData("vnp_Version", VnPayConfig.Version);
@@ -290,5 +349,47 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.InternalServerError
                 };
         }
+        public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(VnPayPaymentResponse req)
+        {
+            var orderInvoiceId = req.vnp_OrderInfo.Split(":", 2)[1];
+            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+                (predicate: x => x.InvoiceId == orderInvoiceId && x.Status == OrderStatus.Pending);
+            order.Status = OrderStatus.Completed;
+            order.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
+                (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+            //update wallet
+            etag.Wallet.Balance += Int32.Parse(req.vnp_Amount.ToString());
+            etag.Wallet.BalanceHistory += Int32.Parse(req.vnp_Amount.ToString());
+            etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+            //create deposite
+            var newDeposit = new Deposit
+            {
+                Id = Guid.NewGuid(), // Tạo ID mới
+                PaymentType = "VnPay",
+                Name = "Nạp tiền vào ETag với số tiền: " + req.vnp_Amount,
+                IsIncrease = true, // Xác định rằng đây là nạp tiền
+                Amount = Int32.Parse(req.vnp_Amount.ToString()),
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                WalletId = etag.Wallet.Id,
+                EtagId = etag.Id,
+                OrderId = order.Id,
+            };
+            await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NoContent,
+                    MessageResponse = VnPayConfig.ipnUrl
+                }
+                : new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError
+                };
+        }
+
     }
 }
