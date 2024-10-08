@@ -26,7 +26,9 @@ namespace VegaCityApp.API.Enums
         public const int orderExpireTime = 30;
         //after success payment, redirect to this url
         //public const string redirectUrl = "https://localhost:44395/api/v1/payment/momo/order";
+        //public const string redirectUrlChargeMoney = "https://localhost:44395/api/v1/payment/momo/order/charge-money";
         public const string redirectUrl = "http://14.225.204.144:8000/api/v1/payment/momo/order";
+        public const string redirectUrlChargeMoney = "http://14.225.204.144:8000/api/v1/payment/momo/order/charge-money";
         //after success payment, send a request to this url to update order or something
         public const string ipnUrl = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b";
         public const string requestType = "payWithMethod";
