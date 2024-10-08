@@ -15,7 +15,7 @@
         public static DateTime GetCurrentSEATime()
         {
             //TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
-            DateTime localTime = DateTime.UtcNow.AddHours(7);
+            DateTime localTime = DateTime.UtcNow;
             //DateTime utcTime = TimeZoneInfo.ConvertTime(localTime, TimeZoneInfo.Local, tz);
             //DateTime utcTime = localTime.AddDays(7);
             return localTime;
@@ -26,8 +26,8 @@
             //TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             //DateTime convertedTime = TimeZoneInfo.ConvertTime(value, tz);
 
-            DateTime convertedTime = value.AddHours(7);
-            return convertedTime;
+           // DateTime convertedTime = value.AddHours(7);
+            return value;
         }
     }
 }
