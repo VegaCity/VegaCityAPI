@@ -276,48 +276,5 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.InternalServerError
                 };
         }
-        public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(VnPayPaymentResponse req)
-        {
-            {
-                var invoiceInfo = req.vnp_OrderInfo.Split(":");
-                var invoiceId = invoiceInfo.Length > 1 ? invoiceInfo[1].Trim() : null;
-                var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                    (predicate: x => x.InvoiceId == invoiceId && x.Status == OrderStatus.Pending);
-                order.Status = OrderStatus.Completed;
-                order.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-                var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
-                //update wallet
-                etag.Wallet.Balance += (int)req.vnp_Amount;
-                etag.Wallet.BalanceHistory += (int)req.vnp_Amount;
-                etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
-                //create deposite
-                var newDeposit = new Deposit
-                {
-                    Id = Guid.NewGuid(), // Tạo ID mới
-                    PaymentType = "VnPay",
-                    Name = "Nạp tiền vào ETag với số tiền: " + req.vnp_Amount,
-                    IsIncrease = true, // Xác định rằng đây là nạp tiền
-                    Amount = (int)req.vnp_Amount,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    WalletId = etag.Wallet.Id,
-                    EtagId = etag.Id
-                };
-                await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
-                return await _unitOfWork.CommitAsync() > 0
-                    ? new ResponseAPI()
-                    {
-                        StatusCode = HttpStatusCodes.NoContent,
-                        MessageResponse = PaymentMomo.ipnUrl
-                    }
-                    : new ResponseAPI()
-                    {
-                        StatusCode = HttpStatusCodes.InternalServerError
-                    };
-            }
-        }
     }
 }

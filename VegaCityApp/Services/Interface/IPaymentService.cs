@@ -11,6 +11,5 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> VnPayment(PaymentRequest request, HttpContext context); //need to response api
         Task<ResponseAPI> UpdateVnPayOrder(VnPayPaymentResponse req);
         Task<ResponseAPI> UpdateOrderPaidForChargingMoney(IPNMomoRequest req);
-        Task<ResponseAPI> UpdateOrderPaidForChargingMoney(VnPayPaymentResponse req);
     }
 }

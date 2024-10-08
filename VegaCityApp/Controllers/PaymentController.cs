@@ -77,19 +77,6 @@ namespace VegaCityApp.API.Controllers
             }
             return BadRequest();
         }
-        //updateCharge for Vnpay
-        [ApiExplorerSettings(IgnoreApi = true)]
-        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [HttpGet(PaymentEndpoint.UpdateOrderVnPaidForChargingMoney)]
-        public async Task<IActionResult> UpdateOrderPaidForChargingMoney([FromQuery] VnPayPaymentResponse req)
-        {
-            var result = await _service.UpdateOrderPaidForChargingMoney(req);
-            if (result.StatusCode == HttpStatusCodes.NoContent)
-            {
-                return Redirect(result.MessageResponse);
-            }
-            return BadRequest();
-        }
 
     }
 }
