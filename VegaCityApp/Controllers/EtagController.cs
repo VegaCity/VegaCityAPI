@@ -63,7 +63,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(EtagEndpoint.CreateEtag)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
-        //[CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb)]
         public async Task<IActionResult> CreateEtag([FromBody] EtagRequest request)
         {
             var result = await _service.CreateEtag(request);
