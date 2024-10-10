@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using AutoMapper;
 using VegaCityApp.Domain.Models;
 using VegaCityApp.Repository.Interfaces;
@@ -29,5 +30,10 @@ namespace VegaCityApp.API.Services
 		{
 			return _httpContextAccessor?.HttpContext?.User?.FindFirstValue("MarketZoneId");
 		}
-	}
+
+		protected string GetEmailFromJwt()
+        {
+            return _httpContextAccessor?.HttpContext?.User?.FindFirstValue(JwtRegisteredClaimNames.Email);
+        }
+    }
 }

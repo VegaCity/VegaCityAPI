@@ -193,7 +193,8 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = MessageConstant.HttpStatusCodes.BadRequest
                 };
             }
-            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagTypeId);
+            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagTypeId
+            , include: x => x.Include(y => y.WalletType));
             if (etagType == null)
             {
                 return new ResponseAPI()
@@ -202,17 +203,21 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = MessageConstant.HttpStatusCodes.NotFound
                 };
             }
+            DateTime newStartdate = req.StartDate.AddHours(7);
+            DateTime newEnddate = (DateTime)(req.EndDate?.AddHours(7));
             var newWallet = new Wallet
             {
                 Id = Guid.NewGuid(),
                 Balance = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
                 BalanceHistory = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
-                CrDate = TimeUtils.GetCurrentSEATime(),
-                UpsDate = TimeUtils.GetCurrentSEATime(),
+                CrDate = TimeUtils.GetCurrentSEATime().AddHours(7),
+                UpsDate = TimeUtils.GetCurrentSEATime().AddHours(7),
                 Deflag = false,
                 WalletTypeId = etagType.WalletType.Id,
-                StartDate = req.StartDate,
-                ExpireDate = req.EndDate
+                //StartDate = req.StartDate,
+                //ExpireDate = req.EndDate
+                StartDate = newStartdate,
+                ExpireDate = newEnddate
             };
             await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
             var newEtag = new Etag
@@ -222,15 +227,15 @@ namespace VegaCityApp.API.Services.Implement
                 MarketZoneId = etagType.MarketZoneId,
                 WalletId = newWallet.Id,
                 Deflag = false,
-                CrDate = TimeUtils.GetCurrentSEATime(),
-                UpsDate = TimeUtils.GetCurrentSEATime(),
+                CrDate = TimeUtils.GetCurrentSEATime().AddHours(7),
+                UpsDate = TimeUtils.GetCurrentSEATime().AddHours(7),
                 Cccd = req.Cccd,
                 FullName = req.FullName,
                 PhoneNumber = req.PhoneNumber,
                 Gender = req.Gender,
-                EtagCode = "VGC" + TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"),
-                StartDate = req.StartDate,
-                EndDate = req.EndDate,
+                EtagCode = "VGC" + TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"),
+                StartDate = newStartdate,
+                EndDate = newEnddate,
                 Status = (int)EtagStatusEnum.Active,
                 IsVerifyPhone = false
             };
