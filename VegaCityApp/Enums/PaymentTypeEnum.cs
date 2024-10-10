@@ -72,7 +72,7 @@ namespace VegaCityApp.API.Enums
        // public const string ReturnUrl = "https://localhost:44395/api/v1/payment/payos/order"; //local
       //  public const string ReturnUrlChargeUrl = "https://localhost:44395/api/v1/payment/payos/order/charge-money"; //local
         public const string ReturnUrl = "http://14.225.204.144:8000/api/v1/payment/payos/order"; //deploy
-        public const string ReturnChargeUrl = "http://14.225.204.144:8000/api/v1/payment/payos/order/charge-money"; //dploy
+        public const string ReturnUrlCharge = "http://14.225.204.144:8000/api/v1/payment/payos/order/charge-money"; //dploy
         public const string create_order_url = "https://api-merchant.payos.vn/v2/payment-requests";
         public const string ipnUrl = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b";
 

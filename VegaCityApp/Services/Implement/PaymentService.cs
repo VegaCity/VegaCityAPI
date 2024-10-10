@@ -491,7 +491,7 @@ namespace VegaCityApp.API.Services.Implement
                     description: "đơn hàng :" + req.InvoiceId,
                     items: itemDataList,
                     cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
-                    returnUrl: PayOSConfiguration.ReturnUrlChargeUrl,  // URL khi thanh toán thành công
+                    returnUrl: PayOSConfiguration.ReturnUrlCharge,  // URL khi thanh toán thành công
                     buyerName: customerInfoEtag.FullName.ToString(),
                     buyerEmail: "", // very require email here!
                     buyerPhone: customerInfoEtag.PhoneNumber.ToString(),
