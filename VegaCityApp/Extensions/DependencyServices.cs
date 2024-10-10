@@ -44,7 +44,7 @@ public static class DependencyServices
         #region varDb
         string Host = "14.225.204.144";
         string UserName = "sa";
-        string Password = "S@123456";
+        string Password = "s@12345";
         string Database = "VegaCityApp";
         string Port = "1433";
         //string Host = "LAPTOP-R0K7KBGI\\TRANGQUOCDAT";
