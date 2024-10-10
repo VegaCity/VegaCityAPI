@@ -453,9 +453,10 @@ namespace VegaCityApp.API.Services.Implement
                         cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
                         returnUrl: PayOSConfiguration.ReturnUrl,  // URL khi thanh toán thành công
                         buyerName: customerInfo.FullName.ToString(),
-                        buyerEmail: customerInfo.Email.ToString(), // very require email here!
+                        //buyerEmail: customerInfo.Email.ToString(), // very require email here!
+                        buyerEmail:"",
                         buyerPhone: customerInfo.PhoneNumber.ToString(),
-                        buyerAddress: customerInfo.Email.ToString(),
+                        buyerAddress:"",// customerInfo.Email.ToString(),
                         expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
                     );
 
