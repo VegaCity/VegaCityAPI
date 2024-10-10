@@ -203,21 +203,18 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = MessageConstant.HttpStatusCodes.NotFound
                 };
             }
-            DateTime newStartdate = req.StartDate.AddHours(7);
-            DateTime newEnddate = (DateTime)(req.EndDate?.AddHours(7));
+
             var newWallet = new Wallet
             {
                 Id = Guid.NewGuid(),
                 Balance = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
                 BalanceHistory = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
-                CrDate = TimeUtils.GetCurrentSEATime().AddHours(7),
-                UpsDate = TimeUtils.GetCurrentSEATime().AddHours(7),
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
                 Deflag = false,
                 WalletTypeId = etagType.WalletType.Id,
-                //StartDate = req.StartDate,
-                //ExpireDate = req.EndDate
-                StartDate = newStartdate,
-                ExpireDate = newEnddate
+                StartDate = req.StartDate,
+                ExpireDate = req.EndDate
             };
             await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
             var newEtag = new Etag
@@ -227,15 +224,15 @@ namespace VegaCityApp.API.Services.Implement
                 MarketZoneId = etagType.MarketZoneId,
                 WalletId = newWallet.Id,
                 Deflag = false,
-                CrDate = TimeUtils.GetCurrentSEATime().AddHours(7),
-                UpsDate = TimeUtils.GetCurrentSEATime().AddHours(7),
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
                 Cccd = req.Cccd,
                 FullName = req.FullName,
                 PhoneNumber = req.PhoneNumber,
                 Gender = req.Gender,
                 EtagCode = "VGC" + TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"),
-                StartDate = newStartdate,
-                EndDate = newEnddate,
+                StartDate = req.StartDate,
+                EndDate = req.EndDate,
                 Status = (int)EtagStatusEnum.Active,
                 IsVerifyPhone = false
             };
@@ -341,14 +338,12 @@ namespace VegaCityApp.API.Services.Implement
                     WalletTypeId = checkEtagType.WalletType.Id,
                     Balance = (int)(checkEtagType.Amount *(1 + checkEtagType.BonusRate)),
                     BalanceHistory = (int)(checkEtagType.Amount * (1 + checkEtagType.BonusRate)),
-                    CrDate = TimeUtils.GetCurrentSEATime().AddHours(7),
-                    UpsDate = TimeUtils.GetCurrentSEATime().AddHours(7),
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
                     Deflag = false
                 };
                 await _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
                 // create etag
-                DateTime newStartdate = req.StartDate.AddHours(7);
-                DateTime newEnddate = (DateTime)(req.EndDate?.AddHours(7));
                 var newEtag = new Etag
                 {
                     Id = Guid.NewGuid(),
@@ -358,14 +353,14 @@ namespace VegaCityApp.API.Services.Implement
                     ImageUrl = "",
                     Gender = (int)GenderEnum.Other,
                     EtagCode = "VGC" + TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"),
-                    CrDate = TimeUtils.GetCurrentSEATime().AddHours(7),
-                    UpsDate = TimeUtils.GetCurrentSEATime().AddHours(7),
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
                     Deflag = false,
                     EtagTypeId = checkEtagType.Id,
                     MarketZoneId = checkEtagType.MarketZoneId,
                     WalletId = wallet.Id,
-                    StartDate = newStartdate,
-                    EndDate = newEnddate,
+                    StartDate = req.StartDate,
+                    EndDate = req.EndDate,
                     Status = (int)EtagStatusEnum.Inactive,
                     IsVerifyPhone = false,
                 };
@@ -624,9 +619,6 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = EtagMessage.CreateOrderForChargeFail,
                 StatusCode = HttpStatusCodes.BadRequest
             };
-
-
-
         }
     }
 }

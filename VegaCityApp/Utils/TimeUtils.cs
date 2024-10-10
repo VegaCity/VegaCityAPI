@@ -36,12 +36,10 @@
             return tz;
         }
 
-            public static DateTime ConvertToSEATime(DateTime value)
+        public static DateTime ConvertToSEATime(DateTime value)
         {
             TimeZoneInfo tz = GetSEATimeZone();
             DateTime convertedTime = TimeZoneInfo.ConvertTime(value, tz);
-
-           // DateTime convertedTime = value.AddHours(7);
             return convertedTime;
         }
     }
