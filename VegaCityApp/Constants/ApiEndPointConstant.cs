@@ -107,6 +107,9 @@ public static class ApiEndPointConstant
         public const string UpdateOrderVnPaidForChargingMoney = ApiEndpoint + "/payment/vnpay/order/charge-money";
        // public const string UpdateOrderPaidOSForChargingMoney = ApiEndpoint + "/payment/payos/order/charge-money";
         public const string UpdateVnPayOrder = ApiEndpoint + "/payment/vnpay/order";
+        public const string PayOSPayment = ApiEndpoint + "/payment/payos";
+        public const string UpdatePayOSOrder = ApiEndpoint + "/payment/payos/order";
+        public const string UpdateOrderPaidOSForChargingMoney = ApiEndpoint + "/payment/payos/order/charge-money";
     }
     public static class WalletTypeEndpoint
     {

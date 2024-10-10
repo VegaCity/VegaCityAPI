@@ -9,9 +9,13 @@ namespace VegaCityApp.API.Services.Interface
     {
         Task<ResponseAPI> MomoPayment(PaymentRequest request);
         Task<ResponseAPI> UpdateOrderPaid(IPNMomoRequest req);
+        Task<ResponseAPI> UpdateOrderPaidForChargingMoney(IPNMomoRequest req);
         Task<ResponseAPI> VnPayment(PaymentRequest request, HttpContext context); //need to response api
         Task<ResponseAPI> UpdateVnPayOrder(VnPayPaymentResponse req);
-        Task<ResponseAPI> UpdateOrderPaidForChargingMoney(IPNMomoRequest req);
         Task<ResponseAPI> UpdateOrderPaidForChargingMoney([FromQuery] VnPayPaymentResponse req);
+        Task<ResponseAPI> PayOSPayment(PaymentRequest req);
+        Task<ResponseAPI> UpdatePayOSOrder(string code, string id, string status, string orderCode);
+        Task<ResponseAPI> UpdateOrderPaidOSForChargingMoney(string code, string id, string status, string orderCode);
+
     }
 }

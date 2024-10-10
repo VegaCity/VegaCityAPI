@@ -59,7 +59,23 @@ namespace VegaCityApp.API.Enums
         //public const string VnPaymentBackReturnUrl = "https://localhost:44395/api/v1/payment/vnpay/order/charge-money";
         public const string ipnUrl = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b";
         public const string PaymentBackReturnUrl = "http://14.225.204.144:8000/api/v1/payment/vnpay/order";
-        public const string VnPaymentBackReturnUrl = "http://14.225.204.144:8000/api/v1/payment/vnpay/order/charge-money";
+        public const string VnPaymentBackReturnUrlChargeMoney = "http://14.225.204.144:8000/api/v1/payment/vnpay/order/charge-money";
+
+    }
+
+    public class PayOSConfiguration
+    {
+        public const string ClientId = "90c82845-c8fb-4644-912c-fcd6fb9a0b91";
+        public const string ApiKey = "6fbfc454-452d-400c-a956-60713ed63655";
+        public const string ChecksumKey = "e0df18284b37c90d88390be74568f6e0c4ff63c95cc4f1ee2eb6af30877d37a5";
+        public const string CancelUrl = "https://example.com/cancel";
+        public const string ReturnUrl = "https://localhost:44395/api/v1/payment/payos/order"; //local
+        public const string ReturnUrlChargeUrl = "https://localhost:44395/api/v1/payment/payos/order/charge-money"; //local
+        //public const string ReturnUrl = "http://14.225.204.144:8000/api/v1/payment/payos/order"; //deploy
+        //public const string ReturnChargeUrl = "http://14.225.204.144:8000/api/v1/payment/payos/order/charge-money"; //dploy
+        public const string create_order_url = "https://api-merchant.payos.vn/v2/payment-requests";
+        public const string ipnUrl = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b";
+
 
     }
 }
