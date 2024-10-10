@@ -14,7 +14,7 @@
 
         public static DateTime GetCurrentSEATime()
         {
-            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho Chi Minh");
+            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             DateTime localTime = DateTime.UtcNow;
             DateTime utcTime = TimeZoneInfo.ConvertTime(localTime, TimeZoneInfo.Local, tz);
             //DateTime utcTime = localTime.AddDays(7);
