@@ -14,16 +14,31 @@
 
         public static DateTime GetCurrentSEATime()
         {
-            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Hanoi");
-            DateTime localTime = DateTime.UtcNow;
+            TimeZoneInfo tz = GetSEATimeZone();
+            DateTime localTime = DateTime.Now;
             DateTime utcTime = TimeZoneInfo.ConvertTime(localTime, TimeZoneInfo.Local, tz);
             //DateTime utcTime = localTime.AddDays(7);
             return utcTime;
         }
-
-        public static DateTime ConvertToSEATime(DateTime value)
+        public static TimeZoneInfo GetSEATimeZone()
         {
-            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Hanoi");
+            TimeZoneInfo tz;
+            try
+            {
+                // Try using Windows time zone
+                tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                // Fallback to IANA time zone for Linux/Docker
+                tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
+            }
+            return tz;
+        }
+
+            public static DateTime ConvertToSEATime(DateTime value)
+        {
+            TimeZoneInfo tz = GetSEATimeZone();
             DateTime convertedTime = TimeZoneInfo.ConvertTime(value, tz);
 
            // DateTime convertedTime = value.AddHours(7);
