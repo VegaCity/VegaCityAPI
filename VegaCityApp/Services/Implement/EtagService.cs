@@ -341,12 +341,14 @@ namespace VegaCityApp.API.Services.Implement
                     WalletTypeId = checkEtagType.WalletType.Id,
                     Balance = (int)(checkEtagType.Amount *(1 + checkEtagType.BonusRate)),
                     BalanceHistory = (int)(checkEtagType.Amount * (1 + checkEtagType.BonusRate)),
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    CrDate = TimeUtils.GetCurrentSEATime().AddHours(7),
+                    UpsDate = TimeUtils.GetCurrentSEATime().AddHours(7),
                     Deflag = false
                 };
                 await _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
                 // create etag
+                DateTime newStartdate = req.StartDate.AddHours(7);
+                DateTime newEnddate = (DateTime)(req.EndDate?.AddHours(7));
                 var newEtag = new Etag
                 {
                     Id = Guid.NewGuid(),
@@ -355,15 +357,15 @@ namespace VegaCityApp.API.Services.Implement
                     Cccd = "",
                     ImageUrl = "",
                     Gender = (int)GenderEnum.Other,
-                    EtagCode = "VGC" + TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"),
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    EtagCode = "VGC" + TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"),
+                    CrDate = TimeUtils.GetCurrentSEATime().AddHours(7),
+                    UpsDate = TimeUtils.GetCurrentSEATime().AddHours(7),
                     Deflag = false,
                     EtagTypeId = checkEtagType.Id,
                     MarketZoneId = checkEtagType.MarketZoneId,
                     WalletId = wallet.Id,
-                    StartDate = req.StartDate,
-                    EndDate = req.EndDate,
+                    StartDate = newStartdate,
+                    EndDate = newEnddate,
                     Status = (int)EtagStatusEnum.Inactive,
                     IsVerifyPhone = false,
                 };
