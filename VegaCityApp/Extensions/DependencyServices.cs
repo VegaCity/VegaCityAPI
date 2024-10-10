@@ -56,6 +56,7 @@ public static class DependencyServices
         string connectionString =
             $"Server={Host},{Port};User Id={UserName};Password={Password};Database={Database}";
         return connectionString;
+
     }
 
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration config)
