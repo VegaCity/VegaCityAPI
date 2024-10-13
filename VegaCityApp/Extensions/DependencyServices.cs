@@ -41,6 +41,7 @@ public static class DependencyServices
          .UseSimpleAssemblyNameTypeSerializer()
          .UseRecommendedSerializerSettings()
          .UseSqlServerStorage(CreateConnectionString(configuration)));
+        services.AddHangfireServer();
         return services;
     }
 
