@@ -7,7 +7,7 @@ namespace VegaCityApp.API.Extensions
         public static void RecurringJobs()
         {
             //var corn = Cron.Daily();
-            var corn = Cron.MinuteInterval(60);
+            var corn = Cron.HourInterval(1);
 
             RecurringJob.AddOrUpdate<IWalletTypeService>(x => x.checkExpireWallet(), corn);
 
