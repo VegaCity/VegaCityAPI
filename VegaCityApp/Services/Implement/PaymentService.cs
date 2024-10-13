@@ -110,7 +110,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 //else
                 var rawSignature = "accessKey=" + PaymentMomo.MomoAccessKey + "&amount=" + checkOrder.TotalAmount
-                            + "&extraData=" + "&ipnUrl=" + PaymentMomo.ipnUrl + "&orderId=" + request.InvoiceId
+                            + "&extraData=" + "&ipnUrl=" + PaymentMomo.ipnUrl + checkOrder.Id + "&orderId=" + request.InvoiceId
                             + "&orderInfo=" + PaymentMomo.orderInfo + "&partnerCode=" + PaymentMomo.MomoPartnerCode
                             + "&redirectUrl=" + PaymentMomo.redirectUrl + "&requestId=" + request.InvoiceId
                             + "&requestType=" + PaymentMomo.requestType;
