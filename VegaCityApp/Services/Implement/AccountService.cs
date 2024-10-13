@@ -258,7 +258,9 @@ namespace VegaCityApp.Service.Implement
                 {
                     Id = Guid.NewGuid(),
                     UserId = user.Id,
-                    Token = user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum() ? JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(3)) : JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(2)),
+                    Token = user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum() 
+                    ? JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(1)) 
+                    : JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(2)),
                     Name = user.Role.Name,
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime()
@@ -301,6 +303,48 @@ namespace VegaCityApp.Service.Implement
                     }
                 };
             }
+        }
+        public async Task<ResponseAPI> GetRefreshTokenByEmail(string email)
+        {
+            //check email valid format
+            if (!ValidationUtils.IsEmail(email))
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.InvalidEmail
+                };
+            }
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
+                predicate: x => x.Email == email);
+            if (user == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = UserMessage.UserNotFound
+                };
+            }
+            var refreshToken = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
+                predicate: x => x.UserId == user.Id);
+            if (refreshToken == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = UserMessage.RefreshTokenNotFound
+                };
+            }
+            return new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = UserMessage.GetRefreshTokenSuccessfully,
+                Data = new
+                {
+                    UserEmail = user.Email,
+                    RefreshToken = refreshToken.Token
+                }
+            };
         }
         public async Task<ResponseAPI> Register(RegisterRequest req)
         {

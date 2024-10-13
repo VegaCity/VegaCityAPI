@@ -118,6 +118,8 @@ public static class MessageConstant
     }
     public static class UserMessage
     {   
+        public const string RefreshTokenNotFound = "Refresh Token Not Found !!";
+        public const string GetRefreshTokenSuccessfully = "Get Refresh Token Successfully !!";
         public const string RoleNotAllow = "Role Not Allow !!";
         public const string HouseNotFound = "House Not Found !!";
         public const string HouseIsRent = "House is renting !!";

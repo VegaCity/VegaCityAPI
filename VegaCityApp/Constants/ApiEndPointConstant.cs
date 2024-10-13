@@ -17,6 +17,7 @@ public static class ApiEndPointConstant
         public const string Register = Authentication + "/sign-up/landing-page";
         public const string ChangePassword = Authentication + "/change-password";
         public const string RefreshToken = Authentication + "/refresh-token";
+        public const string GetRefreshTokenByEmail = Authentication + "/refresh-token/{email}";
     }
     public static class EtagTypeEndpoint
     {
