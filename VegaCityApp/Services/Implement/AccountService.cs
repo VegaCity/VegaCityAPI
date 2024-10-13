@@ -258,7 +258,7 @@ namespace VegaCityApp.Service.Implement
                 {
                     Id = Guid.NewGuid(),
                     UserId = user.Id,
-                    Token = user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum() ? JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(1)) : JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(2)),
+                    Token = user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum() ? JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddMinutes(3)) : JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(2)),
                     Name = user.Role.Name,
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime()
