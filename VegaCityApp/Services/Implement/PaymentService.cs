@@ -48,7 +48,7 @@ namespace VegaCityApp.API.Services.Implement
                 //checkKey
                 try
                 {
-                    if (request.Key.Split("_")[0] == "momo")
+                    if (request.Key.Split("_")[0] == "Momo")
                     {
                         var rawSignature = "accessKey=" + PaymentMomo.MomoAccessKey + "&amount=" + checkOrder.TotalAmount
                                 + "&extraData=" + "&ipnUrl=" + PaymentMomo.ipnUrl + "&orderId=" + request.InvoiceId
