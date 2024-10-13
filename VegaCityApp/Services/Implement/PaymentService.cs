@@ -51,9 +51,9 @@ namespace VegaCityApp.API.Services.Implement
                     if (request.Key.Split("_")[0] == "Momo")
                     {
                         var rawSignature = "accessKey=" + PaymentMomo.MomoAccessKey + "&amount=" + checkOrder.TotalAmount
-                                + "&extraData=" + "&ipnUrl=" + PaymentMomo.ipnUrl + "&orderId=" + request.InvoiceId
+                                + "&extraData=" + "&ipnUrl=" + request.UrlIpn + "&orderId=" + request.InvoiceId
                                 + "&orderInfo=" + PaymentMomo.orderInfo + "&partnerCode=" + PaymentMomo.MomoPartnerCode
-                                + "&redirectUrl=" + PaymentMomo.redirectUrlChargeMoney + "&requestId=" + request.InvoiceId
+                                + "&redirectUrl=" + request.UrlDirect + "&requestId=" + request.InvoiceId
                                 + "&requestType=" + PaymentMomo.requestType;
                         //create signature with sha256 and sercetkey
                         string signature = PasswordUtil.getSignature(rawSignature, PaymentMomo.MomoSecretKey);
