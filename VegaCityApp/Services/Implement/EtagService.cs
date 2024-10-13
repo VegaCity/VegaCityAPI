@@ -230,7 +230,7 @@ namespace VegaCityApp.API.Services.Implement
                 FullName = req.FullName,
                 PhoneNumber = req.PhoneNumber,
                 Gender = req.Gender,
-                EtagCode = "VGC" + TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"),
+                EtagCode = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
                 StartDate = req.StartDate,
                 EndDate = req.EndDate,
                 Status = (int)EtagStatusEnum.Active,
@@ -352,7 +352,7 @@ namespace VegaCityApp.API.Services.Implement
                     Cccd = "",
                     ImageUrl = "",
                     Gender = (int)GenderEnum.Other,
-                    EtagCode = "VGC" + TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"),
+                    EtagCode = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
                     Deflag = false,
@@ -594,7 +594,7 @@ namespace VegaCityApp.API.Services.Implement
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = OrderStatus.Pending,
-                InvoiceId = TimeUtils.GetCurrentSEATime().ToString("yyyymmdd"),
+                InvoiceId = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
                 EtagId = etagExist.Id,
                 SaleType = "Etag Charge",
                 UserId = req.UserId,
@@ -611,8 +611,8 @@ namespace VegaCityApp.API.Services.Implement
                      invoiceId = newOrder.InvoiceId,
                      balance = etagExist.Wallet.Balance,
                      Key = key,
-                     UrlDirect = "http://14.225.204.144:8000/api/v1/payment/momo/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
-                     UrlIpn = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b"
+                     UrlDirect = "https://api.vegacity.id.vn/api/v1/payment/momo/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
+                     UrlIpn = $"https://vegacity.id.vn/user/order-status?status=success&orderId={newOrder.Id}"
                  }
             } : new ResponseAPI()
             {

@@ -341,7 +341,7 @@ namespace VegaCityApp.API.Services.Implement
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = OrderStatus.Pending,
-                InvoiceId = TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"),
+                InvoiceId = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
                 CustomerInfo = customerInfo,
                 SaleType = req.SaleType
             };

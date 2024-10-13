@@ -170,7 +170,7 @@ namespace VegaCityApp.API.Services.Implement
                 ? new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PaymentMomo.ipnUrl
+                    MessageResponse = PaymentMomo.ipnUrl + order.Id
                 }
                 : new ResponseAPI()
                 {
@@ -210,7 +210,7 @@ namespace VegaCityApp.API.Services.Implement
                 ? new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PaymentMomo.ipnUrl
+                    MessageResponse = PaymentMomo.ipnUrl + order.Id
                 }
                 : new ResponseAPI()
                 {
@@ -243,7 +243,7 @@ namespace VegaCityApp.API.Services.Implement
                         vnpayCharge.AddRequestData("vnp_Command", VnPayConfig.Command);
                         vnpayCharge.AddRequestData("vnp_TmnCode", VnPayConfig.TmnCode);
                         vnpayCharge.AddRequestData("vnp_Amount", (orderExisted.TotalAmount * 100).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 
-                        vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"));
+                        vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()));
                         vnpayCharge.AddRequestData("vnp_CurrCode", VnPayConfig.CurrCode);
                         vnpayCharge.AddRequestData("vnp_IpAddr", VnPayUtils.GetIpAddress(context));
                         vnpayCharge.AddRequestData("vnp_Locale", VnPayConfig.Locale);
@@ -297,7 +297,7 @@ namespace VegaCityApp.API.Services.Implement
             vnpay.AddRequestData("vnp_TmnCode", VnPayConfig.TmnCode);
             vnpay.AddRequestData("vnp_Amount", (orderExisted.TotalAmount * 100).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 10000000
 
-            vnpay.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"));
+            vnpay.AddRequestData("vnp_CreateDate", TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()));
             vnpay.AddRequestData("vnp_CurrCode", VnPayConfig.CurrCode);
             vnpay.AddRequestData("vnp_IpAddr", VnPayUtils.GetIpAddress(context));
             vnpay.AddRequestData("vnp_Locale", VnPayConfig.Locale);
@@ -349,7 +349,7 @@ namespace VegaCityApp.API.Services.Implement
                 ? new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PaymentMomo.ipnUrl
+                    MessageResponse = PaymentMomo.ipnUrl + order.Id
                 }
                 : new ResponseAPI()
                 {
@@ -390,7 +390,7 @@ namespace VegaCityApp.API.Services.Implement
                 ? new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = VnPayConfig.ipnUrl
+                    MessageResponse = VnPayConfig.ipnUrl + order.Id
                 }
                 : new ResponseAPI()
                 {
@@ -531,7 +531,7 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PaymentMomo.ipnUrl
+                    MessageResponse = "https://vegacity.id.vn/user/order-status?status=failure"
                 };
             }
             // Update the order to 'Completed'
@@ -546,7 +546,7 @@ namespace VegaCityApp.API.Services.Implement
                 ? new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PaymentMomo.ipnUrl // URL for client-side redirection
+                    MessageResponse = PayOSConfiguration.ipnUrl + order.Id // URL for client-side redirection
                 }
                 : new ResponseAPI()
                 {
@@ -565,7 +565,7 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PaymentMomo.ipnUrl
+                    MessageResponse = "https://vegacity.id.vn/user/order-status?status=failure"
                 };
             }
             order.Status = OrderStatus.Completed;
@@ -597,7 +597,7 @@ namespace VegaCityApp.API.Services.Implement
                 ? new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PayOSConfiguration.ipnUrl
+                    MessageResponse = PayOSConfiguration.ipnUrl + order.Id
                 }
                 : new ResponseAPI()
                 {

@@ -114,7 +114,7 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = PackageMessage.NotFoundPackage
                 };
             }
-            DateTime currentDate = DateTime.UtcNow;
+            DateTime currentDate = TimeUtils.GetCurrentSEATime();
             if (req.EndDate < currentDate)
             {
                 return new ResponseAPI()

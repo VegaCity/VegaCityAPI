@@ -12,12 +12,12 @@
             return value.ToString("H:mm");
         }
 
+        // config on server ubuntu, docker
         public static DateTime GetCurrentSEATime()
         {
             TimeZoneInfo tz = GetSEATimeZone();
             DateTime localTime = DateTime.Now;
             DateTime utcTime = TimeZoneInfo.ConvertTime(localTime, TimeZoneInfo.Local, tz);
-            //DateTime utcTime = localTime.AddDays(7);
             return utcTime;
         }
         public static TimeZoneInfo GetSEATimeZone()
@@ -35,10 +35,24 @@
             }
             return tz;
         }
-
+        // config on server ubuntu, docker
         public static DateTime ConvertToSEATime(DateTime value)
         {
             TimeZoneInfo tz = GetSEATimeZone();
+            DateTime convertedTime = TimeZoneInfo.ConvertTime(value, tz);
+            return convertedTime;
+        }
+        //config on local or windows
+        public static DateTime GetCurrenSEATimeOnWindowOrLocal()
+        {
+            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime localTime = DateTime.Now;
+            DateTime utcTime = TimeZoneInfo.ConvertTime(localTime, TimeZoneInfo.Local, tz);
+            return utcTime;
+        }
+        public static DateTime ConvertToSEATimeOnWindowOrLocal(DateTime value)
+        {
+            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             DateTime convertedTime = TimeZoneInfo.ConvertTime(value, tz);
             return convertedTime;
         }
