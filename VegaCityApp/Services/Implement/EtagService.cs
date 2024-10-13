@@ -609,7 +609,7 @@ namespace VegaCityApp.API.Services.Implement
                  Data = new
                  {
                      invoiceId = newOrder.InvoiceId,
-                     balance = etagExist.Wallet.Balance,
+                     balance = req.ChargeAmount,
                      Key = key,
                      UrlDirect = "https://api.vegacity.id.vn/api/v1/payment/momo/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
                      UrlIpn = $"https://vegacity.id.vn/user/order-status?status=success&orderId={newOrder.Id}"
