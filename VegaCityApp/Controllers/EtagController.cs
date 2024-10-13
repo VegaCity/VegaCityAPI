@@ -55,7 +55,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(EtagTypeEndpoint.SearchAllEtagType)]
         [ProducesResponseType(typeof(ResponseAPI<IEnumerable<EtagTypeResponse>>), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         public async Task<IActionResult> SearchAllEtagType([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _service.SearchAllEtagType(size, page);
