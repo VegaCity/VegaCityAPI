@@ -18,6 +18,8 @@ using Newtonsoft.Json;
 using Net.payOS;
 using Net.payOS.Constants;
 using VegaCityApp.API.Enums;
+using VegaCityApp.API.Services;
+using Hangfire;
 
 namespace VegaCityApp.API.Extensions;
 public static class DependencyServices
@@ -34,6 +36,11 @@ public static class DependencyServices
             .AddEnvironmentVariables(EnvironmentVariableConstant.Prefix).Build();
         //services.AddDbContext<VegaCityAppContext>(options => options.UseSqlServer("Data Source=LAPTOP-R0K7KBGI\\TRANGQUOCDAT;Initial Catalog=VegaCityApp2;Persist Security Info=True;User ID=sa;Password=12345;Trust Server Certificate=True"));
         services.AddDbContext<VegaCityAppContext>(options => options.UseSqlServer(CreateConnectionString(configuration)));
+        services.AddHangfire(config => config
+         .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+         .UseSimpleAssemblyNameTypeSerializer()
+         .UseRecommendedSerializerSettings()
+         .UseSqlServerStorage(CreateConnectionString(configuration)));
         return services;
     }
 

@@ -1,10 +1,12 @@
 using System.Text.Json.Serialization;
+using Hangfire;
 using NLog;
 using NLog.Web;
 using VegaCityApp.API.Constants;
 using VegaCityApp.API.Converter;
 using VegaCityApp.API.Extensions;
 using VegaCityApp.API.Middlewares;
+using VegaCityApp.API.Services;
 
 var logger = LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(), "/nlog.config")).GetCurrentClassLogger();
 try
@@ -41,11 +43,15 @@ try
     app.UseSwaggerUI();
     app.UseMiddleware<ExceptionHandlingMiddleware>();
 
+
     //app.UseHttpsRedirection();
     app.UseCors(CorsConstant.PolicyName);
     app.UseAuthentication();
     app.UseAuthorization();
 
+    app.UseHangfireDashboard();
+    app.MapHangfireDashboard();
+    BackgroundJobs.RecurringJobs();
     app.MapControllers();
 
     app.Run();

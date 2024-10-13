@@ -251,5 +251,22 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = WalletTypeMessage.UpdateWalletTypeFailed
             };
         }
+
+        public async Task checkExpireWallet()
+        {
+            var currentTime = TimeUtils.GetCurrentSEATime();
+            var wallet =(List<Wallet>) await _unitOfWork.GetRepository<Wallet>().GetListAsync
+                (predicate: x => x.ExpireDate < currentTime && !x.Deflag);
+            if (wallet.Count > 0)
+            {
+                foreach (var item in wallet)
+                {
+                    item.Deflag = true;
+                    item.UpsDate = currentTime;
+                }
+                _unitOfWork.GetRepository<Wallet>().UpdateRange(wallet);
+                await _unitOfWork.CommitAsync();
+            }
+        }
     }
 }
