@@ -620,6 +620,19 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.BadRequest
             };
         }
+
+        public async Task checkEtagExpire()
+        {
+            var currentDate = TimeUtils.GetCurrentSEATime();
+            var etags = (List<Etag>) await _unitOfWork.GetRepository<Etag>().GetListAsync
+                (predicate: x => x.EndDate < currentDate && x.Status == (int)EtagStatusEnum.Active && !x.Deflag);
+            foreach (var etag in etags)
+            {
+                etag.Status = (int)EtagStatusEnum.Expired;
+                etag.UpsDate = currentDate;
+                _unitOfWork.GetRepository<Etag>().UpdateAsync(etag);
+            }
+        }
     }
 }
             
