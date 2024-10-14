@@ -16,11 +16,18 @@ namespace VegaCityApp.Domain.Models
         {
         }
 
+        public virtual DbSet<AggregatedCounter> AggregatedCounters { get; set; } = null!;
+        public virtual DbSet<Counter> Counters { get; set; } = null!;
         public virtual DbSet<Deposit> Deposits { get; set; } = null!;
         public virtual DbSet<DisputeReport> DisputeReports { get; set; } = null!;
         public virtual DbSet<Etag> Etags { get; set; } = null!;
         public virtual DbSet<EtagType> EtagTypes { get; set; } = null!;
+        public virtual DbSet<Hash> Hashes { get; set; } = null!;
         public virtual DbSet<House> Houses { get; set; } = null!;
+        public virtual DbSet<Job> Jobs { get; set; } = null!;
+        public virtual DbSet<JobParameter> JobParameters { get; set; } = null!;
+        public virtual DbSet<JobQueue> JobQueues { get; set; } = null!;
+        public virtual DbSet<List> Lists { get; set; } = null!;
         public virtual DbSet<MarketZone> MarketZones { get; set; } = null!;
         public virtual DbSet<Menu> Menus { get; set; } = null!;
         public virtual DbSet<Order> Orders { get; set; } = null!;
@@ -29,6 +36,10 @@ namespace VegaCityApp.Domain.Models
         public virtual DbSet<PackageETagTypeMapping> PackageETagTypeMappings { get; set; } = null!;
         public virtual DbSet<ProductCategory> ProductCategories { get; set; } = null!;
         public virtual DbSet<Role> Roles { get; set; } = null!;
+        public virtual DbSet<Schema> Schemas { get; set; } = null!;
+        public virtual DbSet<Server> Servers { get; set; } = null!;
+        public virtual DbSet<Set> Sets { get; set; } = null!;
+        public virtual DbSet<State> States { get; set; } = null!;
         public virtual DbSet<Store> Stores { get; set; } = null!;
         public virtual DbSet<StoreService> StoreServices { get; set; } = null!;
         public virtual DbSet<Transaction> Transactions { get; set; } = null!;
@@ -50,6 +61,35 @@ namespace VegaCityApp.Domain.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<AggregatedCounter>(entity =>
+            {
+                entity.HasKey(e => e.Key)
+                    .HasName("PK_HangFire_CounterAggregated");
+
+                entity.ToTable("AggregatedCounter", "HangFire");
+
+                entity.HasIndex(e => e.ExpireAt, "IX_HangFire_AggregatedCounter_ExpireAt")
+                    .HasFilter("([ExpireAt] IS NOT NULL)");
+
+                entity.Property(e => e.Key).HasMaxLength(100);
+
+                entity.Property(e => e.ExpireAt).HasColumnType("datetime");
+            });
+
+            modelBuilder.Entity<Counter>(entity =>
+            {
+                entity.HasKey(e => new { e.Key, e.Id })
+                    .HasName("PK_HangFire_Counter");
+
+                entity.ToTable("Counter", "HangFire");
+
+                entity.Property(e => e.Key).HasMaxLength(100);
+
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                entity.Property(e => e.ExpireAt).HasColumnType("datetime");
+            });
+
             modelBuilder.Entity<Deposit>(entity =>
             {
                 entity.ToTable("Deposit");
@@ -236,6 +276,21 @@ namespace VegaCityApp.Domain.Models
                     .HasConstraintName("FK_ETagType_WalletType");
             });
 
+            modelBuilder.Entity<Hash>(entity =>
+            {
+                entity.HasKey(e => new { e.Key, e.Field })
+                    .HasName("PK_HangFire_Hash");
+
+                entity.ToTable("Hash", "HangFire");
+
+                entity.HasIndex(e => e.ExpireAt, "IX_HangFire_Hash_ExpireAt")
+                    .HasFilter("([ExpireAt] IS NOT NULL)");
+
+                entity.Property(e => e.Key).HasMaxLength(100);
+
+                entity.Property(e => e.Field).HasMaxLength(100);
+            });
+
             modelBuilder.Entity<House>(entity =>
             {
                 entity.ToTable("House");
@@ -265,6 +320,69 @@ namespace VegaCityApp.Domain.Models
                     .HasForeignKey(d => d.ZoneId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_House_Zone");
+            });
+
+            modelBuilder.Entity<Job>(entity =>
+            {
+                entity.ToTable("Job", "HangFire");
+
+                entity.HasIndex(e => e.ExpireAt, "IX_HangFire_Job_ExpireAt")
+                    .HasFilter("([ExpireAt] IS NOT NULL)");
+
+                entity.HasIndex(e => e.StateName, "IX_HangFire_Job_StateName")
+                    .HasFilter("([StateName] IS NOT NULL)");
+
+                entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+
+                entity.Property(e => e.ExpireAt).HasColumnType("datetime");
+
+                entity.Property(e => e.StateName).HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<JobParameter>(entity =>
+            {
+                entity.HasKey(e => new { e.JobId, e.Name })
+                    .HasName("PK_HangFire_JobParameter");
+
+                entity.ToTable("JobParameter", "HangFire");
+
+                entity.Property(e => e.Name).HasMaxLength(40);
+
+                entity.HasOne(d => d.Job)
+                    .WithMany(p => p.JobParameters)
+                    .HasForeignKey(d => d.JobId)
+                    .HasConstraintName("FK_HangFire_JobParameter_Job");
+            });
+
+            modelBuilder.Entity<JobQueue>(entity =>
+            {
+                entity.HasKey(e => new { e.Queue, e.Id })
+                    .HasName("PK_HangFire_JobQueue");
+
+                entity.ToTable("JobQueue", "HangFire");
+
+                entity.Property(e => e.Queue).HasMaxLength(50);
+
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                entity.Property(e => e.FetchedAt).HasColumnType("datetime");
+            });
+
+            modelBuilder.Entity<List>(entity =>
+            {
+                entity.HasKey(e => new { e.Key, e.Id })
+                    .HasName("PK_HangFire_List");
+
+                entity.ToTable("List", "HangFire");
+
+                entity.HasIndex(e => e.ExpireAt, "IX_HangFire_List_ExpireAt")
+                    .HasFilter("([ExpireAt] IS NOT NULL)");
+
+                entity.Property(e => e.Key).HasMaxLength(100);
+
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                entity.Property(e => e.ExpireAt).HasColumnType("datetime");
             });
 
             modelBuilder.Entity<MarketZone>(entity =>
@@ -527,6 +645,69 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.Name)
                     .HasMaxLength(50)
                     .IsUnicode(false);
+            });
+
+            modelBuilder.Entity<Schema>(entity =>
+            {
+                entity.HasKey(e => e.Version)
+                    .HasName("PK_HangFire_Schema");
+
+                entity.ToTable("Schema", "HangFire");
+
+                entity.Property(e => e.Version).ValueGeneratedNever();
+            });
+
+            modelBuilder.Entity<Server>(entity =>
+            {
+                entity.ToTable("Server", "HangFire");
+
+                entity.HasIndex(e => e.LastHeartbeat, "IX_HangFire_Server_LastHeartbeat");
+
+                entity.Property(e => e.Id).HasMaxLength(200);
+
+                entity.Property(e => e.LastHeartbeat).HasColumnType("datetime");
+            });
+
+            modelBuilder.Entity<Set>(entity =>
+            {
+                entity.HasKey(e => new { e.Key, e.Value })
+                    .HasName("PK_HangFire_Set");
+
+                entity.ToTable("Set", "HangFire");
+
+                entity.HasIndex(e => e.ExpireAt, "IX_HangFire_Set_ExpireAt")
+                    .HasFilter("([ExpireAt] IS NOT NULL)");
+
+                entity.HasIndex(e => new { e.Key, e.Score }, "IX_HangFire_Set_Score");
+
+                entity.Property(e => e.Key).HasMaxLength(100);
+
+                entity.Property(e => e.Value).HasMaxLength(256);
+
+                entity.Property(e => e.ExpireAt).HasColumnType("datetime");
+            });
+
+            modelBuilder.Entity<State>(entity =>
+            {
+                entity.HasKey(e => new { e.JobId, e.Id })
+                    .HasName("PK_HangFire_State");
+
+                entity.ToTable("State", "HangFire");
+
+                entity.HasIndex(e => e.CreatedAt, "IX_HangFire_State_CreatedAt");
+
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+
+                entity.Property(e => e.Name).HasMaxLength(20);
+
+                entity.Property(e => e.Reason).HasMaxLength(100);
+
+                entity.HasOne(d => d.Job)
+                    .WithMany(p => p.States)
+                    .HasForeignKey(d => d.JobId)
+                    .HasConstraintName("FK_HangFire_State_Job");
             });
 
             modelBuilder.Entity<Store>(entity =>
