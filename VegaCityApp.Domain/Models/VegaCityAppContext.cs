@@ -194,8 +194,7 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.Cccd)
                     .HasMaxLength(12)
                     .IsUnicode(false)
-                    .HasColumnName("CCCD")
-                    .IsFixedLength();
+                    .HasColumnName("CCCD");
 
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")
@@ -838,8 +837,7 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.Cccd)
                     .HasMaxLength(12)
                     .IsUnicode(false)
-                    .HasColumnName("CCCD")
-                    .IsFixedLength();
+                    .HasColumnName("CCCD");
 
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")
