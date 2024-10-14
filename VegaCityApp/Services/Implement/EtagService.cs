@@ -630,8 +630,9 @@ namespace VegaCityApp.API.Services.Implement
             {
                 etag.Status = (int)EtagStatusEnum.Expired;
                 etag.UpsDate = currentDate;
-                _unitOfWork.GetRepository<Etag>().UpdateAsync(etag);
             }
+            _unitOfWork.GetRepository<Etag>().UpdateRange(etags);
+            await _unitOfWork.CommitAsync();
         }
     }
 }
