@@ -39,7 +39,7 @@ public class JwtUtil
         if (guidClaim != null) claims.Add(new Claim(guidClaim.Item1, guidClaim.Item2.ToString()));
         var expires = user.Role.Name.Equals(RoleEnum.Admin.GetDescriptionFromEnum())
             ? TimeUtils.GetCurrentSEATime().AddDays(1)
-            : TimeUtils.GetCurrentSEATime().AddMinutes(60);
+            : TimeUtils.GetCurrentSEATime().AddMinutes(180);
         var token = new JwtSecurityToken(issuer, null, claims, notBefore: TimeUtils.GetCurrentSEATime().AddHours(-7), expires.AddHours(-7), credentials);
         return jwtHandler.WriteToken(token);
     }
