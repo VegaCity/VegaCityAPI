@@ -21,6 +21,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> RemoveEtagTypeFromPackage(Guid etagId, Guid packageId);
         Task<ResponseAPI> ActivateEtag(Guid etagId, ActivateEtagRequest req);
         Task<ResponseAPI> PrepareChargeMoneyEtag(ChargeMoneyEtagRequest req);
-        Task checkEtagExpire();
+        Task CheckEtagExpire();
     }
 }

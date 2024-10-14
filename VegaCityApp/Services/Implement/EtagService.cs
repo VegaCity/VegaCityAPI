@@ -621,7 +621,7 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
 
-        public async Task checkEtagExpire()
+        public async Task CheckEtagExpire()
         {
             var currentDate = TimeUtils.GetCurrentSEATime();
             var etags = (List<Etag>) await _unitOfWork.GetRepository<Etag>().GetListAsync

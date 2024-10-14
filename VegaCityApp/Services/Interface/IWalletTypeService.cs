@@ -14,6 +14,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI<IEnumerable<WalletTypeResponse>>> GetAllWalletType(int size, int page);
         Task<ResponseAPI> AddServiceStoreToWalletType(Guid id, Guid serviceStoreId);
         Task<ResponseAPI> RemoveServiceStoreToWalletType(Guid id, Guid serviceStoreId);
-        Task checkExpireWallet();
+        Task CheckExpireWallet();
     }
 }

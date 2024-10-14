@@ -252,7 +252,7 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
 
-        public async Task checkExpireWallet()
+        public async Task CheckExpireWallet()
         {
             var currentTime = TimeUtils.GetCurrentSEATime();
             var wallet =(List<Wallet>) await _unitOfWork.GetRepository<Wallet>().GetListAsync

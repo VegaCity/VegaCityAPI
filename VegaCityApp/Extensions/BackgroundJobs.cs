@@ -9,8 +9,8 @@ namespace VegaCityApp.API.Extensions
             //var corn = Cron.Daily();
             var corn = Cron.HourInterval(1);
 
-            RecurringJob.AddOrUpdate<IWalletTypeService>(x => x.checkExpireWallet(), corn);
-            RecurringJob.AddOrUpdate<IEtagService>(x => x.checkEtagExpire(), corn);
+            RecurringJob.AddOrUpdate<IWalletTypeService>(x => x.CheckExpireWallet(), corn);
+            RecurringJob.AddOrUpdate<IEtagService>(x => x.CheckEtagExpire(), corn);
         }
     }
 }
