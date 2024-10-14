@@ -18,7 +18,7 @@ namespace VegaCityApp.Domain.Models
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
-        public bool Isrent { get; set; }
+        public bool IsRent { get; set; }
 
         public virtual Zone Zone { get; set; } = null!;
         public virtual ICollection<Store> Stores { get; set; }

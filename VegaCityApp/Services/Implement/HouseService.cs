@@ -52,7 +52,7 @@ namespace VegaCityApp.API.Services.Implement
                 Deflag = false,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
-                Isrent = false,
+                IsRent = false,
             };
             await _unitOfWork.GetRepository<House>().InsertAsync(newHouse);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()

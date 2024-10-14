@@ -568,7 +568,7 @@ namespace VegaCityApp.Service.Implement
                 predicate: x => x.Location == req.LocationHouse.Trim() && x.Address == req.AdressHouse.Trim());
             if (house != null)
             {
-                if (house.Isrent)
+                if (house.IsRent)
                 {
                     return new ResponseAPI
                     {
