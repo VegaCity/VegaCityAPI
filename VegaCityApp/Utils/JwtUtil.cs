@@ -32,7 +32,7 @@ public class JwtUtil
         string issuer = issuerKey;
         List<Claim> claims = new List<Claim>()
         {
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(ClaimTypes.Role, user.Role.Name),
         };
@@ -55,7 +55,7 @@ public class JwtUtil
         string issuer = issuerKey;
         List<Claim> claims = new List<Claim>()
         {
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(ClaimTypes.Role, user.Role.Name),
         };

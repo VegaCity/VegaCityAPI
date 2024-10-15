@@ -19,21 +19,24 @@ namespace VegaCityApp.API.Services
 			_httpContextAccessor = httpContextAccessor;
 			_mapper = mapper;
 		}
+        protected string GetRoleFromJwt()
+        {
+            string role = _httpContextAccessor?.HttpContext?.User.FindFirstValue(ClaimTypes.Role);
+            return role;
+        }
 
-		protected string GetRoleFromJwt()
-		{
-			string role = _httpContextAccessor?.HttpContext?.User.FindFirstValue(ClaimTypes.Role);
-			return role;
-		}
+        protected string GetMarketZoneIdFromJwt()
+        {
+            return _httpContextAccessor?.HttpContext?.User?.FindFirstValue("MarketZoneId");
+        }
 
-		protected string GetMarketZoneIdFromJwt()
-		{
-			return _httpContextAccessor?.HttpContext?.User?.FindFirstValue("MarketZoneId");
-		}
-
-		protected string GetEmailFromJwt()
+        protected string GetEmailFromJwt()
         {
             return _httpContextAccessor?.HttpContext?.User?.FindFirstValue(JwtRegisteredClaimNames.Email);
+        }
+        protected Guid GetUserIdFromJwt()
+        {
+            return Guid.Parse(_httpContextAccessor?.HttpContext?.User?.FindFirstValue(JwtRegisteredClaimNames.Jti));
         }
     }
 }
