@@ -25,7 +25,7 @@ namespace VegaCityApp.Service.Implement
         }
 
         #region Private Method
-        private async Task<User> CreateUserRegister(RegisterRequest req)
+        private async Task<User> CreateUserRegister(RegisterRequest req, Guid apiKey)
         {
             var role = await _unitOfWork.GetRepository<Role>()
                 .SingleOrDefaultAsync(predicate: r => r.Name == req.RoleName.Trim().Replace(" ", string.Empty));
@@ -38,7 +38,7 @@ namespace VegaCityApp.Service.Implement
                 Address = req.Address.Trim(),
                 Email = req.Email.Trim(),
                 Description = req.Description.Trim(),
-                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
+                MarketZoneId = apiKey,
                 RoleId = role != null ? role.Id : Guid.Parse(EnvironmentVariableConstant.StoreId),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -123,7 +123,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                predicate: x => x.Email == req.Email && x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
+                predicate: x => x.Email == req.Email,
                 include: User => User.Include(y => y.Role));
             if (user == null)
             {
@@ -348,7 +348,7 @@ namespace VegaCityApp.Service.Implement
                 }
             };
         }
-        public async Task<ResponseAPI> Register(RegisterRequest req)
+        public async Task<ResponseAPI> Register(RegisterRequest req, Guid apiKey)
         {
             //check form Email, PhoneNumber, CCCD
             if (!ValidationUtils.IsEmail(req.Email))
@@ -380,7 +380,7 @@ namespace VegaCityApp.Service.Implement
 
             //check if email is already exist
             var emailExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Email == req.Email.Trim());
+                x.Email == req.Email.Trim() && x.MarketZoneId == apiKey);
             if (emailExist != null)
             {
                 return new ResponseAPI()
@@ -390,7 +390,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var phoneNumberExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.PhoneNumber == req.PhoneNumber.Trim());
+                x.PhoneNumber == req.PhoneNumber.Trim() && x.MarketZoneId == apiKey);
             if (phoneNumberExist != null)
             {
                 return new ResponseAPI()
@@ -400,7 +400,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var cccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Cccd == req.CCCD.Trim());
+                x.Cccd == req.CCCD.Trim() && x.MarketZoneId == apiKey);
             if (cccdExist != null)
             {
                 return new ResponseAPI()
@@ -411,7 +411,7 @@ namespace VegaCityApp.Service.Implement
             }
 
             //create new user
-            var newUser = await CreateUserRegister(req);
+            var newUser = await CreateUserRegister(req, apiKey);
             //create refesh token
             var refresh = new ReFreshTokenRequest
             {
@@ -450,6 +450,7 @@ namespace VegaCityApp.Service.Implement
         }
         public async Task<ResponseAPI> AdminCreateUser(RegisterRequest req)
         {
+            Guid apiKey = GetMarketZoneIdFromJwt();
             #region validate form
             if (!ValidationUtils.IsEmail(req.Email))
             {
@@ -511,7 +512,7 @@ namespace VegaCityApp.Service.Implement
             }
             #endregion
             #region create new user
-            var newUser = await CreateUserRegister(req);
+            var newUser = await CreateUserRegister(req, apiKey);
             #endregion
             #region create refesh token
             var refresh = new ReFreshTokenRequest
@@ -561,9 +562,10 @@ namespace VegaCityApp.Service.Implement
                 }
             };
         }
-        //after register, admin will approve user
         public async Task<ResponseAPI> ApproveUser(Guid userId, ApproveRequest req)
         {
+            Guid apiKey = GetMarketZoneIdFromJwt();
+            string roleName = GetRoleFromJwt();
             var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(
                 predicate: x => x.Location == req.LocationHouse.Trim() && x.Address == req.AdressHouse.Trim());
             if (house != null)
@@ -586,8 +588,9 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var user = await _unitOfWork.GetRepository<User>()
-            .SingleOrDefaultAsync(predicate: x => x.Id == userId);
-            if (user.Status == (int)UserStatusEnum.Active)
+            .SingleOrDefaultAsync(predicate: x => x.Id == userId && x.MarketZoneId == apiKey,
+                                  include: role => role.Include(z => z.Role));
+            if (user.Status == (int) UserStatusEnum.Active)
             {
                 return new ResponseAPI
                 {
@@ -599,7 +602,7 @@ namespace VegaCityApp.Service.Implement
                     }
                 };
             }
-            if (user.RoleId != Guid.Parse(EnvironmentVariableConstant.StoreId))
+            if (user.Role.Name != RoleEnum.Admin.GetDescriptionFromEnum())
             {
                 return new ResponseAPI
                 {
@@ -665,7 +668,7 @@ namespace VegaCityApp.Service.Implement
                         Status = (int)StoreStatusEnum.Closed,
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         UpsDate = TimeUtils.GetCurrentSEATime(),
-                        MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
+                        MarketZoneId = apiKey,
                         Deflag = false,
                         HouseId = house.Id
                     };
@@ -811,6 +814,7 @@ namespace VegaCityApp.Service.Implement
         {
             try
             {
+                Guid apiKey = GetMarketZoneIdFromJwt();
                 IPaginate<GetUserResponse> data = await _unitOfWork.GetRepository<User>().GetPagingListAsync(
                 selector: x => new GetUserResponse()
                 {
@@ -833,7 +837,7 @@ namespace VegaCityApp.Service.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.FullName),
-                predicate: x => x.Status == (int)UserStatusEnum.Active);
+                predicate: x => x.Status == (int)UserStatusEnum.Active && x.MarketZoneId == apiKey);
 
                 return new ResponseAPI<IEnumerable<GetUserResponse>>
                 {

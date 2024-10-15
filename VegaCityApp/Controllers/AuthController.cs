@@ -30,9 +30,9 @@ namespace VegaCityApp.API.Controllers
         [HttpPost(AuthenticationEndpoint.Register)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [SwaggerOperation(Summary = "Register new user for Store")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request, [FromQuery] Guid apiKey)
         {
-            var result = await _accountService.Register(request);
+            var result = await _accountService.Register(request, apiKey);
             return StatusCode(result.StatusCode, result);
         }
         [HttpPost(AuthenticationEndpoint.ChangePassword)]

@@ -2,8 +2,8 @@
 {
     public enum StoreTypeEnum
     {
-        Food,
-        Clothing,
-        Other
+        Food = 0,
+        Clothing = 1,
+        Other = 2
     }
 }

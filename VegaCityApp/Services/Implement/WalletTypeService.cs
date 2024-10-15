@@ -116,13 +116,14 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> CreateWalletType(WalletTypeRequest walletTypeRequest)
         {
+            Guid apiKey = GetMarketZoneIdFromJwt();
             walletTypeRequest.Name = walletTypeRequest.Name.Trim();
             var newWalletType = _mapper.Map<WalletType>(walletTypeRequest);
             newWalletType.Id = Guid.NewGuid();
             newWalletType.CrDate = TimeUtils.GetCurrentSEATime();
             newWalletType.UpsDate = TimeUtils.GetCurrentSEATime();
             newWalletType.Deflag = false;
-            newWalletType.MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId);
+            newWalletType.MarketZoneId = apiKey;
             await _unitOfWork.GetRepository<WalletType>().InsertAsync(newWalletType);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
             {

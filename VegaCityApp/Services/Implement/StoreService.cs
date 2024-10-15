@@ -24,7 +24,7 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> UpdateStore(Guid storeId,UpdateStoreRequest req)
         {
-          
+            Guid apiKey = GetMarketZoneIdFromJwt();
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == storeId && !x.Deflag);
             if (store == null)
             {
@@ -52,7 +52,7 @@ namespace VegaCityApp.API.Services.Implement
             store.PhoneNumber = req.PhoneNumber;
             store.ShortName = req.ShortName;
             store.Email = req.Email;
-            store.MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId);
+            store.MarketZoneId = apiKey;
             store.Description = req.Description;
             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
             var result = await _unitOfWork.CommitAsync();

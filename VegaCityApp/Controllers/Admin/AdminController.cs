@@ -29,7 +29,7 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpPost(UserEndpoint.CreateUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [SwaggerOperation(Summary = "Create new user for admin, cashier web, cashier app")]
-        //[CustomAuthorize(RoleEnum.Admin)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> AdminCreateUser([FromBody] RegisterRequest request)
         {
             var result = await _service.AdminCreateUser(request);

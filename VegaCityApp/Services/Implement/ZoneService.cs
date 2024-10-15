@@ -22,7 +22,7 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> CreateZone(CreateZoneRequest req)
         {
-
+            Guid apiKey = GetMarketZoneIdFromJwt();
             var zoneExisted = await _unitOfWork.GetRepository<Zone>()
                 .SingleOrDefaultAsync(predicate: x => x.Name == req.Name);
             if (zoneExisted != null)
@@ -38,7 +38,7 @@ namespace VegaCityApp.API.Services.Implement
                 Id = Guid.NewGuid(),
                 Name = req.Name,
                 Location = req.Location,
-                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
+                MarketZoneId = apiKey,
                 Deflag = false,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -124,8 +124,8 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => !x.Deflag
-            );
+                predicate: x => !x.Deflag && x.MarketZoneId == GetMarketZoneIdFromJwt()
+                );
                 return new ResponseAPI<IEnumerable<GetZoneResponse>>
                 {
                     MessageResponse = ZoneMessage.SearchZonesSuccess,
