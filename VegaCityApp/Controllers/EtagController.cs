@@ -119,9 +119,9 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(EtagEndpoint.SearchEtag)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchEtag(Guid id)
+        public async Task<IActionResult> SearchEtag(Guid? id , string? etagCode)
         {
-            var result = await _service.SearchEtag(id);
+            var result = await _service.SearchEtag(id, etagCode);
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(EtagEndpoint.SearchAllEtag)]

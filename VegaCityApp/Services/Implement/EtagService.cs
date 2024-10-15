@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
 using VegaCityApp.API.Constants;
 using VegaCityApp.API.Enums;
@@ -449,9 +450,9 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = MessageConstant.HttpStatusCodes.BadRequest
             };
         }
-        public async Task<ResponseAPI> SearchEtag(Guid etagId)
+        public async Task<ResponseAPI> SearchEtag(Guid? etagId, string? etagCode)
         {
-            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == etagId && !x.Deflag,
+            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => (x.Id == etagId || x.EtagCode == etagCode) && !x.Deflag,
                 include: etag => etag.Include(y => y.EtagType)
                         .Include(y => y.Wallet)
                         .Include(y => y.MarketZone));
@@ -470,6 +471,7 @@ namespace VegaCityApp.API.Services.Implement
                 Data = new { etag }
             };
         }
+
         public async Task<ResponseAPI<IEnumerable<EtagResponse>>> SearchAllEtag(int size, int page)
         {
             try
