@@ -180,12 +180,22 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(IPNMomoRequest req)
         {
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending);
+                (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending,
+                 include: z => z.Include(a => a.User));
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
                 (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+            //update wallet admin
+            var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(
+                predicate: x => x.Id == order.User.MarketZoneId);
+            var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
+                predicate: x => x.Email == marketZone.Email, include: wallet => wallet.Include(z => z.Wallets));
+            admin.Wallets.FirstOrDefault().BalanceHistory -= Int32.Parse(req.amount.ToString());
+            order.User.Wallets.FirstOrDefault().Balance += Int32.Parse(req.amount.ToString());
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(admin.Wallets.FirstOrDefault());
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.User.Wallets.FirstOrDefault());
             //update wallet
             etag.Wallet.Balance += Int32.Parse(req.amount.ToString());
             etag.Wallet.BalanceHistory += Int32.Parse(req.amount.ToString());
