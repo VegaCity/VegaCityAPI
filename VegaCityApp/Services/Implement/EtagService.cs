@@ -22,14 +22,15 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> CreateEtagType(EtagTypeRequest req)
         {
+            Guid apiKey = GetMarketZoneIdFromJwt();
             //check wallet type exist
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(predicate: x => x.Id == req.WalletTypeId && !x.Deflag);
             if (walletType == null)
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.WalletTypeMessage.NotFoundWalletType,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = WalletTypeMessage.NotFoundWalletType,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             var newEtagType = new EtagType
@@ -37,7 +38,7 @@ namespace VegaCityApp.API.Services.Implement
                 Id = Guid.NewGuid(),
                 Name = req.Name,
                 ImageUrl = req.ImageUrl,
-                MarketZoneId = Guid.Parse(EnvironmentVariableConstant.MarketZoneId),
+                MarketZoneId = apiKey,
                 BonusRate = req.BonusRate,
                 Deflag = false,
                 Amount = req.Amount,
@@ -46,16 +47,16 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.GetRepository<EtagType>().InsertAsync(newEtagType);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.CreateSuccessFully,
-                StatusCode = MessageConstant.HttpStatusCodes.Created,
+                MessageResponse = EtagTypeMessage.CreateSuccessFully,
+                StatusCode = HttpStatusCodes.Created,
                 Data = new
                 {
                     EtagTypeId = newEtagType.Id,
                 }
             } : new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.CreateFail,
-                StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                MessageResponse = EtagTypeMessage.CreateFail,
+                StatusCode = HttpStatusCodes.BadRequest
             };
         }
         public async Task<ResponseAPI> UpdateEtagType(Guid etagTypeId, UpdateEtagTypeRequest req)
@@ -65,8 +66,8 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagTypeMessage.NotFoundEtagType,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = EtagTypeMessage.NotFoundEtagType,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             etagType.Name = req.Name;
@@ -76,13 +77,13 @@ namespace VegaCityApp.API.Services.Implement
             _unitOfWork.GetRepository<EtagType>().UpdateAsync(etagType);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.UpdateSuccessFully,
-                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                MessageResponse = EtagTypeMessage.UpdateSuccessFully,
+                StatusCode = HttpStatusCodes.OK,
                 Data = new { etagTypeId = etagType.Id }
             } : new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.UpdateFail,
-                StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                MessageResponse = EtagTypeMessage.UpdateFail,
+                StatusCode = HttpStatusCodes.BadRequest
             };
         }
         public async Task<ResponseAPI> DeleteEtagType(Guid etagTypeId)
@@ -92,21 +93,21 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI
                 {
-                    MessageResponse = MessageConstant.EtagTypeMessage.NotFoundEtagType,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = EtagTypeMessage.NotFoundEtagType,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             etagType.Deflag = true;
             _unitOfWork.GetRepository<EtagType>().UpdateAsync(etagType);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.DeleteEtagTypeSuccessfully,
-                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                MessageResponse = EtagTypeMessage.DeleteEtagTypeSuccessfully,
+                StatusCode = HttpStatusCodes.OK,
                 Data = new { etagTypeId = etagType.Id }
             } : new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.DeleteEtagTypeFail,
-                StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                MessageResponse = EtagTypeMessage.DeleteEtagTypeFail,
+                StatusCode = HttpStatusCodes.BadRequest
             };
         }
         public async Task<ResponseAPI> SearchEtagType(Guid etagTypeId)
@@ -118,14 +119,14 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagTypeMessage.NotFoundEtagType,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = EtagTypeMessage.NotFoundEtagType,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             return new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.SearchEtagTypeSuccess,
-                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                MessageResponse = EtagTypeMessage.SearchEtagTypeSuccess,
+                StatusCode = HttpStatusCodes.OK,
                 Data = new { etagType }
             };
         }
@@ -148,13 +149,13 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(y => y.Name),
-                predicate: x => !x.Deflag
+                predicate: x => !x.Deflag && x.MarketZoneId == GetMarketZoneIdFromJwt()
                 );
 
                 return new ResponseAPI<IEnumerable<EtagTypeResponse>>()
                 {
                     MessageResponse = EtagTypeMessage.SearchAllEtagTypeSuccess,
-                    StatusCode = MessageConstant.HttpStatusCodes.OK,
+                    StatusCode = HttpStatusCodes.OK,
                     Data = data.Items,  // Danh sách EtagType trả về
                     MetaData = new MetaData
                     {
@@ -182,16 +183,16 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagMessage.CCCDInvalid,
-                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    MessageResponse = EtagMessage.CCCDInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
             if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagMessage.PhoneNumberInvalid,
-                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    MessageResponse = EtagMessage.PhoneNumberInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
             var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagTypeId
@@ -200,8 +201,8 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagMessage.EtagTypeNotFound,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = EtagMessage.EtagTypeNotFound,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
 
@@ -241,13 +242,13 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.CreateSuccessFully,
-                StatusCode = MessageConstant.HttpStatusCodes.Created,
+                MessageResponse = EtagTypeMessage.CreateSuccessFully,
+                StatusCode = HttpStatusCodes.Created,
                 Data = new { etagId = newEtag.Id, walletId = newWallet.Id }
             } : new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.CreateFail,
-                StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                MessageResponse = EtagTypeMessage.CreateFail,
+                StatusCode = HttpStatusCodes.BadRequest
             };
         }
         public async Task<ResponseAPI> AddEtagTypeToPackage(Guid etagTypeId, Guid packageId, int quantityEtagType)
@@ -257,8 +258,8 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagTypeMessage.NotFoundEtagType,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = EtagTypeMessage.NotFoundEtagType,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == packageId && !x.Deflag);
@@ -266,8 +267,8 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.PackageMessage.NotFoundPackage,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = PackageMessage.NotFoundPackage,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             var etagPackage = new PackageETagTypeMapping()
@@ -282,13 +283,13 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.GetRepository<PackageETagTypeMapping>().InsertAsync(etagPackage);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.CreateSuccessFully,
-                StatusCode = MessageConstant.HttpStatusCodes.Created,
+                MessageResponse = EtagTypeMessage.CreateSuccessFully,
+                StatusCode = HttpStatusCodes.Created,
                 Data = new { etagPackageId = etagPackage.Id }
             } : new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.CreateFail,
-                StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                MessageResponse = EtagTypeMessage.CreateFail,
+                StatusCode = HttpStatusCodes.BadRequest
             };
         }
         public async Task<ResponseAPI> RemoveEtagTypeFromPackage(Guid etagId, Guid packageId)
@@ -299,20 +300,20 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagTypeMessage.NotFoundEtagType,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = EtagTypeMessage.NotFoundEtagType,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             _unitOfWork.GetRepository<PackageETagTypeMapping>().DeleteAsync(packageEtagType);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.DeleteEtagTypeSuccessfully,
-                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                MessageResponse = EtagTypeMessage.DeleteEtagTypeSuccessfully,
+                StatusCode = HttpStatusCodes.OK,
                 Data = new { etagPackageId = packageEtagType.Id }
             } : new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.DeleteEtagTypeFail,
-                StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                MessageResponse = EtagTypeMessage.DeleteEtagTypeFail,
+                StatusCode = HttpStatusCodes.BadRequest
             };
         }
         public async Task<ResponseAPI> GenerateEtag(int quantity, Guid etagTypeId, GenerateEtagRequest req)
@@ -325,8 +326,8 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagTypeMessage.NotFoundEtagType,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = EtagTypeMessage.NotFoundEtagType,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             //generate etag
@@ -372,8 +373,8 @@ namespace VegaCityApp.API.Services.Implement
             }
             return new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagTypeMessage.CreateSuccessFully,
-                StatusCode = MessageConstant.HttpStatusCodes.Created,
+                MessageResponse = EtagTypeMessage.CreateSuccessFully,
+                StatusCode = HttpStatusCodes.Created,
                 Data = new { 
                     Quantity = quantity,
                     ListIdEtag = listEtagCreated 
@@ -387,24 +388,24 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagMessage.NotFoundEtag,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = EtagMessage.NotFoundEtag,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             if(!ValidationUtils.IsCCCD(req.CCCD))
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagMessage.CCCDInvalid,
-                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    MessageResponse = EtagMessage.CCCDInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
             if(!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagMessage.PhoneNumberInvalid,
-                    StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                    MessageResponse = EtagMessage.PhoneNumberInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
             etag.FullName = req.Fullname ?? etag.FullName;
@@ -416,13 +417,13 @@ namespace VegaCityApp.API.Services.Implement
             _unitOfWork.GetRepository<Etag>().UpdateAsync(etag);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagMessage.UpdateSuccessFully,
-                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                MessageResponse = EtagMessage.UpdateSuccessFully,
+                StatusCode = HttpStatusCodes.OK,
                 Data = new { etagId = etag.Id }
             } : new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagMessage.UpdateFail,
-                StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                MessageResponse = EtagMessage.UpdateFail,
+                StatusCode = HttpStatusCodes.BadRequest
             };
         }
         public async Task<ResponseAPI> DeleteEtag(Guid etagId)
@@ -432,8 +433,8 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagMessage.NotFoundEtag,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = EtagMessage.NotFoundEtag,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             etag.Deflag = true;
@@ -441,13 +442,13 @@ namespace VegaCityApp.API.Services.Implement
             _unitOfWork.GetRepository<Etag>().UpdateAsync(etag);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagMessage.DeleteEtagSuccessfully,
-                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                MessageResponse = EtagMessage.DeleteEtagSuccessfully,
+                StatusCode = HttpStatusCodes.OK,
                 Data = new { etagId = etag.Id }
             } : new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagMessage.DeleteEtagFail,
-                StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                MessageResponse = EtagMessage.DeleteEtagFail,
+                StatusCode = HttpStatusCodes.BadRequest
             };
         }
         public async Task<ResponseAPI> SearchEtag(Guid? etagId, string? etagCode)
@@ -460,14 +461,14 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagMessage.NotFoundEtag,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = EtagMessage.NotFoundEtag,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             return new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagMessage.SearchEtagSuccess,
-                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                MessageResponse = EtagMessage.SearchEtagSuccess,
+                StatusCode = HttpStatusCodes.OK,
                 Data = new { etag }
             };
         }
@@ -530,8 +531,8 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI()
                 {
-                    MessageResponse = MessageConstant.EtagMessage.NotFoundEtag,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound
+                    MessageResponse = EtagMessage.NotFoundEtag,
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             etag.Status = (int)EtagStatusEnum.Active;
@@ -546,13 +547,13 @@ namespace VegaCityApp.API.Services.Implement
             _unitOfWork.GetRepository<Etag>().UpdateAsync(etag);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagMessage.ActivateEtagSuccess,
-                StatusCode = MessageConstant.HttpStatusCodes.OK,
+                MessageResponse = EtagMessage.ActivateEtagSuccess,
+                StatusCode = HttpStatusCodes.OK,
                 Data = new { etagId = etag.Id }
             } : new ResponseAPI()
             {
-                MessageResponse = MessageConstant.EtagMessage.ActivateEtagFail,
-                StatusCode = MessageConstant.HttpStatusCodes.BadRequest
+                MessageResponse = EtagMessage.ActivateEtagFail,
+                StatusCode = HttpStatusCodes.BadRequest
             };
         }
 
@@ -573,7 +574,7 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI()
                 {
                     MessageResponse = EtagMessage.NotFoundEtag,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound,
+                    StatusCode = HttpStatusCodes.NotFound,
                 };
             }
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == req.UserId && x.Status == (int)UserStatusEnum.Active);
@@ -583,7 +584,7 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI()
                 {
                     MessageResponse = UserMessage.NotFoundUser,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound,
+                    StatusCode = HttpStatusCodes.NotFound,
                 };
             }
 

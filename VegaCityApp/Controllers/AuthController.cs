@@ -51,9 +51,9 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(AuthenticationEndpoint.GetRefreshTokenByEmail)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> GetRefreshTokenByEmail(string email)
+        public async Task<IActionResult> GetRefreshTokenByEmail(string email, [FromBody] GetApiKey req)
         {
-            var result = await _accountService.GetRefreshTokenByEmail(email);
+            var result = await _accountService.GetRefreshTokenByEmail(email, req);
             return StatusCode(result.StatusCode, result);
         }
     }
