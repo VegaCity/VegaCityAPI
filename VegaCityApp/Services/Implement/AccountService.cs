@@ -229,7 +229,7 @@ namespace VegaCityApp.Service.Implement
         {
             Tuple<string, Guid> guidClaim = null;
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                               predicate: x => x.Email == req.Email,
+                               predicate: x => x.Email == req.Email && x.MarketZoneId == req.apiKey,
                                               include: User => User.Include(y => y.Role));
             var refreshToken = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
                                predicate: x => x.UserId == user.Id && x.Token == req.RefreshToken);
@@ -306,7 +306,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
         }
-        public async Task<ResponseAPI> GetRefreshTokenByEmail(string email)
+        public async Task<ResponseAPI> GetRefreshTokenByEmail(string email, GetApiKey req)
         {
             //check email valid format
             if (!ValidationUtils.IsEmail(email))
@@ -318,7 +318,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                predicate: x => x.Email == email);
+                predicate: x => x.Email == email && x.MarketZoneId == req.apiKey);
             if (user == null)
             {
                 return new ResponseAPI
@@ -348,7 +348,7 @@ namespace VegaCityApp.Service.Implement
                 }
             };
         }
-        public async Task<ResponseAPI> Register(RegisterRequest req, Guid apiKey)
+        public async Task<ResponseAPI> Register(RegisterRequest req)
         {
             //check form Email, PhoneNumber, CCCD
             if (!ValidationUtils.IsEmail(req.Email))
@@ -380,7 +380,7 @@ namespace VegaCityApp.Service.Implement
 
             //check if email is already exist
             var emailExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Email == req.Email.Trim() && x.MarketZoneId == apiKey);
+                x.Email == req.Email.Trim() && x.MarketZoneId == req.apiKey);
             if (emailExist != null)
             {
                 return new ResponseAPI()
@@ -390,7 +390,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var phoneNumberExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.PhoneNumber == req.PhoneNumber.Trim() && x.MarketZoneId == apiKey);
+                x.PhoneNumber == req.PhoneNumber.Trim() && x.MarketZoneId == req.apiKey);
             if (phoneNumberExist != null)
             {
                 return new ResponseAPI()
@@ -400,7 +400,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var cccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Cccd == req.CCCD.Trim() && x.MarketZoneId == apiKey);
+                x.Cccd == req.CCCD.Trim() && x.MarketZoneId == req.apiKey);
             if (cccdExist != null)
             {
                 return new ResponseAPI()
@@ -411,7 +411,7 @@ namespace VegaCityApp.Service.Implement
             }
 
             //create new user
-            var newUser = await CreateUserRegister(req, apiKey);
+            var newUser = await CreateUserRegister(req, req.apiKey);
             //create refesh token
             var refresh = new ReFreshTokenRequest
             {
@@ -746,7 +746,7 @@ namespace VegaCityApp.Service.Implement
             }
 
             var user = await _unitOfWork.GetRepository<User>()
-                .SingleOrDefaultAsync(predicate: x => x.Email == req.Email.Trim(), include: user => user.Include(x => x.Role));
+                .SingleOrDefaultAsync(predicate: x => x.Email == req.Email.Trim() && x.MarketZoneId == req.apiKey, include: user => user.Include(x => x.Role));
             if (user == null)
             {
                 return new ResponseAPI

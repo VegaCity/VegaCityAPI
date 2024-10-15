@@ -12,8 +12,8 @@ namespace VegaCityApp.Service.Interface
 
         Task<ResponseAPI> RefreshToken(ReFreshTokenRequest req);
 
-        Task<ResponseAPI> GetRefreshTokenByEmail(string email);
-        Task<ResponseAPI> Register (RegisterRequest req, Guid apiKey);
+        Task<ResponseAPI> GetRefreshTokenByEmail(string email, GetApiKey req);
+        Task<ResponseAPI> Register (RegisterRequest req);
 
         Task<ResponseAPI> AdminCreateUser(RegisterRequest req);
 

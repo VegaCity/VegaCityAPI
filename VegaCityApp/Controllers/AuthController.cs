@@ -30,9 +30,9 @@ namespace VegaCityApp.API.Controllers
         [HttpPost(AuthenticationEndpoint.Register)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [SwaggerOperation(Summary = "Register new user for Store")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request, [FromQuery] Guid apiKey)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            var result = await _accountService.Register(request, apiKey);
+            var result = await _accountService.Register(request);
             return StatusCode(result.StatusCode, result);
         }
         [HttpPost(AuthenticationEndpoint.ChangePassword)]
@@ -51,9 +51,9 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(AuthenticationEndpoint.GetRefreshTokenByEmail)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> GetRefreshTokenByEmail(string email)
+        public async Task<IActionResult> GetRefreshTokenByEmail(string email, [FromBody] GetApiKey req)
         {
-            var result = await _accountService.GetRefreshTokenByEmail(email);
+            var result = await _accountService.GetRefreshTokenByEmail(email, req);
             return StatusCode(result.StatusCode, result);
         }
     }
