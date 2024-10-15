@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Order;
 using VegaCityApp.API.Payload.Request.Store;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.OrderResponse;
 using VegaCityApp.API.Payload.Response.StoreResponse;
 using VegaCityApp.API.Services.Interface;
+using VegaCityApp.API.Validators;
 using VegaCityApp.Domain.Paginate;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
@@ -23,6 +25,7 @@ namespace VegaCityApp.API.Controllers
 
         [HttpPost(OrderEndpoint.CreateOrder)]
         [ProducesResponseType(typeof(ResponseAPI<CreateOrderRequest>), HttpStatusCodes.Created)]
+        [CustomAuthorize(RoleEnum.Store, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         public async Task<IActionResult> CreateOrder(CreateOrderRequest req)
         {
             var result = await _orderService.CreateOrder(req);
@@ -62,6 +65,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(OrderEndpoint.CreateOrderForCashier)]
         [ProducesResponseType(typeof(ResponseAPI<CreateOrderForCashierRequest>), HttpStatusCodes.Created)]
+        [CustomAuthorize(RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         public async Task<IActionResult> CreateOrderForCashier(CreateOrderForCashierRequest req)
         {
             var result = await _orderService.CreateOrderForCashier(req);
@@ -69,6 +73,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(OrderEndpoint.ConfirmOrderForCashier)]
         [ProducesResponseType(typeof(ResponseAPI<ConfirmOrderForCashierRequest>), HttpStatusCodes.Created)]
+        [CustomAuthorize(RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         public async Task<IActionResult> ConfirmOrderForCashier(ConfirmOrderForCashierRequest req)
         {
             var result = await _orderService.ConfirmOrderForCashier(req);
