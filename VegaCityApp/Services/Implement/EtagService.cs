@@ -579,16 +579,6 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = MessageConstant.HttpStatusCodes.NotFound,
                 };
             }
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == userId && x.Status == (int)UserStatusEnum.Active);
-               
-            if (user == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = UserMessage.NotFoundUser,
-                    StatusCode = MessageConstant.HttpStatusCodes.NotFound,
-                };
-            }
 
             var newOrder = new Order()
             {

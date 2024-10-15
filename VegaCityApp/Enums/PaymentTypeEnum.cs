@@ -27,7 +27,7 @@ namespace VegaCityApp.API.Enums
         //after success payment, redirect to this url
         //public const string redirectUrl = "https://localhost:44395/api/v1/payment/momo/order";
         //public const string redirectUrlChargeMoney = "https://localhost:44395/api/v1/payment/momo/order/charge-money";
-        public const string redirectUrl = "https://localhost:44395/api/v1/payment/momo/order";
+        public const string redirectUrl = "https://api.vegacity.id.vn/api/v1/payment/momo/order";
         public const string redirectUrlChargeMoney = "https://api.vegacity.id.vn/api/v1/payment/momo/order/charge-money";
         //after success payment, send a request to this url to update order or something
         public const string ipnUrl = "https://vegacity.id.vn/user/order-status?status=success&orderId=";

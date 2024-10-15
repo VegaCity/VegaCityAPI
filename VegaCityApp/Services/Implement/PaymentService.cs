@@ -179,53 +179,70 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(IPNMomoRequest req)
         {
-            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending,
-                 include: z => z.Include(a => a.User));
-            order.Status = OrderStatus.Completed;
-            order.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
-            //update wallet admin
-            var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(
-                predicate: x => x.Id == order.User.MarketZoneId);
-            var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                predicate: x => x.Email == marketZone.Email, include: wallet => wallet.Include(z => z.Wallets));
-            admin.Wallets.FirstOrDefault().BalanceHistory -= Int32.Parse(req.amount.ToString());
-            order.User.Wallets.FirstOrDefault().Balance += Int32.Parse(req.amount.ToString());
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(admin.Wallets.FirstOrDefault());
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.User.Wallets.FirstOrDefault());
-            //update wallet
-            etag.Wallet.Balance += Int32.Parse(req.amount.ToString());
-            etag.Wallet.BalanceHistory += Int32.Parse(req.amount.ToString());
-            etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
-            //create deposite
-            var newDeposit = new Deposit
+            try
             {
-                Id = Guid.NewGuid(), // Tạo ID mới
-                PaymentType = "Momo",
-                Name = "Nạp tiền vào ETag với số tiền: " + req.amount,
-                IsIncrease = true, // Xác định rằng đây là nạp tiền
-                Amount = Int32.Parse(req.amount.ToString()),
-                CrDate = TimeUtils.GetCurrentSEATime(),
-                UpsDate = TimeUtils.GetCurrentSEATime(),
-                WalletId = etag.Wallet.Id,
-                EtagId = etag.Id,
-                OrderId = order.Id,
-            };
-            await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
-            return await _unitOfWork.CommitAsync() > 0
-                ? new ResponseAPI()
+                var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+                    (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending,
+                     include: z => z.Include(a => a.User).ThenInclude(b => b.Wallets)); //..
+                order.Status = OrderStatus.Completed;
+                order.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
+                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+                //update wallet admin
+                var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(
+                    predicate: x => x.Id == order.User.MarketZoneId);//..
+                var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
+                    predicate: x => x.Email == marketZone.Email, include: wallet => wallet.Include(z => z.Wallets));//..
+                foreach(var item in admin.Wallets)
                 {
-                    StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PaymentMomo.ipnUrl + order.Id
+                    item.BalanceHistory -= Int32.Parse(req.amount.ToString());
                 }
-                : new ResponseAPI()
+                foreach (var item in order.User.Wallets)
                 {
-                    StatusCode = HttpStatusCodes.InternalServerError
+                    item.Balance += Int32.Parse(req.amount.ToString());
+                }
+                _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
+                _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
+                //..
+                //update wallet
+                etag.Wallet.Balance += Int32.Parse(req.amount.ToString());
+                etag.Wallet.BalanceHistory += Int32.Parse(req.amount.ToString());
+                etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+                //create deposite
+                var newDeposit = new Deposit
+                {
+                    Id = Guid.NewGuid(), // Tạo ID mới
+                    PaymentType = "Momo",
+                    Name = "Nạp tiền vào ETag với số tiền: " + req.amount,
+                    IsIncrease = true, // Xác định rằng đây là nạp tiền
+                    Amount = Int32.Parse(req.amount.ToString()),
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    WalletId = etag.Wallet.Id,
+                    EtagId = etag.Id,
+                    OrderId = order.Id,
                 };
+                await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
+                return await _unitOfWork.CommitAsync() > 0
+                    ? new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentMomo.ipnUrl + order.Id
+                    }
+                    : new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.InternalServerError
+                    };
+            }catch (Exception ex)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    MessageResponse = ex.Message
+                };
+            }
         }
 
         public async Task<ResponseAPI> VnPayment(PaymentRequest req, HttpContext context)
