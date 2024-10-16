@@ -78,19 +78,6 @@ namespace VegaCityApp.Service.Implement
             await _unitOfWork.CommitAsync();
             return user.Id;
         }
-        private async Task<Guid> UpdateOtherUserApproving(User user, Guid RoleId)
-        {
-            user.Status = (int)UserStatusEnum.Active;
-            user.IsChange = false;
-            if (RoleId == Guid.Parse(EnvironmentVariableConstant.CashierWebId))
-            {
-                user.Password = PasswordUtil.GenerateCharacter(10);
-
-            }
-            _unitOfWork.GetRepository<User>().UpdateAsync(user);
-            await _unitOfWork.CommitAsync();
-            return user.Id;
-        }
         private async Task<bool> DeleteRefreshToken(string token)
         {
             var refreshToken = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
@@ -517,6 +504,7 @@ namespace VegaCityApp.Service.Implement
             #region create refesh token
             var refresh = new ReFreshTokenRequest
             {
+                apiKey = apiKey,
                 Email = newUser.Email,
                 RefreshToken = null
             };
