@@ -571,13 +571,21 @@ namespace VegaCityApp.API.Services.Implement
             //get user id from token
             Guid userId = GetUserIdFromJwt();
             var etagExist = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagCode == req.EtagCode && !x.Deflag && x.Cccd == req.CCCD,
-                 include: etag => etag.Include(y => y.Wallet) );
+                 include: etag => etag.Include(y => y.Wallet));
             if (etagExist == null)
             {
                 return new ResponseAPI()
                 {
                     MessageResponse = EtagMessage.NotFoundEtag,
                     StatusCode = HttpStatusCodes.NotFound,
+                };
+            }
+            if(etagExist.Wallet.ExpireDate < TimeUtils.GetCurrentSEATime() || etagExist.EndDate < TimeUtils.GetCurrentSEATime())
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.EtagExpired,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
 

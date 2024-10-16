@@ -96,6 +96,7 @@ public static class MessageConstant
     }
     public static class EtagMessage
     {
+        public const string EtagExpired = "Etag Expired !!";
         public const string SearchEtagSuccess = "Search Etag Successfully !!";
         public const string SearchAllEtagsSuccess = "Search All Etags Successfully !!";
         public const string SearchAllEtagsFailed = "Failed To Search All Etags !!";
