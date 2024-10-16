@@ -588,7 +588,14 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-
+            if(PaymentTypeHelper.allowedPaymentTypes.Contains(req.PaymentType) == false)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = OrderMessage.PaymentTypeInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
             var newOrder = new Order()
             {
                 Id = Guid.NewGuid(),

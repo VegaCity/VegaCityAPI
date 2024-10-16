@@ -2,19 +2,15 @@
 
 namespace VegaCityApp.API.Enums
 {
-    public enum PaymentTypeEnum
+    public static class PaymentTypeHelper
     {
-        ZaloPay,
-        Momo,
-        VnPay,
-        VisaCard,
-        Other,
-    }
-    public class PaymentType
-    {
-        public const string ZaloPay = "ZaloPay";
-        public const string Momo = "Momo";
-        public const string VnPay = "VnPay";
+        public static readonly string[] allowedPaymentTypes =
+        {
+            "ZaloPay",
+            "Momo",
+            "VnPay",
+            "PayOS",
+        };
     }
     public class PaymentMomo
     {

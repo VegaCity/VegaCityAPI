@@ -1,4 +1,6 @@
-﻿namespace VegaCityApp.API.Enums
+﻿using VegaCityApp.API.Utils;
+
+namespace VegaCityApp.API.Enums
 {
     public enum RoleEnum
     {
@@ -7,11 +9,14 @@
         Store,
         CashierApp
     }
-    public class RoleName
+    public static class RoleHelper
     {
-        public const string Admin = "Admin";
-        public const string CashierWeb = "CashierWeb";
-        public const string Store = "Store";
-        public const string CashierApp = "CashierApp";
+        public static readonly string[] allowedRoles =
+        {
+            RoleEnum.CashierWeb.GetDescriptionFromEnum(),
+            RoleEnum.Store.GetDescriptionFromEnum(),
+            RoleEnum.Admin.GetDescriptionFromEnum(),
+            RoleEnum.CashierApp.GetDescriptionFromEnum()
+        };
     }
 }

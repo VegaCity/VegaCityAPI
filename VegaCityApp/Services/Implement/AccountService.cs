@@ -90,14 +90,6 @@ namespace VegaCityApp.Service.Implement
             return await _unitOfWork.CommitAsync() > 0;
         }
         #endregion
-        #region private variable
-        private readonly string[] allowedRoles = {
-            RoleEnum.CashierWeb.GetDescriptionFromEnum(),
-            RoleEnum.Store.GetDescriptionFromEnum(),
-            RoleEnum.Admin.GetDescriptionFromEnum(),
-            RoleEnum.CashierApp.GetDescriptionFromEnum()
-        };
-        #endregion
         public async Task<LoginResponse> Login(LoginRequest req)
         {
             Tuple<string, Guid> guidClaim = null;
@@ -747,7 +739,7 @@ namespace VegaCityApp.Service.Implement
 
             if (user.IsChange == false)
             {
-                if(allowedRoles.Contains(user.Role.Name))
+                if(RoleHelper.allowedRoles.Contains(user.Role.Name))
                 {
                     if (user.Password == req.OldPassword.Trim())
                     {

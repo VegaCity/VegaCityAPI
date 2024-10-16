@@ -186,6 +186,7 @@ public static class MessageConstant
 
     public static class OrderMessage
     {
+        public const string PaymentTypeInvalid = "Payment Type Invalid";
         public const string NotFoundPackage = "Package Not Found";
         public const string ConfirmOrderSuccessfully = "Confirm Order Successfully !!";
         public const string ConfirmOrderFail = "Confirm Order Fail !!";

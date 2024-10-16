@@ -6,6 +6,5 @@
         public int ChargeAmount { get; set; }
         public string CCCD { get; set; }
         public string PaymentType { get; set; }
-
     }
 }
