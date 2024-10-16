@@ -269,8 +269,9 @@ namespace VegaCityApp.API.Services.Implement
                         vnpayCharge.AddRequestData("vnp_Version", VnPayConfig.Version);
                         vnpayCharge.AddRequestData("vnp_Command", VnPayConfig.Command);
                         vnpayCharge.AddRequestData("vnp_TmnCode", VnPayConfig.TmnCode);
-                        vnpayCharge.AddRequestData("vnp_Amount", (orderExisted.TotalAmount * 100).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 
-                        vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()));
+                        vnpayCharge.AddRequestData("vnp_Amount", (orderExisted.TotalAmount*100 ).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 
+                        // vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()));
+                        vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"));
                         vnpayCharge.AddRequestData("vnp_CurrCode", VnPayConfig.CurrCode);
                         vnpayCharge.AddRequestData("vnp_IpAddr", VnPayUtils.GetIpAddress(context));
                         vnpayCharge.AddRequestData("vnp_Locale", VnPayConfig.Locale);
@@ -322,9 +323,9 @@ namespace VegaCityApp.API.Services.Implement
             vnpay.AddRequestData("vnp_Version", VnPayConfig.Version);
             vnpay.AddRequestData("vnp_Command", VnPayConfig.Command);
             vnpay.AddRequestData("vnp_TmnCode", VnPayConfig.TmnCode);
-            vnpay.AddRequestData("vnp_Amount", (orderExisted.TotalAmount * 100).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 10000000
-
-            vnpay.AddRequestData("vnp_CreateDate", TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()));
+            vnpay.AddRequestData("vnp_Amount", (orderExisted.TotalAmount *100 ).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 10000000
+            vnpay.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"));
+            //vnpay.AddRequestData("vnp_CreateDate", TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()));
             vnpay.AddRequestData("vnp_CurrCode", VnPayConfig.CurrCode);
             vnpay.AddRequestData("vnp_IpAddr", VnPayUtils.GetIpAddress(context));
             vnpay.AddRequestData("vnp_Locale", VnPayConfig.Locale);
@@ -383,7 +384,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.InternalServerError
                 };
         }
-        public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(VnPayPaymentResponse req) //need to fix time
+        public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(VnPayPaymentResponse req) //done to fix time
         {
             try
             {
@@ -391,43 +392,59 @@ namespace VegaCityApp.API.Services.Implement
                 var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
                     (predicate: x => x.InvoiceId == orderInvoiceId && x.Status == OrderStatus.Pending
                     , include: z => z.Include(a => a.User).ThenInclude(b => b.Wallets));//  find user and wallet vnpay
+                int trimmedAmount = req.vnp_Amount / 100; //remove exceed 00 o day
                 order.Status = OrderStatus.Completed;
                 order.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
                 var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet).Include(b => b.EtagType));
+
+                //bonus 
+                decimal? bonusRate = etag.EtagType.BonusRate;
+                decimal bonus = (bonusRate.HasValue ? bonusRate.Value : 0) * trimmedAmount; // Tính toán bonus chính xác
+
                 //admin wallet part vnpay
                 var marketzone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId);
                 var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Email == marketzone.Email, include: wallet => wallet.Include(z => z.Wallets));
+
                 foreach (var item in admin.Wallets)
                 {
-                    item.BalanceHistory -= Int32.Parse(req.vnp_Amount.ToString());
+                    item.BalanceHistory -= trimmedAmount;
                 }
+
                 foreach (var item in order.User.Wallets)
                 {
-                    item.Balance += Int32.Parse(req.vnp_Amount.ToString());
+                    // Chuyển đổi bonus từ decimal về int và tính toán
+                    item.Balance += trimmedAmount + (int)bonus;
                 }
-                //..
+
+                _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
+                _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
+
                 //update wallet
-                etag.Wallet.Balance += Int32.Parse(req.vnp_Amount.ToString());
-                etag.Wallet.BalanceHistory += Int32.Parse(req.vnp_Amount.ToString());
+                etag.Wallet.Balance += trimmedAmount + (int)bonus;
+                etag.Wallet.BalanceHistory += trimmedAmount + (int)bonus;
                 etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+
                 //create deposite
                 var newDeposit = new Deposit
                 {
                     Id = Guid.NewGuid(), // Tạo ID mới
                     PaymentType = "VnPay",
-                    Name = "Nạp tiền vào ETag với số tiền: " + req.vnp_Amount,
+                    Name = "Nạp tiền vào ETag với số tiền: " + order.TotalAmount,
                     IsIncrease = true, // Xác định rằng đây là nạp tiền
-                    Amount = Int32.Parse(req.vnp_Amount.ToString()),
+                    Amount = trimmedAmount,
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
                     WalletId = etag.Wallet.Id,
                     EtagId = etag.Id,
                     OrderId = order.Id,
                 };
+
                 await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
+
                 return await _unitOfWork.CommitAsync() > 0
                     ? new ResponseAPI()
                     {
@@ -544,7 +561,7 @@ namespace VegaCityApp.API.Services.Implement
                     items: itemDataList,
                     cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
                     //returnUrl: PayOSConfiguration.ReturnUrlCharge,
-                     returnUrl: PayOSConfiguration.ReturnUrlChargeUrl,
+                     returnUrl: PayOSConfiguration.ReturnUrlCharge,
                     // URL khi thanh toán thành công
                     buyerName: customerInfoEtag.FullName.ToString(),
                     buyerEmail: "", // very require email here!
@@ -613,7 +630,8 @@ namespace VegaCityApp.API.Services.Implement
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
                 (predicate: x => x.InvoiceId == orderCode && x.Status == OrderStatus.Pending,
                 include: z => z.Include(a => a.User).ThenInclude(b => b.Wallets)); //
-                                                                                   //from here
+            var orderCompleted = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+               (predicate: x => x.InvoiceId == orderCode && x.Status == OrderStatus.Completed);                                                                     //from here
             if (order == null || order.Status == OrderStatus.Completed)
             {
                 // If the order doesn't exist or is already processed, return not found
@@ -621,7 +639,7 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     StatusCode = HttpStatusCodes.NoContent,
                     //MessageResponse = "https://vegacity.id.vn/user/order-status?status=failure"
-                    MessageResponse = PayOSConfiguration.ipnUrl + order.Id
+                    MessageResponse = PayOSConfiguration.ipnUrl + orderCompleted.Id
 
                 };
             }
@@ -629,7 +647,10 @@ namespace VegaCityApp.API.Services.Implement
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+                (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet).Include(b => b.EtagType));
+            //bonus 
+            decimal? bonusRate = etag.EtagType.BonusRate;
+            decimal bonus = (bonusRate.HasValue ? bonusRate.Value : 0) * order.TotalAmount;
             //admin wallet stuff
             var marketzone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId);
             var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Email == marketzone.Email, include: wallet => wallet.Include(z => z.Wallets)); //
@@ -639,15 +660,15 @@ namespace VegaCityApp.API.Services.Implement
             }
             foreach (var item in order.User.Wallets)
             {
-                item.Balance += Int32.Parse((order.TotalAmount.ToString()));
+                item.Balance += order.TotalAmount + (int)bonus;
             }
             _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
             _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
             //..
             
             //update wallet
-            etag.Wallet.Balance += Int32.Parse(order.TotalAmount.ToString());
-            etag.Wallet.BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
+            etag.Wallet.Balance += order.TotalAmount + (int)bonus;
+            etag.Wallet.BalanceHistory += order.TotalAmount + (int)bonus;
             etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
             //create deposite

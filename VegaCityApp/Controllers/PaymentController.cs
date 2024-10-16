@@ -162,9 +162,15 @@ namespace VegaCityApp.API.Controllers
                         return BadRequest(new { message = "Failed to update order." });
                     }
                 }
-                else
+                else if(status == "CANCELED")
                 {
                     return BadRequest(new { message = "Payment was not successful or canceled." });
+                }
+                else
+                {
+                    var result = await _service.UpdateOrderPaidOSForChargingMoney(code, id, status, orderCode);
+                    return Redirect(result.MessageResponse);
+
                 }
             }
             catch (Exception ex)

@@ -70,7 +70,7 @@ namespace VegaCityApp.API.Enums
         public const string ChecksumKey = "e0df18284b37c90d88390be74568f6e0c4ff63c95cc4f1ee2eb6af30877d37a5";
         public const string CancelUrl = "https://example.com/cancel";
        // public const string ReturnUrl = "https://localhost:44395/api/v1/payment/payos/order"; //local
-        public const string ReturnUrlChargeUrl = "https://localhost:44395/api/v1/payment/payos/order/charge-money"; //local
+        //public const string ReturnUrlCharge = "https://localhost:44395/api/v1/payment/payos/order/charge-money"; //local
         public const string ReturnUrl = "https://api.vegacity.id.vn/api/v1/payment/payos/order"; //deploy
         public const string ReturnUrlCharge = "https://api.vegacity.id.vn/api/v1/payment/payos/order/charge-money"; //dploy
         public const string create_order_url = "https://api-merchant.payos.vn/v2/payment-requests";
