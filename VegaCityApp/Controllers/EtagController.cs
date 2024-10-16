@@ -136,7 +136,6 @@ namespace VegaCityApp.API.Controllers
         [HttpPost(EtagEndpoint.ChargeMoneyETag)]
         [ProducesResponseType(typeof(ResponseAPI<ChargeMoneyEtagRequest>), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.CashierApp, RoleEnum.CashierWeb)]
-        [SwaggerOperation(Summary = "API is fixing")]
         public async Task<IActionResult> PrepareChargeMoneyEtag([FromBody] ChargeMoneyEtagRequest req)
         {
             var result = await _service.PrepareChargeMoneyEtag(req);
