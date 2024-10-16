@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.WalletType;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.WalletResponse;
 using VegaCityApp.API.Services.Interface;
+using VegaCityApp.API.Validators;
 using VegaCityApp.Domain.Paginate;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
@@ -21,6 +24,7 @@ namespace VegaCityApp.API.Controllers
 
         [HttpPost(WalletTypeEndpoint.CreateWalletType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> CreateWalletType([FromBody] WalletTypeRequest request)
         {
             var result = await _walletTypeService.CreateWalletType(request);
@@ -29,6 +33,7 @@ namespace VegaCityApp.API.Controllers
 
         [HttpPatch(WalletTypeEndpoint.UpdateWalletType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> UpdateWalletType(Guid id, [FromBody] UpDateWalletTypeRequest request)
         {
             var result = await _walletTypeService.UpdateWalletType(id, request);
@@ -37,6 +42,8 @@ namespace VegaCityApp.API.Controllers
 
         [HttpDelete(WalletTypeEndpoint.DeleteWalletType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        [SwaggerOperation(Summary = "If delete walletType, Everything in walletType will be deleted")]
         public async Task<IActionResult> DeleteWalletType(Guid id)
         {
             var result = await _walletTypeService.DeleteWalletType(id);
@@ -45,6 +52,7 @@ namespace VegaCityApp.API.Controllers
 
         [HttpGet(WalletTypeEndpoint.GetWalletTypeById)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> GetWalletTypeById(Guid id)
         {
             var result = await _walletTypeService.GetWalletTypeById(id);
@@ -53,6 +61,7 @@ namespace VegaCityApp.API.Controllers
 
         [HttpGet(WalletTypeEndpoint.GetAllWalletType)]
         [ProducesResponseType(typeof(ResponseAPI<IEnumerable<WalletTypeResponse>>), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> GetAllWalletType(int size = 10, int page = 1)
         {
             var result = await _walletTypeService.GetAllWalletType(size, page);
@@ -60,6 +69,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(WalletTypeEndpoint.AddServiceStoreToWalletType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> AddServiceStoreToWalletType(Guid id, Guid serviceStoreId)
         {
             var result = await _walletTypeService.AddServiceStoreToWalletType(id, serviceStoreId);
@@ -67,6 +77,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpDelete(WalletTypeEndpoint.RemoveServiceStoreToWalletType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> RemoveServiceStoreToWalletType(Guid id, Guid serviceStoreId)
         {
             var result = await _walletTypeService.RemoveServiceStoreToWalletType(id, serviceStoreId);

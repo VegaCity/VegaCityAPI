@@ -1,8 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Store;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.StoreResponse;
 using VegaCityApp.API.Services.Interface;
+using VegaCityApp.API.Validators;
 using VegaCityApp.Domain.Paginate;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
@@ -20,6 +23,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(ServiceStoreEndpoint.CreateServiceStore)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [CustomAuthorize(RoleEnum.Store)]
         public async Task<IActionResult> CreateServiceStore([FromBody] ServiceStoreRequest request)
         {
             var result = await _serviceStore.CreateServiceStore(request);
@@ -27,6 +31,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPatch(ServiceStoreEndpoint.UpdateServiceStore)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Store)]
         public async Task<IActionResult> UpdateServiceStore(Guid id,[FromBody] UpDateServiceStoreRequest request)
         {
             var result = await _serviceStore.UpdateServiceStore(id, request);
@@ -34,6 +39,8 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpDelete(ServiceStoreEndpoint.DeleteServiceStore)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [SwaggerOperation(Summary = "If delete ServiceStore, Everything in ServiceStore will be deleted")]
+        [CustomAuthorize(RoleEnum.Store)]
         public async Task<IActionResult> DeleteServiceStore(Guid id)
         {
             var result = await _serviceStore.DeleteServiceStore(id);
@@ -41,6 +48,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(ServiceStoreEndpoint.GetServiceStoreById)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Store)]
         public async Task<IActionResult> GetServiceStoreById(Guid id)
         {
             var result = await _serviceStore.GetServiceStoreById(id);

@@ -8,6 +8,7 @@ using VegaCityApp.Domain.Paginate;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
 using VegaCityApp.API.Enums;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace VegaCityApp.API.Controllers
 {
@@ -55,6 +56,7 @@ namespace VegaCityApp.API.Controllers
         [HttpDelete(HouseEndpoint.DeleteHouse)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]
+        [SwaggerOperation(Summary = "If delete House, Everything in house will be deleted")]
         public async Task<IActionResult> DeleteHouse(Guid id)
         {
             var result = await _service.DeleteHouse(id);

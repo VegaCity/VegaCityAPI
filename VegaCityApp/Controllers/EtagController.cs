@@ -41,6 +41,7 @@ namespace VegaCityApp.API.Controllers
         [HttpDelete(EtagTypeEndpoint.DeleteEtagType)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]
+        [SwaggerOperation(Summary = "If delete EtagType, Everything in EtagType will be deleted")]
         public async Task<IActionResult> DeleteEtagType( Guid id)
         {
             var result = await _service.DeleteEtagType(id);

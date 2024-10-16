@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Store;
 using VegaCityApp.API.Payload.Response;
@@ -49,6 +50,7 @@ namespace VegaCityApp.API.Controllers
         [HttpDelete(StoreEndpoint.DeleteStore)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]
+        [SwaggerOperation(Summary = "If delete Store, Everything in Store will be deleted")]
         public async Task<IActionResult> DeleteStore(Guid id)
         {
             var result = await _storeService.DeleteStore(id);

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Package;
 using VegaCityApp.API.Payload.Response;
@@ -55,6 +56,7 @@ namespace VegaCityApp.API.Controllers
         [HttpDelete(PackageEndpoint.DeletePackage)]
         [CustomAuthorize(RoleEnum.Admin)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [SwaggerOperation(Summary = "If delete Package, Everything in package will be deleted")]
         public async Task<IActionResult> DeletePackage(Guid id)
         {
             var result = await _packageService.DeletePackage(id);
