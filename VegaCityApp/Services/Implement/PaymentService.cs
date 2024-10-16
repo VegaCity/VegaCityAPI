@@ -197,9 +197,11 @@ namespace VegaCityApp.API.Services.Implement
                 foreach(var item in admin.Wallets)
                 {
                     item.BalanceHistory -= Int32.Parse(req.amount.ToString());
+                    item.UpsDate = TimeUtils.GetCurrentSEATime();
                 }
                 foreach (var item in order.User.Wallets)
                 {
+                    item.UpsDate = TimeUtils.GetCurrentSEATime();
                     item.Balance += Int32.Parse(req.amount.ToString());
                 }
                 _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
@@ -411,12 +413,14 @@ namespace VegaCityApp.API.Services.Implement
                 foreach (var item in admin.Wallets)
                 {
                     item.BalanceHistory -= trimmedAmount;
+                    item.UpsDate = TimeUtils.GetCurrentSEATime();
                 }
 
                 foreach (var item in order.User.Wallets)
                 {
                     // Chuyển đổi bonus từ decimal về int và tính toán
                     item.Balance += trimmedAmount + (int)bonus;
+                    item.UpsDate = TimeUtils.GetCurrentSEATime();
                 }
 
                 _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
@@ -601,7 +605,7 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = "https://vegacity.id.vn/user/order-status?status=failure"
+                    //MessageResponse = "https://vegacity.id.vn/user/order-status?status=failure"
                 };
             }
             // Update the order to 'Completed'
@@ -657,10 +661,12 @@ namespace VegaCityApp.API.Services.Implement
             foreach (var item in admin.Wallets)
             {
                 item.BalanceHistory -= Int32.Parse((order.TotalAmount.ToString()));
+                item.UpsDate = TimeUtils.GetCurrentSEATime();
             }
             foreach (var item in order.User.Wallets)
             {
                 item.Balance += order.TotalAmount + (int)bonus;
+                item.UpsDate = TimeUtils.GetCurrentSEATime();
             }
             _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
             _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);

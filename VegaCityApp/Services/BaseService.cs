@@ -25,9 +25,9 @@ namespace VegaCityApp.API.Services
             return role;
         }
 
-        protected string GetMarketZoneIdFromJwt()
+        protected Guid GetMarketZoneIdFromJwt()
         {
-            return _httpContextAccessor?.HttpContext?.User?.FindFirstValue("MarketZoneId");
+            return Guid.Parse(_httpContextAccessor?.HttpContext?.User?.FindFirstValue("MarketZoneId"));
         }
 
         protected string GetEmailFromJwt()
