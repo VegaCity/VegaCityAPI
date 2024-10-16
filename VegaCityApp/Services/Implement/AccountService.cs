@@ -402,6 +402,7 @@ namespace VegaCityApp.Service.Implement
             //create refesh token
             var refresh = new ReFreshTokenRequest
             {
+                apiKey = req.apiKey,
                 Email = newUser.Email,
                 RefreshToken = null
             };
