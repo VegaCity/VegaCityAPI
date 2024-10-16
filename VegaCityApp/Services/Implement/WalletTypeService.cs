@@ -139,7 +139,9 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> DeleteWalletType(Guid id)
         {
-            var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(predicate: x => x.Id == id && !x.Deflag);
+            var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync
+                (predicate: x => x.Id == id && !x.Deflag,
+                 include: mapping => mapping.Include(a => a.WalletTypeStoreServiceMappings));
             if (walletType == null)
             {
                 return new ResponseAPI
@@ -147,6 +149,13 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound,
                     MessageResponse = WalletTypeMessage.NotFoundWalletType
                 };
+            }
+            if(walletType.WalletTypeStoreServiceMappings.Count > 0)
+            {
+                foreach (var item in walletType.WalletTypeStoreServiceMappings)
+                {
+                    _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().DeleteAsync(item);
+                }
             }
             walletType.Deflag = true;
             walletType.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -167,7 +176,7 @@ namespace VegaCityApp.API.Services.Implement
             try
             {
                 IPaginate<WalletTypeResponse> data = await _unitOfWork.GetRepository<WalletType>().GetPagingListAsync(
-                predicate: x => !x.Deflag,
+                predicate: x => !x.Deflag && x.MarketZoneId == GetMarketZoneIdFromJwt(),
                 selector: z => new WalletTypeResponse
                 {
                     Id = z.Id,
@@ -228,7 +237,6 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> UpdateWalletType(Guid Id, UpDateWalletTypeRequest walletTypeRequest)
         {
-            walletTypeRequest.Name = walletTypeRequest.Name.Trim();
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(predicate: x => x.Id == Id && !x.Deflag);
             if (walletType == null)
             {
@@ -238,7 +246,7 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = WalletTypeMessage.NotFoundWalletType
                 };
             }
-            walletType.Name = walletTypeRequest.Name;
+            walletType.Name = walletTypeRequest.Name != null? walletTypeRequest.Name.Trim() : walletType.Name;
             walletType.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<WalletType>().UpdateAsync(walletType);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI

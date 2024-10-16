@@ -51,7 +51,9 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> DeleteServiceStore(Guid id)
         {
-            var serviceStore = await _unitOfWork.GetRepository<Domain.Models.StoreService>().SingleOrDefaultAsync(predicate: x => x.Id == id && !x.Deflag);
+            var serviceStore = await _unitOfWork.GetRepository<Domain.Models.StoreService>().SingleOrDefaultAsync
+                (predicate: x => x.Id == id && !x.Deflag,
+                 include: map => map.Include(z => z.WalletTypeStoreServiceMappings));
             if (serviceStore == null)
             {
                 return new ResponseAPI
@@ -59,6 +61,13 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound,
                     MessageResponse = WalletTypeMessage.NotFoundWalletType
                 };
+            }
+            if(serviceStore.WalletTypeStoreServiceMappings.Count > 0)
+            {
+                foreach(var item in serviceStore.WalletTypeStoreServiceMappings)
+                {
+                    _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().DeleteAsync(item);
+                }
             }
             serviceStore.Deflag = true;
             serviceStore.UpsDate = TimeUtils.GetCurrentSEATime();

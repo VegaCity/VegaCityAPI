@@ -89,7 +89,9 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> DeleteEtagType(Guid etagTypeId)
         {
-            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag);
+            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync
+                (predicate: x => x.Id == etagTypeId && !x.Deflag,
+                 include: map => map.Include(z => z.PackageETagTypeMappings));
             if (etagType == null)
             {
                 return new ResponseAPI
@@ -97,6 +99,13 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = EtagTypeMessage.NotFoundEtagType,
                     StatusCode = HttpStatusCodes.NotFound
                 };
+            }
+            if (etagType.PackageETagTypeMappings.Count > 0)
+            {
+                foreach (var item in etagType.PackageETagTypeMappings)
+                {
+                    _unitOfWork.GetRepository<PackageETagTypeMapping>().DeleteAsync(item);
+                }
             }
             etagType.Deflag = true;
             _unitOfWork.GetRepository<EtagType>().UpdateAsync(etagType);
@@ -415,6 +424,7 @@ namespace VegaCityApp.API.Services.Implement
             etag.ImageUrl = req.ImageUrl ?? etag.ImageUrl;
             etag.Birthday = req.DateOfBirth ?? etag.Birthday;
             etag.Gender = req.Gender ?? etag.Gender;
+            etag.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Etag>().UpdateAsync(etag);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
@@ -623,7 +633,7 @@ namespace VegaCityApp.API.Services.Implement
                      balance = req.ChargeAmount,
                      Key = key,
                      UrlDirect = "https://api.vegacity.id.vn/api/v1/payment/momo/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
-                     UrlIpn = $"https://vegacity.id.vn/user/order-status?status=success&orderId={newOrder.Id}"
+                     UrlIpn = $"https://vegacity.id.vn/order-status?status=success&orderId={newOrder.Id}"
                  }
             } : new ResponseAPI()
             {

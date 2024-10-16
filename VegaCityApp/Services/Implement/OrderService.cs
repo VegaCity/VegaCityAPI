@@ -135,6 +135,7 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             orderExisted.Status = OrderStatus.Canceled;
+            orderExisted.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(orderExisted);
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()

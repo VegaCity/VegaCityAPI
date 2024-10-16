@@ -24,22 +24,14 @@ namespace VegaCityApp.API.Services.Implement
                 (predicate: x => x.HouseName == req.HouseName 
                               && !x.Deflag
                               && x.Location == req.Location
-                              && x.Address == req.Address);
+                              && x.Address == req.Address
+                              && x.ZoneId == req.ZoneId);
             if (house != null)
             {
                 return new ResponseAPI()
                 {
                     MessageResponse = HouseMessage.ExistedHouseName,
                     StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-            var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == req.ZoneId && !x.Deflag);
-            if (zone == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = HouseMessage.NotFoundZone,
-                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
             var newHouse = new House
@@ -71,7 +63,8 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> DeleteHouse(Guid HouseId)
         {
-            var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(predicate: x => x.Id == HouseId && !x.Deflag);
+            var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(predicate: x => x.Id == HouseId && !x.Deflag,
+                include: store => store.Include(z => z.Stores));
             if (house == null)
             {
                 return new ResponseAPI()
@@ -80,13 +73,15 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
-            if (house.Deflag)
+            // delete all store in house
+            if(house.Stores.Count > 0)
             {
-                return new ResponseAPI()
+                foreach (var store in house.Stores)
                 {
-                    MessageResponse = HouseMessage.HouseDeleted,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
+                    store.Deflag = true;
+                    store.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Store>().UpdateAsync(store);
+                }
             }
             house.Deflag = true;
             _unitOfWork.GetRepository<House>().UpdateAsync(house);
@@ -182,9 +177,10 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
-            house.HouseName = req.HouseName?? house.HouseName;
-            house.Location = req.Location?? house.Location;
-            house.Address = req.Address?? house.Address;
+            house.HouseName = req.HouseName != null? req.HouseName.Trim() : house.HouseName;
+            house.Location = req.Location != null ? req.Location.Trim() : house.Location;
+            house.Address = req.Address != null ? req.Address.Trim() : house.Address;
+            house.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<House>().UpdateAsync(house);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {

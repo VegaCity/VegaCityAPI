@@ -922,6 +922,7 @@ namespace VegaCityApp.Service.Implement
             {
                 case (int)UserStatusEnum.Active:
                     user.Status = (int)UserStatusEnum.Disable;
+                    user.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<User>().UpdateAsync(user);
                     return await _unitOfWork.CommitAsync() > 0
                         ? new ResponseAPI()

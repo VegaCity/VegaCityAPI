@@ -21,11 +21,12 @@ namespace VegaCityApp.API.Services.Implement
         public StoreService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<StoreService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
         }
-
         public async Task<ResponseAPI> UpdateStore(Guid storeId,UpdateStoreRequest req)
         {
             Guid apiKey = GetMarketZoneIdFromJwt();
-            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == storeId && !x.Deflag);
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
+                (predicate: x => x.Id == storeId && !x.Deflag &&
+                                 x.MarketZoneId == apiKey);
             if (store == null)
             {
                 return new ResponseAPI()
@@ -34,7 +35,16 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = StoreMessage.NotFoundStore
                 };
             }
-            //check enum
+            store.Name = req.Name != null? req.Name.Trim() : store.Name;
+            if (!Enum.IsDefined(typeof(StoreStatusEnum), req.StoreStatus))
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = StoreMessage.InvalidStoreStatus
+                };
+            }
+            store.Status = req.StoreStatus;
             if (!Enum.IsDefined(typeof(StoreTypeEnum), req.StoreType))
             {
                 return new ResponseAPI()
@@ -43,17 +53,12 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = StoreMessage.InvalidStoreType
                 };
             }
-            store.Id = store.Id;
-            store.Name = req.Name;
-            store.Status = req.StoreStatus;
             store.StoreType = req.StoreType;
-            store.Address = req.Address;
-            store.CrDate = TimeUtils.GetCurrentSEATime();
-            store.PhoneNumber = req.PhoneNumber;
-            store.ShortName = req.ShortName;
-            store.Email = req.Email;
-            store.MarketZoneId = apiKey;
-            store.Description = req.Description;
+            store.Address = req.Address != null ? req.Address.Trim() : store.Address;
+            store.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : store.PhoneNumber;
+            store.ShortName = req.ShortName != null ? req.ShortName.Trim() : store.ShortName;
+            store.Email = req.Email != null ? req.Email.Trim() : store.Email;
+            store.Description = req.Description != null ? req.Description.Trim() : store.Description;
             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
             var result = await _unitOfWork.CommitAsync();
             if (result > 0)
@@ -74,7 +79,6 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
-
         public async Task<ResponseAPI<IEnumerable<GetStoreResponse>>> SearchAllStore(int size, int page)
         {
             try
@@ -102,8 +106,8 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => !x.Deflag
-            );
+                predicate: x => !x.Deflag && x.MarketZoneId == GetMarketZoneIdFromJwt()
+                );
                 return new ResponseAPI<IEnumerable<GetStoreResponse>>
                 {
                     MessageResponse = StoreMessage.GetListStoreSuccess,
@@ -175,7 +179,11 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> DeleteStore(Guid StoreId)
         {
-            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == StoreId && !x.Deflag);
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
+                (predicate: x => x.Id == StoreId && !x.Deflag,
+                 include: inStore => inStore.Include(z => z.Menus)
+                                            .Include(z => z.DisputeReports)
+                                            .Include(z => z.StoreServices).ThenInclude(a => a.WalletTypeStoreServiceMappings));
             if (store == null)
             {
                 return new ResponseAPI()
@@ -184,7 +192,41 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = StoreMessage.NotFoundStore
                 };
             }
-
+            //delete every thing related to store
+            if(store.Menus.Count > 0)
+            {
+                foreach (var menu in store.Menus)
+                {
+                    menu.Deflag = true;
+                    _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
+                }
+            }
+            if(store.DisputeReports.Count > 0)
+            {
+                foreach (var dispute in store.DisputeReports)
+                {
+                    _unitOfWork.GetRepository<DisputeReport>().DeleteAsync(dispute);
+                }
+            }
+            if (store.StoreServices.Count > 0)
+            {
+                if(store.StoreServices.Where(x => x.WalletTypeStoreServiceMappings.Count > 0).Count() > 0)
+                {
+                    foreach (var storeService in store.StoreServices)
+                    {
+                        if (storeService.WalletTypeStoreServiceMappings.Count > 0)
+                        {
+                            foreach (var walletTypeStoreServiceMapping in storeService.WalletTypeStoreServiceMappings)
+                            {
+                                _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().DeleteAsync(walletTypeStoreServiceMapping);
+                            }
+                        }
+                        storeService.Deflag = true;
+                        storeService.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Domain.Models.StoreService>().UpdateAsync(storeService);
+                    }
+                }
+            }
             store.Deflag = true;
             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
             return await _unitOfWork.CommitAsync() > 0

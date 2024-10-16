@@ -31,9 +31,9 @@ namespace VegaCityApp.API.Controllers
         [HttpPatch(HouseEndpoint.UpdateHouse)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]
-        public async Task<IActionResult> UpdateHouse(Guid houseId, [FromBody] UpdateHouseRequest req)
+        public async Task<IActionResult> UpdateHouse(Guid id, [FromBody] UpdateHouseRequest req)
         {
-            var result = await _service.UpdateHouse(houseId, req);
+            var result = await _service.UpdateHouse(id, req);
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(HouseEndpoint.GetListHouse)]

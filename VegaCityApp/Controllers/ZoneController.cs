@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Zone;
 using VegaCityApp.API.Payload.Response;
@@ -56,6 +57,7 @@ namespace VegaCityApp.API.Controllers
         [HttpDelete(ZoneEndPoint.DeleteZone)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]
+        [SwaggerOperation(Summary = "If delete Zone, Everything in zone will be deleted")]
         public async Task<IActionResult> DeleteZone(Guid id)
         {
             var result = await _zoneService.DeleteZone(id);

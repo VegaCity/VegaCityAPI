@@ -159,6 +159,7 @@ namespace VegaCityApp.API.Services.Implement
             package.StartDate = req.StartDate;
             package.EndDate = req.EndDate;
             package.ImageUrl = req.ImageUrl;
+            package.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Package>().UpdateAsync(package);
             var result = await _unitOfWork.CommitAsync();
             if (result > 0)
@@ -263,7 +264,9 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> DeletePackage(Guid PackageId)
         {
-            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == PackageId);
+            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
+                (predicate: x => x.Id == PackageId,
+                 include: map => map.Include(z => z.PackageETagTypeMappings));
             if (package == null)
             {
                 return new ResponseAPI()
@@ -272,7 +275,14 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = PackageMessage.NotFoundPackage
                 };
             }
-
+            //delete mapping
+            if(package.PackageETagTypeMappings.Count > 0)
+            {
+                foreach (var item in package.PackageETagTypeMappings)
+                {
+                    _unitOfWork.GetRepository<PackageETagTypeMapping>().DeleteAsync(item);
+                }
+            }
             package.Deflag = true;
             _unitOfWork.GetRepository<Package>().UpdateAsync(package);
             return await _unitOfWork.CommitAsync() > 0
