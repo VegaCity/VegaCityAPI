@@ -63,7 +63,8 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> UpdateZone(Guid Id, UpdateZoneRequest req)
         {
           
-            var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == Id && x.Deflag == false, include: z=>z.Include(zone=>zone.Houses) );
+            var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == Id && x.Deflag == false,
+                include: z=>z.Include(zone=>zone.Houses) );
             if (zone == null)
             {
                 return new ResponseAPI()
@@ -72,17 +73,8 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = ZoneMessage.SearchZoneFail
                 };
             }
-            zone.Name = req.ZoneName;
-            if (zone.Houses.Any(h => h.Deflag == false))
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = ZoneMessage.HouseStillExist,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-            zone.Location = req.ZoneLocation;
-            zone.CrDate = zone.CrDate;
+            zone.Name = req.ZoneName ?? zone.Name;
+            zone.Location = req.ZoneLocation ?? zone.Name;
             zone.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Zone>().UpdateAsync(zone);
             var result = await _unitOfWork.CommitAsync();

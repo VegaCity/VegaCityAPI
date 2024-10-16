@@ -2,7 +2,7 @@
 {
     public class UpdateZoneRequest
     {
-        public string ZoneName { get; set; }
-        public string ZoneLocation { get; set; }
+        public string? ZoneName { get; set; }
+        public string? ZoneLocation { get; set; }
     }
 }
