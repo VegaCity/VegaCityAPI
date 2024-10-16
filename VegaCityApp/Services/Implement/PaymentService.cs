@@ -33,7 +33,8 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> MomoPayment(PaymentRequest request)
         {
             var checkOrder = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                                        (predicate: x => x.InvoiceId == request.InvoiceId && x.Status == OrderStatus.Pending);
+                             (predicate: x => x.InvoiceId == request.InvoiceId 
+                                           && x.Status == OrderStatus.Pending);
             if (checkOrder == null)
             {
                 return new ResponseAPI
@@ -48,7 +49,7 @@ namespace VegaCityApp.API.Services.Implement
                 //checkKey
                 try
                 {
-                    if (request.Key.Split("_")[0] == "Momo")
+                    if (request.Key.Split("_")[0] == "Momo" && request.Key.Split("_")[1] == checkOrder.InvoiceId)
                     {
                         var rawSignature = "accessKey=" + PaymentMomo.MomoAccessKey + "&amount=" + checkOrder.TotalAmount
                                 + "&extraData=" + "&ipnUrl=" + request.UrlIpn + "&orderId=" + request.InvoiceId
@@ -261,7 +262,7 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
 
-            if (req.Key != null && req.Key.Split('_')[0] == "vnpay")
+            if (req.Key != null && req.Key.Split('_')[0] == "vnpay" && req.Key.Split("_")[1] == orderExisted.InvoiceId)
             {
                 try
                 {
@@ -555,7 +556,7 @@ namespace VegaCityApp.API.Services.Implement
                     };
                 }
             }
-            if(req.Key != null && req.Key.Split('_')[0] == "payos")
+            if(req.Key != null && req.Key.Split('_')[0] == "payos" && req.Key.Split("_")[1] == checkOrder.InvoiceId)
             {
                 var customerInfoEtag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == checkOrder.EtagId);
                 var paymentDataChargeMoney = new PaymentData(
@@ -693,18 +694,15 @@ namespace VegaCityApp.API.Services.Implement
             };
             await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
             return await _unitOfWork.CommitAsync() > 0
-                ? new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PayOSConfiguration.ipnUrl + order.Id
-                }
-                : new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.InternalServerError
-                };
+            ? new ResponseAPI()
+            {
+                StatusCode = HttpStatusCodes.NoContent,
+                MessageResponse = PayOSConfiguration.ipnUrl + order.Id
+            }
+            : new ResponseAPI()
+            {
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
-
     }
-
-
 }

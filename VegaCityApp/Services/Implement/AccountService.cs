@@ -481,7 +481,7 @@ namespace VegaCityApp.Service.Implement
             #endregion
             #region check exist
             var emailExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Email == req.Email);
+                x.Email == req.Email && x.MarketZoneId == apiKey);
             if (emailExist != null)
             {
                 return new ResponseAPI()
@@ -491,7 +491,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var phoneNumberExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.PhoneNumber == req.PhoneNumber);
+                x.PhoneNumber == req.PhoneNumber && x.MarketZoneId == apiKey);
             if (phoneNumberExist != null)
             {
                 return new ResponseAPI()
@@ -501,7 +501,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var cccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Cccd == req.CCCD);
+                x.Cccd == req.CCCD && x.MarketZoneId == apiKey);
             if (cccdExist != null)
             {
                 return new ResponseAPI()
