@@ -252,7 +252,7 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
-                MessageResponse = EtagTypeMessage.CreateSuccessFully,
+                MessageResponse = EtagMessage.CreateSuccessFully,
                 StatusCode = HttpStatusCodes.Created,
                 Data = new { etagId = newEtag.Id, walletId = newWallet.Id }
             } : new ResponseAPI()
