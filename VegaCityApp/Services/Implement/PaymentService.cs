@@ -179,43 +179,70 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(IPNMomoRequest req)
         {
-            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending);
-            order.Status = OrderStatus.Completed;
-            order.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
-            //update wallet
-            etag.Wallet.Balance += Int32.Parse(req.amount.ToString());
-            etag.Wallet.BalanceHistory += Int32.Parse(req.amount.ToString());
-            etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
-            //create deposite
-            var newDeposit = new Deposit
+            try
             {
-                Id = Guid.NewGuid(), // Tạo ID mới
-                PaymentType = "Momo",
-                Name = "Nạp tiền vào ETag với số tiền: " + req.amount,
-                IsIncrease = true, // Xác định rằng đây là nạp tiền
-                Amount = Int32.Parse(req.amount.ToString()),
-                CrDate = TimeUtils.GetCurrentSEATime(),
-                UpsDate = TimeUtils.GetCurrentSEATime(),
-                WalletId = etag.Wallet.Id,
-                EtagId = etag.Id,
-                OrderId = order.Id,
-            };
-            await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
-            return await _unitOfWork.CommitAsync() > 0
-                ? new ResponseAPI()
+                var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+                    (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending,
+                     include: z => z.Include(a => a.User).ThenInclude(b => b.Wallets)); //..
+                order.Status = OrderStatus.Completed;
+                order.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
+                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+                //update wallet admin
+                var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(
+                    predicate: x => x.Id == order.User.MarketZoneId);//..
+                var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
+                    predicate: x => x.Email == marketZone.Email, include: wallet => wallet.Include(z => z.Wallets));//..
+                foreach(var item in admin.Wallets)
                 {
-                    StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PaymentMomo.ipnUrl + order.Id
+                    item.BalanceHistory -= Int32.Parse(req.amount.ToString());
                 }
-                : new ResponseAPI()
+                foreach (var item in order.User.Wallets)
                 {
-                    StatusCode = HttpStatusCodes.InternalServerError
+                    item.Balance += Int32.Parse(req.amount.ToString());
+                }
+                _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
+                _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
+                //..
+                //update wallet
+                etag.Wallet.Balance += Int32.Parse(req.amount.ToString());
+                etag.Wallet.BalanceHistory += Int32.Parse(req.amount.ToString());
+                etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+                //create deposite
+                var newDeposit = new Deposit
+                {
+                    Id = Guid.NewGuid(), // Tạo ID mới
+                    PaymentType = "Momo",
+                    Name = "Nạp tiền vào ETag với số tiền: " + req.amount,
+                    IsIncrease = true, // Xác định rằng đây là nạp tiền
+                    Amount = Int32.Parse(req.amount.ToString()),
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    WalletId = etag.Wallet.Id,
+                    EtagId = etag.Id,
+                    OrderId = order.Id,
                 };
+                await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
+                return await _unitOfWork.CommitAsync() > 0
+                    ? new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentMomo.ipnUrl + order.Id
+                    }
+                    : new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.InternalServerError
+                    };
+            }catch (Exception ex)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    MessageResponse = ex.Message
+                };
+            }
         }
 
         public async Task<ResponseAPI> VnPayment(PaymentRequest req, HttpContext context)
@@ -356,46 +383,70 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.InternalServerError
                 };
         }
-        public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(VnPayPaymentResponse req)
+        public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(VnPayPaymentResponse req) //need to fix time
         {
-            var orderInvoiceId = req.vnp_OrderInfo.Split(":", 2)[1];
-            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                (predicate: x => x.InvoiceId == orderInvoiceId && x.Status == OrderStatus.Pending);
-            order.Status = OrderStatus.Completed;
-            order.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
-            //update wallet
-            etag.Wallet.Balance += Int32.Parse(req.vnp_Amount.ToString());
-            etag.Wallet.BalanceHistory += Int32.Parse(req.vnp_Amount.ToString());
-            etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
-            //create deposite
-            var newDeposit = new Deposit
+            try
             {
-                Id = Guid.NewGuid(), // Tạo ID mới
-                PaymentType = "VnPay",
-                Name = "Nạp tiền vào ETag với số tiền: " + req.vnp_Amount,
-                IsIncrease = true, // Xác định rằng đây là nạp tiền
-                Amount = Int32.Parse(req.vnp_Amount.ToString()),
-                CrDate = TimeUtils.GetCurrentSEATime(),
-                UpsDate = TimeUtils.GetCurrentSEATime(),
-                WalletId = etag.Wallet.Id,
-                EtagId = etag.Id,
-                OrderId = order.Id,
-            };
-            await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
-            return await _unitOfWork.CommitAsync() > 0
-                ? new ResponseAPI()
+                var orderInvoiceId = req.vnp_OrderInfo.Split(":", 2)[1];
+                var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+                    (predicate: x => x.InvoiceId == orderInvoiceId && x.Status == OrderStatus.Pending
+                    , include: z => z.Include(a => a.User).ThenInclude(b => b.Wallets));//  find user and wallet vnpay
+                order.Status = OrderStatus.Completed;
+                order.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
+                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+                //admin wallet part vnpay
+                var marketzone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId);
+                var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Email == marketzone.Email, include: wallet => wallet.Include(z => z.Wallets));
+                foreach (var item in admin.Wallets)
                 {
-                    StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = VnPayConfig.ipnUrl + order.Id
+                    item.BalanceHistory -= Int32.Parse(req.vnp_Amount.ToString());
                 }
-                : new ResponseAPI()
+                foreach (var item in order.User.Wallets)
                 {
+                    item.Balance += Int32.Parse(req.vnp_Amount.ToString());
+                }
+                //..
+                //update wallet
+                etag.Wallet.Balance += Int32.Parse(req.vnp_Amount.ToString());
+                etag.Wallet.BalanceHistory += Int32.Parse(req.vnp_Amount.ToString());
+                etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+                //create deposite
+                var newDeposit = new Deposit
+                {
+                    Id = Guid.NewGuid(), // Tạo ID mới
+                    PaymentType = "VnPay",
+                    Name = "Nạp tiền vào ETag với số tiền: " + req.vnp_Amount,
+                    IsIncrease = true, // Xác định rằng đây là nạp tiền
+                    Amount = Int32.Parse(req.vnp_Amount.ToString()),
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    WalletId = etag.Wallet.Id,
+                    EtagId = etag.Id,
+                    OrderId = order.Id,
+                };
+                await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
+                return await _unitOfWork.CommitAsync() > 0
+                    ? new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = VnPayConfig.ipnUrl + order.Id
+                    }
+                    : new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.InternalServerError
+                    };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError
                 };
+            }
         }
 
         public async Task<ResponseAPI> PayOSPayment(PaymentRequest req)
@@ -492,7 +543,9 @@ namespace VegaCityApp.API.Services.Implement
                     description: "đơn hàng :" + req.InvoiceId,
                     items: itemDataList,
                     cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
-                    returnUrl: PayOSConfiguration.ReturnUrlCharge,  // URL khi thanh toán thành công
+                    //returnUrl: PayOSConfiguration.ReturnUrlCharge,
+                     returnUrl: PayOSConfiguration.ReturnUrlChargeUrl,
+                    // URL khi thanh toán thành công
                     buyerName: customerInfoEtag.FullName.ToString(),
                     buyerEmail: "", // very require email here!
                     buyerPhone: customerInfoEtag.PhoneNumber.ToString(),
@@ -558,14 +611,18 @@ namespace VegaCityApp.API.Services.Implement
         {
             //var orderInvoiceId = req.vnp_OrderInfo.Split(":", 2)[1];
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                (predicate: x => x.InvoiceId == orderCode && x.Status == OrderStatus.Pending);
+                (predicate: x => x.InvoiceId == orderCode && x.Status == OrderStatus.Pending,
+                include: z => z.Include(a => a.User).ThenInclude(b => b.Wallets)); //
+                                                                                   //from here
             if (order == null || order.Status == OrderStatus.Completed)
             {
                 // If the order doesn't exist or is already processed, return not found
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = "https://vegacity.id.vn/user/order-status?status=failure"
+                    //MessageResponse = "https://vegacity.id.vn/user/order-status?status=failure"
+                    MessageResponse = PayOSConfiguration.ipnUrl + order.Id
+
                 };
             }
             order.Status = OrderStatus.Completed;
@@ -573,6 +630,21 @@ namespace VegaCityApp.API.Services.Implement
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
                 (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+            //admin wallet stuff
+            var marketzone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId);
+            var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Email == marketzone.Email, include: wallet => wallet.Include(z => z.Wallets)); //
+            foreach (var item in admin.Wallets)
+            {
+                item.BalanceHistory -= Int32.Parse((order.TotalAmount.ToString()));
+            }
+            foreach (var item in order.User.Wallets)
+            {
+                item.Balance += Int32.Parse((order.TotalAmount.ToString()));
+            }
+            _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
+            _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
+            //..
+            
             //update wallet
             etag.Wallet.Balance += Int32.Parse(order.TotalAmount.ToString());
             etag.Wallet.BalanceHistory += Int32.Parse(order.TotalAmount.ToString());

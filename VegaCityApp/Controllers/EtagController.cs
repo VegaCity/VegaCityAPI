@@ -9,6 +9,7 @@ using static VegaCityApp.API.Constants.MessageConstant;
 using VegaCityApp.API.Validators;
 using VegaCityApp.API.Payload.Request.Etag;
 using VegaCityApp.Domain.Paginate;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace VegaCityApp.API.Controllers
 {
@@ -134,7 +135,8 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(EtagEndpoint.ChargeMoneyETag)]
         [ProducesResponseType(typeof(ResponseAPI<ChargeMoneyEtagRequest>), HttpStatusCodes.OK)]
-        //[CustomAuthorize(RoleEnum.CashierApp, RoleEnum.CashierWeb)]
+        [CustomAuthorize(RoleEnum.CashierApp, RoleEnum.CashierWeb)]
+        [SwaggerOperation(Summary = "API is fixing")]
         public async Task<IActionResult> PrepareChargeMoneyEtag([FromBody] ChargeMoneyEtagRequest req)
         {
             var result = await _service.PrepareChargeMoneyEtag(req);

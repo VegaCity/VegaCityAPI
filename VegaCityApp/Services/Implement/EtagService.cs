@@ -18,6 +18,7 @@ namespace VegaCityApp.API.Services.Implement
     {
         public EtagService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<EtagService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ResponseAPI> CreateEtagType(EtagTypeRequest req)
@@ -567,6 +568,8 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
+            //get user id from token
+            Guid userId = GetUserIdFromJwt();
             var etagExist = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagCode == req.EtagCode && !x.Deflag && x.Cccd == req.CCCD,
                  include: etag => etag.Include(y => y.Wallet) );
             if (etagExist == null)
@@ -574,16 +577,6 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI()
                 {
                     MessageResponse = EtagMessage.NotFoundEtag,
-                    StatusCode = HttpStatusCodes.NotFound,
-                };
-            }
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == req.UserId && x.Status == (int)UserStatusEnum.Active);
-               
-            if (user == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = UserMessage.NotFoundUser,
                     StatusCode = HttpStatusCodes.NotFound,
                 };
             }
@@ -600,7 +593,7 @@ namespace VegaCityApp.API.Services.Implement
                 InvoiceId = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
                 EtagId = etagExist.Id,
                 SaleType = "Etag Charge",
-                UserId = req.UserId,
+                UserId = userId,
             };
 
             await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);

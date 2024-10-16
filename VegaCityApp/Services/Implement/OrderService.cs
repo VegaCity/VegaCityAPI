@@ -63,6 +63,8 @@ namespace VegaCityApp.API.Services.Implement
                 count += item.Quantity;
             }
             string json = JsonConvert.SerializeObject(req.ProductData);
+            //add user ID for Store Type
+            Guid userID = GetUserIdFromJwt();
             var newOrder = new Order()
             {
                 Id = Guid.NewGuid(),
@@ -75,7 +77,8 @@ namespace VegaCityApp.API.Services.Implement
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = OrderStatus.Pending,
                 InvoiceId = req.InvoiceId,
-                SaleType = "Store"
+                SaleType = "Store",
+                UserId = userID,
             };
             await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
             //create order Detail
@@ -332,6 +335,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             string customerInfo = JsonConvert.SerializeObject(req.CustomerInfo);
             string json = JsonConvert.SerializeObject(req.ProductData);
+            Guid userId = GetUserIdFromJwt();
             var newOrder = new Order()
             {
                 Id = Guid.NewGuid(),
@@ -343,11 +347,12 @@ namespace VegaCityApp.API.Services.Implement
                 Status = OrderStatus.Pending,
                 InvoiceId = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
                 CustomerInfo = customerInfo,
-                SaleType = req.SaleType
+                SaleType = req.SaleType,
+                UserId = userId,
             };
             await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
             //create order Detail
-            var orderDetail = new OrderDetail()
+            var orderDetail = new OrderDetail() //add userId here
             {
                 Id = Guid.NewGuid(),
                 OrderId = newOrder.Id,
