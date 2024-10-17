@@ -11,5 +11,7 @@ namespace VegaCityApp.API.Enums
     public class SaleType
     {
         public const string EtagCharge = "Etag Charge";
+        public const string Package = "Package";
+        public const string EtagType = "EtagType";
     }
 }

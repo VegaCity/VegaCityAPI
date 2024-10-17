@@ -25,7 +25,7 @@ namespace VegaCityApp.API.Payload.Request.Order
     public class ConfirmOrderForCashierRequest
     {
         public string InvoiceId { get; set; }
-        public GenerateEtagRequest GenerateEtagRequest { get; set; }
+        public GenerateEtagRequest? GenerateEtagRequest { get; set; }
     }
     public class CustomerInfo
     {

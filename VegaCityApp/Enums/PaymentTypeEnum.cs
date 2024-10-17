@@ -22,6 +22,10 @@ namespace VegaCityApp.API.Enums
             "Etag Charge",
         };
     }
+    public class PaymentType
+    {
+        public const string Cash = "Cash";
+    }
     public class PaymentMomo
     {
         public const string MomoAccessKey = "F8BBA842ECF85";
