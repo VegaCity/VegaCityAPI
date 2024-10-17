@@ -728,7 +728,7 @@ namespace VegaCityApp.API.Services.Implement
             //    redirecturl = "https://docs.zalopay.vn/result"
             //};
             var embed_data = new {
-                //redirecturl = "https://www.google.com/"
+                redirecturl = "https://www.google.com/"
             };
             Random random = new Random();
             var app_trans_id = random.Next(1000000);
@@ -741,20 +741,20 @@ namespace VegaCityApp.API.Services.Implement
             {
                 var zaloReq = new ZaloPayRequest()
                 {
-                    app_id = 2554,
-                    app_trans_id = TimeUtils.GetCurrentSEATime().ToString("yyMMdd") + "_" + app_trans_id,
-                    app_user = "user123",
+                    app_id = PaymentZaloPay.app_id,
+                    app_trans_id = TimeUtils.GetCurrentSEATime().ToString("yyMMdd") + "_" + req.InvoiceId,
+                    app_user = PaymentZaloPay.app_user,
                     app_time = long.Parse(TimeUtils.GetTimeStamp().ToString()),
                     item = JsonConvert.SerializeObject(items),
                     embed_data = JsonConvert.SerializeObject(embed_data),
-                    amount = 50000,
+                    amount = checkOrder.TotalAmount,
                     //callback_url = "https://www.google.com/", // callback api update order
-                    description = "Thanh toán cho đơn hàng (InvoiceId):" + app_trans_id,
+                    description = "Thanh toán cho đơn hàng (InvoiceId):" + req.InvoiceId,
                     bank_code = "",
                 };
-                var data = 2554 + "|" + zaloReq.app_trans_id + "|" + zaloReq.app_user + "|" + 50000 + "|"
+                var data = zaloReq.app_id + "|" + zaloReq.app_trans_id + "|" + zaloReq.app_user + "|" + zaloReq.amount + "|"
                 + zaloReq.app_time + "|" + zaloReq.embed_data + "|" + zaloReq.item;
-                zaloReq.mac = PasswordUtil.Compute(PasswordUtil.ZaloPayHMAC.HMACSHA256, PaymentZaloPay.key1, data);
+                zaloReq.mac = PasswordUtil.getSignature(data, PaymentZaloPay.key1);
 
                 var response = await CallApiUtils.CallApiEndpoint("https://sb-openapi.zalopay.vn/v2/create", zaloReq);
 
