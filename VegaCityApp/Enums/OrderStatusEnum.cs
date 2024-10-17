@@ -1,15 +1,15 @@
-﻿namespace VegaCityApp.API.Enums
+﻿using VegaCityApp.API.Utils;
+
+namespace VegaCityApp.API.Enums
 {
-    public enum OrderStatusEnum
-    {
-        Complete,
-        Canceled,
-        Pending
-    }
     public class OrderStatus
     {
         public const string Pending = "PENDING";
         public const string Completed = "COMPLETED";
         public const string Canceled = "CANCELED";
+    }
+    public class SaleType
+    {
+        public const string EtagCharge = "Etag Charge";
     }
 }

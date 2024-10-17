@@ -630,7 +630,7 @@ namespace VegaCityApp.API.Services.Implement
                 Status = OrderStatus.Pending,
                 InvoiceId = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
                 EtagId = etagExist.Id,
-                SaleType = "Etag Charge",
+                SaleType = SaleType.EtagCharge,
                 UserId = userId,
             };
 

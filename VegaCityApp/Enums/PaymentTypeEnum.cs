@@ -10,6 +10,16 @@ namespace VegaCityApp.API.Enums
             "Momo",
             "VnPay",
             "PayOS",
+            "Cash"
+        };
+    }
+    public static class SaleTypeHelper
+    {
+        public static readonly string[] allowedSaleType =
+        {
+            "Package",
+            "EtagType",
+            "Etag Charge",
         };
     }
     public class PaymentMomo

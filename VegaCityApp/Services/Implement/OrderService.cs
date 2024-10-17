@@ -334,6 +334,22 @@ namespace VegaCityApp.API.Services.Implement
                 amount += item.Price * item.Quantity;
                 count += item.Quantity;
             }
+            if (PaymentTypeHelper.allowedPaymentTypes.Contains(req.PaymentType) == false)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = OrderMessage.PaymentTypeInvalid,
+                };
+            }
+            if (SaleTypeHelper.allowedSaleType.Contains(req.SaleType) == false)
+            {
+                return new ResponseAPI()
+                { 
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = OrderMessage.SaleTypeInvalid
+                };
+            }
             string customerInfo = JsonConvert.SerializeObject(req.CustomerInfo);
             string json = JsonConvert.SerializeObject(req.ProductData);
             Guid userId = GetUserIdFromJwt();
