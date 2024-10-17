@@ -439,7 +439,8 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> DeleteEtag(Guid etagId)
         {
-            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == etagId && !x.Deflag);
+            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == etagId && !x.Deflag,
+                                                                                    include: wallet => wallet.Include(z => z.Wallet));
             if (etag == null)
             {
                 return new ResponseAPI()
@@ -449,6 +450,9 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             etag.Deflag = true;
+            etag.Status =(int) EtagStatusEnum.Inactive;
+            etag.Wallet.Deflag = true;
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
             etag.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Etag>().UpdateAsync(etag);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
@@ -474,6 +478,15 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     MessageResponse = EtagMessage.NotFoundEtag,
                     StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+            if (etag.Wallet == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = "Etag Wallet is deleted !!",
+                    Data = new { etag }
                 };
             }
             return new ResponseAPI()
