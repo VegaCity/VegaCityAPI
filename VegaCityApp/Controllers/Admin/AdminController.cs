@@ -76,5 +76,14 @@ namespace VegaCityApp.API.Controllers.Admin
             var result = await _service.DeleteUser(id);
             return StatusCode(result.StatusCode, result);
         }
+        //get admin wallet 
+        [HttpGet(UserEndpoint.GetAdminWallet)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp)]
+        public async Task<IActionResult> GetAdminWallet()
+        {
+            var result = await _service.GetAdminWallet();
+            return Ok(result);
+        }
     }
 }

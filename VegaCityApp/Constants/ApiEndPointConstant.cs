@@ -50,6 +50,7 @@ public static class ApiEndPointConstant
         public const string UpdateUserProfile = ApiEndpoint + "/user/{id}";
         public const string DeleteUser = ApiEndpoint + "/user/{id}";
         public const string CreateUser = ApiEndpoint + "/user";
+        public const string GetAdminWallet = ApiEndpoint + "/wallet";
 
     }
 

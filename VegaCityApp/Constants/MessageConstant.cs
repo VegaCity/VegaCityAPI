@@ -168,6 +168,8 @@ public static class MessageConstant
         public const string EmailExist = "Email already exist !!";
         public const string GetAllUser = "Get All Users Successfully!";
         public const string GetAllUserFail = "Failed To Get All Users!";
+        public const string NotFoundUserWallet = "Failed To Get Admin's Wallet!!";
+        public const string GetWalletSuccess = "Successfully Get Wallet!!";
     }
 
     public static class RoleMessage
