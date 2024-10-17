@@ -247,7 +247,6 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
-
         public async Task<ResponseAPI> VnPayment(PaymentRequest req, HttpContext context)
         {
             var orderExisted = await _unitOfWork.GetRepository<Order>()
@@ -470,7 +469,6 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
-
         public async Task<ResponseAPI> PayOSPayment(PaymentRequest req)
         {
             var checkOrder = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.InvoiceId == req.InvoiceId && x.Status == OrderStatus.Pending);
@@ -702,6 +700,84 @@ namespace VegaCityApp.API.Services.Implement
             : new ResponseAPI()
             {
                 StatusCode = HttpStatusCodes.InternalServerError
+            };
+        }
+        public async Task<ResponseAPI> ZaloPayPayment(PaymentRequest req)
+        {
+            var checkOrder = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+                             (predicate: x => x.InvoiceId == req.InvoiceId
+                                           && x.Status == OrderStatus.Pending);
+            if (checkOrder == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = PaymentMessage.OrderNotFound
+                };
+            }
+            //var demoData = new List<Object>();
+            //demoData.Add(new
+            //{
+            //    itemid = "item1",
+            //    itename = "item 1",
+            //    itemprice = 10000,
+            //    itemquantity = 1
+            //});
+            //var dataEmbed = new {
+            //    preferred_payment_method = new List<string> { "vietqr" },
+            //    redirecturl = "https://docs.zalopay.vn/result"
+            //};
+            var embed_data = new {
+                //redirecturl = "https://www.google.com/"
+            };
+            Random random = new Random();
+            var app_trans_id = random.Next(1000000);
+            var items = new List<Object>();
+            if (req.Key != null && req.Key.Split('_')[0] == "ZaloPay" && req.Key.Split("_")[1] == checkOrder.InvoiceId)
+            {
+
+            }
+            else
+            {
+                var zaloReq = new ZaloPayRequest()
+                {
+                    app_id = 2554,
+                    app_trans_id = TimeUtils.GetCurrentSEATime().ToString("yyMMdd") + "_" + app_trans_id,
+                    app_user = "user123",
+                    app_time = long.Parse(TimeUtils.GetTimeStamp().ToString()),
+                    item = JsonConvert.SerializeObject(items),
+                    embed_data = JsonConvert.SerializeObject(embed_data),
+                    amount = 50000,
+                    //callback_url = "https://www.google.com/", // callback api update order
+                    description = "Thanh toán cho đơn hàng (InvoiceId):" + app_trans_id,
+                    bank_code = "",
+                };
+                var data = 2554 + "|" + zaloReq.app_trans_id + "|" + zaloReq.app_user + "|" + 50000 + "|"
+                + zaloReq.app_time + "|" + zaloReq.embed_data + "|" + zaloReq.item;
+                zaloReq.mac = PasswordUtil.Compute(PasswordUtil.ZaloPayHMAC.HMACSHA256, PaymentZaloPay.key1, data);
+
+                var response = await CallApiUtils.CallApiEndpoint("https://sb-openapi.zalopay.vn/v2/create", zaloReq);
+
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.InternalServerError,
+                        MessageResponse = PaymentMessage.ZaloPayPaymentFail
+                    };
+                }
+                var ZaloPayResponse = await CallApiUtils.GenerateObjectFromResponse<ZaloPayPaymentResponse>(response);
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = PaymentMessage.MomoPaymentSuccess,
+                    Data = ZaloPayResponse
+                };
+            }
+            return new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.BadRequest,
+                MessageResponse = PaymentMessage.ZaloPayPaymentFail
             };
         }
     }

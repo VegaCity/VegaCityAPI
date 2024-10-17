@@ -179,6 +179,12 @@ namespace VegaCityApp.API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error processing payment.");
             }
         }
-
+        [HttpPost(PaymentEndpoint.ZaloPayPayment)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        public async Task<IActionResult> ZaloPayPayment([FromBody] PaymentRequest request)
+        {
+            var result = await _service.ZaloPayPayment(request);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }
