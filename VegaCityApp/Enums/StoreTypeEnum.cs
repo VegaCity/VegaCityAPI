@@ -4,6 +4,7 @@
     {
         Food = 0,
         Clothing = 1,
-        Other = 2
+        Service = 2,
+        Other = 3
     }
 }

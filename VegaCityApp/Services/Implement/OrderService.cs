@@ -28,6 +28,22 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> CreateOrder(CreateOrderRequest req)
         {
+            if(PaymentTypeHelper.allowedPaymentTypes.Contains(req.PaymentType) == false)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = OrderMessage.PaymentTypeInvalid,
+                };
+            }
+            if (SaleTypeHelper.allowedSaleType.Contains(req.SaleType) == false)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = OrderMessage.SaleTypeInvalid
+                };
+            }
             var store = await _unitOfWork.GetRepository<Store>()
                 .SingleOrDefaultAsync(predicate: x => x.Id == req.StoreId && !x.Deflag && x.Status ==(int) StoreStatusEnum.Opened);
             if(!ValidationUtils.CheckNumber(req.TotalAmount))
@@ -77,7 +93,7 @@ namespace VegaCityApp.API.Services.Implement
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = OrderStatus.Pending,
                 InvoiceId = req.InvoiceId,
-                SaleType = "Store",
+                SaleType = req.SaleType,
                 UserId = userID,
             };
             await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
@@ -428,7 +444,7 @@ namespace VegaCityApp.API.Services.Implement
             int count = 0;
             foreach (var item in productJson)
             {
-                if (order.SaleType == "EtagType")
+                if (order.SaleType == SaleType.EtagType)
                 {
                     etagTypeName = item.Name;
                     count = item.Quantity;
@@ -519,7 +535,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             else
             {
-                if (order.PaymentType == PaymentType.Cash && PaymentTypeHelper.allowedPaymentTypes.Contains(order.PaymentType) && order.SaleType == SaleType.EtagCharge)
+                if (PaymentTypeHelper.allowedPaymentTypes.Contains(order.PaymentType) && PaymentTypeHelper.allowedPaymentTypes.Contains(order.PaymentType) && order.SaleType == SaleType.EtagCharge)
                 {
                     order.Status = OrderStatus.Completed;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -553,7 +569,7 @@ namespace VegaCityApp.API.Services.Implement
                     var newDeposit = new Deposit
                     {
                         Id = Guid.NewGuid(), // Tạo ID mới
-                        PaymentType = "Momo",
+                        PaymentType = "Cash",
                         Name = "Nạp tiền vào ETag với số tiền: " + order.TotalAmount,
                         IsIncrease = true, // Xác định rằng đây là nạp tiền
                         Amount = Int32.Parse(order.TotalAmount.ToString()),

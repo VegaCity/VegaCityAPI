@@ -22,10 +22,6 @@ namespace VegaCityApp.API.Enums
             "Etag Charge",
         };
     }
-    public class PaymentType
-    {
-        public const string Cash = "Cash";
-    }
     public class PaymentMomo
     {
         public const string MomoAccessKey = "F8BBA842ECF85";
@@ -48,12 +44,14 @@ namespace VegaCityApp.API.Enums
     }
     public class PaymentZaloPay
     {
-        public const string app_id = "2554";
+        public const int app_id = 2554;
         public const string app_user = "demo";
         public const string app_time = "1612138541";
         public const string key1 = "sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn";
         public const string key2 = "trMrHtvjo6myautxDUiAcYsVtaeQ8nhf";
         public const string create_order_url = "https://sb-openapi.zalopay.vn/v2/create";
+        public const string redirectUrl = "https://api.vegacity.id.vn/api/v1/payment/zalopay/order";
+        public const string ipnUrl = "https://vegacity.id.vn/order-status?status=success&orderId=";
     }
 
     public class VnPayConfig

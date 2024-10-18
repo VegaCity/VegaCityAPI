@@ -96,7 +96,10 @@ public static class MessageConstant
     }
     public static class EtagMessage
     {
+        public const string PhoneNumberExist = "Phone Number already exist !!";
+        public const string CCCDExist = "CCCD already exist !!";
         public const string EtagExpired = "Etag Expired !!";
+        public const string CreateSuccessFully = "Create Etag Successfully !!";
         public const string SearchEtagSuccess = "Search Etag Successfully !!";
         public const string SearchAllEtagsSuccess = "Search All Etags Successfully !!";
         public const string SearchAllEtagsFailed = "Failed To Search All Etags !!";
@@ -300,6 +303,7 @@ public static class MessageConstant
     }
     public static class PaymentMessage
     {
+        public const string ZaloPayPaymentFail = "Failed To Create Payment with ZaloPay";
         public const string OrderNotFound = "Order Not Found";
         public const string MomoPaymentFail = "Momo Payment Fail";
         public const string VnPaySuccess = "Successflly With VnPay";

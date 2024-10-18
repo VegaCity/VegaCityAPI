@@ -11,6 +11,15 @@
         {
             return value.ToString("H:mm");
         }
+        public static long GetTimeStampp(DateTime date)
+        {
+            return (long)(date.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0)).TotalMilliseconds;
+        }
+
+        public static long GetTimeStamp()
+        {
+            return GetTimeStampp(DateTime.Now);
+        }
 
         // config on server ubuntu, docker
         public static DateTime GetCurrentSEATime()

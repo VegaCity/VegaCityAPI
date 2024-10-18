@@ -16,6 +16,8 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> PayOSPayment(PaymentRequest req);
         Task<ResponseAPI> UpdatePayOSOrder(string code, string id, string status, string orderCode);
         Task<ResponseAPI> UpdateOrderPaidOSForChargingMoney(string code, string id, string status, string orderCode);
-
+        Task<ResponseAPI> ZaloPayPayment(PaymentRequest req);
+        Task<ResponseAPI> UpdateOrderPaid(IPNZaloPayRequest req);
+        Task<ResponseAPI> UpdateOrderPaidForChargingMoney(IPNZaloPayRequest req);
     }
 }

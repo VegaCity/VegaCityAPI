@@ -252,7 +252,7 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
-                MessageResponse = EtagTypeMessage.CreateSuccessFully,
+                MessageResponse = EtagMessage.CreateSuccessFully,
                 StatusCode = HttpStatusCodes.Created,
                 Data = new { etagId = newEtag.Id, walletId = newWallet.Id }
             } : new ResponseAPI()
@@ -559,9 +559,43 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
+            if(!ValidationUtils.IsCCCD(req.CCCD))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.CCCDInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            if (!ValidationUtils.IsPhoneNumber(req.Phone))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.PhoneNumberInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            var checkPhone = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.PhoneNumber == req.Phone && !x.Deflag);
+            if (checkPhone != null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.PhoneNumberExist,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            var checkCCCD = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Cccd == req.CCCD && !x.Deflag);
+            if (checkCCCD != null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.CCCDExist,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
             etag.Status = (int)EtagStatusEnum.Active;
             etag.FullName = req.Name;
-            etag.PhoneNumber = req.Phone;
+            etag.PhoneNumber = req.Phone; 
             etag.Cccd = req.CCCD;
             etag.UpsDate = TimeUtils.GetCurrentSEATime();
             etag.Gender = req.Gender;
@@ -588,6 +622,14 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI()
                 {
                     MessageResponse = OrderMessage.TotalAmountInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            if (!ValidationUtils.IsCCCD(req.CCCD))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.CCCDInvalid,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
@@ -645,8 +687,7 @@ namespace VegaCityApp.API.Services.Implement
                      invoiceId = newOrder.InvoiceId,
                      balance = req.ChargeAmount,
                      Key = key,
-                     UrlDirect = "https://api.vegacity.id.vn/api/v1/payment/" + req.PaymentType.ToLower()  + "/order/charge-money",
-                     //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
+                     UrlDirect = $"https://localhost:44395/api/v1/payment/{req.PaymentType.ToLower()}/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
                      UrlIpn = $"https://vegacity.id.vn/order-status?status=success&orderId={newOrder.Id}"
                  }
             } : new ResponseAPI()

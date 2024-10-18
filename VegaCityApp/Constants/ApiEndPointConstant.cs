@@ -100,14 +100,16 @@ public static class ApiEndPointConstant
     }
     public static class PaymentEndpoint
     {
+        public const string ZaloPayPayment = ApiEndpoint + "/payment/zalopay";
         public const string MomoPayment = ApiEndpoint + "/payment/momo";
-        public const string ZaloPayment = ApiEndpoint + "/payment/zalo";
         public const string VnPayPayment = ApiEndpoint + "/payment/vnpay";
         public const string VisaCardPayment = ApiEndpoint + "/payment/visa";
         public const string UpdateOrderPaid = ApiEndpoint + "/payment/momo/order";
+        public const string UpdateOrderPaidZaloPay = ApiEndpoint + "/payment/zalopay/order";
         public const string UpdateOrderPaidForChargingMoney = ApiEndpoint + "/payment/momo/order/charge-money";
+        public const string UpdateOrderPaidForChargingMoneyZaloPay = ApiEndpoint + "/payment/zalopay/order/charge-money";
         public const string UpdateOrderVnPaidForChargingMoney = ApiEndpoint + "/payment/vnpay/order/charge-money";
-       // public const string UpdateOrderPaidOSForChargingMoney = ApiEndpoint + "/payment/payos/order/charge-money";
+        // public const string UpdateOrderPaidOSForChargingMoney = ApiEndpoint + "/payment/payos/order/charge-money";
         public const string UpdateVnPayOrder = ApiEndpoint + "/payment/vnpay/order";
         public const string PayOSPayment = ApiEndpoint + "/payment/payos";
         public const string UpdatePayOSOrder = ApiEndpoint + "/payment/payos/order";
