@@ -186,5 +186,29 @@ namespace VegaCityApp.API.Controllers
             var result = await _service.ZaloPayPayment(request);
             return StatusCode(result.StatusCode, result);
         }
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [HttpGet(PaymentEndpoint.UpdateOrderPaidZaloPay)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> UpdateOrderPaidZaloPay([FromQuery] IPNZaloPayRequest req)
+        {
+            var result = await _service.UpdateOrderPaid(req);
+            if (result.StatusCode == HttpStatusCodes.NoContent)
+            {
+                return Redirect(result.MessageResponse);
+            }
+            return Redirect(result.MessageResponse);
+        }
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [HttpGet(PaymentEndpoint.UpdateOrderPaidForChargingMoneyZaloPay)]
+        public async Task<IActionResult> UpdateOrderPaidForChargingMoney([FromQuery] IPNZaloPayRequest req)
+        {
+            var result = await _service.UpdateOrderPaidForChargingMoney(req);
+            if (result.StatusCode == HttpStatusCodes.NoContent)
+            {
+                return Redirect(result.MessageResponse);
+            }
+            return BadRequest();
+        }
     }
 }

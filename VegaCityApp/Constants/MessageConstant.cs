@@ -96,6 +96,8 @@ public static class MessageConstant
     }
     public static class EtagMessage
     {
+        public const string PhoneNumberExist = "Phone Number already exist !!";
+        public const string CCCDExist = "CCCD already exist !!";
         public const string EtagExpired = "Etag Expired !!";
         public const string SearchEtagSuccess = "Search Etag Successfully !!";
         public const string SearchAllEtagsSuccess = "Search All Etags Successfully !!";

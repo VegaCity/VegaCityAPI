@@ -49,7 +49,7 @@ namespace VegaCityApp.API.Services.Implement
                 //checkKey
                 try
                 {
-                    if (request.Key.Split("_")[0] == "Momo" && request.Key.Split("_")[1] == checkOrder.InvoiceId)
+                    if (PaymentTypeHelper.allowedPaymentTypes.Contains(request.Key.Split("_")[0]) && request.Key.Split("_")[1] == checkOrder.InvoiceId)
                     {
                         var rawSignature = "accessKey=" + PaymentMomo.MomoAccessKey + "&amount=" + checkOrder.TotalAmount
                                 + "&extraData=" + "&ipnUrl=" + request.UrlIpn + "&orderId=" + request.InvoiceId
@@ -261,7 +261,7 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
 
-            if (req.Key != null && req.Key.Split('_')[0] == "vnpay" && req.Key.Split("_")[1] == orderExisted.InvoiceId)
+            if (req.Key != null && PaymentTypeHelper.allowedPaymentTypes.Contains(req.Key.Split('_')[0]) && req.Key.Split("_")[1] == orderExisted.InvoiceId)
             {
                 try
                 {
@@ -554,7 +554,7 @@ namespace VegaCityApp.API.Services.Implement
                     };
                 }
             }
-            if(req.Key != null && req.Key.Split('_')[0] == "payos" && req.Key.Split("_")[1] == checkOrder.InvoiceId)
+            if(req.Key != null && PaymentTypeHelper.allowedPaymentTypes.Contains(req.Key.Split('_')[0]) && req.Key.Split("_")[1] == checkOrder.InvoiceId)
             {
                 var customerInfoEtag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == checkOrder.EtagId);
                 var paymentDataChargeMoney = new PaymentData(
@@ -715,29 +715,11 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = PaymentMessage.OrderNotFound
                 };
             }
-            //var demoData = new List<Object>();
-            //demoData.Add(new
-            //{
-            //    itemid = "item1",
-            //    itename = "item 1",
-            //    itemprice = 10000,
-            //    itemquantity = 1
-            //});
-            //var dataEmbed = new {
-            //    preferred_payment_method = new List<string> { "vietqr" },
-            //    redirecturl = "https://docs.zalopay.vn/result"
-            //};
             var embed_data = new {
-                redirecturl = "https://www.google.com/"
+                redirecturl = req.UrlDirect ?? PaymentZaloPay.redirectUrl,
             };
-            Random random = new Random();
-            var app_trans_id = random.Next(1000000);
             var items = new List<Object>();
-            if (req.Key != null && req.Key.Split('_')[0] == "ZaloPay" && req.Key.Split("_")[1] == checkOrder.InvoiceId)
-            {
-
-            }
-            else
+            if (req.Key != null && PaymentTypeHelper.allowedPaymentTypes.Contains(req.Key.Split('_')[0]) && req.Key.Split("_")[1] == checkOrder.InvoiceId)
             {
                 var zaloReq = new ZaloPayRequest()
                 {
@@ -748,7 +730,6 @@ namespace VegaCityApp.API.Services.Implement
                     item = JsonConvert.SerializeObject(items),
                     embed_data = JsonConvert.SerializeObject(embed_data),
                     amount = checkOrder.TotalAmount,
-                    //callback_url = "https://www.google.com/", // callback api update order
                     description = "Thanh toán cho đơn hàng (InvoiceId):" + req.InvoiceId,
                     bank_code = "",
                 };
@@ -774,11 +755,133 @@ namespace VegaCityApp.API.Services.Implement
                     Data = ZaloPayResponse
                 };
             }
-            return new ResponseAPI
+            else
             {
-                StatusCode = HttpStatusCodes.BadRequest,
-                MessageResponse = PaymentMessage.ZaloPayPaymentFail
-            };
+                var zaloReq = new ZaloPayRequest()
+                {
+                    app_id = PaymentZaloPay.app_id,
+                    app_trans_id = TimeUtils.GetCurrentSEATime().ToString("yyMMdd") + "_" + req.InvoiceId,
+                    app_user = PaymentZaloPay.app_user,
+                    app_time = long.Parse(TimeUtils.GetTimeStamp().ToString()),
+                    item = JsonConvert.SerializeObject(items),
+                    embed_data = JsonConvert.SerializeObject(embed_data),
+                    amount = checkOrder.TotalAmount,
+                    description = "Thanh toán cho đơn hàng (InvoiceId):" + req.InvoiceId,
+                    bank_code = "",
+                };
+                var data = zaloReq.app_id + "|" + zaloReq.app_trans_id + "|" + zaloReq.app_user + "|" + zaloReq.amount + "|"
+                + zaloReq.app_time + "|" + zaloReq.embed_data + "|" + zaloReq.item;
+                zaloReq.mac = PasswordUtil.getSignature(data, PaymentZaloPay.key1);
+
+                var response = await CallApiUtils.CallApiEndpoint("https://sb-openapi.zalopay.vn/v2/create", zaloReq);
+
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.InternalServerError,
+                        MessageResponse = PaymentMessage.ZaloPayPaymentFail
+                    };
+                }
+                var ZaloPayResponse = await CallApiUtils.GenerateObjectFromResponse<ZaloPayPaymentResponse>(response);
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = PaymentMessage.MomoPaymentSuccess,
+                    Data = ZaloPayResponse
+                };
+            }
+        }
+        public async Task<ResponseAPI> UpdateOrderPaid(IPNZaloPayRequest req)
+        {
+            string InvoiceId = req.apptransid.Split("_")[1];
+            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+                (predicate: x => x.InvoiceId == InvoiceId && x.Status == OrderStatus.Pending);
+            order.Status = OrderStatus.Completed;
+            order.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NoContent,
+                    MessageResponse = PaymentZaloPay.ipnUrl + order.Id
+                }
+                : new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    MessageResponse = "https://vegacity.id.vn/order-status?status=failure"
+                };
+        }
+        public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(IPNZaloPayRequest req)
+        {
+            try
+            {
+                string InvoiceId = req.apptransid.Split("_")[1];
+                var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+                    (predicate: x => x.InvoiceId == InvoiceId && x.Status == OrderStatus.Pending,
+                     include: z => z.Include(a => a.User).ThenInclude(b => b.Wallets)); //..
+                order.Status = OrderStatus.Completed;
+                order.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
+                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+                //update wallet admin
+                var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(
+                    predicate: x => x.Id == order.User.MarketZoneId);//..
+                var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
+                    predicate: x => x.Email == marketZone.Email, include: wallet => wallet.Include(z => z.Wallets));//..
+                foreach (var item in admin.Wallets)
+                {
+                    item.BalanceHistory -= Int32.Parse(req.amount.ToString());
+                    item.UpsDate = TimeUtils.GetCurrentSEATime();
+                }
+                foreach (var item in order.User.Wallets)
+                {
+                    item.UpsDate = TimeUtils.GetCurrentSEATime();
+                    item.Balance += Int32.Parse(req.amount.ToString());
+                }
+                _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
+                _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
+                //..
+                //update wallet
+                etag.Wallet.Balance += Int32.Parse(req.amount.ToString());
+                etag.Wallet.BalanceHistory += Int32.Parse(req.amount.ToString());
+                etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+                //create deposite
+                var newDeposit = new Deposit
+                {
+                    Id = Guid.NewGuid(), // Tạo ID mới
+                    PaymentType = "Momo",
+                    Name = "Nạp tiền vào ETag với số tiền: " + req.amount,
+                    IsIncrease = true, // Xác định rằng đây là nạp tiền
+                    Amount = Int32.Parse(req.amount.ToString()),
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    WalletId = etag.Wallet.Id,
+                    EtagId = etag.Id,
+                    OrderId = order.Id,
+                };
+                await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
+                return await _unitOfWork.CommitAsync() > 0
+                    ? new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentMomo.ipnUrl + order.Id
+                    }
+                    : new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.InternalServerError
+                    };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    MessageResponse = ex.Message
+                };
+            }
         }
     }
 }
