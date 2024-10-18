@@ -232,7 +232,7 @@ namespace VegaCityApp.API.Services.Implement
                     ? new ResponseAPI()
                     {
                         StatusCode = HttpStatusCodes.NoContent,
-                        MessageResponse = req.UrlIpn + order.Id
+                        MessageResponse = PaymentMomo.ipnUrl + order.Id
                     }
                     : new ResponseAPI()
                     {
@@ -335,7 +335,7 @@ namespace VegaCityApp.API.Services.Implement
 
             vnpay.AddRequestData("vnp_OrderInfo", "Thanh toán cho đơn hàng (InvoiceId):" + req.InvoiceId);
             vnpay.AddRequestData("vnp_OrderType", "other"); //default value: other
-            vnpay.AddRequestData("vnp_ReturnUrl", req.UrlDirect);
+            vnpay.AddRequestData("vnp_ReturnUrl", VnPayConfig.PaymentBackReturnUrl);
 
             vnpay.AddRequestData("vnp_TxnRef", tick); // Mã tham chiếu của giao dịch tại hệ thống của merchant. Mã này là duy nhất dùng để phân biệt các đơn hàng gửi sang VNPAY. Không được trùng lặp trong ngày
 
@@ -454,7 +454,7 @@ namespace VegaCityApp.API.Services.Implement
                     ? new ResponseAPI()
                     {
                         StatusCode = HttpStatusCodes.NoContent,
-                        MessageResponse = req.UrlIpn + order.Id
+                        MessageResponse = VnPayConfig.ipnUrl + order.Id
                     }
                     : new ResponseAPI()
                     {
@@ -524,7 +524,7 @@ namespace VegaCityApp.API.Services.Implement
                         description: "đơn hàng :" + req.InvoiceId,
                         items: itemDataList,
                         cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
-                        returnUrl: req.UrlDirect,  // URL khi thanh toán thành công
+                        returnUrl: PayOSConfiguration.ReturnUrl,  // URL khi thanh toán thành công
                         buyerName: customerInfo.FullName.ToString(),
                         //buyerEmail: customerInfo.Email.ToString(), // very require email here!
                         buyerEmail:"",
@@ -566,7 +566,7 @@ namespace VegaCityApp.API.Services.Implement
                     items: itemDataList,
                     cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
                     //returnUrl: PayOSConfiguration.ReturnUrlCharge,
-                     returnUrl: req.UrlDirect,
+                     returnUrl: PayOSConfiguration.ReturnUrlCharge,
                     // URL khi thanh toán thành công
                     buyerName: customerInfoEtag.FullName.ToString(),
                     buyerEmail: "", // very require email here!
