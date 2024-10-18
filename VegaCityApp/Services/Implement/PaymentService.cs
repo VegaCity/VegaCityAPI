@@ -262,7 +262,7 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
 
-            if (req.Key != null && req.Key.Split('_')[0] == "vnpay" && req.Key.Split("_")[1] == orderExisted.InvoiceId)
+            if (req.Key != null && req.Key.Split('_')[0].ToLower() == "vnpay" && req.Key.Split("_")[1] == orderExisted.InvoiceId)
             {
                 try
                 {
@@ -556,7 +556,7 @@ namespace VegaCityApp.API.Services.Implement
                     };
                 }
             }
-            if(req.Key != null && req.Key.Split('_')[0] == "payos" && req.Key.Split("_")[1] == checkOrder.InvoiceId)
+            if(req.Key != null && req.Key.Split('_')[0].ToLower() == "payos" && req.Key.Split("_")[1] == checkOrder.InvoiceId)
             {
                 var customerInfoEtag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == checkOrder.EtagId);
                 var paymentDataChargeMoney = new PaymentData(
