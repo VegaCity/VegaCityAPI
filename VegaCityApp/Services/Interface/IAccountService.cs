@@ -28,5 +28,7 @@ namespace VegaCityApp.Service.Interface
         Task<ResponseAPI> UpdateUser(Guid userId, UpdateUserAccountRequest req);
 
         Task<ResponseAPI> DeleteUser(Guid UserId);
+        Task<ResponseAPI> GetAdminWallet();
+
     }
 }

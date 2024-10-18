@@ -114,6 +114,7 @@ namespace VegaCityApp.API.Controllers
         [HttpDelete(EtagEndpoint.DeleteEtag)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb)]
+        [SwaggerOperation(Summary = "Delete Etag, wallet's Etag willbe deleted")]
         public async Task<IActionResult> DeleteEtag(Guid id)
         {
             var result = await _service.DeleteEtag(id);

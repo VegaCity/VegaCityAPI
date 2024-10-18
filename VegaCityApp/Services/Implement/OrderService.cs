@@ -28,6 +28,22 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> CreateOrder(CreateOrderRequest req)
         {
+            if(PaymentTypeHelper.allowedPaymentTypes.Contains(req.PaymentType) == false)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = OrderMessage.PaymentTypeInvalid,
+                };
+            }
+            if (SaleTypeHelper.allowedSaleType.Contains(req.SaleType) == false)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = OrderMessage.SaleTypeInvalid
+                };
+            }
             var store = await _unitOfWork.GetRepository<Store>()
                 .SingleOrDefaultAsync(predicate: x => x.Id == req.StoreId && !x.Deflag && x.Status ==(int) StoreStatusEnum.Opened);
             if(!ValidationUtils.CheckNumber(req.TotalAmount))
@@ -77,7 +93,7 @@ namespace VegaCityApp.API.Services.Implement
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = OrderStatus.Pending,
                 InvoiceId = req.InvoiceId,
-                SaleType = "Store",
+                SaleType = req.SaleType,
                 UserId = userID,
             };
             await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
@@ -334,6 +350,22 @@ namespace VegaCityApp.API.Services.Implement
                 amount += item.Price * item.Quantity;
                 count += item.Quantity;
             }
+            if (PaymentTypeHelper.allowedPaymentTypes.Contains(req.PaymentType) == false)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = OrderMessage.PaymentTypeInvalid,
+                };
+            }
+            if (SaleTypeHelper.allowedSaleType.Contains(req.SaleType) == false)
+            {
+                return new ResponseAPI()
+                { 
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = OrderMessage.SaleTypeInvalid
+                };
+            }
             string customerInfo = JsonConvert.SerializeObject(req.CustomerInfo);
             string json = JsonConvert.SerializeObject(req.ProductData);
             Guid userId = GetUserIdFromJwt();
@@ -385,8 +417,8 @@ namespace VegaCityApp.API.Services.Implement
         {
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
                 predicate: x => x.InvoiceId == req.InvoiceId && x.Status == OrderStatus.Pending,
-                include: order => order.Include(z => z.OrderDetails));
-            if(order == null)
+                include: order => order.Include(z => z.OrderDetails).Include(a => a.User).ThenInclude(b => b.Wallets));
+            if (order == null)
             {
                 return new ResponseAPI()
                 {
@@ -397,15 +429,22 @@ namespace VegaCityApp.API.Services.Implement
             string etagTypeName = "";
             string packageName = "";
             string json = "";
-            foreach (var item in order.OrderDetails)
+            if (order.OrderDetails.Count > 0)
             {
-                json = item.ProductJson;
+                foreach (var item in order.OrderDetails)
+                {
+                    if (item.ProductJson != null)
+                    {
+                        json = item.ProductJson;
+                    }
+                }
             }
-            var productJson = JsonConvert.DeserializeObject<List<OrderProductFromCashierRequest>>(json);
+            List<OrderProductFromCashierRequest> productJson = new List<OrderProductFromCashierRequest>();
+            if (json != "") productJson = JsonConvert.DeserializeObject<List<OrderProductFromCashierRequest>>(json);
             int count = 0;
-            foreach(var item in productJson)
+            foreach (var item in productJson)
             {
-                if(order.SaleType == "EtagType")
+                if (order.SaleType == SaleType.EtagType)
                 {
                     etagTypeName = item.Name;
                     count = item.Quantity;
@@ -417,7 +456,10 @@ namespace VegaCityApp.API.Services.Implement
                 }
             }
             int quantityEtagType = 0;
-            if (order.SaleType == "Package")
+            // fix lại cái response khi nhập saleType
+            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Name == etagTypeName && !x.Deflag);
+            //generate etag
+            if (order.SaleType == SaleType.Package)
             {
                 var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
                     predicate: x => x.Name == packageName && !x.Deflag,
@@ -435,12 +477,6 @@ namespace VegaCityApp.API.Services.Implement
                     etagTypeName = item.EtagType.Name;
                     quantityEtagType = item.QuantityEtagType;
                 }
-            }
-            // fix lại cái response khi nhập saleType
-            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Name == etagTypeName && !x.Deflag);
-            //generate etag
-            if(order.SaleType == "Package")
-            {
                 var ListEtagFollowQuantity = await _etagService.GenerateEtag(quantityEtagType, etagType.Id, req.GenerateEtagRequest);
                 if (ListEtagFollowQuantity.StatusCode == HttpStatusCodes.BadRequest)
                 {
@@ -459,7 +495,8 @@ namespace VegaCityApp.API.Services.Implement
                     Data = new
                     {
                         OrderId = order.Id,
-                        invoiceId = order.InvoiceId
+                        invoiceId = order.InvoiceId,
+                        ListEtagGenerate = ListEtagFollowQuantity.Data
                     }
                 } : new ResponseAPI()
                 {
@@ -467,7 +504,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            else
+            else if (order.SaleType == SaleType.EtagType)
             {
                 var ListEtag = await _etagService.GenerateEtag(count, etagType.Id, req.GenerateEtagRequest);
                 if (ListEtag.StatusCode == HttpStatusCodes.BadRequest)
@@ -496,6 +533,73 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
+            else
+            {
+                if (PaymentTypeHelper.allowedPaymentTypes.Contains(order.PaymentType) && PaymentTypeHelper.allowedPaymentTypes.Contains(order.PaymentType) && order.SaleType == SaleType.EtagCharge)
+                {
+                    order.Status = OrderStatus.Completed;
+                    order.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                    var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
+                        (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+                    //update wallet admin
+                    var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(
+                        predicate: x => x.Id == order.User.MarketZoneId);//..
+                    var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
+                        predicate: x => x.Email == marketZone.Email, include: wallet => wallet.Include(z => z.Wallets));//..
+                    foreach (var item in admin.Wallets)
+                    {
+                        item.BalanceHistory -= Int32.Parse(order.TotalAmount.ToString());
+                        item.UpsDate = TimeUtils.GetCurrentSEATime();
+                    }
+                    foreach (var item in order.User.Wallets)
+                    {
+                        item.UpsDate = TimeUtils.GetCurrentSEATime();
+                        item.Balance += Int32.Parse(order.TotalAmount.ToString());
+                    }
+                    _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
+                    _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
+                    //..
+                    //update wallet
+                    etag.Wallet.Balance += Int32.Parse(order.TotalAmount.ToString());
+                    etag.Wallet.BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
+                    etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+                    //create deposite
+                    var newDeposit = new Deposit
+                    {
+                        Id = Guid.NewGuid(), // Tạo ID mới
+                        PaymentType = "Cash",
+                        Name = "Nạp tiền vào ETag với số tiền: " + order.TotalAmount,
+                        IsIncrease = true, // Xác định rằng đây là nạp tiền
+                        Amount = Int32.Parse(order.TotalAmount.ToString()),
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        WalletId = etag.Wallet.Id,
+                        EtagId = etag.Id,
+                        OrderId = order.Id,
+                    };
+                    await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
+                    return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI() {
+                        StatusCode = HttpStatusCodes.OK,
+                        MessageResponse = OrderMessage.ConfirmOrderSuccessfully,
+                        Data = new
+                        {
+                            OrderId = order.Id,
+                            invoiceId = order.InvoiceId,
+                        }
+                    } : new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = OrderMessage.ConfirmOrderFail,
+                    };
+                }
+            }
+            return new ResponseAPI()
+            {
+                StatusCode = HttpStatusCodes.BadRequest,
+                MessageResponse = OrderMessage.ConfirmOrderFail,
+            };
         }
     }
 }

@@ -6,6 +6,7 @@ namespace VegaCityApp.API.Payload.Request.Order
     {
         public string OrderName { get; set; }
         public string PaymentType { get; set; }
+        public string SaleType { get; set; }
         public Guid StoreId { get; set; }
         public int TotalAmount { get; set; }
         public Guid MenuId { get; set; }
@@ -25,7 +26,7 @@ namespace VegaCityApp.API.Payload.Request.Order
     public class ConfirmOrderForCashierRequest
     {
         public string InvoiceId { get; set; }
-        public GenerateEtagRequest GenerateEtagRequest { get; set; }
+        public GenerateEtagRequest? GenerateEtagRequest { get; set; }
     }
     public class CustomerInfo
     {

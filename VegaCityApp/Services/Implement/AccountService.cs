@@ -954,5 +954,35 @@ namespace VegaCityApp.Service.Implement
                 MessageResponse = UserMessage.DeleteUserFail
             };
         }
+        public async Task<ResponseAPI> GetAdminWallet()
+        {
+            var currentMarketZoneId = GetMarketZoneIdFromJwt();
+            var marketzone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == currentMarketZoneId);
+            if(marketzone == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = "Not Found MarketZone!!",
+                    StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+            var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Email == marketzone.Email, include: wallet => wallet.Include(z => z.Wallets));
+            if (admin == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = UserMessage.NotFoundUserWallet,
+                    StatusCode = HttpStatusCodes.NotFound,
+                };
+            }
+            Wallet walletAd = admin.Wallets.SingleOrDefault();
+            walletAd.User = null;
+            return new ResponseAPI()
+            {
+                MessageResponse = UserMessage.GetWalletSuccess,
+                StatusCode = HttpStatusCodes.OK,
+                Data = walletAd
+            };
+        }
     }
 }

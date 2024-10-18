@@ -439,7 +439,8 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> DeleteEtag(Guid etagId)
         {
-            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == etagId && !x.Deflag);
+            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == etagId && !x.Deflag,
+                                                                                    include: wallet => wallet.Include(z => z.Wallet));
             if (etag == null)
             {
                 return new ResponseAPI()
@@ -449,6 +450,9 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             etag.Deflag = true;
+            etag.Status =(int) EtagStatusEnum.Inactive;
+            etag.Wallet.Deflag = true;
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
             etag.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Etag>().UpdateAsync(etag);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
@@ -474,6 +478,15 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     MessageResponse = EtagMessage.NotFoundEtag,
                     StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+            if (etag.Wallet == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = "Etag Wallet is deleted !!",
+                    Data = new { etag }
                 };
             }
             return new ResponseAPI()
@@ -546,9 +559,43 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
+            if(!ValidationUtils.IsCCCD(req.CCCD))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.CCCDInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            if (!ValidationUtils.IsPhoneNumber(req.Phone))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.PhoneNumberInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            var checkPhone = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.PhoneNumber == req.Phone && !x.Deflag);
+            if (checkPhone != null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.PhoneNumberExist,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            var checkCCCD = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Cccd == req.CCCD && !x.Deflag);
+            if (checkCCCD != null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.CCCDExist,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
             etag.Status = (int)EtagStatusEnum.Active;
             etag.FullName = req.Name;
-            etag.PhoneNumber = req.Phone;
+            etag.PhoneNumber = req.Phone; 
             etag.Cccd = req.CCCD;
             etag.UpsDate = TimeUtils.GetCurrentSEATime();
             etag.Gender = req.Gender;
@@ -575,6 +622,14 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI()
                 {
                     MessageResponse = OrderMessage.TotalAmountInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            if (!ValidationUtils.IsCCCD(req.CCCD))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.CCCDInvalid,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
@@ -617,7 +672,7 @@ namespace VegaCityApp.API.Services.Implement
                 Status = OrderStatus.Pending,
                 InvoiceId = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
                 EtagId = etagExist.Id,
-                SaleType = "Etag Charge",
+                SaleType = SaleType.EtagCharge,
                 UserId = userId,
             };
 
@@ -632,7 +687,7 @@ namespace VegaCityApp.API.Services.Implement
                      invoiceId = newOrder.InvoiceId,
                      balance = req.ChargeAmount,
                      Key = key,
-                     UrlDirect = "https://api.vegacity.id.vn/api/v1/payment/momo/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
+                     UrlDirect = $"https://localhost:44395/api/v1/payment/{req.PaymentType.ToLower()}/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
                      UrlIpn = $"https://vegacity.id.vn/order-status?status=success&orderId={newOrder.Id}"
                  }
             } : new ResponseAPI()
