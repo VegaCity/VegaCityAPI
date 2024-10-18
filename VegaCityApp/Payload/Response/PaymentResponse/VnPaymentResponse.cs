@@ -36,5 +36,6 @@
         public DateTime vnp_TxnRef { get; set; }
 
         public string vnp_SecureHash { get; set; }
+        public string? UrlIpn { get; set; }
     }
 }

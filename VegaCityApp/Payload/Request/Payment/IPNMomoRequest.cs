@@ -18,5 +18,6 @@ namespace VegaCityApp.API.Payload.Request.Payment
         public long? responseTime { get; set; }
         public string? extraData { get; set; }
         public string? signature { get; set; }
+        public string? UrlIpn { get; set; }
     }
 }
