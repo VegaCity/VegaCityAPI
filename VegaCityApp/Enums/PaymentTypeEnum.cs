@@ -36,7 +36,7 @@ namespace VegaCityApp.API.Enums
         public const string redirectUrl = "https://api.vegacity.id.vn/api/v1/payment/momo/order";
         public const string redirectUrlChargeMoney = "https://api.vegacity.id.vn/api/v1/payment/momo/order/charge-money";
         //after success payment, send a request to this url to update order or something
-        public const string ipnUrl = "https://vegacity.id.vn/user/order-status?status=success&orderId=";
+        public const string ipnUrl = "https://vegacity.id.vn/order-status?status=success&orderId=";
         public const string requestType = "payWithMethod";
         public const string paymentCode = "T8Qii53fAXyUftPV3m9ysyRhEanUs9KlOPfHgpMR0ON50U10Bh+vZdpJU7VY4z+Z2y77fJHkoDc69scwwzLuW5MzeUKTwPo3ZMaB29imm6YulqnWfTkgzqRaion+EuD7FN9wZ4aXE1+mRt0gHsU193y+yxtRgpmY7SDMU9hCKoQtYyHsfFR5FUAOAKMdw2fzQqpToei3rnaYvZuYaxolprm9+/+WIETnPUDlxCYOiw7vPeaaYQQH0BF0TxyU3zu36ODx980rJvPAgtJzH1gUrlxcSS1HQeQ9ZaVM1eOK/jl8KJm6ijOwErHGbgf/hVymUQG65rHU2MWz9U8QUjvDWA==";
         public const bool autoCapture = true;
