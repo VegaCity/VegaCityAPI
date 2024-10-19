@@ -706,12 +706,12 @@ namespace VegaCityApp.API.Services.Implement
         {
             var checkOrder = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
                              (predicate: x => x.InvoiceId == req.InvoiceId
-                                           && x.Status == OrderStatus.Pending);
+                                           && x.Status    == OrderStatus.Pending);
             if (checkOrder == null)
             {
                 return new ResponseAPI
                 {
-                    StatusCode = HttpStatusCodes.NotFound,
+                    StatusCode      = HttpStatusCodes.NotFound,
                     MessageResponse = PaymentMessage.OrderNotFound
                 };
             }
@@ -751,7 +751,7 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.OK,
-                    MessageResponse = PaymentMessage.MomoPaymentSuccess,
+                    MessageResponse = PaymentMessage.ZaloPayPaymentSuccess,
                     Data = ZaloPayResponse
                 };
             }
@@ -866,8 +866,8 @@ namespace VegaCityApp.API.Services.Implement
                 return await _unitOfWork.CommitAsync() > 0
                     ? new ResponseAPI()
                     {
-                        StatusCode = HttpStatusCodes.NoContent,
-                        MessageResponse = PaymentMomo.ipnUrl + order.Id
+                        StatusCode      = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentZaloPay.ipnUrl + order.Id
                     }
                     : new ResponseAPI()
                     {

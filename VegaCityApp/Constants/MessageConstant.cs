@@ -304,6 +304,7 @@ public static class MessageConstant
     public static class PaymentMessage
     {
         public const string ZaloPayPaymentFail = "Failed To Create Payment with ZaloPay";
+        public const string ZaloPayPaymentSuccess = "Successfully Create ZaloPay Payment";
         public const string OrderNotFound = "Order Not Found";
         public const string MomoPaymentFail = "Momo Payment Fail";
         public const string VnPaySuccess = "Successflly With VnPay";

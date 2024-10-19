@@ -687,7 +687,7 @@ namespace VegaCityApp.API.Services.Implement
                      invoiceId = newOrder.InvoiceId,
                      balance = req.ChargeAmount,
                      Key = key,
-                     UrlDirect = $"https://localhost:44395/api/v1/payment/{req.PaymentType.ToLower()}/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
+                     UrlDirect = $"https://api.vegacity.id.vn/api/v1/payment/{req.PaymentType.ToLower()}/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
                      UrlIpn = $"https://vegacity.id.vn/order-status?status=success&orderId={newOrder.Id}"
                  }
             } : new ResponseAPI()
