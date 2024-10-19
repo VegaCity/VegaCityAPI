@@ -315,6 +315,11 @@ public static class MessageConstant
     }
     public static class WalletTypeMessage
     {
+        public const string WithdrawMoneySuccessfully = "Withdraw Money Successfully !!";
+        public const string WithdrawMoneyFail = "Withdraw Money Fail !!";
+        public const string NotFoundCashierWeb = "CashierWeb Not Found";
+        public const string NotEnoughBalance = "Not Enough Balance !!";
+        public const string NotFoundWallet = "Wallet Not Found";
         public const string NotFoundServiceStoreInWalletType = "ServiceStore Not Found In WalletType !!";
         public const string RemoveServiceStoreToWalletTypeSuccess = "Remove ServiceStore To WalletType Successfully !!";
         public const string RemoveServiceStoreToWalletTypeFail = "Remove ServiceStore To WalletType Fail !!";

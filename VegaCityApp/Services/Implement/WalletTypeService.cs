@@ -321,7 +321,9 @@ namespace VegaCityApp.API.Services.Implement
                     Amount = item.Balance,
                     IsIncrease = true,
                     Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                    CrDate = TimeUtils.GetCurrentSEATime()
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    Status = TransactionStatus.Success,
+                    Description = "End day check wallet cashier",
                 };
                 await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalance);
                 var transactionBalanceHistory = new Transaction
@@ -332,12 +334,86 @@ namespace VegaCityApp.API.Services.Implement
                     Amount = item.BalanceHistory,
                     IsIncrease = true,
                     Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                    CrDate = TimeUtils.GetCurrentSEATime()
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    Status = TransactionStatus.Success,
+                    Description = "End day check wallet cashier",
                 };
                 await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceHistory);
             }
             _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
             await _unitOfWork.CommitAsync();
+        }
+        public async Task<ResponseAPI> WithdrawMoneyWallet(Guid id, WithdrawMoneyRequest request)
+        {
+            Guid cashierWebId = GetUserIdFromJwt();
+            //wallet user
+            var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync
+                (predicate: x => x.Id == id && !x.Deflag,
+                 include: userStore => userStore.Include(z => z.User));
+
+            var cashierWeb = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
+                (predicate: x => x.Id == cashierWebId && x.Status == (int)UserStatusEnum.Active,
+                 include: wl => wl.Include(z => z.Wallets));
+            if(cashierWeb == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = WalletTypeMessage.NotFoundCashierWeb
+                };
+            }
+            if (wallet == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = WalletTypeMessage.NotFoundWallet
+                };
+            }
+            if (wallet.Balance < request.Amount)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = WalletTypeMessage.NotEnoughBalance
+                };
+            }
+            wallet.Balance -= request.Amount;
+            wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+            if(cashierWeb.Wallets.Count() > 0)
+            {
+                foreach (var item in cashierWeb.Wallets)
+                {
+                    item.BalanceHistory += request.Amount;
+                    item.UpsDate = TimeUtils.GetCurrentSEATime();
+                }
+            }
+            _unitOfWork.GetRepository<Wallet>().UpdateRange(cashierWeb.Wallets);
+            var transaction = new Transaction
+            {
+                Id = Guid.NewGuid(),
+                Type = TransactionType.WithdrawMoney,
+                WalletId = wallet.Id,
+                Amount = request.Amount,
+                IsIncrease = false,
+                Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                Status = TransactionStatus.Success,
+                Description = "Withdraw money",
+                StoreId = wallet.User.StoreId,
+            };
+            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = WalletTypeMessage.WithdrawMoneySuccessfully,
+                Data = wallet
+            } : new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.BadRequest,
+                MessageResponse = WalletTypeMessage.WithdrawMoneyFail
+            };
         }
     }
 }

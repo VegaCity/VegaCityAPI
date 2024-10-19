@@ -852,7 +852,7 @@ namespace VegaCityApp.API.Services.Implement
                 var newDeposit = new Deposit
                 {
                     Id = Guid.NewGuid(), // Tạo ID mới
-                    PaymentType = "Momo",
+                    PaymentType = "ZaloPay",
                     Name = "Nạp tiền vào ETag với số tiền: " + req.amount,
                     IsIncrease = true, // Xác định rằng đây là nạp tiền
                     Amount = Int32.Parse(req.amount.ToString()),

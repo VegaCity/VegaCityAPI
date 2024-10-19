@@ -15,6 +15,7 @@ namespace VegaCityApp.Domain.Models
         public Guid StoreId { get; set; }
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
+        public int? Price { get; set; }
         public bool Deflag { get; set; }
 
         public virtual Store Store { get; set; } = null!;

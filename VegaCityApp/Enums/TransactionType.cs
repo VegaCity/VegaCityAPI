@@ -3,6 +3,11 @@
     public class TransactionType
     {
         public const string EndDayCheckWalletCashier = "EndDayCheckWalletCashier";
+        public const string WithdrawMoney = "WithdrawMoney";
+    }
+    public class TransactionStatus
+    {
+        public const string Success = "Success";
     }
     public enum CurrencyEnum
     {

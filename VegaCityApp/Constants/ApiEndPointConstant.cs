@@ -117,6 +117,7 @@ public static class ApiEndPointConstant
     }
     public static class WalletTypeEndpoint
     {
+        public const string WithdrawMoneyWallet = ApiEndpoint + "/wallet/{userid}/withdraw-money";
         public const string AddServiceStoreToWalletType = ApiEndpoint + "/wallet-type/{id}/service-store/{serviceStoreId}";
         public const string RemoveServiceStoreToWalletType = ApiEndpoint + "/wallet-type/{id}/service-store/{serviceStoreId}";
         public const string CreateWalletType = ApiEndpoint + "/wallet-type";
@@ -132,5 +133,11 @@ public static class ApiEndPointConstant
         public const string DeleteServiceStore = ApiEndpoint + "/service-store/{id}";
         public const string GetServiceStoreById = ApiEndpoint + "/service-store/{id}";
         public const string GetAllServiceStore = ApiEndpoint + "/service-stores";
+    }
+    public static class TransactionEndpoint
+    {
+        public const string GetListTransaction = ApiEndpoint + "/transactions";
+        public const string GetTransaction = ApiEndpoint + "/transaction/{id}";
+        public const string DeleteTransaction = ApiEndpoint + "/transaction/{id}";
     }
 }
