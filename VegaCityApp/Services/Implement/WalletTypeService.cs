@@ -18,9 +18,9 @@ namespace VegaCityApp.API.Services.Implement
     public class WalletTypeService : BaseService<WalletTypeService>, IWalletTypeService
     {
         public WalletTypeService(
-            IUnitOfWork<VegaCityAppContext> unitOfWork, 
-            ILogger<WalletTypeService> logger, 
-            IMapper mapper, 
+            IUnitOfWork<VegaCityAppContext> unitOfWork,
+            ILogger<WalletTypeService> logger,
+            IMapper mapper,
             IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
         }
@@ -131,7 +131,7 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.Created,
                 MessageResponse = WalletTypeMessage.CreateWalletTypeSuccessfully,
                 Data = newWalletType
-            }: new ResponseAPI
+            } : new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.BadRequest,
                 MessageResponse = WalletTypeMessage.CreateWalletTypeFail
@@ -151,7 +151,7 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = WalletTypeMessage.NotFoundWalletType
                 };
             }
-            if(walletType.WalletTypeStoreServiceMappings.Count > 0)
+            if (walletType.WalletTypeStoreServiceMappings.Count > 0)
             {
                 foreach (var item in walletType.WalletTypeStoreServiceMappings)
                 {
@@ -247,7 +247,7 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = WalletTypeMessage.NotFoundWalletType
                 };
             }
-            walletType.Name = walletTypeRequest.Name != null? walletTypeRequest.Name.Trim() : walletType.Name;
+            walletType.Name = walletTypeRequest.Name != null ? walletTypeRequest.Name.Trim() : walletType.Name;
             walletType.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<WalletType>().UpdateAsync(walletType);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
@@ -265,7 +265,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task CheckExpireWallet()
         {
             var currentTime = TimeUtils.GetCurrentSEATime();
-            var wallet =(List<Wallet>) await _unitOfWork.GetRepository<Wallet>().GetListAsync
+            var wallet = (List<Wallet>)await _unitOfWork.GetRepository<Wallet>().GetListAsync
                 (predicate: x => x.ExpireDate < currentTime && !x.Deflag);
             if (wallet.Count > 0)
             {
@@ -280,15 +280,15 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task EndDayCheckWalletCashier(Guid apiKey)
         {
-            var data =(List<User>) await _unitOfWork.GetRepository<User>().GetListAsync
+            var data = (List<User>)await _unitOfWork.GetRepository<User>().GetListAsync
                 (predicate: x => (x.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierAppId)
-                              || x.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierWebId))
-                              && x.Status == (int)UserStatusEnum.Active);
+                                || x.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierWebId))
+                                && x.Status == (int)UserStatusEnum.Active);
             var maketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
                         (predicate: x => x.Id == apiKey);
             var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
                 (predicate: x => x.Email == maketZone.Email && x.Status == (int)UserStatusEnum.Active,
-                 include: wallet => wallet.Include(z => z.Wallets));
+                    include: wallet => wallet.Include(z => z.Wallets));
             foreach (var user in data)
             {
                 //wallet cashier
@@ -309,6 +309,32 @@ namespace VegaCityApp.API.Services.Implement
                         }
                     }
                 }
+            }
+            //create transaction
+            foreach (var item in admin.Wallets)
+            {
+                var transactionBalance = new Transaction
+                {
+                    Id = Guid.NewGuid(),
+                    Type = TransactionType.EndDayCheckWalletCashier,
+                    WalletId = item.Id,
+                    Amount = item.Balance,
+                    IsIncrease = true,
+                    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                    CrDate = TimeUtils.GetCurrentSEATime()
+                };
+                await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalance);
+                var transactionBalanceHistory = new Transaction
+                {
+                    Id = Guid.NewGuid(),
+                    Type = TransactionType.EndDayCheckWalletCashier,
+                    WalletId = item.Id,
+                    Amount = item.BalanceHistory,
+                    IsIncrease = true,
+                    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                    CrDate = TimeUtils.GetCurrentSEATime()
+                };
+                await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceHistory);
             }
             _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
             await _unitOfWork.CommitAsync();
