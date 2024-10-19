@@ -345,6 +345,14 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> WithdrawMoneyWallet(Guid id, WithdrawMoneyRequest request)
         {
+            if(!ValidationUtils.CheckNumber(request.Amount))
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = WalletTypeMessage.AmountInvalid
+                };
+            }
             Guid cashierWebId = GetUserIdFromJwt();
             //wallet user
             var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync

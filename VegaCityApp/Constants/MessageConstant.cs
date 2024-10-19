@@ -315,6 +315,7 @@ public static class MessageConstant
     }
     public static class WalletTypeMessage
     {
+        public const string AmountInvalid = "Amount Invalid";
         public const string WithdrawMoneySuccessfully = "Withdraw Money Successfully !!";
         public const string WithdrawMoneyFail = "Withdraw Money Fail !!";
         public const string NotFoundCashierWeb = "CashierWeb Not Found";
