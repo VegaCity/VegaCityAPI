@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using VegaCityApp.API.Constants;
+using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.WalletType;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.StoreResponse;
@@ -276,6 +277,41 @@ namespace VegaCityApp.API.Services.Implement
                 _unitOfWork.GetRepository<Wallet>().UpdateRange(wallet);
                 await _unitOfWork.CommitAsync();
             }
+        }
+        public async Task EndDayCheckWalletCashier(Guid apiKey)
+        {
+            var data =(List<User>) await _unitOfWork.GetRepository<User>().GetListAsync
+                (predicate: x => (x.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierAppId)
+                              || x.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierWebId))
+                              && x.Status == (int)UserStatusEnum.Active);
+            var maketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
+                        (predicate: x => x.Id == apiKey);
+            var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
+                (predicate: x => x.Email == maketZone.Email && x.Status == (int)UserStatusEnum.Active,
+                 include: wallet => wallet.Include(z => z.Wallets));
+            foreach (var user in data)
+            {
+                //wallet cashier
+                var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync
+                    (predicate: x => x.UserId == user.Id && !x.Deflag);
+                if (wallet != null)
+                {
+                    if (admin.Wallets.Count() > 0)
+                    {
+                        foreach (var item in admin.Wallets)
+                        {
+                            item.Balance += wallet.Balance;
+                            wallet.Balance = 0;
+                            item.BalanceHistory += wallet.BalanceHistory;
+                            wallet.BalanceHistory = 0;
+                            item.UpsDate = TimeUtils.GetCurrentSEATime();
+                            _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+                        }
+                    }
+                }
+            }
+            _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
+            await _unitOfWork.CommitAsync();
         }
     }
 }
