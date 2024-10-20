@@ -169,7 +169,7 @@ public static class MessageConstant
         public const string YourPinCode = "Your Verify Pin Code ";
         public const string SaveRefreshTokenFail = "Save Refresh Token Fail !!";
         public const string EmailExist = "Email already exist !!";
-        public const string GetAllUser = "Get All Users Successfully!";
+        public const string GetUserSuccess = "Get User Successfully!";
         public const string GetAllUserFail = "Failed To Get All Users!";
         public const string NotFoundUserWallet = "Failed To Get Admin's Wallet!!";
         public const string GetWalletSuccess = "Successfully Get Wallet!!";
@@ -312,6 +312,7 @@ public static class MessageConstant
         public const string MomoPaymentSuccess = "Momo Payment Success";
         public const string PayOSPaymentFail = "Failed To Create Payment with PayOS";
         public const string PayOSPaymentSuccess = "Successfully Create PayOS Payment";
+        public const string NotFoundUser = "User's Information Was Not Found!!";
     }
     public static class WalletTypeMessage
     {

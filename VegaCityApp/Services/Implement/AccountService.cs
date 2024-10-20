@@ -575,7 +575,7 @@ namespace VegaCityApp.Service.Implement
             {
                 return new ResponseAPI
                 {
-                    StatusCode = HttpStatusCodes.BadRequest,
+                    StatusCode = HttpStatusCodes.OK,
                     MessageResponse = UserMessage.Approved,
                     Data = new
                     {
@@ -866,7 +866,7 @@ namespace VegaCityApp.Service.Implement
             }
             return new ResponseAPI()
             {
-                MessageResponse = UserMessage.GetListSuccess,
+                MessageResponse = UserMessage.GetUserSuccess,
                 StatusCode = HttpStatusCodes.OK,
                 Data = new
                 {

@@ -508,52 +508,6 @@ namespace VegaCityApp.API.Services.Implement
              item.quantity,
              item.price
              )).ToList();
-            if (checkOrder.CustomerInfo != null) //package , item sell without customer infor from etag
-            {
-                var customerInfo = JsonConvert.DeserializeObject<VegaCityApp.API.Payload.Request.Payment.CustomerInfo>(checkOrder.CustomerInfo);//xiu xai
-
-                //here
-                try
-                {
-
-                    var paymentData = new PaymentData(
-                        orderCode: Int64.Parse(checkOrder.InvoiceId.ToString()),  // Bạn có thể tạo mã đơn hàng tại đây
-                        amount: checkOrder.TotalAmount,
-                        description: "đơn hàng :" + req.InvoiceId,
-                        items: itemDataList,
-                        cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
-                        returnUrl: PayOSConfiguration.ReturnUrl,  // URL khi thanh toán thành công
-                        buyerName: customerInfo.FullName.ToString(),
-                        //buyerEmail: customerInfo.Email.ToString(), // very require email here!
-                        buyerEmail:"",
-                        buyerPhone: customerInfo.PhoneNumber.ToString(),
-                        buyerAddress:"",// customerInfo.Email.ToString(),
-                        expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
-                    );
-
-                    // Gọi hàm createPaymentLink từ PayOS với đối tượng PaymentData
-                    var paymentUrl = await _payOs.createPaymentLink(paymentData);
-
-                    //return Ok(new { Url = paymentUrl });
-                    return new ResponseAPI
-                    {
-                        MessageResponse = PaymentMessage.PayOSPaymentSuccess,
-                        StatusCode = HttpStatusCodes.OK,
-                        Data = paymentUrl
-                    };
-                }
-                catch (Exception ex)
-                {
-                    //string error = ErrorUtil.GetErrorString("Exception", ex.Message);
-                    //return StatusCode(StatusCodes.Status500InternalServerError, error);
-                    return new ResponseAPI
-                    {
-                        MessageResponse = PaymentMessage.PayOSPaymentFail + ex.Message,
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        Data = null
-                    };
-                }
-            }
             if(req.Key != null && PaymentTypeHelper.allowedPaymentTypes.Contains(req.Key.Split('_')[0]) && req.Key.Split("_")[1] == checkOrder.InvoiceId)
             {
                 var customerInfoEtag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == checkOrder.EtagId);
@@ -584,10 +538,57 @@ namespace VegaCityApp.API.Services.Implement
                     Data = paymentUrlChargeMoney
                 };
             }
+            if (checkOrder.CustomerInfo != null) //package , item sell without customer infor from etag
+            {
+                var customerInfo = JsonConvert.DeserializeObject<VegaCityApp.API.Payload.Request.Payment.CustomerInfo>(checkOrder.CustomerInfo);//xiu xai
+
+                //here
+                try
+                {
+
+                    var paymentData = new PaymentData(
+                        orderCode: Int64.Parse(checkOrder.InvoiceId.ToString()),  // Bạn có thể tạo mã đơn hàng tại đây
+                        amount: checkOrder.TotalAmount,
+                        description: "đơn hàng :" + req.InvoiceId,
+                        items: itemDataList,
+                        cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
+                        returnUrl: PayOSConfiguration.ReturnUrl,  // URL khi thanh toán thành công
+                        buyerName: customerInfo.FullName.ToString(),
+                        //buyerEmail: customerInfo.Email.ToString(), // very require email here!
+                        buyerEmail: "",
+                        buyerPhone: customerInfo.PhoneNumber.ToString(),
+                        buyerAddress: "",// customerInfo.Email.ToString(),
+                        expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
+                    );
+
+                    // Gọi hàm createPaymentLink từ PayOS với đối tượng PaymentData
+                    var paymentUrl = await _payOs.createPaymentLink(paymentData);
+
+                    //return Ok(new { Url = paymentUrl });
+                    return new ResponseAPI
+                    {
+                        MessageResponse = PaymentMessage.PayOSPaymentSuccess,
+                        StatusCode = HttpStatusCodes.OK,
+                        Data = paymentUrl
+                    };
+                }
+                catch (Exception ex)
+                {
+                    //string error = ErrorUtil.GetErrorString("Exception", ex.Message);
+                    //return StatusCode(StatusCodes.Status500InternalServerError, error);
+                    return new ResponseAPI
+                    {
+                        MessageResponse = PaymentMessage.PayOSPaymentFail + ex.Message,
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        Data = null
+                    };
+                }
+            }
+
             return new ResponseAPI
             {
-                MessageResponse = PaymentMessage.PayOSPaymentFail,
-                StatusCode = HttpStatusCodes.BadRequest,
+                MessageResponse = PaymentMessage.NotFoundUser,
+                StatusCode = HttpStatusCodes.NotFound,
             };
 
         }
@@ -596,8 +597,11 @@ namespace VegaCityApp.API.Services.Implement
             var invoiceId = orderCode.ToString();
 
             // Fetch the order and check if it's still pending
-            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
-               predicate: x => x.InvoiceId == invoiceId && x.Status == OrderStatus.Pending);
+            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+                    (predicate: x => x.InvoiceId == orderCode && x.Status == OrderStatus.Pending,
+                    include: z => z.Include(a => a.User).ThenInclude(b => b.Wallets)); //
+            var orderCompleted = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+               (predicate: x => x.InvoiceId == orderCode && x.Status == OrderStatus.Completed);                                                                     //from here
             if (order == null || order.Status == OrderStatus.Completed)
             {
                 // If the order doesn't exist or is already processed, return not found
@@ -605,6 +609,8 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     StatusCode = HttpStatusCodes.NoContent,
                     //MessageResponse = "https://vegacity.id.vn/user/order-status?status=failure"
+                    MessageResponse = PayOSConfiguration.ipnUrl + orderCompleted.Id
+
                 };
             }
             // Update the order to 'Completed'
@@ -619,7 +625,7 @@ namespace VegaCityApp.API.Services.Implement
                 ? new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PayOSConfiguration.ipnUrl + order.Id // URL for client-side redirection
+                    MessageResponse = PayOSConfiguration.ipnUrl + orderCompleted.Id // URL for client-side redirection
                 }
                 : new ResponseAPI()
                 {

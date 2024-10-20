@@ -82,6 +82,6 @@ namespace VegaCityApp.API.Enums
         public const string ReturnUrl = "https://api.vegacity.id.vn/api/v1/payment/payos/order"; //deploy
         public const string ReturnUrlCharge = "https://api.vegacity.id.vn/api/v1/payment/payos/order/charge-money"; //dploy
         public const string create_order_url = "https://api-merchant.payos.vn/v2/payment-requests";
-        public const string ipnUrl = "https://vegacity.id.vn/user/order-status?status=success&orderId=";
+        public const string ipnUrl = "https://vegacity.id.vn/order-status?status=success&orderId=";
     }
 }
