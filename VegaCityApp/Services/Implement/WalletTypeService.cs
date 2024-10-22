@@ -545,6 +545,7 @@ namespace VegaCityApp.API.Services.Implement
                 transaction.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
                 wallet.BalanceHistory -= request.Amount;
+                wallet.Balance += request.Amount;
                 wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
             }
@@ -571,12 +572,17 @@ namespace VegaCityApp.API.Services.Implement
                     }
                 }
             }
-            var transactionBalance = new Transaction
+            var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
+                (predicate: x => x.Id == cashierWeb.MarketZoneId);
+            var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
+                (predicate: x => x.Email == marketZone.Email && x.Status == (int)UserStatusEnum.Active,
+                    include: wallet => wallet.Include(z => z.Wallets));
+            var transactionBalanceAdmin = new Transaction
             {
                 Id = Guid.NewGuid(),
                 Type = TransactionType.WithdrawMoney,
-                WalletId = cashierWeb.Wallets.SingleOrDefault().Id,
-                Amount = cashierWeb.Wallets.SingleOrDefault().Balance,
+                WalletId = admin.Wallets.SingleOrDefault().Id,
+                Amount = admin.Wallets.SingleOrDefault().Balance - request.Amount,
                 IsIncrease = false,
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 CrDate = TimeUtils.GetCurrentSEATime(),
@@ -588,14 +594,14 @@ namespace VegaCityApp.API.Services.Implement
                 Id = Guid.NewGuid(),
                 Type = TransactionType.WithdrawMoney,
                 WalletId = cashierWeb.Wallets.SingleOrDefault().Id,
-                Amount = cashierWeb.Wallets.SingleOrDefault().BalanceHistory,
+                Amount = cashierWeb.Wallets.SingleOrDefault().BalanceHistory + request.Amount,
                 IsIncrease = true,
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 Status = TransactionStatus.Success,
                 Description = "Withdraw money",
             };
-            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalance);
+            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceAdmin);
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceHistory);
             return await _unitOfWork.CommitAsync() > 0? new ResponseAPI
             {
