@@ -880,6 +880,14 @@ namespace VegaCityApp.Service.Implement
         }
         public async Task<ResponseAPI> UpdateUser(Guid userId, UpdateUserAccountRequest req)
         {
+            if(!ValidationUtils.IsPhoneNumber(req.PhoneNumber.Trim()))
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.InvalidPhoneNumber
+                };
+            }
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
                     (predicate: x => x.Id == userId && x.Status == (int)UserStatusEnum.Active);
             if (user == null)
@@ -890,13 +898,13 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.NotFoundUser
                 };
             }
-            user.FullName = req.FullName;
-            user.PhoneNumber = req.PhoneNumber;
-            user.Birthday = req.Birthday;
-            user.Gender = req.Gender;
-            user.ImageUrl = req.ImageUrl;
-            user.Address = req.Address;
-            user.Description = req.Description;
+            user.FullName = req.FullName != null ? req.FullName.Trim() : user.FullName;
+            user.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : user.PhoneNumber;
+            user.Birthday = req.Birthday ?? user.Birthday;
+            user.Gender = req.Gender ?? user.Gender;
+            user.ImageUrl = req.ImageUrl != null ? req.ImageUrl.Trim() : user.ImageUrl;
+            user.Address = req.Address != null ? req.Address.Trim() : user.Address;
+            user.Description = req.Description != null ? req.Description.Trim() : user.Description;
             _unitOfWork.GetRepository<User>().UpdateAsync(user);
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
