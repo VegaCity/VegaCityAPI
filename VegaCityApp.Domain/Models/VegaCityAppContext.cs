@@ -163,12 +163,6 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.SolveDate).HasColumnType("datetime");
 
-                entity.HasOne(d => d.Creator)
-                    .WithMany(p => p.DisputeReports)
-                    .HasForeignKey(d => d.CreatorId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_DisputeReports_User");
-
                 entity.HasOne(d => d.IssueType)
                     .WithMany(p => p.DisputeReports)
                     .HasForeignKey(d => d.IssueTypeId)

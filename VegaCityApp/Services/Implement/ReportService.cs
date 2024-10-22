@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Report;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Services.Interface;
@@ -29,6 +30,52 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = "Create Issue Type Success",
                 Data = issueType
+            };
+        }
+
+        public async Task<ResponseAPI> CreateReport(Guid creatorId, ReportRequest req)
+        {
+            var report = _mapper.Map<DisputeReport>(req);
+            report.Id = Guid.NewGuid();
+            report.CreatorId = creatorId;
+            report.CrDate = TimeUtils.GetCurrentSEATime();
+            report.Status = (int) ReportStatus.Pending;
+            report.StoreId = req.StoreId;
+            await _unitOfWork.GetRepository<DisputeReport>().InsertAsync(report);
+            await _unitOfWork.CommitAsync();
+            return new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = "Create Report Success",
+                Data = report
+            };
+        }
+        public async Task<ResponseAPI> UpdateReport(Guid id, SolveRequest req)
+        {
+            string email = GetEmailFromJwt();
+            var report = await _unitOfWork.GetRepository<DisputeReport>().SingleOrDefaultAsync
+                (predicate: x => x.Id == id
+                        && (x.Status != (int)ReportStatus.Done
+                        || x.Status != (int)ReportStatus.Cancel));
+            if (report == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = "Report Not Found"
+                };
+            }
+            report.Status = req.Status;
+            report.SolveDate = TimeUtils.GetCurrentSEATime();
+            report.Solution = req.Solution != null? req.Solution.Trim() : report.Solution;
+            report.SolveBy = email;
+            _unitOfWork.GetRepository<DisputeReport>().UpdateAsync(report);
+            await _unitOfWork.CommitAsync();
+            return new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = "Update Report Success",
+                Data = report
             };
         }
 

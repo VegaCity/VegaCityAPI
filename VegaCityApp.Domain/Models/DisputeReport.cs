@@ -16,7 +16,6 @@ namespace VegaCityApp.Domain.Models
         public DateTime? SolveDate { get; set; }
         public Guid? StoreId { get; set; }
 
-        public virtual User Creator { get; set; } = null!;
         public virtual IssueType IssueType { get; set; } = null!;
         public virtual Store? Store { get; set; }
     }

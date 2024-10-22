@@ -7,6 +7,7 @@ namespace VegaCityApp.API.Services.Interface
     {
         Task<ResponseAPI> CreateIssueType(CreateIssueTypeRequest req);
         Task<ResponseAPI> DeleteIssueType(Guid id);
-
+        Task<ResponseAPI> CreateReport(Guid creatorId, ReportRequest req);
+        Task<ResponseAPI> UpdateReport(Guid id, SolveRequest req);
     }
 }

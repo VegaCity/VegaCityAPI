@@ -145,5 +145,7 @@ public static class ApiEndPointConstant
     {
         public const string CreateIssueType = ApiEndpoint + "/report/issue-type";
         public const string DeleteIssueType = ApiEndpoint + "/report/issue-type/{id}";
+        public const string CreateReport = ApiEndpoint + "/report";
+        public const string UpdateReport = ApiEndpoint + "/report/{id}";
     }
 }

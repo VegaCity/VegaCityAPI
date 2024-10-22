@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Report;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Services.Interface;
+using VegaCityApp.API.Validators;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
 
@@ -28,6 +30,21 @@ namespace VegaCityApp.API.Controllers
         public async Task<IActionResult> DeleteIssueType(Guid id)
         {
             var result = await _reportService.DeleteIssueType(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPost(ReportEndpoint.CreateReport)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        public async Task<IActionResult> CreateReport([FromQuery] Guid creatorId, [FromBody] ReportRequest request)
+        {
+            var result = await _reportService.CreateReport(creatorId, request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPut(ReportEndpoint.UpdateReport)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.Store)]
+        public async Task<IActionResult> UpdateReport(Guid id, [FromBody] SolveRequest request)
+        {
+            var result = await _reportService.UpdateReport(id, request);
             return StatusCode(result.StatusCode, result);
         }
     }
