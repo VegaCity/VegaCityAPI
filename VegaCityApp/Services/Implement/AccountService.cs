@@ -583,7 +583,7 @@ namespace VegaCityApp.Service.Implement
                     }
                 };
             }
-            if (user.Role.Name != RoleEnum.Admin.GetDescriptionFromEnum())
+            if (roleName != RoleEnum.Admin.GetDescriptionFromEnum())
             {
                 return new ResponseAPI
                 {
@@ -671,7 +671,11 @@ namespace VegaCityApp.Service.Implement
                     await _unitOfWork.CommitAsync();
                     #endregion
                     //update user
+                    house.IsRent = true;
+                    house.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<House>().UpdateAsync(house);
                     var result = await UpdateUserApproving(user, newStore.Id);
+                    await _unitOfWork.CommitAsync();
                     if (result != Guid.Empty)
                     {
                         #region send mail
