@@ -809,6 +809,10 @@ namespace VegaCityApp.Domain.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
+                entity.Property(e => e.UpsDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("upsDate");
+
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.Transactions)
                     .HasForeignKey(d => d.StoreId)

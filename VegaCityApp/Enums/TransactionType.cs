@@ -8,6 +8,7 @@
     public class TransactionStatus
     {
         public const string Success = "Success";
+        public const string Pending = "Pending";
     }
     public enum CurrencyEnum
     {

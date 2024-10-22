@@ -83,12 +83,20 @@ namespace VegaCityApp.API.Controllers
             var result = await _walletTypeService.RemoveServiceStoreToWalletType(id, serviceStoreId);
             return StatusCode(result.StatusCode, result);
         }
-        [HttpPost(WalletTypeEndpoint.WithdrawMoneyWallet)]
+        [HttpPost(WalletTypeEndpoint.RequestWithdrawMoneyWallet)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.CashierWeb)]
-        public async Task<IActionResult> WithdrawMoneyWallet(Guid userid, [FromBody] WithdrawMoneyRequest request)
+        public async Task<IActionResult> RequestWithdrawMoneyWallet(Guid walletid, [FromBody] WithdrawMoneyRequest request)
         {
-            var result = await _walletTypeService.WithdrawMoneyWallet(userid, request);
+            var result = await _walletTypeService.RequestWithdrawMoneyWallet(walletid, request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch(WalletTypeEndpoint.WithdrawMoneyWallet)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
+        public async Task<IActionResult> WithdrawMoneyWallet(Guid walletid, [FromBody] WithdrawMoneyRequest request)
+        {
+            var result = await _walletTypeService.WithdrawMoneyWallet(walletid, request);
             return StatusCode(result.StatusCode, result);
         }
     }

@@ -315,6 +315,12 @@ public static class MessageConstant
     }
     public static class WalletTypeMessage
     {
+        public const string NotFoundTransaction = "Transaction Not Found";
+        public const string RequestWithdrawMoneySuccessfully = "Request Withdraw Money Successfully !!";
+        public const string RequestWithdrawMoneyFail = "Request Withdraw Money Fail !!";
+        public const string NotAllowWithdraw = "Not Allow Withdraw";
+        public const string RoleNotAllow = "Role is Not Allow !!";
+        public const string AmountInvalid = "Amount Invalid";
         public const string WithdrawMoneySuccessfully = "Withdraw Money Successfully !!";
         public const string WithdrawMoneyFail = "Withdraw Money Fail !!";
         public const string NotFoundCashierWeb = "CashierWeb Not Found";
