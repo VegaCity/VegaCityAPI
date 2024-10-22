@@ -89,6 +89,7 @@ public static class DependencyServices
         services.AddScoped<IWalletTypeService, WalletTypeService>();
         services.AddScoped<IServiceStore, ServiceStore>();
         services.AddScoped<ITransactionService, TransactionService>();
+        services.AddScoped<IReportService, ReportService>();
         #endregion
         return services;
     }

@@ -141,4 +141,9 @@ public static class ApiEndPointConstant
         public const string GetTransaction = ApiEndpoint + "/transaction/{id}";
         public const string DeleteTransaction = ApiEndpoint + "/transaction/{id}";
     }
+    public static class ReportEndpoint
+    {
+        public const string CreateIssueType = ApiEndpoint + "/report/issue-type";
+        public const string DeleteIssueType = ApiEndpoint + "/report/issue-type/{id}";
+    }
 }
