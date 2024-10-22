@@ -29,11 +29,6 @@ namespace VegaCityApp.API.Services
         {
             return Guid.Parse(_httpContextAccessor?.HttpContext?.User?.FindFirstValue("MarketZoneId"));
         }
-
-        protected string GetEmailFromJwt()
-        {
-            return _httpContextAccessor?.HttpContext?.User?.FindFirstValue(JwtRegisteredClaimNames.Email);
-        }
         protected Guid GetUserIdFromJwt()
         {
             return Guid.Parse(_httpContextAccessor?.HttpContext?.User?.FindFirstValue(JwtRegisteredClaimNames.Jti));

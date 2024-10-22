@@ -75,12 +75,6 @@ public static class MessageConstant
         public const int NotExtended = 510;
         public const int NetworkAuthenticationRequired = 511;
     }
-
-    public static class LoginMessage
-    {
-        public const string InvalidUsernameOrPassword = "Tên đăng nhập hoặc mật khẩu không chính xác";
-        public const string DeactivatedAccount = "Tài khoản đang bị vô hiệu hoá";
-    }
     public static class EtagTypeMessage
     {
         public const string CreateSuccessFully = "Create EtagType Successfully !!";
@@ -175,20 +169,6 @@ public static class MessageConstant
         public const string GetWalletSuccess = "Successfully Get Wallet!!";
     }
 
-    public static class RoleMessage
-    {
-        public const string GetListByRoleSuccessfully = "Get List User By Role Successfully !!";
-        public const string GetListByRoleFail = "Get List User By Role Fail !!";
-        public const string GetListByRoleNotFound = "Not Found User By Role !!";
-    }
-
-    public static class walletMessage
-    {
-        public const string CreateWalletSuccessfully = "Create Wallet Successfully !!";
-        public const string NotFound = "Not Found Wallet !!";
-        public const string FoundSuccess = "Get Wallet Successfully !!";
-    }
-
     public static class OrderMessage
     {
         public const string SaleTypeInvalid = "Sale Type Invalid";
@@ -281,8 +261,6 @@ public static class MessageConstant
         public const string StoreServiceExisted = "Store Service Existed";
         public const string GetListStoreServicesSuccess = "Get List Store's Services Successfully!";
         public const string GetListStoreServicesFail = "Failed To Get List Store's Services!";
-
-
     }
     public static class HouseMessage
     {
@@ -316,6 +294,11 @@ public static class MessageConstant
     }
     public static class WalletTypeMessage
     {
+        public const string NotFoundTransaction = "Transaction Not Found";
+        public const string RequestWithdrawMoneySuccessfully = "Request Withdraw Money Successfully !!";
+        public const string RequestWithdrawMoneyFail = "Request Withdraw Money Fail !!";
+        public const string NotAllowWithdraw = "Not Allow Withdraw";
+        public const string RoleNotAllow = "Role is Not Allow !!";
         public const string AmountInvalid = "Amount Invalid";
         public const string WithdrawMoneySuccessfully = "Withdraw Money Successfully !!";
         public const string WithdrawMoneyFail = "Withdraw Money Fail !!";

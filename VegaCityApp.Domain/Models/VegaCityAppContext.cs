@@ -24,6 +24,7 @@ namespace VegaCityApp.Domain.Models
         public virtual DbSet<EtagType> EtagTypes { get; set; } = null!;
         public virtual DbSet<Hash> Hashes { get; set; } = null!;
         public virtual DbSet<House> Houses { get; set; } = null!;
+        public virtual DbSet<IssueType> IssueTypes { get; set; } = null!;
         public virtual DbSet<Job> Jobs { get; set; } = null!;
         public virtual DbSet<JobParameter> JobParameters { get; set; } = null!;
         public virtual DbSet<JobQueue> JobQueues { get; set; } = null!;
@@ -141,7 +142,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.HasIndex(e => e.StoreId, "IX_DisputeReports_StoreId");
 
-                entity.HasIndex(e => e.UserId, "IX_DisputeReports_UserId");
+                entity.HasIndex(e => e.Creator, "IX_DisputeReports_UserId");
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
@@ -150,31 +151,28 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("crDate")
                     .HasDefaultValueSql("(getdate())");
 
-                entity.Property(e => e.Description)
-                    .HasMaxLength(500)
+                entity.Property(e => e.Creator)
+                    .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.IssueType)
-                    .HasMaxLength(100)
+                entity.Property(e => e.Description).HasMaxLength(500);
+
+                entity.Property(e => e.SolveBy)
+                    .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.Resolution).IsUnicode(false);
+                entity.Property(e => e.SolveDate).HasColumnType("datetime");
 
-                entity.Property(e => e.ResolvedBy)
-                    .HasMaxLength(20)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.ResolvedDate).HasColumnType("datetime");
+                entity.HasOne(d => d.IssueType)
+                    .WithMany(p => p.DisputeReports)
+                    .HasForeignKey(d => d.IssueTypeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_DisputeReports_IssueType");
 
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.DisputeReports)
                     .HasForeignKey(d => d.StoreId)
                     .HasConstraintName("FK_DisputeReports_Store");
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.DisputeReports)
-                    .HasForeignKey(d => d.UserId)
-                    .HasConstraintName("FK_DisputeReports_User");
             });
 
             modelBuilder.Entity<Etag>(entity =>
@@ -319,6 +317,19 @@ namespace VegaCityApp.Domain.Models
                     .HasForeignKey(d => d.ZoneId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_House_Zone");
+            });
+
+            modelBuilder.Entity<IssueType>(entity =>
+            {
+                entity.ToTable("IssueType");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate");
+
+                entity.Property(e => e.Name).HasMaxLength(200);
             });
 
             modelBuilder.Entity<Job>(entity =>
@@ -808,6 +819,10 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.Type)
                     .HasMaxLength(50)
                     .IsUnicode(false);
+
+                entity.Property(e => e.UpsDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("upsDate");
 
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.Transactions)
