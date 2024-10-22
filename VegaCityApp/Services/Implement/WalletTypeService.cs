@@ -398,7 +398,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             else if (wallet.User.StoreId == wallet.StoreId)
             {
-                if (wallet.Balance < request.Amount)
+                if (wallet.BalanceHistory < request.Amount)
                 {
                     return new ResponseAPI
                     {
@@ -533,7 +533,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             else if (wallet.User.StoreId == wallet.StoreId)
             {
-                if (wallet.Balance < request.Amount)
+                if (wallet.BalanceHistory < request.Amount)
                 {
                     return new ResponseAPI
                     {
@@ -544,7 +544,7 @@ namespace VegaCityApp.API.Services.Implement
                 transaction.Status = TransactionStatus.Success;
                 transaction.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
-                wallet.Balance -= request.Amount;
+                wallet.BalanceHistory -= request.Amount;
                 wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
             }
