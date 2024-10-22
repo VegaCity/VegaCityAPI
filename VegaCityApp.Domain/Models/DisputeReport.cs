@@ -7,7 +7,7 @@ namespace VegaCityApp.Domain.Models
     {
         public Guid Id { get; set; }
         public Guid IssueTypeId { get; set; }
-        public Guid CreatorId { get; set; }
+        public string Creator { get; set; } = null!;
         public string Description { get; set; } = null!;
         public string? Solution { get; set; }
         public string? SolveBy { get; set; }

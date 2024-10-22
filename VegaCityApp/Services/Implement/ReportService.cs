@@ -2,9 +2,12 @@
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Report;
 using VegaCityApp.API.Payload.Response;
+using VegaCityApp.API.Payload.Response.HouseResponse;
+using VegaCityApp.API.Payload.Response.ReportResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
 using VegaCityApp.Domain.Models;
+using VegaCityApp.Domain.Paginate;
 using VegaCityApp.Repository.Interfaces;
 using static VegaCityApp.API.Constants.MessageConstant;
 
@@ -33,30 +36,35 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
 
-        public async Task<ResponseAPI> CreateReport(Guid creatorId, ReportRequest req)
+        public async Task<ResponseAPI> CreateReport(string creator, ReportRequest req)
         {
             var report = _mapper.Map<DisputeReport>(req);
             report.Id = Guid.NewGuid();
-            report.CreatorId = creatorId;
+            report.Creator = creator;
             report.CrDate = TimeUtils.GetCurrentSEATime();
             report.Status = (int) ReportStatus.Pending;
             report.StoreId = req.StoreId;
             await _unitOfWork.GetRepository<DisputeReport>().InsertAsync(report);
-            await _unitOfWork.CommitAsync();
-            return new ResponseAPI
+           
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = "Create Report Success",
                 Data = report
+            }: new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.BadRequest,
+                MessageResponse = "Create Report Fail"
             };
         }
         public async Task<ResponseAPI> UpdateReport(Guid id, SolveRequest req)
         {
-            string email = GetEmailFromJwt();
+            Guid userSolve = GetUserIdFromJwt();
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == userSolve);
             var report = await _unitOfWork.GetRepository<DisputeReport>().SingleOrDefaultAsync
                 (predicate: x => x.Id == id
-                        && (x.Status != (int)ReportStatus.Done
-                        || x.Status != (int)ReportStatus.Cancel));
+                        && x.Status != (int)ReportStatus.Done
+                       );
             if (report == null)
             {
                 return new ResponseAPI
@@ -68,7 +76,7 @@ namespace VegaCityApp.API.Services.Implement
             report.Status = req.Status;
             report.SolveDate = TimeUtils.GetCurrentSEATime();
             report.Solution = req.Solution != null? req.Solution.Trim() : report.Solution;
-            report.SolveBy = email;
+            report.SolveBy = user.Email;
             _unitOfWork.GetRepository<DisputeReport>().UpdateAsync(report);
             await _unitOfWork.CommitAsync();
             return new ResponseAPI
@@ -101,6 +109,46 @@ namespace VegaCityApp.API.Services.Implement
                     issueTypeId = issueType.Id
                 }
             };
+        }
+
+        public async Task<ResponseAPI<IEnumerable<IssueTypeResponse>>> GetAllIssueType(int size, int page)
+        {
+            try
+            {
+                IPaginate<IssueTypeResponse> data = await _unitOfWork.GetRepository<IssueType>().GetPagingListAsync(
+                               selector: x => new IssueTypeResponse()
+                               {
+                                   Id = x.Id,
+                                   CrDate = x.CrDate,
+                                   Name = x.Name
+                               },
+                                page: page,
+                                size: size,
+                                orderBy: x => x.OrderByDescending(z => z.Name));
+                return new ResponseAPI<IEnumerable<IssueTypeResponse>>
+                {
+                    MessageResponse = "Get All Issue Type Success",
+                    StatusCode = HttpStatusCodes.OK,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    },
+                    Data = data.Items
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI<IEnumerable<IssueTypeResponse>>
+                {
+                    MessageResponse = "Get Issue Type Fail" + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null,
+                    MetaData = null
+                };
+            }
         }
     }
 }

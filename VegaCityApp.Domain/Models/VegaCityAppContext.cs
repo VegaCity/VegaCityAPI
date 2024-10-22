@@ -142,7 +142,7 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.HasIndex(e => e.StoreId, "IX_DisputeReports_StoreId");
 
-                entity.HasIndex(e => e.CreatorId, "IX_DisputeReports_UserId");
+                entity.HasIndex(e => e.Creator, "IX_DisputeReports_UserId");
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
@@ -151,11 +151,11 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("crDate")
                     .HasDefaultValueSql("(getdate())");
 
-                entity.Property(e => e.Description)
-                    .HasMaxLength(500)
+                entity.Property(e => e.Creator)
+                    .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.Solution).IsUnicode(false);
+                entity.Property(e => e.Description).HasMaxLength(500);
 
                 entity.Property(e => e.SolveBy)
                     .HasMaxLength(50)
@@ -329,9 +329,7 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnType("datetime")
                     .HasColumnName("crDate");
 
-                entity.Property(e => e.Name)
-                    .HasMaxLength(200)
-                    .IsUnicode(false);
+                entity.Property(e => e.Name).HasMaxLength(200);
             });
 
             modelBuilder.Entity<Job>(entity =>
