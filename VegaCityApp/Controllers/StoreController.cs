@@ -23,15 +23,15 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(StoreEndpoint.GetListStore)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
-        public async Task<IActionResult> SearchAllStore([FromQuery] int size = 10, [FromQuery] int page = 1)
+        //[CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
+        public async Task<IActionResult> SearchAllStore([FromQuery] Guid apiKey, [FromQuery] int size = 10, [FromQuery] int page = 1)
         {
-            var result = await _storeService.SearchAllStore(size, page);
+            var result = await _storeService.SearchAllStore(apiKey, size, page);
             return Ok(result);
         }
         [HttpGet(StoreEndpoint.GetStore)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
+        //[CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
         public async Task<IActionResult> SearchStore(Guid id)
         {
             var result = await _storeService.SearchStore(id);
@@ -58,7 +58,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(StoreEndpoint.GetMenu)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Store)]
+        //[CustomAuthorize(RoleEnum.Store)]
         public async Task<IActionResult> GetMenu(Guid id)
         {
             var result = await _storeService.GetMenuFromPos(id);

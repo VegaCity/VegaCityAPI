@@ -10,7 +10,7 @@ namespace VegaCityApp.API.Services.Interface
     public interface IStoreService
     {
         Task<ResponseAPI> UpdateStore(Guid storeId,UpdateStoreRequest req);
-        Task<ResponseAPI<IEnumerable<GetStoreResponse>>> SearchAllStore(int size, int page);
+        Task<ResponseAPI<IEnumerable<GetStoreResponse>>> SearchAllStore(Guid apiKey, int size, int page);
         Task<ResponseAPI> DeleteStore(Guid StoreId);
         Task<ResponseAPI> SearchStore(Guid StoreId);
         Task<ResponseAPI> GetMenuFromPos(Guid id);

@@ -79,7 +79,7 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
-        public async Task<ResponseAPI<IEnumerable<GetStoreResponse>>> SearchAllStore(int size, int page)
+        public async Task<ResponseAPI<IEnumerable<GetStoreResponse>>> SearchAllStore(Guid apiKey, int size, int page)
         {
             try
             {
@@ -100,13 +100,15 @@ namespace VegaCityApp.API.Services.Implement
                     ShortName = x.ShortName,
                     Email = x.Email,
                     HouseId = x.HouseId,
-                    Status = x.Status
+                    Status = x.Status,
+                    ZoneName = x.House.Zone.Name
 
                 },
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => !x.Deflag && x.MarketZoneId == GetMarketZoneIdFromJwt()
+                predicate: x => !x.Deflag && x.MarketZoneId == apiKey,
+                include: store => store.Include(y => y.House).ThenInclude(y => y.Zone)
                 );
                 return new ResponseAPI<IEnumerable<GetStoreResponse>>
                 {
