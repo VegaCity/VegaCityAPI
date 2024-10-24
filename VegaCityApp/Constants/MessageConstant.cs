@@ -324,4 +324,14 @@ public static class MessageConstant
         public const string DeleteWalletTypeSuccess = "Delete WalletType Successfully!";
         public const string DeleteWalletTypeFail = "Delete WalletType Failed!";
     }
+
+    public static class TransactionMessage
+    {
+        public const string NotFoundTransaction = "Transaction Not Found";
+        public const string GetTransactionSuccess = "Get Transactions Successfully !!";
+        public const string FailedGetTransaction = "Failed To Get Transactions !!";
+        public const string DeletedSuccess = "Deleted Transaction Successfully!!";
+        public const string DayNull = "The Days Duration Must Be Greater Than Zero!!";
+
+    }
 }

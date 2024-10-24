@@ -51,6 +51,7 @@ public static class ApiEndPointConstant
         public const string DeleteUser = ApiEndpoint + "/user/{id}";
         public const string CreateUser = ApiEndpoint + "/user";
         public const string GetAdminWallet = ApiEndpoint + "/wallet";
+        public const string GetChartDashboard = ApiEndpoint + "/transaction/dashboard";
 
     }
 

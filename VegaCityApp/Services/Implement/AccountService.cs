@@ -996,5 +996,126 @@ namespace VegaCityApp.Service.Implement
                 Data = walletAd
             };
         }
+
+        public async Task<ResponseAPI> GetChartByDuration(AdminChartDurationRequest req)
+        {
+            string roleCurrent = GetRoleFromJwt();
+            if (roleCurrent == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = UserMessage.UserNotFound,
+                };
+            }
+
+            if (req.Days == 0)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = TransactionMessage.DayNull,
+                    StatusCode = HttpStatusCodes.BadRequest,
+                };
+            }
+
+            if (!DateTime.TryParse(req.StartDate + " 00:00:00.000Z", out DateTime startDate))
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = "Invalid start date format.",
+                };
+            }
+
+            DateTime? endDate = startDate.AddDays(((int)req.Days));
+            var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
+                                                       && x.CrDate <= endDate && x.Status == OrderStatus.Completed, null, include: etag => etag.Include(y => y.Etag));
+            var etags = await _unitOfWork.GetRepository<Etag>().GetListAsync(x => x.CrDate >= startDate
+                                                       && x.CrDate <= endDate, null, null);
+            var transactions = await _unitOfWork.GetRepository<Transaction>()
+                                       .GetListAsync(x => x.CrDate >= startDate
+                                                       && x.CrDate <= endDate
+                                                       && x.Amount > 0
+                                                       && x.Type != "WithdrawMoney",
+                                                       null, null);
+            var deposits = await _unitOfWork.GetRepository<Deposit>()
+                                      .GetListAsync(x => x.CrDate >= startDate
+                                                      && x.CrDate <= endDate
+                                                      && x.Amount > 0,
+                                                      null, null);
+            var packages = await _unitOfWork.GetRepository<Package>().GetListAsync(x => x.CrDate >= startDate
+                                                       && x.CrDate <= endDate,
+                                                        null, null);
+            if (transactions == null || !transactions.Any())
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = "Transaction not found"
+                };
+            }
+
+            if (roleCurrent == "Admin")
+            {
+                var groupedStaticsAdmin = transactions
+               .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+               .Select(g => new
+               {
+                   Name = g.Key, // Month name
+                   TotalTransactions = transactions.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                   TotalTransactionsAmount = g.Sum(t => t.Amount),
+                   //  EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                   EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key && o.EtagId != null),
+                   OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
+
+               }).ToList();
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = "Get Admin's Dashboard Successfully!",
+                    Data = groupedStaticsAdmin
+                };
+            }
+            else if (roleCurrent == "CashierWeb" || roleCurrent == "CashierApp")
+            {
+                var groupedStaticsCashier = deposits
+              .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+              .Select(g => new
+              {
+                  Name = g.Key, // Month name
+                  TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                  TotalTransactionsAmount = g.Sum(t => t.Amount),
+                  EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key && o.EtagId != null),
+                  OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
+                  PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
+              }).ToList();
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = "Get Cashier's Dashboard Successfully!",
+                    Data = groupedStaticsCashier
+                };
+            }
+            // case store 
+            var storeOrders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
+                                                       && x.CrDate <= endDate && x.StoreId != null && x.Status == OrderStatus.Completed,
+                                                        null, null);
+            var groupedStaticsStore = orders
+             .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+             .Select(g => new
+             {
+                 Name = g.Key, // Month name
+                 OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
+                 TotalAmountFromOrder = g.Sum(t => t.TotalAmount),
+                 //PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
+             }).ToList();
+            return new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = "Get Store's Dashboard Successfully!",
+                Data = groupedStaticsStore
+            };
+        }
+
     }
 }

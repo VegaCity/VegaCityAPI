@@ -85,5 +85,13 @@ namespace VegaCityApp.API.Controllers.Admin
             var result = await _service.GetAdminWallet();
             return Ok(result);
         }
+        [HttpPost(UserEndpoint.GetChartDashboard)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp, RoleEnum.Store)]
+        public async Task<IActionResult> GetChartByDuration(AdminChartDurationRequest req)
+        {
+            var response = await _service.GetChartByDuration(req);
+            return Ok(response);
+        }
     }
 }
