@@ -54,7 +54,7 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpGet(UserEndpoint.GetUserInfo)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb, RoleEnum.Store)]
         public async Task<IActionResult> SearchUser(Guid id)
         {
             var result = await _service.SearchUser(id);
