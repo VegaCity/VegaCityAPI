@@ -108,7 +108,6 @@ namespace VegaCityApp.API.Services.Implement
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
                     TotalAmount = amount + (amount * EnvironmentVariableConstant.VATRate),
-                    MenuId = req.MenuId,
                     Quantity = count,
                     Vatrate = EnvironmentVariableConstant.VATRate,
                 };

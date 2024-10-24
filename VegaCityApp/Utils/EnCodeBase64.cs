@@ -24,6 +24,15 @@ namespace VegaCityApp.API.Utils
             var base64 = Convert.ToBase64String(plainTextBytes);
             return base64;
         }
+        public static string EncodeBase64<T>(T data)
+        {
+            var currentTime = TimeUtils.GetCurrentSEATime();
+            var qrCode = data + "_" + currentTime + "_" + currentTime.Millisecond;
+            //Encode to Base64
+            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(qrCode);
+            var base64 = Convert.ToBase64String(plainTextBytes);
+            return base64;
+        }
 
         //public static DecodeBase64Response DecodeBase64Response(string base64)
         //{

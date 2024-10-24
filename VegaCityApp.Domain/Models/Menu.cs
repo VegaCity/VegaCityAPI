@@ -7,7 +7,6 @@ namespace VegaCityApp.Domain.Models
     {
         public Menu()
         {
-            OrderDetails = new HashSet<OrderDetail>();
             ProductCategories = new HashSet<ProductCategory>();
         }
 
@@ -22,7 +21,6 @@ namespace VegaCityApp.Domain.Models
         public string? MenuJson { get; set; }
 
         public virtual Store Store { get; set; } = null!;
-        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
         public virtual ICollection<ProductCategory> ProductCategories { get; set; }
     }
 }

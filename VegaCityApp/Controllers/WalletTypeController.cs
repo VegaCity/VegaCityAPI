@@ -7,6 +7,7 @@ using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.WalletResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Validators;
+using VegaCityApp.Domain.Models;
 using VegaCityApp.Domain.Paginate;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
@@ -94,9 +95,9 @@ namespace VegaCityApp.API.Controllers
         [HttpPatch(WalletTypeEndpoint.WithdrawMoneyWallet)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.CashierWeb)]
-        public async Task<IActionResult> WithdrawMoneyWallet(Guid walletid, [FromBody] WithdrawMoneyRequest request)
+        public async Task<IActionResult> WithdrawMoneyWallet(Guid walletid,[FromBody] Transaction transaction)
         {
-            var result = await _walletTypeService.WithdrawMoneyWallet(walletid, request);
+            var result = await _walletTypeService.WithdrawMoneyWallet(walletid, transaction);
             return StatusCode(result.StatusCode, result);
         }
     }

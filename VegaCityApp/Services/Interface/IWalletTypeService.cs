@@ -1,6 +1,7 @@
 ﻿using VegaCityApp.API.Payload.Request.WalletType;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.WalletResponse;
+using VegaCityApp.Domain.Models;
 using VegaCityApp.Domain.Paginate;
 
 namespace VegaCityApp.API.Services.Interface
@@ -17,6 +18,6 @@ namespace VegaCityApp.API.Services.Interface
         Task CheckExpireWallet();
         Task EndDayCheckWalletCashier(Guid apiKey);
         Task<ResponseAPI> RequestWithdrawMoneyWallet(Guid id, WithdrawMoneyRequest request);
-        Task<ResponseAPI> WithdrawMoneyWallet(Guid id, WithdrawMoneyRequest request);
+        Task<ResponseAPI> WithdrawMoneyWallet(Guid id, Transaction transaction);
     }
 }

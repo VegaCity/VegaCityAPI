@@ -2,9 +2,9 @@
 {
     public enum UserStatusEnum
     {
-        Active,
-        Disable,
-        Ban,
-        PendingVerify
+        Active = 0,
+        Disable = 1,
+        Ban = 2,
+        PendingVerify = 3
     }
 }
