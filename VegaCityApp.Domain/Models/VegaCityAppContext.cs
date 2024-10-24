@@ -863,10 +863,10 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Birthday).HasColumnType("date");
 
-                entity.Property(e => e.Cccd)
+                entity.Property(e => e.CccdPassport)
                     .HasMaxLength(12)
                     .IsUnicode(false)
-                    .HasColumnName("CCCD");
+                    .HasColumnName("CCCD_Passport");
 
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")

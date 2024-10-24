@@ -154,7 +154,7 @@ namespace VegaCityApp.API.Services.Implement
                 Email = x.Email,
                 Gender = x.Gender,
                 Birthday = x.Birthday,
-                Cccd = x.Cccd,
+                CccdPassport = x.CccdPassport,
                 Description = x.Description,
                 ImageUrl = x.ImageUrl,
                 Status = x.Status

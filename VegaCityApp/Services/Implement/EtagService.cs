@@ -621,7 +621,7 @@ namespace VegaCityApp.API.Services.Implement
                                   Id = x.Id,
                                   FullName = x.EtagDetails.FirstOrDefault().FullName,
                                   PhoneNumber = x.EtagDetails.FirstOrDefault().PhoneNumber,
-                                  CCCD = x.EtagDetails.FirstOrDefault().CccdPassport,
+                                  CccdPassport = x.EtagDetails.FirstOrDefault().CccdPassport,
                                   ImageUrl = x.ImageUrl,
                                   EtagCode = x.EtagCode,
                                   QRCode = x.Qrcode,
@@ -751,7 +751,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            if (!ValidationUtils.IsCCCD(req.CCCD))
+            if (!ValidationUtils.IsCCCD(req.CccdPassport))
             {
                 return new ResponseAPI()
                 {
@@ -762,7 +762,7 @@ namespace VegaCityApp.API.Services.Implement
             //get user id from token
             Guid userId = GetUserIdFromJwt(); 
             var etagExist = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagCode == req.EtagCode && !x.Deflag
-            && x.EtagDetails.FirstOrDefault().CccdPassport == req.CCCD // FROM ETAG DETAIL HERE TOO
+            && x.EtagDetails.FirstOrDefault().CccdPassport == req.CccdPassport // FROM ETAG DETAIL HERE TOO
                  , include: etag => etag.Include(y => y.Wallet).Include(y => y.EtagDetails));
             if (etagExist == null)
             {

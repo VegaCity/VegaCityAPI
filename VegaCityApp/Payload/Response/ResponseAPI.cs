@@ -39,7 +39,7 @@ namespace VegaCityApp.API.Payload.Response
         public string EtagCode { get; set; }
         public string FullName { get; set; }
         public string? PhoneNumber { get; set; }
-        public string? CCCD { get; set; }
+        public string? CccdPassport { get; set; }
         public string? ImageUrl { get; set; }
         public int? Gender { get; set; }
         public DateTime? Birthday { get; set; }
@@ -60,7 +60,7 @@ namespace VegaCityApp.API.Payload.Response
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
         public int? Gender { get; set; }
-        public string? Cccd { get; set; }
+        public string? CccdPassport { get; set; }
         public string? ImageUrl { get; set; }
         public string? Email { get; set; }
         public Guid? RoleId { get; set; }

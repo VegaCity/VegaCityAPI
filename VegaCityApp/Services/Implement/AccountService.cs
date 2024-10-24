@@ -34,7 +34,7 @@ namespace VegaCityApp.Service.Implement
                 Id = Guid.NewGuid(),
                 FullName = req.FullName.Trim(),
                 PhoneNumber = req.PhoneNumber.Trim(),
-                Cccd = req.CCCD.Trim(),
+                CccdPassport = req.CccdPassport.Trim(),
                 Address = req.Address.Trim(),
                 Email = req.Email.Trim(),
                 Description = req.Description.Trim(),
@@ -348,7 +348,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
 
-            if (!ValidationUtils.IsCCCD(req.CCCD))
+            if (!ValidationUtils.IsCCCD(req.CccdPassport))
             {
                 return new ResponseAPI
                 {
@@ -379,7 +379,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var cccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Cccd == req.CCCD.Trim() && x.MarketZoneId == req.apiKey);
+                x.CccdPassport == req.CccdPassport.Trim() && x.MarketZoneId == req.apiKey);
             if (cccdExist != null)
             {
                 return new ResponseAPI()
@@ -450,7 +450,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
 
-            if (!ValidationUtils.IsCCCD(req.CCCD))
+            if (!ValidationUtils.IsCCCD(req.CccdPassport))
             {
                 return new ResponseAPI()
                 {
@@ -481,7 +481,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var cccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Cccd == req.CCCD && x.MarketZoneId == apiKey);
+                x.CccdPassport == req.CccdPassport && x.MarketZoneId == apiKey);
             if (cccdExist != null)
             {
                 return new ResponseAPI()
@@ -810,7 +810,7 @@ namespace VegaCityApp.Service.Implement
                     PhoneNumber = x.PhoneNumber,
                     Birthday = x.Birthday,
                     Description = x.Description,
-                    Cccd = x.Cccd,
+                    CccdPassport = x.CccdPassport,
                     Gender = x.Gender,
                     ImageUrl = x.ImageUrl,
                     StoreId = x.StoreId,

@@ -20,7 +20,7 @@ namespace VegaCityApp.Domain.Models
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public int Gender { get; set; }
-        public string Cccd { get; set; } = null!;
+        public string CccdPassport { get; set; } = null!;
         public string? ImageUrl { get; set; }
         public Guid MarketZoneId { get; set; }
         public string Email { get; set; } = null!;
