@@ -33,7 +33,7 @@ namespace VegaCityApp.API.Controllers
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> UpdateOrderPaid([FromQuery] IPNMomoRequest req)
         {
-            var result = await _service.UpdateOrderPaid(req);
+            var result = await _service.UpdateOrderPaidForCashier(req);
             if(result.StatusCode == HttpStatusCodes.NoContent)
             {
                 return Redirect(result.MessageResponse);

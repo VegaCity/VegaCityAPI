@@ -160,7 +160,7 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = PaymentMessage.MomoPaymentFail
             };
         }
-        public async Task<ResponseAPI> UpdateOrderPaid(IPNMomoRequest req)
+        public async Task<ResponseAPI> UpdateOrderPaidForCashier(IPNMomoRequest req)
         {
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
                 (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending);
