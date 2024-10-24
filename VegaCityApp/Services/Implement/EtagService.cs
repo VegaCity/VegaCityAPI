@@ -187,80 +187,6 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
-        public async Task<ResponseAPI> CreateEtag(EtagRequest req)
-        {
-            if(!ValidationUtils.IsCCCD(req.Cccd))
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagMessage.CCCDInvalid,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagMessage.PhoneNumberInvalid,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagTypeId
-            , include: x => x.Include(y => y.WalletType));
-            if (etagType == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagMessage.EtagTypeNotFound,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
-
-            var newWallet = new Wallet
-            {
-                Id = Guid.NewGuid(),
-                Balance = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
-                BalanceHistory = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
-                CrDate = TimeUtils.GetCurrentSEATime(),
-                UpsDate = TimeUtils.GetCurrentSEATime(),
-                Deflag = false,
-                WalletTypeId = etagType.WalletType.Id,
-                StartDate = req.StartDate,
-                ExpireDate = req.EndDate
-            };
-            await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
-            var newEtag = new Etag
-            {
-                Id = Guid.NewGuid(),
-                EtagTypeId = etagType.Id,
-                MarketZoneId = etagType.MarketZoneId,
-                WalletId = newWallet.Id,
-                Deflag = false,
-                CrDate = TimeUtils.GetCurrentSEATime(),
-                UpsDate = TimeUtils.GetCurrentSEATime(),
-                Cccd = req.Cccd,
-                FullName = req.FullName,
-                PhoneNumber = req.PhoneNumber,
-                Gender = req.Gender,
-                EtagCode = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
-                StartDate = req.StartDate,
-                EndDate = req.EndDate,
-                Status = (int)EtagStatusEnum.Active,
-                IsVerifyPhone = false
-            };
-            newEtag.Qrcode = EnCodeBase64.EncodeBase64Etag(newEtag.EtagCode);
-            await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
-            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
-            {
-                MessageResponse = EtagMessage.CreateSuccessFully,
-                StatusCode = HttpStatusCodes.Created,
-                Data = new { etagId = newEtag.Id, walletId = newWallet.Id }
-            } : new ResponseAPI()
-            {
-                MessageResponse = EtagTypeMessage.CreateFail,
-                StatusCode = HttpStatusCodes.BadRequest
-            };
-        }
         public async Task<ResponseAPI> AddEtagTypeToPackage(Guid etagTypeId, Guid packageId, int quantityEtagType)
         {
             var etag = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag);
@@ -326,6 +252,111 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.BadRequest
             };
         }
+        public async Task<ResponseAPI> CreateEtag(EtagRequest req) //include EtagDetail too
+        {
+            //if(!ValidationUtils.IsCCCD(req.Cccd))
+            //{
+            //    return new ResponseAPI()
+            //    {
+            //        MessageResponse = EtagMessage.CCCDInvalid,
+            //        StatusCode = HttpStatusCodes.BadRequest
+            //    };
+            //}
+            //if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
+            //{
+            //    return new ResponseAPI()
+            //    {
+            //        MessageResponse = EtagMessage.PhoneNumberInvalid,
+            //        StatusCode = HttpStatusCodes.BadRequest
+            //    };
+            //}
+            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagTypeId
+            , include: x => x.Include(y => y.WalletType));
+            if (etagType == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.EtagTypeNotFound,
+                    StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+
+            var newWallet = new Wallet
+            {
+                Id = Guid.NewGuid(),
+                Balance = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
+                BalanceHistory = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                Deflag = false,
+                WalletTypeId = etagType.WalletType.Id,
+                StartDate = req.StartDate,
+                ExpireDate = req.EndDate
+            };
+            await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
+            var newEtag = new Etag
+            {
+                Id = Guid.NewGuid(),
+                EtagTypeId = etagType.Id,
+                MarketZoneId = etagType.MarketZoneId,
+                WalletId = newWallet.Id,
+                Deflag = false,
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                //Cccd = req.Cccd,
+                //FullName = req.FullName,
+                //PhoneNumber = req.PhoneNumber,
+                //Gender = req.Gender,
+                EtagCode = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
+                StartDate = req.StartDate,
+                EndDate = req.EndDate,
+                Status = (int)EtagStatusEnum.Active,
+                // IsVerifyPhone = false,
+                IsAdult = false,
+            };
+            newEtag.Qrcode = EnCodeBase64.EncodeBase64Etag(newEtag.EtagCode);
+            await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
+            //etag detail below here 
+            if (!ValidationUtils.IsCCCD(req.Cccd))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.CCCDInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.PhoneNumberInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            var newEtagDetail = new EtagDetail
+            {
+                Id = Guid.NewGuid(),
+                EtagId = newEtag.Id,
+                FullName = req.FullName,
+                PhoneNumber = req.PhoneNumber,
+                CccdPassport = req.Cccd,
+                Gender = req.Gender,
+                IsVerifyPhone = false, 
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime()
+            };
+            await _unitOfWork.GetRepository<EtagDetail>().InsertAsync(newEtagDetail);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            {
+                MessageResponse = EtagMessage.CreateSuccessFully,
+                StatusCode = HttpStatusCodes.Created,
+                Data = new { etagId = newEtag.Id, walletId = newWallet.Id }
+            } : new ResponseAPI()
+            {
+                MessageResponse = EtagTypeMessage.CreateFail,
+                StatusCode = HttpStatusCodes.BadRequest
+            };
+        }
         public async Task<ResponseAPI> GenerateEtag(int quantity, Guid etagTypeId, GenerateEtagRequest req)
         {
             List<Guid> listEtagCreated = new List<Guid>();
@@ -359,11 +390,11 @@ namespace VegaCityApp.API.Services.Implement
                 var newEtag = new Etag
                 {
                     Id = Guid.NewGuid(),
-                    FullName = "User VegaCity",
-                    PhoneNumber = "",
-                    Cccd = "",
-                    ImageUrl = "",
-                    Gender = (int)GenderEnum.Other,
+                    //FullName = "User VegaCity",
+                    //PhoneNumber = "",
+                    //Cccd = "",
+                    //ImageUrl = "",
+                    //Gender = (int)GenderEnum.Other, //THOSE IN ETAG DETAIL
                     EtagCode = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -374,10 +405,24 @@ namespace VegaCityApp.API.Services.Implement
                     StartDate = req.StartDate,
                     EndDate = req.EndDate,
                     Status = (int)EtagStatusEnum.Inactive,
-                    IsVerifyPhone = false,
+                    //IsVerifyPhone = false,
+                    IsAdult = false,
                 };
                 newEtag.Qrcode = EnCodeBase64.EncodeBase64Etag(newEtag.EtagCode);
                 await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
+                var newEtagDetail = new EtagDetail
+                {
+                    Id = Guid.NewGuid(),
+                    EtagId = newEtag.Id,
+                    FullName =  "User VegaCity", // Default or provided value
+                    PhoneNumber =  "", // Default or provided value
+                    CccdPassport = "", // Default or provided value
+                    Gender = (int)GenderEnum.Other, // Default or provided value
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    IsVerifyPhone = false // Assuming the phone isn't verified initially
+                };
+                await _unitOfWork.GetRepository<EtagDetail>().InsertAsync(newEtagDetail);
                 await _unitOfWork.CommitAsync();
                 listEtagCreated.Add(newEtag.Id);
             }
@@ -393,7 +438,10 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> UpdateEtag(Guid etagId, UpdateEtagRequest req)
         {
-            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == etagId && !x.Deflag);
+            //var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == etagId && !x.Deflag);
+            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == etagId && !x.Deflag,
+                include: etag => etag.Include(y => y.EtagDetails)
+            );
             if (etag == null)
             {
                 return new ResponseAPI()
@@ -402,14 +450,14 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
-            if(!ValidationUtils.IsCCCD(req.CCCD))
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagMessage.CCCDInvalid,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
+            //if(!ValidationUtils.IsCCCD(req.CCCD))
+            //{
+            //    return new ResponseAPI()
+            //    {
+            //        MessageResponse = EtagMessage.CCCDInvalid,
+            //        StatusCode = HttpStatusCodes.BadRequest
+            //    };
+            //}
             if(!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
             {
                 return new ResponseAPI()
@@ -418,12 +466,28 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            etag.FullName = req.Fullname ?? etag.FullName;
-            etag.PhoneNumber = req.PhoneNumber ?? etag.PhoneNumber;
-            etag.Cccd = req.CCCD ?? etag.Cccd;
+            //BELOW UPDATE ETAG DETAIL instead of etag ban dau
+            //etag.FullName = req.Fullname ?? etag.FullName;
+            //etag.PhoneNumber = req.PhoneNumber ?? etag.PhoneNumber;
+            //etag.Cccd = req.CCCD ?? etag.Cccd;
+            // etag.ImageUrl = req.ImageUrl ?? etag.ImageUrl;
+            //etag.Birthday = req.DateOfBirth ?? etag.Birthday;
+            //etag.Gender = req.Gender ?? etag.Gender;
+            //  etag.UpsDate = TimeUtils.GetCurrentSEATime();
+            // _unitOfWork.GetRepository<Etag>().UpdateAsync(etag
+            var etagDetail = etag.EtagDetails.FirstOrDefault();
+            if (etagDetail != null)
+            {
+                etagDetail.FullName = req.Fullname ?? etagDetail.FullName;
+                etagDetail.PhoneNumber = req.PhoneNumber ?? etagDetail.PhoneNumber;
+                //etagDetail.CccdPassport = req.CCCD ?? etagDetail.CccdPassport;
+                etagDetail.Gender = req.Gender ?? etagDetail.Gender;
+                etagDetail.Birthday = req.DateOfBirth ?? etagDetail.Birthday;
+                etagDetail.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<EtagDetail>().UpdateAsync(etagDetail);
+            }
+            //update etag
             etag.ImageUrl = req.ImageUrl ?? etag.ImageUrl;
-            etag.Birthday = req.DateOfBirth ?? etag.Birthday;
-            etag.Gender = req.Gender ?? etag.Gender;
             etag.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Etag>().UpdateAsync(etag);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
@@ -471,6 +535,8 @@ namespace VegaCityApp.API.Services.Implement
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => (x.Id == etagId || x.EtagCode == etagCode) && !x.Deflag,
                 include: etag => etag.Include(y => y.EtagType)
                         .Include(y => y.Wallet)
+                        .Include(y => y.EtagDetails)
+                        .Include(y => y.Orders)
                         .Include(y => y.MarketZone));
             if (etag == null)
             {
@@ -505,14 +571,14 @@ namespace VegaCityApp.API.Services.Implement
                               selector: x => new EtagResponse()
                               {
                                   Id = x.Id,
-                                  FullName = x.FullName,
-                                  PhoneNumber = x.PhoneNumber,
-                                  CCCD = x.Cccd,
+                                  FullName = x.EtagDetails.FirstOrDefault().FullName,
+                                  PhoneNumber = x.EtagDetails.FirstOrDefault().PhoneNumber,
+                                  CCCD = x.EtagDetails.FirstOrDefault().CccdPassport,
                                   ImageUrl = x.ImageUrl,
                                   EtagCode = x.EtagCode,
                                   QRCode = x.Qrcode,
-                                  Birthday = x.Birthday,
-                                  Gender = x.Gender,
+                                  Birthday = x.EtagDetails.FirstOrDefault().Birthday,
+                                  Gender = x.EtagDetails.FirstOrDefault().Gender, 
                                   Deflag = x.Deflag,
                                   EndDate = x.EndDate,
                                   StartDate = x.StartDate,
@@ -520,8 +586,9 @@ namespace VegaCityApp.API.Services.Implement
                               },
                                page: page,
                                size: size,
-                               orderBy: x => x.OrderByDescending(z => z.FullName),
-                               predicate: x => !x.Deflag);
+                               orderBy: x => x.OrderByDescending(z => z.StartDate),
+                               predicate: x => !x.Deflag,
+                               include: etag => etag.Include(y => y.EtagDetails));
                 return new ResponseAPI<IEnumerable<EtagResponse>>
                 {
                     MessageResponse = EtagMessage.SearchAllEtagsSuccess,
@@ -550,7 +617,8 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> ActivateEtag(Guid etagId, ActivateEtagRequest req)
         {
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(
-                predicate: x => x.Id == etagId && !x.Deflag && x.Status ==(int) EtagStatusEnum.Inactive);
+                predicate: x => x.Id == etagId && !x.Deflag && x.Status ==(int) EtagStatusEnum.Inactive,
+                include: etag => etag.Include(y => y.EtagDetails));
             if (etag == null)
             {
                 return new ResponseAPI()
@@ -575,7 +643,8 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            var checkPhone = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.PhoneNumber == req.Phone && !x.Deflag);
+            //BELOW CHECK FROM ETAG DETAIL (INCLUDE ETAG DETAIL FROM ETAG)
+            var checkPhone = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagDetails.FirstOrDefault().PhoneNumber == req.Phone && !x.Deflag);
             if (checkPhone != null)
             {
                 return new ResponseAPI()
@@ -584,7 +653,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            var checkCCCD = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Cccd == req.CCCD && !x.Deflag);
+            var checkCCCD = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagDetails.FirstOrDefault().CccdPassport == req.CCCD && !x.Deflag);
             if (checkCCCD != null)
             {
                 return new ResponseAPI()
@@ -594,12 +663,20 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             etag.Status = (int)EtagStatusEnum.Active;
-            etag.FullName = req.Name;
-            etag.PhoneNumber = req.Phone; 
-            etag.Cccd = req.CCCD;
+            //etag.FullName = req.Name;
+            //etag.PhoneNumber = req.Phone; 
+            //etag.Cccd = req.CCCD; //ETAG DETAIL
+            var etagDetail = etag.EtagDetails.FirstOrDefault();
+            etagDetail.FullName = req.Name;
+            etagDetail.PhoneNumber= req.Phone;
+            etagDetail.CccdPassport = req.CCCD;
+
             etag.UpsDate = TimeUtils.GetCurrentSEATime();
-            etag.Gender = req.Gender;
-            etag.Birthday = req.Birthday;
+
+            //etag.Gender = req.Gender;
+            //etag.Birthday = req.Birthday; ETAG DETAIL
+            etagDetail.Gender = req.Gender;
+            etagDetail.Birthday = req.Birthday;
             etag.StartDate = req.StartDate ?? etag.StartDate;
             etag.EndDate = req.EndDate ?? etag.EndDate;
             _unitOfWork.GetRepository<Etag>().UpdateAsync(etag);
@@ -634,9 +711,10 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             //get user id from token
-            Guid userId = GetUserIdFromJwt();
-            var etagExist = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagCode == req.EtagCode && !x.Deflag && x.Cccd == req.CCCD,
-                 include: etag => etag.Include(y => y.Wallet));
+            Guid userId = GetUserIdFromJwt(); 
+            var etagExist = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagCode == req.EtagCode && !x.Deflag
+            && x.EtagDetails.FirstOrDefault().CccdPassport == req.CCCD // FROM ETAG DETAIL HERE TOO
+                 , include: etag => etag.Include(y => y.Wallet).Include(y => y.EtagDetails));
             if (etagExist == null)
             {
                 return new ResponseAPI()
@@ -665,7 +743,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 Id = Guid.NewGuid(),
                 PaymentType = req.PaymentType,
-                Name = "Charge Money for Etag: " + etagExist.FullName,
+                Name = "Charge Money for Etag: " + etagExist.EtagDetails.FirstOrDefault().FullName, //FULL NAME FROM ETAG DETAIL
                 TotalAmount = req.ChargeAmount,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),

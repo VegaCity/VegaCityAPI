@@ -8,16 +8,12 @@ namespace VegaCityApp.Domain.Models
         public Etag()
         {
             Deposits = new HashSet<Deposit>();
+            EtagDetails = new HashSet<EtagDetail>();
             Orders = new HashSet<Order>();
         }
 
         public Guid Id { get; set; }
-        public string FullName { get; set; } = null!;
-        public string PhoneNumber { get; set; } = null!;
-        public string Cccd { get; set; } = null!;
         public string? ImageUrl { get; set; }
-        public int Gender { get; set; }
-        public DateTime? Birthday { get; set; }
         public string Qrcode { get; set; } = null!;
         public string EtagCode { get; set; } = null!;
         public DateTime CrDate { get; set; }
@@ -29,12 +25,13 @@ namespace VegaCityApp.Domain.Models
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public int Status { get; set; }
-        public bool IsVerifyPhone { get; set; }
+        public bool? IsAdult { get; set; }
 
         public virtual EtagType EtagType { get; set; } = null!;
         public virtual MarketZone MarketZone { get; set; } = null!;
         public virtual Wallet Wallet { get; set; } = null!;
         public virtual ICollection<Deposit> Deposits { get; set; }
+        public virtual ICollection<EtagDetail> EtagDetails { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
     }
 }

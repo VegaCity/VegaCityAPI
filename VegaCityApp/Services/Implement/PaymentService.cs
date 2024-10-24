@@ -520,9 +520,9 @@ namespace VegaCityApp.API.Services.Implement
                     //returnUrl: PayOSConfiguration.ReturnUrlCharge,
                      returnUrl: PayOSConfiguration.ReturnUrlCharge,
                     // URL khi thanh toán thành công
-                    buyerName: customerInfoEtag.FullName.ToString(),
+                    buyerName: "",//customerInfoEtag.FullName.ToString()
                     buyerEmail: "", // very require email here!
-                    buyerPhone: customerInfoEtag.PhoneNumber.ToString(),
+                    buyerPhone: "",//customerInfoEtag.PhoneNumber.ToString()
                     buyerAddress: "",
                     expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
                 );

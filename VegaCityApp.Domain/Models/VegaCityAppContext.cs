@@ -21,6 +21,7 @@ namespace VegaCityApp.Domain.Models
         public virtual DbSet<Deposit> Deposits { get; set; } = null!;
         public virtual DbSet<DisputeReport> DisputeReports { get; set; } = null!;
         public virtual DbSet<Etag> Etags { get; set; } = null!;
+        public virtual DbSet<EtagDetail> EtagDetails { get; set; } = null!;
         public virtual DbSet<EtagType> EtagTypes { get; set; } = null!;
         public virtual DbSet<Hash> Hashes { get; set; } = null!;
         public virtual DbSet<House> Houses { get; set; } = null!;
@@ -187,13 +188,6 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
-                entity.Property(e => e.Birthday).HasColumnType("date");
-
-                entity.Property(e => e.Cccd)
-                    .HasMaxLength(12)
-                    .IsUnicode(false)
-                    .HasColumnName("CCCD");
-
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")
                     .HasColumnName("crDate")
@@ -207,14 +201,7 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.EtagTypeId).HasColumnName("ETagTypeId");
 
-                entity.Property(e => e.FullName).HasMaxLength(50);
-
                 entity.Property(e => e.ImageUrl).IsUnicode(false);
-
-                entity.Property(e => e.PhoneNumber)
-                    .HasMaxLength(10)
-                    .IsUnicode(false)
-                    .IsFixedLength();
 
                 entity.Property(e => e.Qrcode)
                     .IsUnicode(false)
@@ -244,6 +231,40 @@ namespace VegaCityApp.Domain.Models
                     .HasForeignKey(d => d.WalletId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ETag_Wallet");
+            });
+
+            modelBuilder.Entity<EtagDetail>(entity =>
+            {
+                entity.ToTable("EtagDetail");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.Birthday).HasColumnType("date");
+
+                entity.Property(e => e.CccdPassport)
+                    .HasMaxLength(12)
+                    .IsUnicode(false)
+                    .HasColumnName("CCCD_Passport");
+
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate");
+
+                entity.Property(e => e.FullName).HasMaxLength(50);
+
+                entity.Property(e => e.PhoneNumber)
+                    .HasMaxLength(10)
+                    .IsFixedLength();
+
+                entity.Property(e => e.UpsDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("upsDate");
+
+                entity.HasOne(d => d.Etag)
+                    .WithMany(p => p.EtagDetails)
+                    .HasForeignKey(d => d.EtagId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_EtagDetail_ETag");
             });
 
             modelBuilder.Entity<EtagType>(entity =>
@@ -884,6 +905,12 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnType("datetime")
                     .HasColumnName("upsDate")
                     .HasDefaultValueSql("(getdate())");
+
+                entity.HasOne(d => d.MarketZone)
+                    .WithMany(p => p.Users)
+                    .HasForeignKey(d => d.MarketZoneId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_User_MarketZone");
 
                 entity.HasOne(d => d.Role)
                     .WithMany(p => p.Users)

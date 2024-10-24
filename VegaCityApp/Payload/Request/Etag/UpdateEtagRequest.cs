@@ -7,6 +7,6 @@
         public string? ImageUrl { get; set; }
         public int? Gender { get; set; }
         public DateTime? DateOfBirth { get; set; }
-        public string? CCCD { get; set; }
+      //  public string? CCCD { get; set; }
     }
 }
