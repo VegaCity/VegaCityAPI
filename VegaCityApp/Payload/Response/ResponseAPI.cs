@@ -41,13 +41,14 @@ namespace VegaCityApp.API.Payload.Response
         public string? PhoneNumber { get; set; }
         public string? CCCD { get; set; }
         public string? ImageUrl { get; set; }
-        public int Gender { get; set; }
+        public int? Gender { get; set; }
         public DateTime? Birthday { get; set; }
         public string QRCode { get; set; }
         public bool Deflag { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public int? Status { get; set; }
+        public Boolean? IsAdult { get; set; }
     }
     public class GetUserResponse
     {
