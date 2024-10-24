@@ -113,6 +113,8 @@ public static class MessageConstant
         public const string ActivateEtagFail = "Activate Etag Fail :( !!";
         public const string CreateOrderForCharge = "Create Order For Charging Etag Money Successfully!";
         public const string CreateOrderForChargeFail = "Create Order For Charging Etag Money Failed!";
+        public const string NotParentEtag = "Etag Must Be Parent To Generate Child's Etag";
+
     }
     public static class UserMessage
     {   

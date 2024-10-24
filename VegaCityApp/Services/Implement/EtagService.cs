@@ -312,7 +312,7 @@ namespace VegaCityApp.API.Services.Implement
                 EndDate = req.EndDate,
                 Status = (int)EtagStatusEnum.Active,
                 // IsVerifyPhone = false,
-                IsAdult = false,
+                IsAdult = true,
             };
             newEtag.Qrcode = EnCodeBase64.EncodeBase64Etag(newEtag.EtagCode);
             await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
@@ -387,45 +387,96 @@ namespace VegaCityApp.API.Services.Implement
                 };
                 await _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
                 // create etag
-                var newEtag = new Etag
+                if(req.EtagId != null) //check 
                 {
-                    Id = Guid.NewGuid(),
-                    //FullName = "User VegaCity",
-                    //PhoneNumber = "",
-                    //Cccd = "",
-                    //ImageUrl = "",
-                    //Gender = (int)GenderEnum.Other, //THOSE IN ETAG DETAIL
-                    EtagCode = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    Deflag = false,
-                    EtagTypeId = checkEtagType.Id,
-                    MarketZoneId = checkEtagType.MarketZoneId,
-                    WalletId = wallet.Id,
-                    StartDate = req.StartDate,
-                    EndDate = req.EndDate,
-                    Status = (int)EtagStatusEnum.Inactive,
-                    //IsVerifyPhone = false,
-                    IsAdult = false,
-                };
-                newEtag.Qrcode = EnCodeBase64.EncodeBase64Etag(newEtag.EtagCode);
-                await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
-                var newEtagDetail = new EtagDetail
+                    var etagParent = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagId && x.Status==(int)EtagStatusEnum.Active && x.IsAdult == true,
+                                                                                                   include: etag => etag.Include(z => z.EtagDetails));           
+                        /// generate etag child based on amount and fields from etag details of parent
+                        var newEtagChild = new Etag
+                        {
+                            Id = Guid.NewGuid(),
+                            //FullName = "User VegaCity",
+                            //PhoneNumber = "",
+                            //Cccd = "",
+                            //ImageUrl = "",
+                            //Gender = (int)GenderEnum.Other, //THOSE IN ETAG DETAIL
+                            EtagCode = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
+                            CrDate = TimeUtils.GetCurrentSEATime(),
+                            UpsDate = TimeUtils.GetCurrentSEATime(),
+                            Deflag = false,
+                            EtagTypeId = checkEtagType.Id,
+                            MarketZoneId = checkEtagType.MarketZoneId,
+                            WalletId = wallet.Id,
+                            StartDate = etagParent.StartDate,
+                            EndDate = req.EndDate,
+                            Status = (int)EtagStatusEnum.Inactive,
+                            //IsVerifyPhone = false,
+                            IsAdult = false,
+                        };
+                        newEtagChild.Qrcode = EnCodeBase64.EncodeBase64Etag(newEtagChild.EtagCode);
+                        await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtagChild);
+                        var newEtagChildDetail = new EtagDetail
+                        {
+                            Id = Guid.NewGuid(),
+                            EtagId = newEtagChild.Id,
+                            FullName = "User VegaCity", // Default or provided value
+                            PhoneNumber = etagParent.EtagDetails.FirstOrDefault().PhoneNumber, // Default or provided value
+                            CccdPassport = etagParent.EtagDetails.FirstOrDefault().CccdPassport, // Default or provided value
+                            Gender = (int)GenderEnum.Other, // Default or provided value
+                            CrDate = TimeUtils.GetCurrentSEATime(),
+                            UpsDate = TimeUtils.GetCurrentSEATime(),
+                            IsVerifyPhone = etagParent.EtagDetails.FirstOrDefault().IsVerifyPhone // Assuming the phone isn't verified initially
+                        };
+                    await _unitOfWork.GetRepository<EtagDetail>().InsertAsync(newEtagChildDetail);
+                   // await _unitOfWork.CommitAsync();
+                    listEtagCreated.Add(newEtagChild.Id);
+                    //end parent here
+                }
+                else
                 {
-                    Id = Guid.NewGuid(),
-                    EtagId = newEtag.Id,
-                    FullName =  "User VegaCity", // Default or provided value
-                    PhoneNumber =  "", // Default or provided value
-                    CccdPassport = "", // Default or provided value
-                    Gender = (int)GenderEnum.Other, // Default or provided value
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    IsVerifyPhone = false // Assuming the phone isn't verified initially
-                };
-                await _unitOfWork.GetRepository<EtagDetail>().InsertAsync(newEtagDetail);
-                await _unitOfWork.CommitAsync();
-                listEtagCreated.Add(newEtag.Id);
+                    var newEtag = new Etag
+                    {
+                        Id = Guid.NewGuid(),
+                        //FullName = "User VegaCity",
+                        //PhoneNumber = "",
+                        //Cccd = "",
+                        //ImageUrl = "",
+                        //Gender = (int)GenderEnum.Other, //THOSE IN ETAG DETAIL
+                        EtagCode = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        Deflag = false,
+                        EtagTypeId = checkEtagType.Id,
+                        MarketZoneId = checkEtagType.MarketZoneId,
+                        WalletId = wallet.Id,
+                        StartDate = req.StartDate,
+                        EndDate = req.EndDate,
+                        Status = (int)EtagStatusEnum.Inactive,
+                        //IsVerifyPhone = false,
+                        IsAdult = true,
+                    };
+                    newEtag.Qrcode = EnCodeBase64.EncodeBase64Etag(newEtag.EtagCode);
+                    await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
+                    var newEtagDetail = new EtagDetail
+                    {
+                        Id = Guid.NewGuid(),
+                        EtagId = newEtag.Id,
+                        FullName = "User VegaCity", // Default or provided value
+                        PhoneNumber = "", // Default or provided value
+                        CccdPassport = "", // Default or provided value
+                        Gender = (int)GenderEnum.Other, // Default or provided value
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        IsVerifyPhone = false // Assuming the phone isn't verified initially
+                    };
+                    //end create etag here
+                    await _unitOfWork.GetRepository<EtagDetail>().InsertAsync(newEtagDetail);
+                    listEtagCreated.Add(newEtag.Id);
+                } 
             }
+            await _unitOfWork.CommitAsync();
+
+
             return new ResponseAPI()
             {
                 MessageResponse = EtagTypeMessage.CreateSuccessFully,
@@ -582,7 +633,8 @@ namespace VegaCityApp.API.Services.Implement
                                   Deflag = x.Deflag,
                                   EndDate = x.EndDate,
                                   StartDate = x.StartDate,
-                                  Status = x.Status
+                                  Status = x.Status,
+                                  IsAdult = x.IsAdult
                               },
                                page: page,
                                size: size,

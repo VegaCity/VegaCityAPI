@@ -48,6 +48,7 @@ namespace VegaCityApp.API.Payload.Response
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public int? Status { get; set; }
+        public Boolean? IsAdult { get; set; }
     }
     public class GetUserResponse
     {
