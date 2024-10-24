@@ -357,7 +357,7 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.BadRequest
             };
         }
-        public async Task<ResponseAPI> GenerateEtag(int quantity, Guid etagTypeId, GenerateEtagRequest req)
+        public async Task<ResponseAPI<List<Guid>>> GenerateEtag(int quantity, Guid etagTypeId, GenerateEtagRequest req)
         {
             List<Guid> listEtagCreated = new List<Guid>();
             var checkEtagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(
@@ -365,7 +365,7 @@ namespace VegaCityApp.API.Services.Implement
                 include: wallet => wallet.Include(z => z.WalletType));
             if (checkEtagType == null)
             {
-                return new ResponseAPI()
+                return new ResponseAPI<List<Guid>>()
                 {
                     MessageResponse = EtagTypeMessage.NotFoundEtagType,
                     StatusCode = HttpStatusCodes.NotFound
@@ -477,14 +477,11 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.CommitAsync();
 
 
-            return new ResponseAPI()
+            return new ResponseAPI<List<Guid>>()
             {
                 MessageResponse = EtagTypeMessage.CreateSuccessFully,
                 StatusCode = HttpStatusCodes.Created,
-                Data = new { 
-                    Quantity = quantity,
-                    ListIdEtag = listEtagCreated 
-                }
+                Data = listEtagCreated
             };
         }
         public async Task<ResponseAPI> UpdateEtag(Guid etagId, UpdateEtagRequest req)

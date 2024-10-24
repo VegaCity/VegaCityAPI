@@ -17,17 +17,21 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using static System.Runtime.CompilerServices.RuntimeHelpers;
 using static VegaCityApp.API.Constants.MessageConstant;
 using Microsoft.AspNetCore.Http;
+using VegaCityApp.API.Payload.Request.Order;
+using VegaCityApp.API.Payload.Request.Etag;
 
 namespace VegaCityApp.API.Services.Implement
 {
     public class PaymentService : BaseService<PaymentService>, IPaymentService
     {
         private readonly PayOS _payOs;
+        private readonly IEtagService _service;
         public PaymentService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<PaymentService> logger, PayOS payOs,
             IMapper mapper,
-            IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor, mapper)
+            IHttpContextAccessor httpContextAccessor, IEtagService service) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
             _payOs = payOs;
+            _service = service;
         }
 
         public async Task<ResponseAPI> MomoPayment(PaymentRequest request)
@@ -163,15 +167,54 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> UpdateOrderPaidForCashier(IPNMomoRequest req)
         {
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending);
+                (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending,
+                 include: detail => detail.Include(a => a.OrderDetails));
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+            //check id? etagtype or package
+            string productJson = null;
+            OrderProductFromCashierRequest productData = null;
+            GenerateEtagRequest reqGenerate = new GenerateEtagRequest()
+            {
+                StartDate = TimeUtils.GetCurrentSEATime(),
+            };
+            List<Guid> res = new List<Guid>();
+            if (order.OrderDetails.Count > 0)
+            {
+                foreach (var item in order.OrderDetails)
+                {
+                    productJson = item.ProductJson.Replace("[","").Replace("]","");
+                    productData = JsonConvert.DeserializeObject<OrderProductFromCashierRequest>(productJson);
+                    if (productData != null)
+                    {
+                        var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync
+                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+                        var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
+                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag, include: mapping => mapping.Include(z => z.PackageETagTypeMappings));
+                        if (etagType != null)
+                        {
+                            //generate etag
+                            var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
+                            res = response.Data;
+                        }
+                        else if (package != null)
+                        {
+                            package.PackageETagTypeMappings.ToList().ForEach(async x =>
+                            {
+                                var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
+                                res = response.Data;
+                            });
+                        }
+                    }
+                }
+            }
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PaymentMomo.ipnUrl + order.Id
+                    MessageResponse = PaymentMomo.ipnUrl + order.Id 
                 }
                 : new ResponseAPI()
                 {
@@ -370,21 +413,61 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> UpdateVnPayOrder(VnPayPaymentResponse req)
         {
             var invoiceId = req.vnp_OrderInfo.Split(":", 2);
+            List<Guid> listEtagCreated = new List<Guid>();
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                (predicate: x => x.InvoiceId == invoiceId[1] && x.Status == OrderStatus.Pending);
+                (predicate: x => x.InvoiceId == invoiceId[1] && x.Status == OrderStatus.Pending,
+                 include: detail => detail.Include(a => a.OrderDetails));
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
+            //check id? etagtype or package
+            string productJson = null;
+            OrderProductFromCashierRequest productData = null;
+            GenerateEtagRequest reqGenerate = new GenerateEtagRequest()
+            {
+                StartDate = TimeUtils.GetCurrentSEATime(),
+            };
+            
+            if (order.OrderDetails.Count > 0)
+            {
+                foreach (var item in order.OrderDetails)
+                {
+                    productJson = item.ProductJson.Replace("[","").Replace("]","");
+                    productData = JsonConvert.DeserializeObject<OrderProductFromCashierRequest>(productJson);
+                    if (productData != null)
+                    {
+                        var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync
+                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+                        var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
+                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag, include: mapping => mapping.Include(z => z.PackageETagTypeMappings));
+                        if (etagType != null)
+                        {
+                            //generate etag
+                            var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
+                            listEtagCreated = response.Data;
+                        }
+                        else if (package != null)
+                        {
+                            foreach(var itemm in package.PackageETagTypeMappings)
+                            {
+                                var response = await _service.GenerateEtag(itemm.QuantityEtagType, itemm.EtagTypeId, reqGenerate);
+                                listEtagCreated = response.Data;
+                            }
+                        }
+                    }
+                }
+            }
+            string data = EnCodeBase64.EncodeBase64<List<Guid>>(listEtagCreated);
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
             return await _unitOfWork.CommitAsync() > 0
-                ? new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PaymentMomo.ipnUrl + order.Id
-                }
-                : new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.InternalServerError
-                };
+            ? new ResponseAPI()
+            {
+                StatusCode = HttpStatusCodes.NoContent,
+                MessageResponse = PaymentMomo.ipnUrl + order.Id 
+            }
+            : new ResponseAPI()
+            {
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
         public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(VnPayPaymentResponse req) //done to fix time
         {
@@ -598,25 +681,51 @@ namespace VegaCityApp.API.Services.Implement
 
             // Fetch the order and check if it's still pending
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                    (predicate: x => x.InvoiceId == orderCode && x.Status == OrderStatus.Pending,
-                    include: z => z.Include(a => a.User).ThenInclude(b => b.Wallets)); //
-            var orderCompleted = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-               (predicate: x => x.InvoiceId == orderCode && x.Status == OrderStatus.Completed);                                                                     //from here
-            if (order == null || order.Status == OrderStatus.Completed)
-            {
-                // If the order doesn't exist or is already processed, return not found
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NoContent,
-                    //MessageResponse = "https://vegacity.id.vn/user/order-status?status=failure"
-                    MessageResponse = PayOSConfiguration.ipnUrl + orderCompleted.Id
-
-                };
-            }
+                 (predicate: x => x.InvoiceId == invoiceId && x.Status == OrderStatus.Pending,
+                  include: detail => detail.Include(a => a.OrderDetails));
             // Update the order to 'Completed'
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+            //check id? etagtype or package
+            string productJson = null;
+            OrderProductFromCashierRequest productData = null;
+            GenerateEtagRequest reqGenerate = new GenerateEtagRequest()
+            {
+                StartDate = TimeUtils.GetCurrentSEATime(),
+            };
+            List<Guid> res = new List<Guid>();
+            if (order.OrderDetails.Count > 0)
+            {
+                foreach (var item in order.OrderDetails)
+                {
+                    productJson = item.ProductJson.Replace("[", "").Replace("]", "");
+                    productData = JsonConvert.DeserializeObject<OrderProductFromCashierRequest>(productJson);
+                    if (productData != null)
+                    {
+                        var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync
+                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+                        var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
+                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag, include: mapping => mapping.Include(z => z.PackageETagTypeMappings));
+                        if (etagType != null)
+                        {
+                            //generate etag
+                            var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
+                            res = response.Data;
+                        }
+                        else if (package != null)
+                        {
+                            package.PackageETagTypeMappings.ToList().ForEach(async x =>
+                            {
+                                var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
+                                res = response.Data;
+                            });
+                        }
+                    }
+                }
+            }
+
 
             // Commit the transaction
             var commitResult = await _unitOfWork.CommitAsync();
@@ -625,7 +734,7 @@ namespace VegaCityApp.API.Services.Implement
                 ? new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PayOSConfiguration.ipnUrl + orderCompleted.Id // URL for client-side redirection
+                    MessageResponse = PayOSConfiguration.ipnUrl + order.Id // URL for client-side redirection
                 }
                 : new ResponseAPI()
                 {
@@ -802,10 +911,50 @@ namespace VegaCityApp.API.Services.Implement
         {
             string InvoiceId = req.apptransid.Split("_")[1];
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                (predicate: x => x.InvoiceId == InvoiceId && x.Status == OrderStatus.Pending);
+               (predicate: x => x.InvoiceId == InvoiceId && x.Status == OrderStatus.Pending,
+                include: detail => detail.Include(a => a.OrderDetails));
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+            //check id? etagtype or package
+            string productJson = null;
+            OrderProductFromCashierRequest productData = null;
+            GenerateEtagRequest reqGenerate = new GenerateEtagRequest()
+            {
+                StartDate = TimeUtils.GetCurrentSEATime(),
+            };
+            List<Guid> res = new List<Guid>();
+            if (order.OrderDetails.Count > 0)
+            {
+                foreach (var item in order.OrderDetails)
+                {
+                    productJson = item.ProductJson.Replace("[", "").Replace("]", "");
+                    productData = JsonConvert.DeserializeObject<OrderProductFromCashierRequest>(productJson);
+                    if (productData != null)
+                    {
+                        var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync
+                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+                        var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
+                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag, include: mapping => mapping.Include(z => z.PackageETagTypeMappings));
+                        if (etagType != null)
+                        {
+                            //generate etag
+                            var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
+                            res = response.Data;
+                        }
+                        else if (package != null)
+                        {
+                            package.PackageETagTypeMappings.ToList().ForEach(async x =>
+                            {
+                                var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
+                                res = response.Data;
+                            });
+                        }
+                    }
+                }
+            }
+
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
