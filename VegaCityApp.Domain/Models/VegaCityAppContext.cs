@@ -547,8 +547,6 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("OrderDetail");
 
-                entity.HasIndex(e => e.MenuId, "IX_OrderDetail_MenuId");
-
                 entity.HasIndex(e => e.OrderId, "IX_OrderDetail_OrderId");
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
@@ -562,11 +560,6 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("upsDate");
 
                 entity.Property(e => e.Vatrate).HasColumnName("VATRate");
-
-                entity.HasOne(d => d.Menu)
-                    .WithMany(p => p.OrderDetails)
-                    .HasForeignKey(d => d.MenuId)
-                    .HasConstraintName("FK_OrderDetail_Menu");
 
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderDetails)

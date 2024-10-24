@@ -20,6 +20,7 @@ namespace VegaCityApp.API.Enums
             "Package",
             "EtagType",
             "Etag Charge",
+            "StoreService"
         };
     }
     public class PaymentMomo
