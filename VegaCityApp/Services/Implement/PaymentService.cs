@@ -604,9 +604,9 @@ namespace VegaCityApp.API.Services.Implement
                     //returnUrl: PayOSConfiguration.ReturnUrlCharge,
                      returnUrl: PayOSConfiguration.ReturnUrlCharge,
                     // URL khi thanh toán thành công
-                    buyerName: customerInfoEtag.EtagDetails.SingleOrDefault().FullName.ToString(),
+                    buyerName: "Nguyen Van A",//customerInfoEtag.EtagDetails.SingleOrDefault().FullName.ToString(),
                     buyerEmail: "", // very require email here!
-                    buyerPhone: customerInfoEtag.EtagDetails.SingleOrDefault().PhoneNumber.ToString(),
+                    buyerPhone: "0909998888",//customerInfoEtag.EtagDetails.SingleOrDefault().PhoneNumber.ToString(),
                     buyerAddress: "",
                     expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
                 );
@@ -622,14 +622,11 @@ namespace VegaCityApp.API.Services.Implement
                     Data = paymentUrlChargeMoney
                 };
             }
-            if (checkOrder.CustomerInfo != null) //package , item sell without customer infor from etag
-            {
+            //if key null
                 var customerInfo = JsonConvert.DeserializeObject<VegaCityApp.API.Payload.Request.Payment.CustomerInfo>(checkOrder.CustomerInfo);//xiu xai
-
                 //here
                 try
                 {
-
                     var paymentData = new PaymentData(
                         orderCode: Int64.Parse(checkOrder.InvoiceId.ToString()),  // Bạn có thể tạo mã đơn hàng tại đây
                         amount: checkOrder.TotalAmount,
@@ -637,10 +634,10 @@ namespace VegaCityApp.API.Services.Implement
                         items: itemDataList,
                         cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
                         returnUrl: PayOSConfiguration.ReturnUrl,  // URL khi thanh toán thành công
-                        buyerName: customerInfo.FullName.ToString(),
+                        buyerName: customerInfo.FullName.ToString(),//customerInfo.FullName.ToString(),
                         //buyerEmail: customerInfo.Email.ToString(), // very require email here!
                         buyerEmail: "",
-                        buyerPhone: customerInfo.PhoneNumber.ToString(),
+                        buyerPhone: customerInfo.PhoneNumber.ToString(),//,
                         buyerAddress: "",// customerInfo.Email.ToString(),
                         expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
                     );
@@ -666,15 +663,7 @@ namespace VegaCityApp.API.Services.Implement
                         StatusCode = HttpStatusCodes.BadRequest,
                         Data = null
                     };
-                }
-            }
-
-            return new ResponseAPI
-            {
-                MessageResponse = PaymentMessage.NotFoundUser,
-                StatusCode = HttpStatusCodes.NotFound,
-            };
-
+                }          
         }
         public async Task<ResponseAPI> UpdatePayOSOrder(string code, string id, string status, string orderCode)
         {

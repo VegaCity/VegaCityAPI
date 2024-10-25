@@ -822,7 +822,8 @@ namespace VegaCityApp.Service.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.FullName),
-                predicate: x => x.Status == (int)UserStatusEnum.Active || x.Status == (int)UserStatusEnum.PendingVerify && x.MarketZoneId == apiKey);
+                predicate: x => //x.Status == (int)UserStatusEnum.Active || x.Status == (int)UserStatusEnum.PendingVerify &&
+                                x.MarketZoneId == apiKey);
 
                 return new ResponseAPI<IEnumerable<GetUserResponse>>
                 {
