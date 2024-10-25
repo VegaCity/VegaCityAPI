@@ -248,7 +248,9 @@ namespace VegaCityApp.API.Services.Implement
         {
              //call api pos - take n parse into Object Menu
              var data = await CallApiUtils.CallApiGetEndpoint(
-                 "https://6504066dc8869921ae2466d4.mockapi.io/api/Product");
+              // "https://6504066dc8869921ae2466d4.mockapi.io/api/Product"
+              $"https://localhost:7131/api/v1/menus/{id}/menus"
+                 );
              var productsPosResponse = await CallApiUtils.GenerateObjectFromResponse<List<ProductsPosResponse>>(data);
              //lưu chuỗi json này
              //parse object list sang json
