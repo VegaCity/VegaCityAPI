@@ -95,9 +95,9 @@ namespace VegaCityApp.API.Controllers
         [HttpPatch(WalletTypeEndpoint.WithdrawMoneyWallet)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.CashierWeb)]
-        public async Task<IActionResult> WithdrawMoneyWallet(Guid walletid,[FromBody] Transaction transaction)
+        public async Task<IActionResult> WithdrawMoneyWallet(Guid walletid,[FromQuery] Guid transactionId)
         {
-            var result = await _walletTypeService.WithdrawMoneyWallet(walletid, transaction);
+            var result = await _walletTypeService.WithdrawMoneyWallet(walletid, transactionId);
             return StatusCode(result.StatusCode, result);
         }
     }

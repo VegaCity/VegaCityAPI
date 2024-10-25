@@ -564,6 +564,35 @@ namespace VegaCityApp.API.Services.Implement
                     etag.Wallet.BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
                     etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+                    //transacitons cash here admin + cashier 
+                    var newAdminTransaction = new VegaCityApp.Domain.Models.Transaction
+                    {
+                        Id = Guid.NewGuid(),
+                        Amount = Int32.Parse(order.TotalAmount.ToString()),
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                        Description = "Withdraw balanceHistory from admin: " + admin.FullName,
+                        IsIncrease = false,
+                        Status = TransactionStatus.Success,
+                        Type = TransactionType.WithdrawMoney,
+                        WalletId = admin.Wallets.SingleOrDefault().Id,
+                    };
+                    //transaction cashier web
+                    var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
+                    {
+                        Id = Guid.NewGuid(),
+                        Type = TransactionType.ChargeMoney,
+                        WalletId = order.User.Wallets.SingleOrDefault().Id,
+                        Amount = Int32.Parse(order.TotalAmount.ToString()),
+                        IsIncrease = true,
+                        Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        Status = TransactionStatus.Success,
+                        Description = "Add balance to cashier web: " + order.User.FullName,
+                    };
+                    await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(newAdminTransaction);
+                    await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
                     //create deposite
                     var newDeposit = new Deposit
                     {
