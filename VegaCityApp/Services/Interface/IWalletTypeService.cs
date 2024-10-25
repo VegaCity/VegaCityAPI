@@ -18,6 +18,6 @@ namespace VegaCityApp.API.Services.Interface
         Task CheckExpireWallet();
         Task EndDayCheckWalletCashier(Guid apiKey);
         Task<ResponseAPI> RequestWithdrawMoneyWallet(Guid id, WithdrawMoneyRequest request);
-        Task<ResponseAPI> WithdrawMoneyWallet(Guid id, Transaction transaction);
+        Task<ResponseAPI> WithdrawMoneyWallet(Guid id, Guid transactionId);
     }
 }
