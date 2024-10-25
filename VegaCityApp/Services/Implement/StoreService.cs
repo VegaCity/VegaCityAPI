@@ -292,6 +292,7 @@ namespace VegaCityApp.API.Services.Implement
             else
             {
                 checkMenu.MenuJson = json;
+                checkMenu.CrDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Menu>().UpdateAsync(checkMenu);
                 await _unitOfWork.CommitAsync();
                 bool check = await InsertProductCategory(productsPosResponse, checkMenu.Id);
@@ -319,7 +320,7 @@ namespace VegaCityApp.API.Services.Implement
             foreach (var Category in selectField)
             {
                 var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
-                    predicate: x=> x.Name == Category.ProductCategory);
+                    predicate: x=> x.Name == Category.ProductCategory && x.MenuId == MenuId);
                 if (productCategory == null)
                 {
                     foreach (var product in listProduct)
