@@ -34,6 +34,6 @@ namespace VegaCityApp.API.Payload.Request.Order
         public string PhoneNumber { get; set; }
         public string Address { get; set; }
         public string Gender { get; set; }
-        public string CCCD { get; set; }
+        public string CccdPassport { get; set; }
     }
 }

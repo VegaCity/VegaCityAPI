@@ -2,7 +2,7 @@
 {
     public class ActivateEtagRequest
     {
-        public string? CCCD { get; set; }
+        public string? CccdPassport { get; set; }
         public string? Name { get; set; }
         public string? Phone { get; set; }
         public int Gender { get; set; }

@@ -317,7 +317,7 @@ namespace VegaCityApp.API.Services.Implement
             newEtag.Qrcode = EnCodeBase64.EncodeBase64Etag(newEtag.EtagCode);
             await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
             //etag detail below here 
-            if (!ValidationUtils.IsCCCD(req.Cccd))
+            if (!ValidationUtils.IsCCCD(req.CccdPassport))
             {
                 return new ResponseAPI()
                 {
@@ -339,7 +339,7 @@ namespace VegaCityApp.API.Services.Implement
                 EtagId = newEtag.Id,
                 FullName = req.FullName,
                 PhoneNumber = req.PhoneNumber,
-                CccdPassport = req.Cccd,
+                CccdPassport = req.CccdPassport,
                 Gender = req.Gender,
                 IsVerifyPhone = false, 
                 CrDate = TimeUtils.GetCurrentSEATime(),
@@ -676,7 +676,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
-            if(!ValidationUtils.IsCCCD(req.CCCD))
+            if(!ValidationUtils.IsCCCD(req.CccdPassport))
             {
                 return new ResponseAPI()
                 {
@@ -702,7 +702,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            var checkCCCD = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagDetails.FirstOrDefault().CccdPassport == req.CCCD && !x.Deflag);
+            var checkCCCD = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagDetails.FirstOrDefault().CccdPassport == req.CccdPassport && !x.Deflag);
             if (checkCCCD != null)
             {
                 return new ResponseAPI()
@@ -718,7 +718,7 @@ namespace VegaCityApp.API.Services.Implement
             var etagDetail = etag.EtagDetails.FirstOrDefault();
             etagDetail.FullName = req.Name;
             etagDetail.PhoneNumber= req.Phone;
-            etagDetail.CccdPassport = req.CCCD;
+            etagDetail.CccdPassport = req.CccdPassport;
 
             etag.UpsDate = TimeUtils.GetCurrentSEATime();
 
