@@ -55,5 +55,12 @@ namespace VegaCityApp.API.Controllers
             var result = await _reportService.GetAllIssueType(size, page);
             return Ok(result);
         }
+        [HttpGet(ReportEndpoint.GetListReports)]
+        [ProducesResponseType(typeof(ResponseAPI<IEnumerable<ReportResponse>>), HttpStatusCodes.OK)]
+        public async Task<IActionResult> GetAllReports([FromQuery] int size = 10, [FromQuery] int page = 1)
+        {
+            var result = await _reportService.GetAllReports(size, page);
+            return Ok(result);
+        }
     }
 }

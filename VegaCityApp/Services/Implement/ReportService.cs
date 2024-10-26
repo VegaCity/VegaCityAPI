@@ -150,5 +150,48 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
+
+        public async Task<ResponseAPI<IEnumerable<ReportResponse>>> GetAllReports(int size, int page)
+        {
+            try
+            {
+                IPaginate<ReportResponse> data = await _unitOfWork.GetRepository<DisputeReport>().GetPagingListAsync(
+                               selector: x => new ReportResponse()
+                               {
+                                 Id = x.Id,
+                                 Description = x.Description,
+                                 IssueTypeId = x.IssueTypeId,
+                                 StoreId = x.StoreId,
+                                 Status = x.Status
+                               },
+                                page: page,
+                                size: size,
+                                orderBy: x => x.OrderByDescending(z => z.CrDate));
+                return new ResponseAPI<IEnumerable<ReportResponse>>
+                {
+                    MessageResponse = "Get All Reports Successfully!",
+                    StatusCode = HttpStatusCodes.OK,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    },
+                    Data = data.Items
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI<IEnumerable<ReportResponse>>
+                {
+                    MessageResponse = "Failed To Get  All Reports" + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null,
+                    MetaData = null
+                };
+            }
+        }
+
     }
 }

@@ -149,5 +149,6 @@ public static class ApiEndPointConstant
         public const string CreateReport = ApiEndpoint + "/report";
         public const string UpdateReport = ApiEndpoint + "/report/{id}";
         public const string GetListIssueType = ApiEndpoint + "/report/issue-types";
+        public const string GetListReports = ApiEndpoint + "/reports";
     }
 }
