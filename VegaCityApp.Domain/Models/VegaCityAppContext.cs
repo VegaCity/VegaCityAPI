@@ -471,8 +471,6 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.ImageUrl).IsUnicode(false);
 
-                entity.Property(e => e.MenuJson).IsUnicode(false);
-
                 entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.Property(e => e.PhoneNumber)
