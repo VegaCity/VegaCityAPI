@@ -111,7 +111,8 @@ namespace VegaCityApp.API.Services.Implement
                                    ZoneId = x.ZoneId,
                                    CrDate = x.CrDate,
                                    UpsDate = x.UpsDate,
-                                   Deflag = x.Deflag
+                                   Deflag = x.Deflag,
+                                   IsRent = x.IsRent,
                                },
                                 page: page,
                                 size: size,
