@@ -52,6 +52,7 @@ namespace VegaCityApp.API.Enums
         public const string key2 = "trMrHtvjo6myautxDUiAcYsVtaeQ8nhf";
         public const string create_order_url = "https://sb-openapi.zalopay.vn/v2/create";
         public const string redirectUrl = "https://api.vegacity.id.vn/api/v1/payment/zalopay/order";
+        //public const string redirectUrl = "https://localhost:44395/api/v1/payment/zalopay/order";
         public const string ipnUrl = "https://vegacity.id.vn/order-status?status=success&orderId=";
     }
 
@@ -78,7 +79,7 @@ namespace VegaCityApp.API.Enums
         public const string ApiKey = "6fbfc454-452d-400c-a956-60713ed63655";
         public const string ChecksumKey = "e0df18284b37c90d88390be74568f6e0c4ff63c95cc4f1ee2eb6af30877d37a5";
         public const string CancelUrl = "https://example.com/cancel";
-       // public const string ReturnUrl = "https://localhost:44395/api/v1/payment/payos/order"; //local
+        //public const string ReturnUrl = "https://localhost:44395/api/v1/payment/payos/order"; //local
         //public const string ReturnUrlCharge = "https://localhost:44395/api/v1/payment/payos/order/charge-money"; //local
         public const string ReturnUrl = "https://api.vegacity.id.vn/api/v1/payment/payos/order"; //deploy
         public const string ReturnUrlCharge = "https://api.vegacity.id.vn/api/v1/payment/payos/order/charge-money"; //dploy
