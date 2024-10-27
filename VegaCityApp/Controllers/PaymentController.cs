@@ -107,34 +107,6 @@ namespace VegaCityApp.API.Controllers
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> UpdatePayOSOrder([FromQuery] string code, [FromQuery] string id, [FromQuery] string status, [FromQuery] string orderCode)
         {
-            //try
-            //{
-            //    // Kiểm tra nếu mã trả về của PayOS là thành công
-            //    if (code == "00" && status == "PAID")
-            //    {
-            //        // Gọi service để cập nhật trạng thái đơn hàng theo orderCode
-            //        var result = await _service.UpdatePayOSOrder(code, id, status, orderCode);
-
-            //        if (result.StatusCode == HttpStatusCodes.NoContent)
-            //        {
-            //            // return Ok(new { message = "Order updated successfully." });
-            //            return Redirect(result.MessageResponse);
-            //        }
-            //        else
-            //        {
-            //              return BadRequest(new { message = "Failed to update order." });
-            //        }
-            //    }
-            //    else
-            //    {
-            //        return BadRequest(new { message = "Payment was not successful or canceled." });
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine($"Error updating order: {ex.Message}");
-            //    return StatusCode(StatusCodes.Status500InternalServerError, "Error processing payment.");
-            //}
             try
             {
                 // Kiểm tra nếu mã trả về của PayOS là thành công

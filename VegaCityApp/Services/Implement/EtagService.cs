@@ -837,6 +837,82 @@ namespace VegaCityApp.API.Services.Implement
             _unitOfWork.GetRepository<Etag>().UpdateRange(etags);
             await _unitOfWork.CommitAsync();
         }
+
+        public async Task<ResponseAPI> EtagPayment(string etagCode, int amount)
+        {
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Deflag != true && x.Status == (int)StoreStatusEnum.Opened);
+            if (store == null)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = StoreMessage.NotFoundStore,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagCode == etagCode && x.Status == (int)EtagStatusEnum.Active , include: etag => etag.Include(y => y.Wallet));
+            if(etag.EndDate <= TimeUtils.GetCurrentSEATime())
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = EtagMessage.EtagExpired,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            if(etag.Wallet.ExpireDate <= TimeUtils.GetCurrentSEATime())
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = WalletTypeMessage.WalletExpired,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            if(etag.Wallet.Balance < amount)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = WalletTypeMessage.NotEnoughBalance,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            if(etag.Deflag)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = EtagMessage.NotFoundEtag,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            etag.Wallet.Balance -= amount;
+            etag.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Etag>().UpdateAsync(etag);
+
+            var newDeposit = new Deposit
+            {
+                Id = Guid.NewGuid(),
+                Name = "Payment From Store",
+                Amount = amount,
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                EtagId = etag.Id,
+                IsIncrease = false,
+                PaymentType = PaymentTypeHelper.allowedPaymentTypes[5],
+                WalletId = etag.WalletId
+            };
+            etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+             _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+            await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
+            return await _unitOfWork.CommitAsync() > 0
+               ? new ResponseAPI()
+               {
+                   StatusCode = HttpStatusCodes.OK,
+                   MessageResponse = EtagMessage.PaymentQrCodeSuccess
+               }
+               : new ResponseAPI()
+               {
+                   StatusCode = HttpStatusCodes.InternalServerError,
+                   MessageResponse = EtagMessage.FailedToPay
+               };
+        }
     }
 }
             

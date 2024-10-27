@@ -168,7 +168,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
                 (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending,
-                 include: detail => detail.Include(a => a.OrderDetails));
+                 include: detail => detail.Include(a => a.OrderDetails).Include(u => u.User).ThenInclude(w => w.Wallets));
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
@@ -210,6 +210,19 @@ namespace VegaCityApp.API.Services.Implement
                     }
                 }
             }
+            var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
+            {
+                Id = Guid.NewGuid(),
+                Type = TransactionType.ChargeMoney,
+                WalletId = order.User.Wallets.SingleOrDefault().Id,
+                Amount = Int32.Parse(order.TotalAmount.ToString()),
+                IsIncrease = true,
+                Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                Status = TransactionStatus.Success,
+                Description = "Add" + order.SaleType + " Balance By " + order.PaymentType + " to cashier web: " + order.User.FullName,
+            };
+            await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
@@ -446,7 +459,7 @@ namespace VegaCityApp.API.Services.Implement
             List<Guid> listEtagCreated = new List<Guid>();
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
                 (predicate: x => x.InvoiceId == invoiceId[1] && x.Status == OrderStatus.Pending,
-                 include: detail => detail.Include(a => a.OrderDetails));
+                 include: detail => detail.Include(a => a.OrderDetails).Include(u => u.User).ThenInclude(w => w.Wallets));
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             //check id? etagtype or package
@@ -487,6 +500,19 @@ namespace VegaCityApp.API.Services.Implement
                 }
             }
             string data = EnCodeBase64.EncodeBase64<List<Guid>>(listEtagCreated);
+            var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
+            {
+                Id = Guid.NewGuid(),
+                Type = TransactionType.ChargeMoney,
+                WalletId = order.User.Wallets.SingleOrDefault().Id,
+                Amount = Int32.Parse(order.TotalAmount.ToString()),
+                IsIncrease = true,
+                Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                Status = TransactionStatus.Success,
+                Description = "Add" + order.SaleType + " Balance By " + order.PaymentType +  " to cashier web: " + order.User.FullName,
+            };
+            await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
             return await _unitOfWork.CommitAsync() > 0
             ? new ResponseAPI()
@@ -662,9 +688,9 @@ namespace VegaCityApp.API.Services.Implement
                     //returnUrl: PayOSConfiguration.ReturnUrlCharge,
                      returnUrl: PayOSConfiguration.ReturnUrlCharge,
                     // URL khi thanh toán thành công
-                    buyerName: "Nguyen Van A",//customerInfoEtag.EtagDetails.SingleOrDefault().FullName.ToString(),
+                    buyerName: customerInfoEtag.EtagDetails.SingleOrDefault().FullName.ToString(),
                     buyerEmail: "", // very require email here!
-                    buyerPhone: "0909998888",//customerInfoEtag.EtagDetails.SingleOrDefault().PhoneNumber.ToString(),
+                    buyerPhone: customerInfoEtag.EtagDetails.SingleOrDefault().PhoneNumber.ToString(),
                     buyerAddress: "",
                     expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
                 );
@@ -682,6 +708,14 @@ namespace VegaCityApp.API.Services.Implement
             }
             //if key null
                 var customerInfo = JsonConvert.DeserializeObject<VegaCityApp.API.Payload.Request.Payment.CustomerInfo>(checkOrder.CustomerInfo);//xiu xai
+                if (customerInfo == null)
+                {
+                return new ResponseAPI
+                {
+                    MessageResponse = PaymentMessage.NotFoundUser,
+                    StatusCode = HttpStatusCodes.NotFound,
+                };
+                }
                 //here
                 try
                 {
@@ -730,7 +764,16 @@ namespace VegaCityApp.API.Services.Implement
             // Fetch the order and check if it's still pending
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
                  (predicate: x => x.InvoiceId == invoiceId && x.Status == OrderStatus.Pending,
-                  include: detail => detail.Include(a => a.OrderDetails));
+                  include: detail => detail.Include(a => a.OrderDetails).Include(u => u.User).ThenInclude(w => w.Wallets));
+            var orderCompleted = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.InvoiceId == invoiceId && x.Status == OrderStatus.Completed);
+            if (orderCompleted != null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NoContent,
+                    MessageResponse = PayOSConfiguration.ipnUrl + orderCompleted.Id // URL for client-side redirection
+                };
+            }
             // Update the order to 'Completed'
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -764,16 +807,39 @@ namespace VegaCityApp.API.Services.Implement
                         }
                         else if (package != null)
                         {
-                            package.PackageETagTypeMappings.ToList().ForEach(async x =>
+                            //package.PackageETagTypeMappings.ToList().ForEach(async x =>
+                            //{
+                            //    var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
+                            //    res = response.Data;
+                            //});
+                            foreach (var mapping in package.PackageETagTypeMappings)
                             {
-                                var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
+                                var response = await _service.GenerateEtag(mapping.QuantityEtagType, mapping.EtagTypeId, reqGenerate);
                                 res = response.Data;
-                            });
+                            }
                         }
+                        //return new ResponseAPI
+                        //{
+                        //    MessageResponse = "Some Thing goes wrong, pakcage or etag type",
+                        //    StatusCode = HttpStatusCodes.BadRequest
+                        //};
                     }
                 }
             }
-
+            //transaction cashier payos
+            var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
+            {
+                Id = Guid.NewGuid(),
+                Type = TransactionType.ChargeMoney,
+                WalletId = order.User.Wallets.SingleOrDefault().Id,
+                Amount = Int32.Parse(order.TotalAmount.ToString()),
+                IsIncrease = true,
+                Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                Status = TransactionStatus.Success,
+                Description = "Add" + order.SaleType + " Balance By " + order.PaymentType + " to cashier web: " + order.User.FullName,
+            };
+            await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
 
             // Commit the transaction
             var commitResult = await _unitOfWork.CommitAsync();
@@ -988,7 +1054,7 @@ namespace VegaCityApp.API.Services.Implement
             string InvoiceId = req.apptransid.Split("_")[1];
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
                (predicate: x => x.InvoiceId == InvoiceId && x.Status == OrderStatus.Pending,
-                include: detail => detail.Include(a => a.OrderDetails));
+                include: detail => detail.Include(a => a.OrderDetails).Include(u => u.User).ThenInclude(w => w.Wallets));
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
@@ -1021,15 +1087,33 @@ namespace VegaCityApp.API.Services.Implement
                         }
                         else if (package != null)
                         {
-                            package.PackageETagTypeMappings.ToList().ForEach(async x =>
+                            //package.PackageETagTypeMappings.ToList().ForEach(async x =>
+                            //{
+                            //    var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
+                            //    res = response.Data;
+                            //});
+                            foreach (var mapping in package.PackageETagTypeMappings)
                             {
-                                var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
+                                var response = await _service.GenerateEtag(mapping.QuantityEtagType, mapping.EtagTypeId, reqGenerate);
                                 res = response.Data;
-                            });
+                            }
                         }
                     }
                 }
             }
+            var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
+            {
+                Id = Guid.NewGuid(),
+                Type = TransactionType.ChargeMoney,
+                WalletId = order.User.Wallets.SingleOrDefault().Id,
+                Amount = Int32.Parse(order.TotalAmount.ToString()),
+                IsIncrease = true,
+                Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                Status = TransactionStatus.Success,
+                Description = "Add" + order.SaleType + " Balance By " + order.PaymentType + " to cashier web: " + order.User.FullName,
+            };
+            await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
 
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
