@@ -129,7 +129,6 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.Deposits)
                     .HasForeignKey(d => d.OrderId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Deposit_Order");
 
                 entity.HasOne(d => d.Wallet)

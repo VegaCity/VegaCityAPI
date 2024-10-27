@@ -143,6 +143,13 @@ namespace VegaCityApp.API.Controllers
             var result = await _service.PrepareChargeMoneyEtag(req);
             return Ok(result);
         }
+        [HttpGet(EtagEndpoint.EtagPayment)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> EtagPayment([FromQuery] string etagCode, [FromQuery] Guid storeId, [FromQuery] int amount)
+        {
+            var result = await _service.EtagPayment(etagCode, amount);
+            return StatusCode(result.StatusCode, result);
+        }
 
     }
 }

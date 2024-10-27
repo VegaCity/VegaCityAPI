@@ -10,7 +10,8 @@ namespace VegaCityApp.API.Enums
             "Momo",
             "VnPay",
             "PayOS",
-            "Cash"
+            "Cash",
+            "QRCode"
         };
     }
     public static class SaleTypeHelper

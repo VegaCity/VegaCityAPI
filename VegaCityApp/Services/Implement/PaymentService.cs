@@ -222,6 +222,7 @@ namespace VegaCityApp.API.Services.Implement
                 Status = TransactionStatus.Success,
                 Description = "Add" + order.SaleType + " Balance By " + order.PaymentType + " to cashier web: " + order.User.FullName,
             };
+            await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {

@@ -114,7 +114,8 @@ public static class MessageConstant
         public const string CreateOrderForCharge = "Create Order For Charging Etag Money Successfully!";
         public const string CreateOrderForChargeFail = "Create Order For Charging Etag Money Failed!";
         public const string NotParentEtag = "Etag Must Be Parent To Generate Child's Etag";
-
+        public const string PaymentQrCodeSuccess = "Payment With Etag Successfully!!";
+        public const string FailedToPay = "Failed To Payment With Etag!!";
     }
     public static class UserMessage
     {   
@@ -323,6 +324,7 @@ public static class MessageConstant
         public const string UpdateWalletTypeFailed = "Update WalletType Failed !!";
         public const string DeleteWalletTypeSuccess = "Delete WalletType Successfully!";
         public const string DeleteWalletTypeFail = "Delete WalletType Failed!";
+        public const string WalletExpired = "Wallet has Expired!";
     }
 
     public static class TransactionMessage
