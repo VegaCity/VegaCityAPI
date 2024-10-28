@@ -548,7 +548,7 @@ namespace VegaCityApp.Service.Implement
             Guid apiKey = GetMarketZoneIdFromJwt();
             string roleName = GetRoleFromJwt();
             var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(
-                predicate: x => x.Location == req.LocationHouse.Trim() && !x.Deflag && x.Address == req.AdressHouse.Trim());
+                predicate: x => x.Location == req.LocationHouse.Trim() && !x.Deflag && x.Address == req.AddressHouse.Trim());
             if (house != null)
             {
                 if (house.IsRent)
