@@ -8,7 +8,6 @@
         public string? PhoneNumber { get; set; }
         public DateTime? Birthday { get; set; }
         public int? Gender { get; set; }
-        public string? CccdPassport { get; set; }
         public string? ImageUrl { get; set; }
     }
 }

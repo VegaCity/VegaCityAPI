@@ -7,6 +7,8 @@ using VegaCityApp.API.Payload.Request.Admin;
 using VegaCityApp.API.Payload.Request.Auth;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Services;
+using VegaCityApp.API.Services.Implement;
+using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
 using VegaCityApp.Domain.Models;
 using VegaCityApp.Domain.Paginate;
@@ -18,10 +20,13 @@ namespace VegaCityApp.Service.Implement
 {
     public class AccountService : BaseService<AccountService>, IAccountService
     {
+        private readonly IUtilService _utilService;
+
         public AccountService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<AccountService> logger,
-            IMapper mapper,
+            IMapper mapper, IUtilService utilService,
             IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
+            _utilService = utilService;
         }
 
         #region Private Method
@@ -93,25 +98,10 @@ namespace VegaCityApp.Service.Implement
         public async Task<LoginResponse> Login(LoginRequest req)
         {
             Tuple<string, Guid> guidClaim = null;
-            if (!ValidationUtils.IsEmail(req.Email))
-            {
-                return new LoginResponse
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidEmail
-                };
-            }
+            if (!ValidationUtils.IsEmail(req.Email.Trim())) throw new BadHttpRequestException(UserMessage.InvalidEmail);
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
                 predicate: x => x.Email == req.Email,
-                include: User => User.Include(y => y.Role));
-            if (user == null)
-            {
-                return new LoginResponse
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = UserMessage.UserNotFound
-                };
-            }
+                include: User => User.Include(y => y.Role)) ?? throw new BadHttpRequestException(UserMessage.UserNotFound);
             switch (user.Status)
             {
                 case (int)UserStatusEnum.Active:
@@ -122,26 +112,11 @@ namespace VegaCityApp.Service.Implement
                         var token = JwtUtil.GenerateJwtToken(user, guidClaim);
                         //check refresh token
                         var refreshToken = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
-                                                        predicate: x => x.UserId == user.Id && x.Name == user.Role.Name);
-                        if (refreshToken == null)
-                        {
-                            return new LoginResponse
-                            {
-                                StatusCode = HttpStatusCodes.Unauthorized,
-                                MessageResponse = UserMessage.SessionExpired
-                            };
-                        }
+                                                        predicate: x => x.UserId == user.Id && x.Name == user.Role.Name) ?? throw new BadHttpRequestException(UserMessage.SessionExpired);
                         var tokenRefresh = "";
                         //check expire date
                         var exDay = JwtUtil.GetExpireDate(refreshToken.Token);
-                        if(TimeUtils.GetCurrentSEATime() > exDay)
-                        {
-                            return new LoginResponse
-                            {
-                                StatusCode = HttpStatusCodes.Unauthorized,
-                                MessageResponse = UserMessage.SessionExpired
-                            };
-                        }
+                        if(TimeUtils.GetCurrentSEATime() > exDay) throw new BadHttpRequestException(UserMessage.SessionExpired);
                         else
                         {
                             //deccode token
@@ -166,72 +141,32 @@ namespace VegaCityApp.Service.Implement
                                     RefreshToken = tokenRefresh
                                 }
                             }
-                        }: new LoginResponse
-                        {
-                            StatusCode = HttpStatusCodes.BadRequest,
-                            MessageResponse = UserMessage.SaveRefreshTokenFail
-                        };
+                        }: throw new BadHttpRequestException(UserMessage.SaveRefreshTokenFail);
                     }
-                    return new LoginResponse
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.WrongPassword
-                    };
+                    throw new BadHttpRequestException(UserMessage.WrongPassword);
                 case (int)UserStatusEnum.PendingVerify:
-                    return new LoginResponse
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.PendingVerify
-                    };
+                    throw new BadHttpRequestException(UserMessage.PendingVerify);
                 case (int)UserStatusEnum.Disable:
-                    return new LoginResponse
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.UserDisable
-                    };
+                    throw new BadHttpRequestException(UserMessage.UserDisable);
                 case (int)UserStatusEnum.Ban:
-                    return new LoginResponse
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.UserBan
-                    };
+                    throw new BadHttpRequestException(UserMessage.UserBan);
             }
 
-            return new LoginResponse
-            {
-                StatusCode = HttpStatusCodes.BadRequest,
-                MessageResponse = UserMessage.LoginFail
-            };
+            throw new BadHttpRequestException(UserMessage.LoginFail);
 
         }
         public async Task<ResponseAPI> RefreshToken(ReFreshTokenRequest req)
         {
             Tuple<string, Guid> guidClaim = null;
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                               predicate: x => x.Email == req.Email && x.MarketZoneId == req.apiKey,
-                                              include: User => User.Include(y => y.Role));
+            var user = await _utilService.GetUser(req.Email, req.apiKey) ?? throw new BadHttpRequestException(UserMessage.UserNotFound);
             var refreshToken = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
                                predicate: x => x.UserId == user.Id && x.Token == req.RefreshToken);
-            if(user == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = UserMessage.UserNotFound
-                };
-            }
+ 
             if(refreshToken == null)
             {
                 var check = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
                                                   predicate: x => x.Name == user.Role.Name && x.UserId == user.Id);
-                if(check != null)
-                {
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.UserHadToken
-                    };
-                }
+                if(check != null) throw new BadHttpRequestException(UserMessage.UserHadToken);
                 guidClaim = new Tuple<string, Guid>("MarketZoneId", user.MarketZoneId); 
                 var newToken = new UserRefreshToken
                 {
@@ -288,34 +223,10 @@ namespace VegaCityApp.Service.Implement
         public async Task<ResponseAPI> GetRefreshTokenByEmail(string email, GetApiKey req)
         {
             //check email valid format
-            if (!ValidationUtils.IsEmail(email))
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidEmail
-                };
-            }
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                predicate: x => x.Email == email && x.MarketZoneId == req.apiKey);
-            if (user == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = UserMessage.UserNotFound
-                };
-            }
+            if (!ValidationUtils.IsEmail(email.Trim())) throw new BadHttpRequestException(UserMessage.InvalidEmail);
+            var user = await _utilService.GetUser(email, req.apiKey) ?? throw new BadHttpRequestException(UserMessage.UserNotFound);
             var refreshToken = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
-                predicate: x => x.UserId == user.Id);
-            if (refreshToken == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = UserMessage.RefreshTokenNotFound
-                };
-            }
+                predicate: x => x.UserId == user.Id) ?? throw new BadHttpRequestException(UserMessage.RefreshTokenNotFound);
             return new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.OK,
@@ -330,64 +241,19 @@ namespace VegaCityApp.Service.Implement
         public async Task<ResponseAPI> Register(RegisterRequest req)
         {
             //check form Email, PhoneNumber, CCCD
-            if (!ValidationUtils.IsEmail(req.Email))
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidEmail
-                };
-            }
+            if (!ValidationUtils.IsEmail(req.Email.Trim())) throw new BadHttpRequestException(UserMessage.InvalidEmail);
 
-            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidPhoneNumber
-                };
-            }
+            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber.Trim())) throw new BadHttpRequestException(UserMessage.InvalidPhoneNumber);
 
-            if (!ValidationUtils.IsCCCD(req.CccdPassport))
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidCCCD
-                };
-            }
+            if (!ValidationUtils.IsCCCD(req.CccdPassport.Trim())) throw new BadHttpRequestException(UserMessage.InvalidCCCD);
 
             //check if email is already exist
-            var emailExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Email == req.Email.Trim() && x.MarketZoneId == req.apiKey);
-            if (emailExist != null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.EmailExist
-                };
-            }
-            var phoneNumberExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.PhoneNumber == req.PhoneNumber.Trim() && x.MarketZoneId == req.apiKey);
-            if (phoneNumberExist != null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.PhoneNumberExist
-                };
-            }
-            var cccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.CccdPassport == req.CccdPassport.Trim() && x.MarketZoneId == req.apiKey);
-            if (cccdExist != null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.CCCDExist
-                };
-            }
+            var emailExist = await _utilService.GetUser(req.Email, req.apiKey);
+            if (emailExist != null) throw new BadHttpRequestException(UserMessage.EmailExist);
+            var phoneNumberExist = await _utilService.GetUserPhone(req.PhoneNumber, req.apiKey);
+            if (phoneNumberExist != null) throw new BadHttpRequestException(UserMessage.PhoneNumberExist);
+            var cccdExist = await _utilService.GetUserCCCDPassport(req.CccdPassport, req.apiKey);
+            if (cccdExist != null) throw new BadHttpRequestException(UserMessage.CCCDExist);
 
             //create new user
             var newUser = await CreateUserRegister(req, req.apiKey);
@@ -403,14 +269,7 @@ namespace VegaCityApp.Service.Implement
             {
                 //create wallet
                 var result = await CreateUserWallet(newUser.Id);
-                if (!result)
-                {
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.CreateWalletFail
-                    };
-                }
+                if (!result) throw new BadHttpRequestException(UserMessage.CreateWalletFail);
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.Created,
@@ -422,74 +281,25 @@ namespace VegaCityApp.Service.Implement
                     }
                 };
             }
-            return new ResponseAPI
-            {
-                StatusCode = HttpStatusCodes.BadRequest,
-                MessageResponse = UserMessage.CreateUserFail
-            };
+            throw new BadHttpRequestException(UserMessage.CreateUserFail);
         }
         public async Task<ResponseAPI> AdminCreateUser(RegisterRequest req)
         {
             Guid apiKey = GetMarketZoneIdFromJwt();
             #region validate form
-            if (!ValidationUtils.IsEmail(req.Email))
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidEmail,
-                };
-            }
+            if (!ValidationUtils.IsEmail(req.Email.Trim())) throw new BadHttpRequestException(UserMessage.InvalidEmail);
 
-            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidPhoneNumber,
-                };
-            }
+            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber.Trim())) throw new BadHttpRequestException(UserMessage.InvalidPhoneNumber);
 
-            if (!ValidationUtils.IsCCCD(req.CccdPassport))
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidCCCD,
-                };
-            }
+            if (!ValidationUtils.IsCCCD(req.CccdPassport.Trim())) throw new BadHttpRequestException(UserMessage.InvalidCCCD);
             #endregion
             #region check exist
-            var emailExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Email == req.Email && x.MarketZoneId == apiKey);
-            if (emailExist != null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.EmailExist
-                };
-            }
-            var phoneNumberExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.PhoneNumber == req.PhoneNumber && x.MarketZoneId == apiKey);
-            if (phoneNumberExist != null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.PhoneNumberExist
-                };
-            }
-            var cccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.CccdPassport == req.CccdPassport && x.MarketZoneId == apiKey);
-            if (cccdExist != null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.CCCDExist
-                };
-            }
+            var emailExist = await _utilService.GetUser(req.Email, apiKey);
+            if (emailExist != null) throw new BadHttpRequestException(UserMessage.EmailExist);
+            var phoneNumberExist = await _utilService.GetUserPhone(req.PhoneNumber, apiKey);
+            if (phoneNumberExist != null) throw new BadHttpRequestException(UserMessage.PhoneNumberExist);
+            var cccdExist = await _utilService.GetUserCCCDPassport(req.CccdPassport, apiKey);
+            if (cccdExist != null) throw new BadHttpRequestException(UserMessage.CCCDExist);
             #endregion
             #region create new user
             var newUser = await CreateUserRegister(req, apiKey);
@@ -505,14 +315,7 @@ namespace VegaCityApp.Service.Implement
             #endregion
             #region create wallet
             var result = await CreateUserWallet(newUser.Id);
-            if (!result)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.CreateWalletFail
-                };
-            }
+            if (!result) throw new BadHttpRequestException(UserMessage.CreateWalletFail);
             #endregion
             #region send mail
             if (newUser != null)
@@ -547,30 +350,11 @@ namespace VegaCityApp.Service.Implement
         {
             Guid apiKey = GetMarketZoneIdFromJwt();
             string roleName = GetRoleFromJwt();
-            var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(
-                predicate: x => x.Location == req.LocationHouse.Trim() && !x.Deflag && x.Address == req.AddressHouse.Trim());
-            if (house != null)
-            {
-                if (house.IsRent)
-                {
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.HouseIsRent
-                    };
-                }
-            }
-            else
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.HouseNotFound
-                };
-            }
-            var user = await _unitOfWork.GetRepository<User>()
-            .SingleOrDefaultAsync(predicate: x => x.Id == userId && x.MarketZoneId == apiKey,
-                                  include: role => role.Include(z => z.Role));
+            var house = await _utilService.GetHouse(req.LocationHouse, req.AddressHouse) ?? throw new BadHttpRequestException(UserMessage.HouseNotFound);
+            if (house.IsRent) throw new BadHttpRequestException(UserMessage.HouseIsRent);
+
+            var user = await SearchUser(userId) ?? throw new BadHttpRequestException(UserMessage.UserNotFound);
+            if(user.MarketZoneId != apiKey) throw new BadHttpRequestException(UserMessage.UserNotFound);
             if (user.Status == (int) UserStatusEnum.Active)
             {
                 return new ResponseAPI
@@ -583,25 +367,9 @@ namespace VegaCityApp.Service.Implement
                     }
                 };
             }
-            if (roleName != RoleEnum.Admin.GetDescriptionFromEnum())
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.RoleNotAllow
-                };
-            }
+            if (roleName != RoleEnum.Admin.GetDescriptionFromEnum()) throw new BadHttpRequestException(UserMessage.RoleNotAllow);
             if (req.ApprovalStatus.Trim().Equals(ApproveStatus.REJECT))
             {
-                if (user == null)
-                {
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.NotFound,
-                        MessageResponse = UserMessage.UserNotFound
-                    };
-                }
-
                 user.Status = (int)UserStatusEnum.Disable;
                 _unitOfWork.GetRepository<User>().UpdateAsync(user);
                 await _unitOfWork.CommitAsync();
@@ -618,23 +386,8 @@ namespace VegaCityApp.Service.Implement
             else if (req.ApprovalStatus.Trim().Equals(ApproveStatus.APPROVED))
             {
                 #region check phone, email valid format
-                if (!ValidationUtils.IsEmail(req.StoreEmail))
-                {
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.InvalidEmail
-                    };
-                }
-
-                if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
-                {
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.InvalidPhoneNumber
-                    };
-                }
+                if (!ValidationUtils.IsEmail(req.StoreEmail)) throw new BadHttpRequestException(UserMessage.InvalidEmail);
+                if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber)) throw new BadHttpRequestException(UserMessage.InvalidPhoneNumber);
                 #endregion
                 if (user.RoleId == Guid.Parse(EnvironmentVariableConstant.StoreId))
                 {
@@ -712,35 +465,13 @@ namespace VegaCityApp.Service.Implement
                     }
                 }
             }
-            return new ResponseAPI
-            {
-                StatusCode = HttpStatusCodes.BadRequest,
-                MessageResponse = UserMessage.ApproveFail
-            };
+            throw new BadHttpRequestException(UserMessage.ApproveFail);
         }
         //after register, admin will approve user
         public async Task<ResponseAPI> ChangePassword(ChangePasswordRequest req)
         {
-            if (!ValidationUtils.IsEmail(req.Email.Trim()))
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidEmail
-                };
-            }
-
-            var user = await _unitOfWork.GetRepository<User>()
-                .SingleOrDefaultAsync(predicate: x => x.Email == req.Email.Trim() && x.MarketZoneId == req.apiKey, include: user => user.Include(x => x.Role));
-            if (user == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = UserMessage.UserNotFound
-                };
-            }
-
+            if (!ValidationUtils.IsEmail(req.Email.Trim())) throw new BadHttpRequestException(UserMessage.InvalidEmail);
+            var user = await _utilService.GetUser(req.Email.Trim(), req.apiKey) ?? throw new BadHttpRequestException(UserMessage.UserNotFound);
             if (user.IsChange == false)
             {
                 if(RoleHelper.allowedRoles.Contains(user.Role.Name))
@@ -761,14 +492,7 @@ namespace VegaCityApp.Service.Implement
                             }
                         };
                     }
-                    else
-                    {
-                        return new ResponseAPI
-                        {
-                            StatusCode = HttpStatusCodes.BadRequest,
-                            MessageResponse = UserMessage.OldPasswordNotDuplicate
-                        };
-                    }
+                    else throw new BadHttpRequestException(UserMessage.OldPasswordNotDuplicate);
                 }
             }
             else
@@ -789,11 +513,7 @@ namespace VegaCityApp.Service.Implement
                     };
                 }
             }
-            return new ResponseAPI
-            {
-                StatusCode = HttpStatusCodes.BadRequest,
-                MessageResponse = UserMessage.PasswordIsNotChanged
-            };
+            throw new BadHttpRequestException(UserMessage.PasswordIsNotChanged);
         }
         public async Task<ResponseAPI<IEnumerable<GetUserResponse>>> SearchAllUser(int size, int page)
         {
@@ -841,17 +561,11 @@ namespace VegaCityApp.Service.Implement
             }
             catch (Exception ex)
             {
-                return new ResponseAPI<IEnumerable<GetUserResponse>>
-                {
-                    MessageResponse = UserMessage.GetAllUserFail + ex.Message,
-                    StatusCode = HttpStatusCodes.InternalServerError,
-                    Data = null,
-                    MetaData=null
-                };
+                throw new Exception(UserMessage.GetAllUserFail + " " +  ex.Message);
             }
         }
 
-        public async Task<ResponseAPI> SearchUser(Guid UserId)
+        public async Task<User> SearchUser(Guid UserId)
         {
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
                 predicate: x => x.Id == UserId 
@@ -861,44 +575,17 @@ namespace VegaCityApp.Service.Implement
                         .Include(y => y.Store)
                         .Include(y => y.Role)
             );
-            if (user == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = UserMessage.NotFoundUser,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
-            return new ResponseAPI()
-            {
-                MessageResponse = UserMessage.GetUserSuccess,
-                StatusCode = HttpStatusCodes.OK,
-                Data = new
-                {
-                    user
-                }
-            };
+            return user;
         }
-        public async Task<ResponseAPI> UpdateUser(Guid userId, UpdateUserAccountRequest req)
+        public async Task<ResponseAPI<User>> UpdateUser(Guid userId, UpdateUserAccountRequest req)
         {
-            if(!ValidationUtils.IsPhoneNumber(req.PhoneNumber.Trim()))
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidPhoneNumber
-                };
-            }
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
-                    (predicate: x => x.Id == userId && x.Status == (int)UserStatusEnum.Active);
-            if (user == null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = UserMessage.NotFoundUser
-                };
-            }
+            if(!ValidationUtils.IsPhoneNumber(req.PhoneNumber.Trim())) throw new BadHttpRequestException(UserMessage.InvalidPhoneNumber);
+            
+            var user = await SearchUser(userId);
+
+            if (user == null) throw new BadHttpRequestException(UserMessage.UserNotFound);
+            else if(user.Status != (int)UserStatusEnum.Active) throw new BadHttpRequestException(UserMessage.UserDisable);
+            
             user.FullName = req.FullName != null ? req.FullName.Trim() : user.FullName;
             user.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : user.PhoneNumber;
             user.Birthday = req.Birthday ?? user.Birthday;
@@ -906,31 +593,22 @@ namespace VegaCityApp.Service.Implement
             user.ImageUrl = req.ImageUrl != null ? req.ImageUrl.Trim() : user.ImageUrl;
             user.Address = req.Address != null ? req.Address.Trim() : user.Address;
             user.Description = req.Description != null ? req.Description.Trim() : user.Description;
+
             _unitOfWork.GetRepository<User>().UpdateAsync(user);
             return await _unitOfWork.CommitAsync() > 0
-                ? new ResponseAPI()
+                ? new ResponseAPI<User>()
                 {
                     StatusCode = HttpStatusCodes.OK,
-                    MessageResponse = UserMessage.UpdateUserSuccessfully
+                    MessageResponse = UserMessage.UpdateUserSuccessfully,
+                    Data = user
                 }
-                : new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.FailedToUpdate
-                };
+                : throw new BadHttpRequestException(UserMessage.FailedToUpdate);
         }
         public async Task<ResponseAPI> DeleteUser(Guid UserId)
         {
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
-                (predicate: x => x.Id == UserId && x.Status ==(int) UserStatusEnum.Active);
-            if (user == null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = MessageConstant.UserMessage.NotFoundUser
-                };
-            }
+            var user = await SearchUser(UserId);
+            if (user == null) throw new BadHttpRequestException(UserMessage.UserNotFound);
+            else if (user.Status != (int)UserStatusEnum.Active) throw new BadHttpRequestException(UserMessage.UserDisable);
             switch (user.Status)
             {
                 case (int)UserStatusEnum.Active:
@@ -943,54 +621,25 @@ namespace VegaCityApp.Service.Implement
                             MessageResponse = UserMessage.DeleteUserSuccess,
                             StatusCode = HttpStatusCodes.OK
                         }
-                        : new ResponseAPI()
-                        {
-                            MessageResponse = UserMessage.DeleteUserFail,
-                            StatusCode = HttpStatusCodes.BadRequest
-                        };
+                        : throw new BadHttpRequestException(UserMessage.DeleteUserFail);
                 case (int)UserStatusEnum.Ban:
-                    return new ResponseAPI()
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.UserBan
-                    };
+                    throw new BadHttpRequestException(UserMessage.UserBan);
                 case (int)UserStatusEnum.Disable:
-                    return new ResponseAPI()
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.UserDisable
-                    };
+                    throw new BadHttpRequestException(UserMessage.UserDisable);
             }
-            return new ResponseAPI()
-            {
-                StatusCode = HttpStatusCodes.BadRequest,
-                MessageResponse = UserMessage.DeleteUserFail
-            };
+            throw new BadHttpRequestException(UserMessage.DeleteUserFail);
         }
-        public async Task<ResponseAPI> GetAdminWallet()
+        public async Task<ResponseAPI<Wallet>> GetAdminWallet()
         {
             var currentMarketZoneId = GetMarketZoneIdFromJwt();
-            var marketzone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == currentMarketZoneId);
-            if(marketzone == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = "Not Found MarketZone!!",
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
-            var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Email == marketzone.Email, include: wallet => wallet.Include(z => z.Wallets));
-            if (admin == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = UserMessage.NotFoundUserWallet,
-                    StatusCode = HttpStatusCodes.NotFound,
-                };
-            }
-            Wallet walletAd = admin.Wallets.SingleOrDefault();
+            var marketzone = await _utilService.GetMarketZone(currentMarketZoneId) ?? throw new BadHttpRequestException("Market Zone is not found");
+            if (string.IsNullOrEmpty(marketzone.Email)) throw new BadHttpRequestException("Market Zone email is not found");
+            var admin = await _utilService.GetUser(marketzone.Email, marketzone.Id) ?? throw new BadHttpRequestException("Admin is not found");
+            if (admin.Status != (int)UserStatusEnum.Active) throw new BadHttpRequestException("Admin is not active");
+            if (!admin.Wallets.Any()) throw new BadHttpRequestException("Admin wallet is not found");
+            Wallet? walletAd = admin.Wallets.SingleOrDefault() ?? throw new BadHttpRequestException("Admin wallet is not found");
             walletAd.User = null;
-            return new ResponseAPI()
+            return new ResponseAPI<Wallet>()
             {
                 MessageResponse = UserMessage.GetWalletSuccess,
                 StatusCode = HttpStatusCodes.OK,
@@ -1000,35 +649,11 @@ namespace VegaCityApp.Service.Implement
 
         public async Task<ResponseAPI> GetChartByDuration(AdminChartDurationRequest req)
         {
-            string roleCurrent = GetRoleFromJwt();
-            if (roleCurrent == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = UserMessage.UserNotFound,
-                };
-            }
-
-            if (req.Days == 0)
-            {
-                return new ResponseAPI
-                {
-                    MessageResponse = TransactionMessage.DayNull,
-                    StatusCode = HttpStatusCodes.BadRequest,
-                };
-            }
-
+            string roleCurrent = GetRoleFromJwt() ?? throw new BadHttpRequestException("Role is not found");
+            if (req.Days == 0) throw new BadHttpRequestException(TransactionMessage.DayNull);
             if (!DateTime.TryParse(req.StartDate + " 00:00:00.000Z", out DateTime startDate))
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = "Invalid start date format.",
-                };
-            }
-
-            DateTime? endDate = startDate.AddDays(((int)req.Days));
+                throw new BadHttpRequestException("Invalid start date format.");
+            DateTime endDate = startDate.AddDays(req.Days ?? throw new BadHttpRequestException(TransactionMessage.DayNull));
             var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
                                                        && x.CrDate <= endDate && x.Status == OrderStatus.Completed, null, include: etag => etag.Include(y => y.Etag));
             var etags = await _unitOfWork.GetRepository<Etag>().GetListAsync(x => x.CrDate >= startDate
@@ -1048,15 +673,9 @@ namespace VegaCityApp.Service.Implement
                                                        && x.CrDate <= endDate,
                                                         null, null);
             if (transactions == null || !transactions.Any())
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = "Transaction not found"
-                };
-            }
+            throw new BadHttpRequestException("Transactions not found");
 
-            if (roleCurrent == "Admin")
+            if (roleCurrent == RoleEnum.Admin.GetDescriptionFromEnum())
             {
                 var groupedStaticsAdmin = transactions
                .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")

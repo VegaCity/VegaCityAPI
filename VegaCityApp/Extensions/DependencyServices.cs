@@ -90,6 +90,7 @@ public static class DependencyServices
         services.AddScoped<IServiceStore, ServiceStore>();
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IUtilService, UtilService>();
         #endregion
         return services;
     }

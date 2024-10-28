@@ -24,7 +24,6 @@ namespace VegaCityApp.API.Services
             string role = _httpContextAccessor?.HttpContext?.User.FindFirstValue(ClaimTypes.Role);
             return role;
         }
-
         protected Guid GetMarketZoneIdFromJwt()
         {
             return Guid.Parse(_httpContextAccessor?.HttpContext?.User?.FindFirstValue("MarketZoneId"));

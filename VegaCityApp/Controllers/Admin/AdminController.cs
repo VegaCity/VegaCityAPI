@@ -14,6 +14,7 @@ using VegaCityApp.API.Payload.Request.Admin;
 using VegaCityApp.API.Payload.Request.Auth;
 using VegaCityApp.Service.Implement;
 using Swashbuckle.AspNetCore.Annotations;
+using VegaCityApp.Domain.Models;
 
 namespace VegaCityApp.API.Controllers.Admin
 {
@@ -53,15 +54,21 @@ namespace VegaCityApp.API.Controllers.Admin
             return Ok(result);
         }
         [HttpGet(UserEndpoint.GetUserInfo)]
-        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<User>), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb, RoleEnum.Store)]
         public async Task<IActionResult> SearchUser(Guid id)
         {
             var result = await _service.SearchUser(id);
-            return StatusCode(result.StatusCode, result);
+            ResponseAPI<User> response = new ResponseAPI<User>
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = UserMessage.GetUserSuccess,
+                Data = result
+            };
+            return StatusCode(response.StatusCode, response);
         }
         [HttpPatch(UserEndpoint.UpdateUserProfile)]
-        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI<User>), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
         public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserAccountRequest request)
         {
