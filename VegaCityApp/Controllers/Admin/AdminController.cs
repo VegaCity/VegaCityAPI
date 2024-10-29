@@ -38,9 +38,9 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpPost(UserEndpoint.ApproveUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         [CustomAuthorize(RoleEnum.Admin)]
-        public async Task<IActionResult> ApproveUser(Guid userId,[FromBody] ApproveRequest request)
+        public async Task<IActionResult> ApproveUser(Guid userId, [FromBody] ApproveRequest request)
         {
-            var result = await _service.ApproveUser(userId,request);
+            var result = await _service.ApproveUser(userId, request);
             return StatusCode(result.StatusCode, result);
         }
 
@@ -92,6 +92,14 @@ namespace VegaCityApp.API.Controllers.Admin
         {
             var response = await _service.GetChartByDuration(req);
             return Ok(response);
+        }
+        [HttpPost(UserEndpoint.ReAssignEmail)]
+        [ProducesResponseType(typeof(string), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        public async Task<IActionResult> ReAssignEmail(Guid userId, [FromBody] ReAssignEmail email)
+        {
+            var result = await _service.ReAssignEmail(userId, email);
+            return Ok(result);
         }
     }
 }

@@ -53,6 +53,7 @@ public static class ApiEndPointConstant
         public const string CreateUser = ApiEndpoint + "/user";
         public const string GetAdminWallet = ApiEndpoint + "/wallet";
         public const string GetChartDashboard = ApiEndpoint + "/transaction/dashboard";
+        public const string ReAssignEmail = ApiEndpoint + "/user/{userId}/re-assign-email";
 
     }
 

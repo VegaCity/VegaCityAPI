@@ -119,6 +119,7 @@ public static class MessageConstant
     }
     public static class UserMessage
     {   
+        public const string ReAssignEmailSuccess = "Re-Assign Email Successfully !!";
         public const string RefreshTokenNotFound = "Refresh Token Not Found !!";
         public const string GetRefreshTokenSuccessfully = "Get Refresh Token Successfully !!";
         public const string RoleNotAllow = "Role Not Allow !!";

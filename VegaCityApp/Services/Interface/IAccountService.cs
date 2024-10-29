@@ -30,6 +30,7 @@ namespace VegaCityApp.Service.Interface
         Task<ResponseAPI> DeleteUser(Guid UserId);
         Task<ResponseAPI> GetAdminWallet();
         Task<ResponseAPI> GetChartByDuration(AdminChartDurationRequest req);
+        Task<string> ReAssignEmail(Guid userId, ReAssignEmail email);
 
     }
 }

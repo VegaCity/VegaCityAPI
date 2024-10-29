@@ -1117,6 +1117,32 @@ namespace VegaCityApp.Service.Implement
                 Data = groupedStaticsStore
             };
         }
-
+        public async Task<string> ReAssignEmail(Guid userId, ReAssignEmail req)
+        {
+            Guid marketZoneId = GetMarketZoneIdFromJwt();
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == userId 
+            && x.Status ==(int) UserStatusEnum.PendingVerify && x.MarketZoneId == marketZoneId);
+            if (user == null)
+            {
+                return UserMessage.UserNotFound;
+            }
+            user.Email = req.Email;
+            user.Password = PasswordUtil.GenerateCharacter(10);
+            user.IsChange = false;
+            _unitOfWork.GetRepository<User>().UpdateAsync(user);
+            //send mail
+            try
+            {
+                var subject = UserMessage.YourPasswordToChange;
+                var body = "Your Your Password To Change. Your password is: " + user.Password;
+                await MailUtil.SendMailAsync(user.Email, subject, body);
+                await _unitOfWork.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                return UserMessage.SendMailFail;
+            }
+            return UserMessage.ReAssignEmailSuccess;
+        }
     }
 }
