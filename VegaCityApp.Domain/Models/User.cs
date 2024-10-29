@@ -31,7 +31,6 @@ namespace VegaCityApp.Domain.Models
         public string? Address { get; set; }
         public int Status { get; set; }
 
-
         public virtual MarketZone MarketZone { get; set; } = null!;
         public virtual Role Role { get; set; } = null!;
         public virtual Store? Store { get; set; }

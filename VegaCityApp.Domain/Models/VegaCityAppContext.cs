@@ -186,8 +186,7 @@ namespace VegaCityApp.Domain.Models
 
                 entity.HasIndex(e => e.MarketZoneId, "IX_ETag_MarketZoneId");
 
-                entity.HasIndex(e => e.WalletId, "IX_ETag_WalletId")
-                    .IsUnique();
+                entity.HasIndex(e => e.WalletId, "IX_ETag_WalletId");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
@@ -230,8 +229,8 @@ namespace VegaCityApp.Domain.Models
                     .HasConstraintName("FK_ETag_MarketZone");
 
                 entity.HasOne(d => d.Wallet)
-                    .WithOne(p => p.Etag)
-                    .HasForeignKey<Etag>(d => d.WalletId)
+                    .WithMany(p => p.Etags)
+                    .HasForeignKey(d => d.WalletId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ETag_Wallet");
             });
