@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "vegacity-utility-card",
+  "private_key_id": "13b366ee3bd9d695d74806aae0729a0f47723993",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCQZxFKCjxMRoxA\nE1h1rAAi4njwiKh9vKX4v0LTpH9JtICEBxMTMTv19LCB6u7Vzj3972kL0KVuPU8n\nuZrWzZL3EnATLi9ug2Oi9mJNE3r9gEg0XVUh/6pC0NZSWLj8b7ixKzPo/7q0CTUL\nAHj9GKt/nf43cRjNRSq5N3g0GCbOcFka6La72NpOVfRX48hsxnVnFofFQ6QTefny\nvWpE58YRS+/viFFHhxureVcgGXTIXll1ng7H0Lz3MSzX4ENiU2Eg5xegwcwtLbMj\nCOOdbVwaNMDAozxBEUR23ABH6S82s+8r2jarCgMr8UudTfmdieEv7OudXweaN/9B\nToyafKYPAgMBAAECggEACKbML+HuG+nMJFikX6R2+6AS++JMKgBf90fKQrDj2XAh\nlQdxeqBkBcfrvVTsi03IhArQgd810iWFNQ2XO9BkQj5ODbAiMl5X3V8io5iLsV16\ntfxzic5uDoPBm3xqVOGCsMa0XPzZXEkC7w5PsWZFfCdkoEC76ix/M0qh/okF5i9Y\n8loFhJuu1A935RfbyztWh46F9Lgcooww6awK7uElZFVUHkd7PMn5UxB/qcMQ9NTW\nczB6gw69zHY+ONVT0taLScTWCeQgVhs4YrBlv01Pz5RpxglK3ZZlcFvegli79Hhf\nFlvvkPQAqm0ReqaK+V46hGCMidk/ZF7k75KvDZbnYQKBgQDGgdmEPmu/OSy07REw\nANxfeWpvjXwaGfspkTQyhzsNOJfOx4DhFdkyoeOY1gUvzx5XJ5bAHtc7ng1xr3u3\n7FYxEd29mgGQuzeUVu2Xe4ui42i/JmcTc3YyYawTfQzcNt+65xfP5EiSfm7BcW9C\nwwaN25dG+dRXyEPlaW4gn9cCIQKBgQC6Oa0+5taZrmwcd5W9i8FJihyHGplStXj7\nOZrpgiTMkftk49uoHce4qHOQkY3IxzD+v+8jZhj5AYK+xXOYZFQ4BmwbSoNz7JAF\nT49aoDtMVycx+5JCf74D2lvHfC7xaswuWmdTIF2llzJq5QfpSj/JsIUtj7PxAqud\nBhggEh8CLwKBgQCnsy9V334bUGwKdXTdvvxt1B8tGrRLQMPE/BzCyygCJVtqn3Sr\ns0+IzOeASN6c4zdYneNnbyaaAQ6OipfUa97tGZDhCuhjoyZzNXUHUqJG/COTyRev\ngQ3LxmQfGrfwmpMsTOr7AHqm+BUNa415M1WoJmmI1qqjdlaVyxn0idSUwQKBgQCp\nvR6LAe7C3zfNbrZ+sR65f/hmsLjlqWEfY68ufaA7EihZGlNBVfuP9YJ4WCMqyVyA\nJsO6uTmz5UudxO2LDo+xDTGGYpGUnR/cp1rb2MaT27BvH4V9tV+ltWcIWcmT5Ks8\n6Mva+dpBr6GVyzI90p53oLyS/bOezrdLhZ2BxeKbowKBgDZ2btO6aMWGPc0d/Gc2\nff4e5mIUu2gYxsvIdx5R6XfL6oe1iIWnXgW+SuS3zYpKF65tpdX1N/qCUMr3/PjB\nipyV4yNktHeooot4Ho3QASVdtNBn49n9dUzEFWJCczBfOXJvBx/BSlUJsdyeEqp5\nf82bKOK8RQhT4yacTxS2Mpnm\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-6wk43@vegacity-utility-card.iam.gserviceaccount.com",
+  "client_id": "117396350876025688416",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-6wk43%40vegacity-utility-card.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
