@@ -131,6 +131,11 @@ namespace VegaCityApp.Domain.Models
                     .HasForeignKey(d => d.OrderId)
                     .HasConstraintName("FK_Deposit_Order");
 
+                entity.HasOne(d => d.Store)
+                    .WithMany(p => p.Deposits)
+                    .HasForeignKey(d => d.StoreId)
+                    .HasConstraintName("FK_Deposit_Store");
+
                 entity.HasOne(d => d.Wallet)
                     .WithMany(p => p.Deposits)
                     .HasForeignKey(d => d.WalletId)

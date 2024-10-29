@@ -838,9 +838,9 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.CommitAsync();
         }
 
-        public async Task<ResponseAPI> EtagPayment(string etagCode, int amount)
+        public async Task<ResponseAPI> EtagPayment(string etagCode, int amount, Guid storeId)
         {
-            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Deflag != true && x.Status == (int)StoreStatusEnum.Opened);
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => !x.Deflag && x.Id == storeId && x.Status == (int)StoreStatusEnum.Opened);
             if (store == null)
             {
                 return new ResponseAPI
@@ -896,7 +896,8 @@ namespace VegaCityApp.API.Services.Implement
                 EtagId = etag.Id,
                 IsIncrease = false,
                 PaymentType = PaymentTypeHelper.allowedPaymentTypes[5],
-                WalletId = etag.WalletId
+                WalletId = etag.WalletId,
+                StoreId = store.Id
             };
             etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
              _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
