@@ -244,6 +244,7 @@ namespace VegaCityApp.API.Services.Implement
                 };
         }
 
+
         public async Task<ResponseAPI> GetMenuFromPos(Guid id)
         {
              //call api pos - take n parse into Object Menu

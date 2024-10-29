@@ -10,5 +10,7 @@
         public bool Deflag { get; set; }
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
+        public bool IsRent { get; set; }
+
     }
 }
