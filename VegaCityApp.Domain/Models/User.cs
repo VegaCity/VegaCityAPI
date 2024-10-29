@@ -14,13 +14,13 @@ namespace VegaCityApp.Domain.Models
 
         public Guid Id { get; set; }
         public string FullName { get; set; } = null!;
-        public string PhoneNumber { get; set; } = null!;
+        public string? PhoneNumber { get; set; }
         public DateTime? Birthday { get; set; }
         public Guid? StoreId { get; set; }
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public int Gender { get; set; }
-        public string CccdPassport { get; set; } = null!;
+        public string? CccdPassport { get; set; }
         public string? ImageUrl { get; set; }
         public Guid MarketZoneId { get; set; }
         public string Email { get; set; } = null!;

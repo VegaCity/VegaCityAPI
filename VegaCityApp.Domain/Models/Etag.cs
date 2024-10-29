@@ -8,7 +8,6 @@ namespace VegaCityApp.Domain.Models
         public Etag()
         {
             Deposits = new HashSet<Deposit>();
-            EtagDetails = new HashSet<EtagDetail>();
             Orders = new HashSet<Order>();
         }
 
@@ -30,8 +29,8 @@ namespace VegaCityApp.Domain.Models
         public virtual EtagType EtagType { get; set; } = null!;
         public virtual MarketZone MarketZone { get; set; } = null!;
         public virtual Wallet Wallet { get; set; } = null!;
+        public virtual EtagDetail? EtagDetail { get; set; }
         public virtual ICollection<Deposit> Deposits { get; set; }
-        public virtual ICollection<EtagDetail> EtagDetails { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
     }
 }

@@ -181,9 +181,13 @@ namespace VegaCityApp.Domain.Models
 
                 entity.HasIndex(e => e.EtagTypeId, "IX_ETag_ETagTypeId");
 
+                entity.HasIndex(e => e.EtagCode, "IX_ETag_EtagCode")
+                    .IsUnique();
+
                 entity.HasIndex(e => e.MarketZoneId, "IX_ETag_MarketZoneId");
 
-                entity.HasIndex(e => e.WalletId, "IX_ETag_WalletId");
+                entity.HasIndex(e => e.WalletId, "IX_ETag_WalletId")
+                    .IsUnique();
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
@@ -226,8 +230,8 @@ namespace VegaCityApp.Domain.Models
                     .HasConstraintName("FK_ETag_MarketZone");
 
                 entity.HasOne(d => d.Wallet)
-                    .WithMany(p => p.Etags)
-                    .HasForeignKey(d => d.WalletId)
+                    .WithOne(p => p.Etag)
+                    .HasForeignKey<Etag>(d => d.WalletId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ETag_Wallet");
             });
@@ -235,6 +239,9 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<EtagDetail>(entity =>
             {
                 entity.ToTable("EtagDetail");
+
+                entity.HasIndex(e => e.EtagId, "IX_EtagDetail_EtagId")
+                    .IsUnique();
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
@@ -260,8 +267,8 @@ namespace VegaCityApp.Domain.Models
                     .HasColumnName("upsDate");
 
                 entity.HasOne(d => d.Etag)
-                    .WithMany(p => p.EtagDetails)
-                    .HasForeignKey(d => d.EtagId)
+                    .WithOne(p => p.EtagDetail)
+                    .HasForeignKey<EtagDetail>(d => d.EtagId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_EtagDetail_ETag");
             });
@@ -311,6 +318,12 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<House>(entity =>
             {
                 entity.ToTable("House");
+
+                entity.HasIndex(e => e.Address, "IX_House_Address")
+                    .IsUnique();
+
+                entity.HasIndex(e => e.Location, "IX_House_Location")
+                    .IsUnique();
 
                 entity.HasIndex(e => e.ZoneId, "IX_House_ZoneId");
 
@@ -418,6 +431,15 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<MarketZone>(entity =>
             {
                 entity.ToTable("MarketZone");
+
+                entity.HasIndex(e => e.Address, "IX_MarketZone_Address")
+                    .IsUnique();
+
+                entity.HasIndex(e => e.Email, "IX_MarketZone_Email")
+                    .IsUnique();
+
+                entity.HasIndex(e => e.PhoneNumber, "IX_MarketZone_PhoneNumber")
+                    .IsUnique();
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
@@ -661,6 +683,9 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Role");
 
+                entity.HasIndex(e => e.Name, "IX_Role_Name")
+                    .IsUnique();
+
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Name)
@@ -734,6 +759,11 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<Store>(entity =>
             {
                 entity.ToTable("Store");
+
+                entity.HasIndex(e => e.Address, "IX_Store_Address")
+                    .IsUnique();
+
+                entity.HasIndex(e => e.Email, "IX_Store_Email");
 
                 entity.HasIndex(e => e.HouseId, "IX_Store_HouseId");
 
@@ -849,6 +879,15 @@ namespace VegaCityApp.Domain.Models
             modelBuilder.Entity<User>(entity =>
             {
                 entity.ToTable("User");
+
+                entity.HasIndex(e => e.CccdPassport, "IX_User_CCCD_Passport")
+                    .IsUnique();
+
+                entity.HasIndex(e => e.Email, "IX_User_Email")
+                    .IsUnique();
+
+                entity.HasIndex(e => e.PhoneNumber, "IX_User_PhoneNumber")
+                    .IsUnique();
 
                 entity.HasIndex(e => e.RoleId, "IX_User_RoleId");
 
