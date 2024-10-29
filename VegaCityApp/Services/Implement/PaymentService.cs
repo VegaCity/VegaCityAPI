@@ -681,7 +681,7 @@ namespace VegaCityApp.API.Services.Implement
             if(req.Key != null && PaymentTypeHelper.allowedPaymentTypes.Contains(req.Key.Split('_')[0]) && req.Key.Split("_")[1] == checkOrder.InvoiceId)
             {
                 var customerInfoEtag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == checkOrder.EtagId,
-                include: etag => etag.Include(o => o.EtagDetails));
+                include: etag => etag.Include(o => o.EtagDetail));
                 var paymentDataChargeMoney = new PaymentData(
                     orderCode: Int64.Parse(checkOrder.InvoiceId.ToString()),  // Bạn có thể tạo mã đơn hàng tại đây
                     amount: checkOrder.TotalAmount,
@@ -691,9 +691,9 @@ namespace VegaCityApp.API.Services.Implement
                     //returnUrl: PayOSConfiguration.ReturnUrlCharge,
                      returnUrl: PayOSConfiguration.ReturnUrlCharge,
                     // URL khi thanh toán thành công
-                    buyerName: customerInfoEtag.EtagDetails.SingleOrDefault().FullName.ToString(),
+                    buyerName: customerInfoEtag.EtagDetail.FullName,
                     buyerEmail: "", // very require email here!
-                    buyerPhone: customerInfoEtag.EtagDetails.SingleOrDefault().PhoneNumber.ToString(),
+                    buyerPhone: customerInfoEtag.EtagDetail.PhoneNumber,
                     buyerAddress: "",
                     expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
                 );
