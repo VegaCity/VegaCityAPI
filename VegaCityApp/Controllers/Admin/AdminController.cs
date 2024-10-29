@@ -54,7 +54,7 @@ namespace VegaCityApp.API.Controllers.Admin
             return Ok(result);
         }
         [HttpGet(UserEndpoint.GetUserInfo)]
-        [ProducesResponseType(typeof(ResponseAPI<User>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb, RoleEnum.Store)]
         public async Task<IActionResult> SearchUser(Guid id)
         {
@@ -68,7 +68,7 @@ namespace VegaCityApp.API.Controllers.Admin
             return StatusCode(response.StatusCode, response);
         }
         [HttpPatch(UserEndpoint.UpdateUserProfile)]
-        [ProducesResponseType(typeof(ResponseAPI<User>), HttpStatusCodes.OK)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
         public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserAccountRequest request)
         {
