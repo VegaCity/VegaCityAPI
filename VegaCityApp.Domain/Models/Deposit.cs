@@ -15,9 +15,11 @@ namespace VegaCityApp.Domain.Models
         public Guid WalletId { get; set; }
         public Guid EtagId { get; set; }
         public Guid? OrderId { get; set; }
+        public Guid? StoreId { get; set; }
 
         public virtual Etag Etag { get; set; } = null!;
         public virtual Order? Order { get; set; }
+        public virtual Store? Store { get; set; }
         public virtual Wallet Wallet { get; set; } = null!;
     }
 }

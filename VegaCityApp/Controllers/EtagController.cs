@@ -147,7 +147,7 @@ namespace VegaCityApp.API.Controllers
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> EtagPayment([FromQuery] string etagCode, [FromQuery] Guid storeId, [FromQuery] int amount)
         {
-            var result = await _service.EtagPayment(etagCode, amount);
+            var result = await _service.EtagPayment(etagCode, amount, storeId);
             return StatusCode(result.StatusCode, result);
         }
 

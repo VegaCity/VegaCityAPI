@@ -22,6 +22,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> ActivateEtag(Guid etagId, ActivateEtagRequest req);
         Task<ResponseAPI> PrepareChargeMoneyEtag(ChargeMoneyEtagRequest req);
         Task CheckEtagExpire();
-        Task<ResponseAPI> EtagPayment( string etagCode, int amount);
+        Task<ResponseAPI> EtagPayment( string etagCode, int amount, Guid storeId);
     }
 }

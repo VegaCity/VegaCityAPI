@@ -7,6 +7,7 @@ namespace VegaCityApp.Domain.Models
     {
         public Store()
         {
+            Deposits = new HashSet<Deposit>();
             DisputeReports = new HashSet<DisputeReport>();
             Menus = new HashSet<Menu>();
             Orders = new HashSet<Order>();
@@ -33,6 +34,7 @@ namespace VegaCityApp.Domain.Models
 
         public virtual House? House { get; set; }
         public virtual MarketZone MarketZone { get; set; } = null!;
+        public virtual ICollection<Deposit> Deposits { get; set; }
         public virtual ICollection<DisputeReport> DisputeReports { get; set; }
         public virtual ICollection<Menu> Menus { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
