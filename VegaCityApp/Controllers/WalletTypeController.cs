@@ -57,7 +57,13 @@ namespace VegaCityApp.API.Controllers
         public async Task<IActionResult> GetWalletTypeById(Guid id)
         {
             var result = await _walletTypeService.GetWalletTypeById(id);
-            return StatusCode(result.StatusCode, result);
+            ResponseAPI<WalletType> res = new ResponseAPI<WalletType>()
+            {
+                Data = result,
+                MessageResponse = WalletTypeMessage.GetWalletTypesSuccessfully,
+                StatusCode = HttpStatusCodes.OK
+            };
+            return StatusCode(res.StatusCode, res);
         }
 
         [HttpGet(WalletTypeEndpoint.GetAllWalletType)]

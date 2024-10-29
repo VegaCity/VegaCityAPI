@@ -16,24 +16,26 @@ namespace VegaCityApp.API.Services.Implement
 {
     public class EtagService : BaseService<EtagService>, IEtagService
     {
-        public EtagService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<EtagService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper) : base(unitOfWork, logger, httpContextAccessor, mapper)
+        private readonly IWalletTypeService _walletTypeService;
+        private readonly IPackageService _packageService;
+
+        public EtagService(IUnitOfWork<VegaCityAppContext> unitOfWork, 
+                           ILogger<EtagService> logger, 
+                           IHttpContextAccessor httpContextAccessor, 
+                           IMapper mapper,
+                           IWalletTypeService walletTypeService,
+                           IPackageService packageService) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
             _httpContextAccessor = httpContextAccessor;
+            _walletTypeService = walletTypeService;
+            _packageService = packageService;
         }
 
         public async Task<ResponseAPI> CreateEtagType(EtagTypeRequest req)
         {
             Guid apiKey = GetMarketZoneIdFromJwt();
             //check wallet type exist
-            var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(predicate: x => x.Id == req.WalletTypeId && !x.Deflag);
-            if (walletType == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = WalletTypeMessage.NotFoundWalletType,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
+            var walletType = await _walletTypeService.GetWalletTypeById(req.WalletTypeId) ?? throw new BadHttpRequestException(WalletTypeMessage.NotFoundWalletType);
             var newEtagType = new EtagType
             {
                 Id = Guid.NewGuid(),
@@ -54,23 +56,11 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     EtagTypeId = newEtagType.Id,
                 }
-            } : new ResponseAPI()
-            {
-                MessageResponse = EtagTypeMessage.CreateFail,
-                StatusCode = HttpStatusCodes.BadRequest
-            };
+            } : throw new BadHttpRequestException(EtagMessage.CreateFail);
         }
         public async Task<ResponseAPI> UpdateEtagType(Guid etagTypeId, UpdateEtagTypeRequest req)
         {
-            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag);
-            if (etagType == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagTypeMessage.NotFoundEtagType,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
+            var etagType = await SearchEtagType(etagTypeId) ?? throw new BadHttpRequestException(EtagTypeMessage.NotFoundEtagType);
             etagType.Name = req.Name;
             etagType.ImageUrl = req.ImageUrl ?? etagType.ImageUrl;
             etagType.BonusRate = req.BonusRate ?? etagType.BonusRate;
@@ -81,25 +71,11 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = EtagTypeMessage.UpdateSuccessFully,
                 StatusCode = HttpStatusCodes.OK,
                 Data = new { etagTypeId = etagType.Id }
-            } : new ResponseAPI()
-            {
-                MessageResponse = EtagTypeMessage.UpdateFail,
-                StatusCode = HttpStatusCodes.BadRequest
-            };
+            } : throw new BadHttpRequestException(EtagTypeMessage.UpdateFail);
         }
         public async Task<ResponseAPI> DeleteEtagType(Guid etagTypeId)
         {
-            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync
-                (predicate: x => x.Id == etagTypeId && !x.Deflag,
-                 include: map => map.Include(z => z.PackageETagTypeMappings));
-            if (etagType == null)
-            {
-                return new ResponseAPI
-                {
-                    MessageResponse = EtagTypeMessage.NotFoundEtagType,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
+            var etagType = await SearchEtagType(etagTypeId) ?? throw new BadHttpRequestException(EtagTypeMessage.NotFoundEtagType);
             if (etagType.PackageETagTypeMappings.Count > 0)
             {
                 foreach (var item in etagType.PackageETagTypeMappings)
@@ -120,25 +96,11 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.BadRequest
             };
         }
-        public async Task<ResponseAPI> SearchEtagType(Guid etagTypeId)
+        public async Task<EtagType> SearchEtagType(Guid etagTypeId)
         {
-            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag,
-                include: etag => etag.Include(y => y.Etags).Include(y => y.WalletType), 
-                selector: z => new { z.Id, z.BonusRate, z.Name, z.Etags, z.Amount, z.ImageUrl, z.WalletType });
-            if (etagType == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagTypeMessage.NotFoundEtagType,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
-            return new ResponseAPI()
-            {
-                MessageResponse = EtagTypeMessage.SearchEtagTypeSuccess,
-                StatusCode = HttpStatusCodes.OK,
-                Data = new { etagType }
-            };
+            EtagType etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag,
+                include: etag => etag.Include(y => y.Etags).Include(y => y.WalletType));
+            return etagType;
         }
         public async Task<ResponseAPI<IEnumerable<EtagTypeResponse>>> SearchAllEtagType(int size, int page)
         {
@@ -189,28 +151,13 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> AddEtagTypeToPackage(Guid etagTypeId, Guid packageId, int quantityEtagType)
         {
-            var etag = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == etagTypeId && !x.Deflag);
-            if (etag == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagTypeMessage.NotFoundEtagType,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
-            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Id == packageId && !x.Deflag);
-            if (package == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.NotFoundPackage,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
+            var etagType = await SearchEtagType(etagTypeId) ?? throw new BadHttpRequestException(EtagTypeMessage.NotFoundEtagType, HttpStatusCodes.NotFound);
+            var package = await _packageService.SearchPackage(packageId) ?? throw new BadHttpRequestException(PackageMessage.NotFoundPackage, HttpStatusCodes.NotFound);
+            
             var etagPackage = new PackageETagTypeMapping()
             {
                 Id = Guid.NewGuid(),
-                EtagTypeId = etag.Id,
+                EtagTypeId = etagType.Id,
                 PackageId = package.Id,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -222,70 +169,31 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = EtagTypeMessage.CreateSuccessFully,
                 StatusCode = HttpStatusCodes.Created,
                 Data = new { etagPackageId = etagPackage.Id }
-            } : new ResponseAPI()
-            {
-                MessageResponse = EtagTypeMessage.CreateFail,
-                StatusCode = HttpStatusCodes.BadRequest
-            };
+            } : throw new BadHttpRequestException(EtagTypeMessage.CreateFail);
         }
         public async Task<ResponseAPI> RemoveEtagTypeFromPackage(Guid etagId, Guid packageId)
         {
             var packageEtagType = await _unitOfWork.GetRepository<PackageETagTypeMapping>().SingleOrDefaultAsync
-                (predicate: x => x.EtagTypeId == etagId && x.PackageId == packageId);
-            if (packageEtagType == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagTypeMessage.NotFoundEtagType,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
+                (predicate: x => x.EtagTypeId == etagId && x.PackageId == packageId)?? throw new BadHttpRequestException(EtagTypeMessage.NotFoundEtagType, HttpStatusCodes.NotFound);
             _unitOfWork.GetRepository<PackageETagTypeMapping>().DeleteAsync(packageEtagType);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
                 MessageResponse = EtagTypeMessage.DeleteEtagTypeSuccessfully,
                 StatusCode = HttpStatusCodes.OK,
                 Data = new { etagPackageId = packageEtagType.Id }
-            } : new ResponseAPI()
-            {
-                MessageResponse = EtagTypeMessage.DeleteEtagTypeFail,
-                StatusCode = HttpStatusCodes.BadRequest
-            };
+            } : throw new BadHttpRequestException("Delete EtagType from Package fail!!");
         }
         public async Task<ResponseAPI> CreateEtag(EtagRequest req) //include EtagDetail too
         {
-            //if(!ValidationUtils.IsCCCD(req.Cccd))
-            //{
-            //    return new ResponseAPI()
-            //    {
-            //        MessageResponse = EtagMessage.CCCDInvalid,
-            //        StatusCode = HttpStatusCodes.BadRequest
-            //    };
-            //}
-            //if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
-            //{
-            //    return new ResponseAPI()
-            //    {
-            //        MessageResponse = EtagMessage.PhoneNumberInvalid,
-            //        StatusCode = HttpStatusCodes.BadRequest
-            //    };
-            //}
-            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagTypeId
-            , include: x => x.Include(y => y.WalletType));
-            if (etagType == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagMessage.EtagTypeNotFound,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
+            if (!ValidationUtils.IsCCCD(req.CccdPassport.Trim())) throw new BadHttpRequestException(EtagMessage.CCCDInvalid, HttpStatusCodes.BadRequest);
+            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber.Trim())) throw new BadHttpRequestException(EtagMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
+            var etagType = await SearchEtagType(req.EtagTypeId) ?? throw new BadHttpRequestException(EtagTypeMessage.NotFoundEtagType, HttpStatusCodes.NotFound);
 
             var newWallet = new Wallet
             {
                 Id = Guid.NewGuid(),
-                Balance = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
-                BalanceHistory = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
+                Balance = (int)(etagType.Amount * (1 +  etagType.BonusRate)),
+                BalanceHistory = (int)(etagType.Amount * (1 + etagType.BonusRate)),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Deflag = false,
@@ -316,23 +224,6 @@ namespace VegaCityApp.API.Services.Implement
             };
             newEtag.Qrcode = EnCodeBase64.EncodeBase64Etag(newEtag.EtagCode);
             await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
-            //etag detail below here 
-            if (!ValidationUtils.IsCCCD(req.CccdPassport))
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagMessage.CCCDInvalid,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagMessage.PhoneNumberInvalid,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
             var newEtagDetail = new EtagDetail
             {
                 Id = Guid.NewGuid(),
@@ -360,17 +251,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI<List<Guid>>> GenerateEtag(int quantity, Guid etagTypeId, GenerateEtagRequest req)
         {
             List<Guid> listEtagCreated = new List<Guid>();
-            var checkEtagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(
-                predicate: x => x.Id == etagTypeId && !x.Deflag,
-                include: wallet => wallet.Include(z => z.WalletType));
-            if (checkEtagType == null)
-            {
-                return new ResponseAPI<List<Guid>>()
-                {
-                    MessageResponse = EtagTypeMessage.NotFoundEtagType,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
+            var checkEtagType = await SearchEtagType(etagTypeId) ?? throw new BadHttpRequestException(EtagTypeMessage.NotFoundEtagType, HttpStatusCodes.NotFound);
             //generate etag
             for (int i = 0; i < quantity; i++)
             {

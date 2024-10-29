@@ -1,5 +1,6 @@
 ﻿namespace VegaCityApp.API.Middlewares;
 
+using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
 using VegaCityApp.API.Payload.Response;
@@ -35,8 +36,8 @@ public class ExceptionHandlingMiddleware
 		switch (exception)
 		{
 			//add more custom exception
-			//For example case AppException: do something
-			case BadHttpRequestException:
+            //For example case AppException: do something
+            case BadHttpRequestException:
 				response.StatusCode = (int)HttpStatusCode.BadRequest;
 				errorResponse.StatusCode = (int)HttpStatusCode.BadRequest;
 				_logger.LogInformation(exception.Message);

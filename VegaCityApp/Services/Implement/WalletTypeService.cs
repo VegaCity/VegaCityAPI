@@ -217,24 +217,12 @@ namespace VegaCityApp.API.Services.Implement
             }
         }
 
-        public async Task<ResponseAPI> GetWalletTypeById(Guid id)
+        public async Task<WalletType> GetWalletTypeById(Guid id)
         {
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
                 predicate: x => x.Id == id && !x.Deflag,
                 include: z => z.Include(y => y.WalletTypeStoreServiceMappings));
-            if (walletType == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = WalletTypeMessage.NotFoundWalletType
-                };
-            }
-            return new ResponseAPI
-            {
-                StatusCode = HttpStatusCodes.OK,
-                Data = walletType
-            };
+            return walletType;
         }
 
         public async Task<ResponseAPI> UpdateWalletType(Guid Id, UpDateWalletTypeRequest walletTypeRequest)

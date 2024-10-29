@@ -233,33 +233,15 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
-        public async Task<ResponseAPI> SearchPackage(Guid PackageId)
+        public async Task<Package> SearchPackage(Guid PackageId)
         {
             var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
-                predicate: x => x.Id == PackageId && x.Deflag==false,
+                predicate: x => x.Id == PackageId && !x.Deflag,
                 include: user => user
                     .Include(y => y.PackageETagTypeMappings)
                     .ThenInclude(y => y.EtagType)
             );
-
-            if (package == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.NotFoundPackage,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
-
-            return new ResponseAPI()
-            {
-                MessageResponse = PackageMessage.GetPackagesSuccessfully,
-                StatusCode = HttpStatusCodes.OK,
-                Data = new
-                {
-                   package
-                }
-            };
+            return package;
         }
 
         public async Task<ResponseAPI> DeletePackage(Guid PackageId)
