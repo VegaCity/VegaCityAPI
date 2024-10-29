@@ -96,6 +96,7 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpPost(UserEndpoint.ReAssignEmail)]
         [ProducesResponseType(typeof(string), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]
+        [SwaggerOperation(Summary = "Re-assign email for user has status pending verify")]
         public async Task<IActionResult> ReAssignEmail(Guid userId, [FromBody] ReAssignEmail email)
         {
             var result = await _service.ReAssignEmail(userId, email);
