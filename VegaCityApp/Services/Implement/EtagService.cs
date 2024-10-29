@@ -254,22 +254,45 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> CreateEtag(EtagRequest req) //include EtagDetail too
         {
-            //if(!ValidationUtils.IsCCCD(req.Cccd))
-            //{
-            //    return new ResponseAPI()
-            //    {
-            //        MessageResponse = EtagMessage.CCCDInvalid,
-            //        StatusCode = HttpStatusCodes.BadRequest
-            //    };
-            //}
-            //if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
-            //{
-            //    return new ResponseAPI()
-            //    {
-            //        MessageResponse = EtagMessage.PhoneNumberInvalid,
-            //        StatusCode = HttpStatusCodes.BadRequest
-            //    };
-            //}
+            //check if cccd or passport 
+            if (!string.IsNullOrEmpty(req.CccdPassport))
+            {
+                if (req.CccdPassport.Length == 12 && long.TryParse(req.CccdPassport, out _))
+                {
+                    if (!ValidationUtils.IsCCCD(req.CccdPassport))
+                    {
+                        return new ResponseAPI()
+                        {
+                            MessageResponse = EtagMessage.CCCDInvalid,
+                            StatusCode = HttpStatusCodes.BadRequest
+                        };
+                    }
+                }
+                else if (req.CccdPassport.Length == 8 || req.CccdPassport.Length == 9)
+                {
+                    req.CccdPassport = req.CccdPassport.Length == 8
+                        ? "0000" + req.CccdPassport
+                        : "000" + req.CccdPassport;
+                }
+                else
+                {
+                    // Handle case if neither CCCD nor a valid passport format
+                    return new ResponseAPI
+                    {
+                        MessageResponse = EtagMessage.CCCDInvalid,
+                        StatusCode = HttpStatusCodes.BadRequest
+                    };
+                }
+            }
+            //end check valid cccd or passport
+            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.PhoneNumberInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
             var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagTypeId
             , include: x => x.Include(y => y.WalletType));
             if (etagType == null)
@@ -284,8 +307,8 @@ namespace VegaCityApp.API.Services.Implement
             var newWallet = new Wallet
             {
                 Id = Guid.NewGuid(),
-                Balance = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
-                BalanceHistory = (int)(etagType.Amount * (1 + etagType.Amount * etagType.BonusRate)),
+                Balance = (int)(etagType.Amount + ( etagType.Amount * etagType.BonusRate)),
+                BalanceHistory = (int)(etagType.Amount + ( etagType.Amount * etagType.BonusRate)),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Deflag = false,
@@ -317,22 +340,6 @@ namespace VegaCityApp.API.Services.Implement
             newEtag.Qrcode = EnCodeBase64.EncodeBase64Etag(newEtag.EtagCode);
             await _unitOfWork.GetRepository<Etag>().InsertAsync(newEtag);
             //etag detail below here 
-            if (!ValidationUtils.IsCCCD(req.CccdPassport))
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagMessage.CCCDInvalid,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagMessage.PhoneNumberInvalid,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
             var newEtagDetail = new EtagDetail
             {
                 Id = Guid.NewGuid(),
@@ -665,6 +672,45 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> ActivateEtag(Guid etagId, ActivateEtagRequest req)
         {
+            //check if cccd or passport 
+            if (!string.IsNullOrEmpty(req.CccdPassport))
+            {
+                if (req.CccdPassport.Length == 12 && long.TryParse(req.CccdPassport, out _))
+                {
+                    if (!ValidationUtils.IsCCCD(req.CccdPassport))
+                    {
+                        return new ResponseAPI()
+                        {
+                            MessageResponse = EtagMessage.CCCDInvalid,
+                            StatusCode = HttpStatusCodes.BadRequest
+                        };
+                    }
+                }
+                else if (req.CccdPassport.Length == 8 || req.CccdPassport.Length == 9)
+                {
+                    req.CccdPassport = req.CccdPassport.Length == 8
+                        ? "0000" + req.CccdPassport
+                        : "000" + req.CccdPassport;
+                }
+                else
+                {
+                    // Handle case if neither CCCD nor a valid passport format
+                    return new ResponseAPI
+                    {
+                        MessageResponse = EtagMessage.CCCDInvalid,
+                        StatusCode = HttpStatusCodes.BadRequest
+                    };
+                }
+            }
+            //end check valid cccd or passport
+            if (!ValidationUtils.IsPhoneNumber(req.Phone))
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.PhoneNumberInvalid,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(
                 predicate: x => x.Id == etagId && !x.Deflag && x.Status ==(int) EtagStatusEnum.Inactive,
                 include: etag => etag.Include(y => y.EtagDetail));
@@ -674,22 +720,6 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     MessageResponse = EtagMessage.NotFoundEtag,
                     StatusCode = HttpStatusCodes.NotFound
-                };
-            }
-            if(!ValidationUtils.IsCCCD(req.CccdPassport))
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagMessage.CCCDInvalid,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-            if (!ValidationUtils.IsPhoneNumber(req.Phone))
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = EtagMessage.PhoneNumberInvalid,
-                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
             //BELOW CHECK FROM ETAG DETAIL (INCLUDE ETAG DETAIL FROM ETAG)
