@@ -421,11 +421,11 @@ namespace VegaCityApp.API.Services.Implement
                     await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
                 }
             }
-            else if (wallet.Etags.Count() > 0)
+            else if (wallet.Etags.Count > 0)
             {
-                foreach (var etag in wallet.Etags)
+                foreach (var item in wallet.Etags)
                 {
-                    if (etag.WalletId == wallet.Id)
+                    if (item.WalletId == wallet.Id)
                     {
                         transaction = new Transaction
                         {
@@ -441,14 +441,7 @@ namespace VegaCityApp.API.Services.Implement
                         };
                         await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
                     }
-                    else
-                    {
-                        return new ResponseAPI
-                        {
-                            StatusCode = HttpStatusCodes.BadRequest,
-                            MessageResponse = WalletTypeMessage.NotAllowWithdraw
-                        };
-                    }
+                    else throw new BadHttpRequestException(WalletTypeMessage.NotAllowWithdraw);
                 }
             }
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
@@ -541,11 +534,11 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
                 }
             }
-            else  if (wallet.Etags.Count() > 0)
+            else  if (wallet.Etags.Count > 0)
             {
-                foreach (var etag in wallet.Etags)
-                {
-                    if (etag.WalletId == wallet.Id)
+                foreach (var item in wallet.Etags) {
+
+                    if (item.WalletId == wallet.Id)
                     {
                         transactionAvailable.Status = TransactionStatus.Success;
                         transactionAvailable.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -563,6 +556,7 @@ namespace VegaCityApp.API.Services.Implement
                         };
                     }
                 }
+                
             }
             var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
                 (predicate: x => x.Id == cashierWeb.MarketZoneId);

@@ -23,9 +23,9 @@ namespace VegaCityApp.Domain.Models
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
-        public string? PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; } = null!;
         public string? ShortName { get; set; }
-        public string? Email { get; set; }
+        public string Email { get; set; } = null!;
         public Guid? HouseId { get; set; }
         public Guid MarketZoneId { get; set; }
         public string? Description { get; set; }

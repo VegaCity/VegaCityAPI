@@ -245,7 +245,10 @@ namespace VegaCityApp.API.Services.Implement
                 order.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Order>().UpdateAsync(order);
                 var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet).Include(b => b.EtagType));
+                //bonus
+                decimal? bonusRate = etag.EtagType.BonusRate;
+                decimal bonus = (bonusRate.HasValue ? bonusRate.Value : 0) * order.TotalAmount;
                 //update wallet admin
                 var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(
                     predicate: x => x.Id == order.User.MarketZoneId);//..
@@ -265,7 +268,7 @@ namespace VegaCityApp.API.Services.Implement
                 _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
                 //..
                 //update wallet
-                etag.Wallet.Balance += Int32.Parse(req.amount.ToString());
+                etag.Wallet.Balance += Int32.Parse(req.amount.ToString()) + (int)bonus;
                 etag.Wallet.BalanceHistory += Int32.Parse(req.amount.ToString());
                 etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
@@ -558,7 +561,7 @@ namespace VegaCityApp.API.Services.Implement
                 foreach (var item in order.User.Wallets)
                 {
                     // Chuyển đổi bonus từ decimal về int và tính toán
-                    item.Balance += trimmedAmount + (int)bonus;
+                    item.Balance += trimmedAmount;
                     item.UpsDate = TimeUtils.GetCurrentSEATime();
                 }
 
@@ -567,7 +570,7 @@ namespace VegaCityApp.API.Services.Implement
 
                 //update wallet
                 etag.Wallet.Balance += trimmedAmount + (int)bonus;
-                etag.Wallet.BalanceHistory += trimmedAmount + (int)bonus;
+                etag.Wallet.BalanceHistory += trimmedAmount;
                 etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
                 //transactions here 
@@ -678,7 +681,7 @@ namespace VegaCityApp.API.Services.Implement
             if(req.Key != null && PaymentTypeHelper.allowedPaymentTypes.Contains(req.Key.Split('_')[0]) && req.Key.Split("_")[1] == checkOrder.InvoiceId)
             {
                 var customerInfoEtag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == checkOrder.EtagId,
-                include: etag => etag.Include(o => o.EtagDetails));
+                include: etag => etag.Include(o => o.EtagDetail));
                 var paymentDataChargeMoney = new PaymentData(
                     orderCode: Int64.Parse(checkOrder.InvoiceId.ToString()),  // Bạn có thể tạo mã đơn hàng tại đây
                     amount: checkOrder.TotalAmount,
@@ -688,9 +691,9 @@ namespace VegaCityApp.API.Services.Implement
                     //returnUrl: PayOSConfiguration.ReturnUrlCharge,
                      returnUrl: PayOSConfiguration.ReturnUrlCharge,
                     // URL khi thanh toán thành công
-                    buyerName: customerInfoEtag.EtagDetails.SingleOrDefault().FullName.ToString(),
+                    buyerName: customerInfoEtag.EtagDetail.FullName,
                     buyerEmail: "", // very require email here!
-                    buyerPhone: customerInfoEtag.EtagDetails.SingleOrDefault().PhoneNumber.ToString(),
+                    buyerPhone: customerInfoEtag.EtagDetail.PhoneNumber,
                     buyerAddress: "",
                     expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
                 );
@@ -893,7 +896,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             foreach (var item in order.User.Wallets)
             {
-                item.Balance += order.TotalAmount + (int)bonus;
+                item.Balance += order.TotalAmount;
                 item.UpsDate = TimeUtils.GetCurrentSEATime();
             }
             _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
@@ -902,7 +905,7 @@ namespace VegaCityApp.API.Services.Implement
             
             //update wallet
             etag.Wallet.Balance += order.TotalAmount + (int)bonus;
-            etag.Wallet.BalanceHistory += order.TotalAmount + (int)bonus;
+            etag.Wallet.BalanceHistory += order.TotalAmount;
             etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
             //create deposite
@@ -1139,7 +1142,10 @@ namespace VegaCityApp.API.Services.Implement
                 order.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Order>().UpdateAsync(order);
                 var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
+                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet).Include(b => b.EtagType));
+                //bonus here
+                decimal? bonusRate = etag.EtagType.BonusRate;
+                decimal bonus = (bonusRate.HasValue ? bonusRate.Value : 0) * order.TotalAmount;
                 //update wallet admin
                 var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(
                     predicate: x => x.Id == order.User.MarketZoneId);//..
@@ -1159,7 +1165,7 @@ namespace VegaCityApp.API.Services.Implement
                 _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
                 //..
                 //update wallet
-                etag.Wallet.Balance += Int32.Parse(req.amount.ToString());
+                etag.Wallet.Balance += Int32.Parse(req.amount.ToString()) + (int)bonus;
                 etag.Wallet.BalanceHistory += Int32.Parse(req.amount.ToString());
                 etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);

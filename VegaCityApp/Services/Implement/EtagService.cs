@@ -390,7 +390,7 @@ namespace VegaCityApp.API.Services.Implement
                 if(req.EtagId != null) //check 
                 {
                     var etagParent = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagId && x.Status==(int)EtagStatusEnum.Active && x.IsAdult == true,
-                                                                                                   include: etag => etag.Include(z => z.EtagDetails));           
+                                                                                                   include: etag => etag.Include(z => z.EtagDetail));           
                         /// generate etag child based on amount and fields from etag details of parent
                         var newEtagChild = new Etag
                         {
@@ -420,12 +420,12 @@ namespace VegaCityApp.API.Services.Implement
                             Id = Guid.NewGuid(),
                             EtagId = newEtagChild.Id,
                             FullName = "User VegaCity", // Default or provided value
-                            PhoneNumber = etagParent.EtagDetails.FirstOrDefault().PhoneNumber, // Default or provided value
-                            CccdPassport = etagParent.EtagDetails.FirstOrDefault().CccdPassport, // Default or provided value
+                            PhoneNumber = etagParent.EtagDetail.PhoneNumber, // Default or provided value
+                            CccdPassport = etagParent.EtagDetail.CccdPassport, // Default or provided value
                             Gender = (int)GenderEnum.Other, // Default or provided value
                             CrDate = TimeUtils.GetCurrentSEATime(),
                             UpsDate = TimeUtils.GetCurrentSEATime(),
-                            IsVerifyPhone = etagParent.EtagDetails.FirstOrDefault().IsVerifyPhone // Assuming the phone isn't verified initially
+                            IsVerifyPhone = etagParent.EtagDetail.IsVerifyPhone // Assuming the phone isn't verified initially
                         };
                     await _unitOfWork.GetRepository<EtagDetail>().InsertAsync(newEtagChildDetail);
                    // await _unitOfWork.CommitAsync();
@@ -488,7 +488,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             //var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == etagId && !x.Deflag);
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == etagId && !x.Deflag,
-                include: etag => etag.Include(y => y.EtagDetails)
+                include: etag => etag.Include(y => y.EtagDetail)
             );
             if (etag == null)
             {
@@ -523,7 +523,7 @@ namespace VegaCityApp.API.Services.Implement
             //etag.Gender = req.Gender ?? etag.Gender;
             //  etag.UpsDate = TimeUtils.GetCurrentSEATime();
             // _unitOfWork.GetRepository<Etag>().UpdateAsync(etag
-            var etagDetail = etag.EtagDetails.FirstOrDefault();
+            var etagDetail = etag.EtagDetail;
             if (etagDetail != null)
             {
                 etagDetail.FullName = req.Fullname ?? etagDetail.FullName;
@@ -583,7 +583,7 @@ namespace VegaCityApp.API.Services.Implement
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => (x.Id == etagId || x.EtagCode == etagCode) && !x.Deflag,
                 include: etag => etag.Include(y => y.EtagType)
                         .Include(y => y.Wallet)
-                        .Include(y => y.EtagDetails)
+                        .Include(y => y.EtagDetail)
                         .Include(y => y.Orders)
                         .Include(y => y.MarketZone));
             if (etag == null)
@@ -619,14 +619,14 @@ namespace VegaCityApp.API.Services.Implement
                               selector: x => new EtagResponse()
                               {
                                   Id = x.Id,
-                                  FullName = x.EtagDetails.FirstOrDefault().FullName,
-                                  PhoneNumber = x.EtagDetails.FirstOrDefault().PhoneNumber,
-                                  CccdPassport = x.EtagDetails.FirstOrDefault().CccdPassport,
+                                  FullName = x.EtagDetail.FullName,
+                                  PhoneNumber = x.EtagDetail.PhoneNumber,
+                                  CccdPassport = x.EtagDetail.CccdPassport,
                                   ImageUrl = x.ImageUrl,
                                   EtagCode = x.EtagCode,
                                   QRCode = x.Qrcode,
-                                  Birthday = x.EtagDetails.FirstOrDefault().Birthday,
-                                  Gender = x.EtagDetails.FirstOrDefault().Gender, 
+                                  Birthday = x.EtagDetail.Birthday,
+                                  Gender = x.EtagDetail.Gender, 
                                   Deflag = x.Deflag,
                                   EndDate = x.EndDate,
                                   StartDate = x.StartDate,
@@ -637,7 +637,7 @@ namespace VegaCityApp.API.Services.Implement
                                size: size,
                                orderBy: x => x.OrderByDescending(z => z.StartDate),
                                predicate: x => !x.Deflag,
-                               include: etag => etag.Include(y => y.EtagDetails));
+                               include: etag => etag.Include(y => y.EtagDetail));
                 return new ResponseAPI<IEnumerable<EtagResponse>>
                 {
                     MessageResponse = EtagMessage.SearchAllEtagsSuccess,
@@ -667,7 +667,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(
                 predicate: x => x.Id == etagId && !x.Deflag && x.Status ==(int) EtagStatusEnum.Inactive,
-                include: etag => etag.Include(y => y.EtagDetails));
+                include: etag => etag.Include(y => y.EtagDetail));
             if (etag == null)
             {
                 return new ResponseAPI()
@@ -693,7 +693,7 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             //BELOW CHECK FROM ETAG DETAIL (INCLUDE ETAG DETAIL FROM ETAG)
-            var checkPhone = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagDetails.FirstOrDefault().PhoneNumber == req.Phone && !x.Deflag);
+            var checkPhone = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagDetail.PhoneNumber == req.Phone && !x.Deflag);
             if (checkPhone != null)
             {
                 return new ResponseAPI()
@@ -702,7 +702,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            var checkCCCD = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagDetails.FirstOrDefault().CccdPassport == req.CccdPassport && !x.Deflag);
+            var checkCCCD = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagDetail.CccdPassport == req.CccdPassport && !x.Deflag);
             if (checkCCCD != null)
             {
                 return new ResponseAPI()
@@ -715,7 +715,7 @@ namespace VegaCityApp.API.Services.Implement
             //etag.FullName = req.Name;
             //etag.PhoneNumber = req.Phone; 
             //etag.Cccd = req.CCCD; //ETAG DETAIL
-            var etagDetail = etag.EtagDetails.FirstOrDefault();
+            var etagDetail = etag.EtagDetail;
             etagDetail.FullName = req.Name;
             etagDetail.PhoneNumber= req.Phone;
             etagDetail.CccdPassport = req.CccdPassport;
@@ -762,8 +762,8 @@ namespace VegaCityApp.API.Services.Implement
             //get user id from token
             Guid userId = GetUserIdFromJwt(); 
             var etagExist = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.EtagCode == req.EtagCode && !x.Deflag
-            && x.EtagDetails.FirstOrDefault().CccdPassport == req.CccdPassport // FROM ETAG DETAIL HERE TOO
-                 , include: etag => etag.Include(y => y.Wallet).Include(y => y.EtagDetails));
+            && x.EtagDetail.CccdPassport == req.CccdPassport // FROM ETAG DETAIL HERE TOO
+                 , include: etag => etag.Include(y => y.Wallet).Include(y => y.EtagDetail));
             if (etagExist == null)
             {
                 return new ResponseAPI()
@@ -792,7 +792,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 Id = Guid.NewGuid(),
                 PaymentType = req.PaymentType,
-                Name = "Charge Money for Etag: " + etagExist.EtagDetails.FirstOrDefault().FullName, //FULL NAME FROM ETAG DETAIL
+                Name = "Charge Money for Etag: " + etagExist.EtagDetail.FullName, //FULL NAME FROM ETAG DETAIL
                 TotalAmount = req.ChargeAmount,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
