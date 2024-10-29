@@ -70,12 +70,11 @@ public static class DependencyServices
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration config)
     {
         #region Firebase
-        //string firebaseCred = config.GetValue<string>("Authentication:FirebaseKey");
-        //// string firebaseCred = config.GetValue<string>("AIzaSyCFJOGAnHOQaWntVhN1a16QINIAjVpWaXI");
-        //FirebaseApp.Create(new AppOptions()
-        //{
-        //    Credential = GoogleCredential.FromJson(firebaseCred)
-        //}, "[DEFAULT]");
+        var pathToKey = Path.Combine(Directory.GetCurrentDirectory(), "firebaseConfig.json");
+        FirebaseApp.Create(new AppOptions
+        {
+            Credential = GoogleCredential.FromFile(pathToKey)
+        }, "[DEFAULT]");
         #endregion
         #region addScope
         services.AddScoped<IAccountService, AccountService>();
@@ -90,6 +89,7 @@ public static class DependencyServices
         services.AddScoped<IServiceStore, ServiceStore>();
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IFirebaseService, FirebaseService>();
         #endregion
         return services;
     }

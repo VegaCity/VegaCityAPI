@@ -4,6 +4,8 @@ using Swashbuckle.AspNetCore.Annotations;
 using VegaCityApp.API.Payload.Request.Admin;
 using VegaCityApp.API.Payload.Request.Auth;
 using VegaCityApp.API.Payload.Response;
+using VegaCityApp.API.Services.Implement;
+using VegaCityApp.API.Services.Interface;
 using VegaCityApp.Service.Interface;
 using static VegaCityApp.API.Constants.ApiEndPointConstant;
 using static VegaCityApp.API.Constants.MessageConstant;
@@ -14,9 +16,11 @@ namespace VegaCityApp.API.Controllers
     public class AuthController : BaseController<AuthController>
     {
         private readonly IAccountService _accountService;
-        public AuthController(ILogger<AuthController> logger, IAccountService service) : base(logger)
+        private readonly IFirebaseService _firebaseService;
+        public AuthController(ILogger<AuthController> logger, IAccountService service, IFirebaseService firebaseService) : base(logger)
         {
             _accountService = service;
+            _firebaseService = firebaseService;
         }
 
         [HttpPost(AuthenticationEndpoint.Login)]
@@ -55,6 +59,20 @@ namespace VegaCityApp.API.Controllers
         {
             var result = await _accountService.GetRefreshTokenByEmail(email, req);
             return StatusCode(result.StatusCode, result);
+        }
+        [HttpPost("send-otp")]
+        [ProducesResponseType(typeof(string), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SendOtp([FromBody] string phoneNumber)
+        {
+            try
+            {
+                var sessionInfo = await _firebaseService.SendOtpAsync(phoneNumber);
+                return Ok(new { SessionInfo = sessionInfo });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
         }
     }
 }
