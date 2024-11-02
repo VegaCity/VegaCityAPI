@@ -225,6 +225,38 @@ public static class MessageConstant
         public const string DeleteSuccess = "Delete Package Successfully!";
         public const string DeleteFail = "Delete Package Failed!";
     }
+    public static class PackageTypeMessage
+    {
+        public const string CreatePackageTypeSuccessfully = "Create Package Type Successfully!";
+        public const string CreatePackageTypeFail = "Create Package Type Failed!";
+        public const string GetPackageTypesSuccessfully = "Get Package Types Successfully!";
+        public const string GetPackageTypesFail = "Get Package Types Failed!";
+        public const string NotFoundPackageType = "Package Type Not Found!";
+        public const string FoundPackageType = "Get Package Type Successfully!";
+        public const string UpdatePackageTypeSuccessfully = "Update Package Type Successfully!";
+        public const string UpdatePackageTypeFail = "Update Package Type Failed!";
+        public const string DeletePackageTypeSuccessfully = "Delete Package Type Successfully!";
+        public const string DeletePackageTypeFail = "Delete Package Type Failed!";
+        public const string PackageTypeExists = "Package Type Name already exists!";
+
+    }
+    public static class PackageItemMessage
+    {
+        public const string CreatePackageItemSuccessfully = "Create Package Item Successfully!";
+        public const string CreatePackageItemFail = "Create Package Item Failed!";
+        public const string GetPackageItemsSuccessfully = "Get Package Items Successfully!";
+        public const string GetPackageItemsFail = "Get Package Items Failed!";
+        public const string GetPackageItemSuccessfully = "Get Package Item Successfully!";
+        public const string GetPackageItemFail = "Get Package Item Failed!";
+        public const string NotFoundPackageItem = "Package Item Not Found!";
+        public const string FoundPackageItem = "Get Package Item Successfully!";
+        public const string UpdatePackageItemSuccessfully = "Update Package Item Successfully!";
+        public const string UpdatePackageItemFail = "Update Package Item Failed!";
+        public const string DeletePackageItemSuccessfully = "Delete Package Item Successfully!";
+        public const string DeletePackageItemFail = "Delete Package Item Failed!";
+        public const string PackageItemExists = "Package Item Name already exists!";
+    }
+
 
     public static class ZoneMessage
     {
