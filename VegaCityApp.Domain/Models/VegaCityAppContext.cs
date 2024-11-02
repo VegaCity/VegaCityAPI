@@ -927,14 +927,16 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Address).HasMaxLength(200);
 
-                entity.Property(e => e.Birthday).HasColumnType("datetime");
+                entity.Property(e => e.Birthday).HasColumnType("date");
 
                 entity.Property(e => e.CccdPassport)
                     .HasMaxLength(12)
                     .IsUnicode(false)
                     .HasColumnName("CCCD_Passport");
 
-                entity.Property(e => e.CrDate).HasColumnType("datetime");
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate");
 
                 entity.Property(e => e.Description).HasMaxLength(400);
 
@@ -955,7 +957,9 @@ namespace VegaCityApp.Domain.Models
                     .IsUnicode(false)
                     .IsFixedLength();
 
-                entity.Property(e => e.UpsDate).HasColumnType("datetime");
+                entity.Property(e => e.UpsDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("upsDate");
 
                 entity.HasOne(d => d.MarketZone)
                     .WithMany(p => p.Users)
@@ -976,7 +980,9 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
-                entity.Property(e => e.CrDate).HasColumnType("datetime");
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate");
 
                 entity.Property(e => e.Name)
                     .HasMaxLength(50)
@@ -984,12 +990,9 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Token).IsUnicode(false);
 
-                entity.Property(e => e.UpsDate).HasColumnType("datetime");
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.UserRefreshTokens)
-                    .HasForeignKey(d => d.UserId)
-                    .HasConstraintName("FK_UserRefreshToken_User");
+                entity.Property(e => e.UpsDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("upsDate");
             });
 
             modelBuilder.Entity<UserSession>(entity =>

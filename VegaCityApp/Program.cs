@@ -48,12 +48,11 @@ try
     app.UseCors(CorsConstant.PolicyName);
     app.UseAuthentication();
     app.UseAuthorization();
-    
+
     app.UseHangfireDashboard();
     app.MapHangfireDashboard();
-    
+
     BackgroundJobs.RecurringJobs();
-    //RoleConfig.InitRole();
     app.MapControllers();
 
     app.Run();
