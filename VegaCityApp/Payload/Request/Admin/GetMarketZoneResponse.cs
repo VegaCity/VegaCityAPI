@@ -1,6 +1,6 @@
 ﻿namespace VegaCityApp.API.Payload.Request.Admin
 {
-    public class MarketZoneRequest
+    public class GetMarketZoneResponse
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
@@ -10,7 +10,9 @@
         public string Address { get; set; } = null!;
         public string PhoneNumber { get; set; } = null!;
         public string Email { get; set; } = null!;
-        public string CccdPassport { get; set; } = null!;
         public string? ShortName { get; set; }
+        public bool Deflag { get; set; }
+        public DateTime CrDate { get; set; }
+        public DateTime UpsDate { get; set; }
     }
 }

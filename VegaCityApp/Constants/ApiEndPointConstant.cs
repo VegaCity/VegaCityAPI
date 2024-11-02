@@ -22,7 +22,7 @@ public static class ApiEndPointConstant
     public static class MarketZoneEndpoint
     {
         public const string CreateMarketZone = ApiEndpoint + "/market-zone";
-        public const string UpdateMarketZone = ApiEndpoint + "/market-zone/{id}";
+        public const string UpdateMarketZone = ApiEndpoint + "/market-zone";
         public const string GetListMarketZone = ApiEndpoint + "/market-zones";
         public const string GetMarketZone = ApiEndpoint + "/market-zone/{id}";
         public const string DeleteMarketZone = ApiEndpoint + "/market-zone/{id}";
