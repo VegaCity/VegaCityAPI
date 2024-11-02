@@ -10,8 +10,7 @@ namespace VegaCityApp.API.Mapper
             CreateMap<CreateIssueTypeRequest, Domain.Models.IssueType>();
             CreateMap<Domain.Models.IssueType, CreateIssueTypeRequest>();
 
-            CreateMap<ReportRequest, Domain.Models.DisputeReport>();
-            CreateMap<Domain.Models.DisputeReport, ReportRequest>();
+
         }
     }
 }

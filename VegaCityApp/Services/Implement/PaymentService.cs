@@ -25,13 +25,11 @@ namespace VegaCityApp.API.Services.Implement
     public class PaymentService : BaseService<PaymentService>, IPaymentService
     {
         private readonly PayOS _payOs;
-        private readonly IEtagService _service;
         public PaymentService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<PaymentService> logger, PayOS payOs,
             IMapper mapper,
-            IHttpContextAccessor httpContextAccessor, IEtagService service) : base(unitOfWork, logger, httpContextAccessor, mapper)
+            IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
             _payOs = payOs;
-            _service = service;
         }
 
         public async Task<ResponseAPI> MomoPayment(PaymentRequest request)
@@ -185,28 +183,27 @@ namespace VegaCityApp.API.Services.Implement
             {
                 foreach (var item in order.OrderDetails)
                 {
-                    productJson = item.ProductJson.Replace("[","").Replace("]","");
+                    //productJson = item.ProductJson.Replace("[","").Replace("]","");
                     productData = JsonConvert.DeserializeObject<OrderProductFromCashierRequest>(productJson);
                     if (productData != null)
                     {
-                        var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync
-                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+
                         var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
-                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag, include: mapping => mapping.Include(z => z.PackageETagTypeMappings));
-                        if (etagType != null)
-                        {
-                            //generate etag
-                            var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
-                            res = response.Data;
-                        }
-                        else if (package != null)
-                        {
-                            package.PackageETagTypeMappings.ToList().ForEach(async x =>
-                            {
-                                var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
-                                res = response.Data;
-                            });
-                        }
+                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+                        //if (etagType != null)
+                        //{
+                        //    //generate etag
+                        //    var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
+                        //    res = response.Data;
+                        //}
+                        //else if (package != null)
+                        //{
+                        //    package.PackageETagTypeMappings.ToList().ForEach(async x =>
+                        //    {
+                        //        var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
+                        //        res = response.Data;
+                        //    });
+                        //}
                     }
                 }
             }
@@ -244,11 +241,10 @@ namespace VegaCityApp.API.Services.Implement
                 order.Status = OrderStatus.Completed;
                 order.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-                var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet).Include(b => b.EtagType));
+
                 //bonus
-                decimal? bonusRate = etag.EtagType.BonusRate;
-                decimal bonus = (bonusRate.HasValue ? bonusRate.Value : 0) * order.TotalAmount;
+                //decimal? bonusRate = etag.EtagType.BonusRate;
+                //decimal bonus = (bonusRate.HasValue ? bonusRate.Value : 0) * order.TotalAmount;
                 //update wallet admin
                 var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(
                     predicate: x => x.Id == order.User.MarketZoneId);//..
@@ -268,10 +264,9 @@ namespace VegaCityApp.API.Services.Implement
                 _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
                 //..
                 //update wallet
-                etag.Wallet.Balance += Int32.Parse(req.amount.ToString()) + (int)bonus;
-                etag.Wallet.BalanceHistory += Int32.Parse(req.amount.ToString());
-                etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+                //etag.Wallet.Balance += Int32.Parse(req.amount.ToString()) + (int)bonus;
+                //etag.Wallet.BalanceHistory += Int32.Parse(req.amount.ToString());
+                //etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
 
                 //new transaction here
                 var newAdminTransaction = new VegaCityApp.Domain.Models.Transaction
@@ -312,8 +307,7 @@ namespace VegaCityApp.API.Services.Implement
                     Amount = Int32.Parse(req.amount.ToString()),
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
-                    WalletId = etag.Wallet.Id,
-                    EtagId = etag.Id,
+                
                     OrderId = order.Id,
                 };
                 await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
@@ -477,28 +471,27 @@ namespace VegaCityApp.API.Services.Implement
             {
                 foreach (var item in order.OrderDetails)
                 {
-                    productJson = item.ProductJson.Replace("[","").Replace("]","");
+                    //productJson = item.ProductJson.Replace("[","").Replace("]","");
                     productData = JsonConvert.DeserializeObject<OrderProductFromCashierRequest>(productJson);
                     if (productData != null)
                     {
-                        var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync
-                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+                        
                         var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
-                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag, include: mapping => mapping.Include(z => z.PackageETagTypeMappings));
-                        if (etagType != null)
-                        {
-                            //generate etag
-                            var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
-                            listEtagCreated = response.Data;
-                        }
-                        else if (package != null)
-                        {
-                            foreach(var itemm in package.PackageETagTypeMappings)
-                            {
-                                var response = await _service.GenerateEtag(itemm.QuantityEtagType, itemm.EtagTypeId, reqGenerate);
-                                listEtagCreated = response.Data;
-                            }
-                        }
+                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+                        //if (etagType != null)
+                        //{
+                        //    //generate etag
+                        //    var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
+                        //    listEtagCreated = response.Data;
+                        //}
+                        //else if (package != null)
+                        //{
+                        //    foreach(var itemm in package.PackageETagTypeMappings)
+                        //    {
+                        //        var response = await _service.GenerateEtag(itemm.QuantityEtagType, itemm.EtagTypeId, reqGenerate);
+                        //        listEtagCreated = response.Data;
+                        //    }
+                        //}
                     }
                 }
             }
@@ -541,12 +534,11 @@ namespace VegaCityApp.API.Services.Implement
                 order.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Order>().UpdateAsync(order);
 
-                var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet).Include(b => b.EtagType));
+                
 
                 //bonus 
-                decimal? bonusRate = etag.EtagType.BonusRate;
-                decimal bonus = (bonusRate.HasValue ? bonusRate.Value : 0) * trimmedAmount; // Tính toán bonus chính xác
+                //decimal? bonusRate = etag.EtagType.BonusRate;
+                //decimal bonus = (bonusRate.HasValue ? bonusRate.Value : 0) * trimmedAmount; // Tính toán bonus chính xác
 
                 //admin wallet part vnpay
                 var marketzone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId);
@@ -569,10 +561,7 @@ namespace VegaCityApp.API.Services.Implement
                 _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
 
                 //update wallet
-                etag.Wallet.Balance += trimmedAmount + (int)bonus;
-                etag.Wallet.BalanceHistory += trimmedAmount;
-                etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+              
                 //transactions here 
                 var newAdminTransaction = new VegaCityApp.Domain.Models.Transaction
                 {
@@ -612,8 +601,7 @@ namespace VegaCityApp.API.Services.Implement
                     Amount = trimmedAmount,
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
-                    WalletId = etag.Wallet.Id,
-                    EtagId = etag.Id,
+    
                     OrderId = order.Id,
                 };
 
@@ -653,25 +641,25 @@ namespace VegaCityApp.API.Services.Implement
             List<PayOSItems> items = new List<PayOSItems>(); //xiu xai
             foreach (var orderDetail in checkOrder.OrderDetails)
             {
-                if (!string.IsNullOrEmpty(orderDetail.ProductJson))
-                {
-                    var products = JsonConvert.DeserializeObject<List<ProductFromPos>>(orderDetail.ProductJson);
-                    var dynamicProducts = JsonConvert.DeserializeObject<List<dynamic>>(orderDetail.ProductJson);
+                //if (!string.IsNullOrEmpty(orderDetail.ProductJson))
+                //{
+                //    //var products = JsonConvert.DeserializeObject<List<ProductFromPos>>(orderDetail.ProductJson);
+                //    //var dynamicProducts = JsonConvert.DeserializeObject<List<dynamic>>(orderDetail.ProductJson);
 
-                    for (int i = 0; i < products.Count; i++)
-                    {
-                        var product = products[i];
-                        var dynamicProduct = dynamicProducts[i];
-                        int quantity = dynamicProduct.Quantity != null ? (int)dynamicProduct.Quantity : (orderDetail.Quantity ?? 1);
+                //    for (int i = 0; i < products.Count; i++)
+                //    {
+                //        var product = products[i];
+                //        var dynamicProduct = dynamicProducts[i];
+                //        int quantity = dynamicProduct.Quantity != null ? (int)dynamicProduct.Quantity : (orderDetail.Quantity ?? 1);
 
-                        items.Add(new PayOSItems
-                        {
-                            name = product.Name,
-                            quantity = quantity,
-                            price = product.Price
-                        });
-                    }
-                }
+                //        items.Add(new PayOSItems
+                //        {
+                //            name = product.Name,
+                //            quantity = quantity,
+                //            price = product.Price
+                //        });
+                //    }
+                //}
             }
             List<ItemData> itemDataList = items.Select(item => new ItemData(
              item.name,   // Mapping from PayOSItems model to ItemData of pay os's model
@@ -680,8 +668,7 @@ namespace VegaCityApp.API.Services.Implement
              )).ToList();
             if(req.Key != null && PaymentTypeHelper.allowedPaymentTypes.Contains(req.Key.Split('_')[0]) && req.Key.Split("_")[1] == checkOrder.InvoiceId)
             {
-                var customerInfoEtag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == checkOrder.EtagId,
-                include: etag => etag.Include(o => o.EtagDetail));
+
                 var paymentDataChargeMoney = new PaymentData(
                     orderCode: Int64.Parse(checkOrder.InvoiceId.ToString()),  // Bạn có thể tạo mã đơn hàng tại đây
                     amount: checkOrder.TotalAmount,
@@ -691,9 +678,9 @@ namespace VegaCityApp.API.Services.Implement
                     //returnUrl: PayOSConfiguration.ReturnUrlCharge,
                      returnUrl: PayOSConfiguration.ReturnUrlCharge,
                     // URL khi thanh toán thành công
-                    buyerName: customerInfoEtag.EtagDetail.FullName,
+                    //buyerName: customerInfoEtag.EtagDetail.FullName,
                     buyerEmail: "", // very require email here!
-                    buyerPhone: customerInfoEtag.EtagDetail.PhoneNumber,
+                    //buyerPhone: customerInfoEtag.EtagDetail.PhoneNumber,
                     buyerAddress: "",
                     expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
                 );
@@ -710,15 +697,7 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             //if key null
-                var customerInfo = JsonConvert.DeserializeObject<VegaCityApp.API.Payload.Request.Payment.CustomerInfo>(checkOrder.CustomerInfo);//xiu xai
-                if (customerInfo == null)
-                {
-                return new ResponseAPI
-                {
-                    MessageResponse = PaymentMessage.NotFoundUser,
-                    StatusCode = HttpStatusCodes.NotFound,
-                };
-                }
+
                 //here
                 try
                 {
@@ -729,10 +708,10 @@ namespace VegaCityApp.API.Services.Implement
                         items: itemDataList,
                         cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
                         returnUrl: PayOSConfiguration.ReturnUrl,  // URL khi thanh toán thành công
-                        buyerName: customerInfo.FullName.ToString(),//customerInfo.FullName.ToString(),
+                        //buyerName: customerInfo.FullName.ToString(),//customerInfo.FullName.ToString(),
                         //buyerEmail: customerInfo.Email.ToString(), // very require email here!
                         buyerEmail: "",
-                        buyerPhone: customerInfo.PhoneNumber.ToString(),//,
+                        //buyerPhone: customerInfo.PhoneNumber.ToString(),//,
                         buyerAddress: "",// customerInfo.Email.ToString(),
                         expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
                     );
@@ -794,33 +773,32 @@ namespace VegaCityApp.API.Services.Implement
             {
                 foreach (var item in order.OrderDetails)
                 {
-                    productJson = item.ProductJson.Replace("[", "").Replace("]", "");
+                    //productJson = item.ProductJson.Replace("[", "").Replace("]", "");
                     productData = JsonConvert.DeserializeObject<OrderProductFromCashierRequest>(productJson);
                     if (productData != null)
                     {
-                        var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync
-                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+
                         var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
-                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag, include: mapping => mapping.Include(z => z.PackageETagTypeMappings));
-                        if (etagType != null)
-                        {
-                            //generate etag
-                            var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
-                            res = response.Data;
-                        }
-                        else if (package != null)
-                        {
-                            //package.PackageETagTypeMappings.ToList().ForEach(async x =>
-                            //{
-                            //    var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
-                            //    res = response.Data;
-                            //});
-                            foreach (var mapping in package.PackageETagTypeMappings)
-                            {
-                                var response = await _service.GenerateEtag(mapping.QuantityEtagType, mapping.EtagTypeId, reqGenerate);
-                                res = response.Data;
-                            }
-                        }
+                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+                        //if (etagType != null)
+                        //{
+                        //    //generate etag
+                        //    var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
+                        //    res = response.Data;
+                        //}
+                        //else if (package != null)
+                        //{
+                        //    //package.PackageETagTypeMappings.ToList().ForEach(async x =>
+                        //    //{
+                        //    //    var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
+                        //    //    res = response.Data;
+                        //    //});
+                        //    foreach (var mapping in package.PackageETagTypeMappings)
+                        //    {
+                        //        var response = await _service.GenerateEtag(mapping.QuantityEtagType, mapping.EtagTypeId, reqGenerate);
+                        //        res = response.Data;
+                        //    }
+                        //}
                         //return new ResponseAPI
                         //{
                         //    MessageResponse = "Some Thing goes wrong, pakcage or etag type",
@@ -881,11 +859,9 @@ namespace VegaCityApp.API.Services.Implement
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet).Include(b => b.EtagType));
             //bonus 
-            decimal? bonusRate = etag.EtagType.BonusRate;
-            decimal bonus = (bonusRate.HasValue ? bonusRate.Value : 0) * order.TotalAmount;
+            //decimal? bonusRate = etag.EtagType.BonusRate;
+            //decimal bonus = (bonusRate.HasValue ? bonusRate.Value : 0) * order.TotalAmount;
             //admin wallet stuff
             var marketzone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId);
             var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Email == marketzone.Email, include: wallet => wallet.Include(z => z.Wallets)); //
@@ -904,10 +880,7 @@ namespace VegaCityApp.API.Services.Implement
             //..
             
             //update wallet
-            etag.Wallet.Balance += order.TotalAmount + (int)bonus;
-            etag.Wallet.BalanceHistory += order.TotalAmount;
-            etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+
             //create deposite
             var newAdminTransaction = new VegaCityApp.Domain.Models.Transaction
             {
@@ -946,8 +919,7 @@ namespace VegaCityApp.API.Services.Implement
                 Amount = Int32.Parse(order.TotalAmount.ToString()),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
-                WalletId = etag.Wallet.Id,
-                EtagId = etag.Id,
+
                 OrderId = order.Id,
             };
             await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
@@ -1074,33 +1046,14 @@ namespace VegaCityApp.API.Services.Implement
             {
                 foreach (var item in order.OrderDetails)
                 {
-                    productJson = item.ProductJson.Replace("[", "").Replace("]", "");
+                    //productJson = item.ProductJson.Replace("[", "").Replace("]", "");
                     productData = JsonConvert.DeserializeObject<OrderProductFromCashierRequest>(productJson);
                     if (productData != null)
                     {
-                        var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync
-                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+
                         var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
-                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag, include: mapping => mapping.Include(z => z.PackageETagTypeMappings));
-                        if (etagType != null)
-                        {
-                            //generate etag
-                            var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
-                            res = response.Data;
-                        }
-                        else if (package != null)
-                        {
-                            //package.PackageETagTypeMappings.ToList().ForEach(async x =>
-                            //{
-                            //    var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
-                            //    res = response.Data;
-                            //});
-                            foreach (var mapping in package.PackageETagTypeMappings)
-                            {
-                                var response = await _service.GenerateEtag(mapping.QuantityEtagType, mapping.EtagTypeId, reqGenerate);
-                                res = response.Data;
-                            }
-                        }
+                            (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+                       
                     }
                 }
             }
@@ -1141,11 +1094,10 @@ namespace VegaCityApp.API.Services.Implement
                 order.Status = OrderStatus.Completed;
                 order.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-                var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                    (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet).Include(b => b.EtagType));
+
                 //bonus here
-                decimal? bonusRate = etag.EtagType.BonusRate;
-                decimal bonus = (bonusRate.HasValue ? bonusRate.Value : 0) * order.TotalAmount;
+                //decimal? bonusRate = etag.EtagType.BonusRate;
+                //decimal bonus = (bonusRate.HasValue ? bonusRate.Value : 0) * order.TotalAmount;
                 //update wallet admin
                 var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(
                     predicate: x => x.Id == order.User.MarketZoneId);//..
@@ -1165,10 +1117,7 @@ namespace VegaCityApp.API.Services.Implement
                 _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
                 //..
                 //update wallet
-                etag.Wallet.Balance += Int32.Parse(req.amount.ToString()) + (int)bonus;
-                etag.Wallet.BalanceHistory += Int32.Parse(req.amount.ToString());
-                etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+
                 //transactions here 
                 var newAdminTransaction = new VegaCityApp.Domain.Models.Transaction
                 {
@@ -1208,8 +1157,7 @@ namespace VegaCityApp.API.Services.Implement
                     Amount = Int32.Parse(req.amount.ToString()),
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
-                    WalletId = etag.Wallet.Id,
-                    EtagId = etag.Id,
+
                     OrderId = order.Id,
                 };
                 await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);

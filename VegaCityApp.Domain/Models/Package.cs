@@ -7,20 +7,27 @@ namespace VegaCityApp.Domain.Models
     {
         public Package()
         {
-            PackageETagTypeMappings = new HashSet<PackageETagTypeMapping>();
+            Orders = new HashSet<Order>();
+            PackageDetails = new HashSet<PackageDetail>();
+            PackageItems = new HashSet<PackageItem>();
+            PackageOrders = new HashSet<PackageOrder>();
         }
 
         public Guid Id { get; set; }
         public string? ImageUrl { get; set; }
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
-        public int? Price { get; set; }
-        public DateTime? StartDate { get; set; }
-        public DateTime? EndDate { get; set; }
+        public int Price { get; set; }
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
+        public int? Duration { get; set; }
+        public Guid? PackageTypeId { get; set; }
 
-        public virtual ICollection<PackageETagTypeMapping> PackageETagTypeMappings { get; set; }
+        public virtual PackageType? PackageType { get; set; }
+        public virtual ICollection<Order> Orders { get; set; }
+        public virtual ICollection<PackageDetail> PackageDetails { get; set; }
+        public virtual ICollection<PackageItem> PackageItems { get; set; }
+        public virtual ICollection<PackageOrder> PackageOrders { get; set; }
     }
 }

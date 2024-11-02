@@ -99,16 +99,13 @@ namespace VegaCityApp.API.Services.Implement
                     MarketZoneId = x.MarketZoneId,
                     ShortName = x.ShortName,
                     Email = x.Email,
-                    HouseId = x.HouseId,
                     Status = x.Status,
-                    ZoneName = x.House.Zone.Name
 
                 },
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => !x.Deflag && x.MarketZoneId == apiKey,
-                include: store => store.Include(y => y.House).ThenInclude(y => y.Zone)
+                predicate: x => !x.Deflag && x.MarketZoneId == apiKey
                 );
                 return new ResponseAPI<IEnumerable<GetStoreResponse>>
                 {
@@ -139,26 +136,22 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> SearchStore(Guid StoreId)
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
-                predicate: x => x.Id == StoreId && !x.Deflag,
-                include: store => store
-                    .Include(y => y.Menus).ThenInclude(y => y.ProductCategories)
-                    .Include(y => y.Orders)
-                    .Include(y => y.Users)
+                predicate: x => x.Id == StoreId && !x.Deflag
             );
-            store.Users = store.Users.Select(x => new User{ 
-                Id = x.Id,
-                FullName = x.FullName,
-                IsChange = x.IsChange,
-                PhoneNumber = x.PhoneNumber,
-                Address = x.Address,
-                Email = x.Email,
-                Gender = x.Gender,
-                Birthday = x.Birthday,
-                CccdPassport = x.CccdPassport,
-                Description = x.Description,
-                ImageUrl = x.ImageUrl,
-                Status = x.Status
-            }).ToList();
+            //store.Users = store.Users.Select(x => new User{ 
+            //    Id = x.Id,
+            //    //FullName = x.FullName,
+            //    IsChange = x.IsChange,
+            //    PhoneNumber = x.PhoneNumber,
+            //    Address = x.Address,
+            //    Email = x.Email,
+            //    Gender = x.Gender,
+            //    Birthday = x.Birthday,
+            //    CccdPassport = x.CccdPassport,
+            //    Description = x.Description,
+            //    ImageUrl = x.ImageUrl,
+            //    Status = x.Status
+            //}).ToList();
             if (store == null)
             {
                 return new ResponseAPI()
@@ -182,10 +175,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> DeleteStore(Guid StoreId)
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
-                (predicate: x => x.Id == StoreId && !x.Deflag,
-                 include: inStore => inStore.Include(z => z.Menus)
-                                            .Include(z => z.DisputeReports)
-                                            .Include(z => z.StoreServices).ThenInclude(a => a.WalletTypeStoreServiceMappings));
+                (predicate: x => x.Id == StoreId && !x.Deflag);
             if (store == null)
             {
                 return new ResponseAPI()
@@ -203,32 +193,32 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
                 }
             }
-            if(store.DisputeReports.Count > 0)
-            {
-                foreach (var dispute in store.DisputeReports)
-                {
-                    _unitOfWork.GetRepository<DisputeReport>().DeleteAsync(dispute);
-                }
-            }
-            if (store.StoreServices.Count > 0)
-            {
-                if(store.StoreServices.Where(x => x.WalletTypeStoreServiceMappings.Count > 0).Count() > 0)
-                {
-                    foreach (var storeService in store.StoreServices)
-                    {
-                        if (storeService.WalletTypeStoreServiceMappings.Count > 0)
-                        {
-                            foreach (var walletTypeStoreServiceMapping in storeService.WalletTypeStoreServiceMappings)
-                            {
-                                _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().DeleteAsync(walletTypeStoreServiceMapping);
-                            }
-                        }
-                        storeService.Deflag = true;
-                        storeService.UpsDate = TimeUtils.GetCurrentSEATime();
-                        _unitOfWork.GetRepository<Domain.Models.StoreService>().UpdateAsync(storeService);
-                    }
-                }
-            }
+            //if(store.DisputeReports.Count > 0)
+            //{
+            //    foreach (var dispute in store.DisputeReports)
+            //    {
+            //        //_unitOfWork.GetRepository<DisputeReport>().DeleteAsync(dispute);
+            //    }
+            //}
+            //if (store.StoreServices.Count > 0)
+            //{
+            //    if(store.StoreServices.Where(x => x.WalletTypeStoreServiceMappings.Count > 0).Count() > 0)
+            //    {
+            //        foreach (var storeService in store.StoreServices)
+            //        {
+            //            if (storeService.WalletTypeStoreServiceMappings.Count > 0)
+            //            {
+            //                foreach (var walletTypeStoreServiceMapping in storeService.WalletTypeStoreServiceMappings)
+            //                {
+            //                    _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().DeleteAsync(walletTypeStoreServiceMapping);
+            //                }
+            //            }
+            //            storeService.Deflag = true;
+            //            storeService.UpsDate = TimeUtils.GetCurrentSEATime();
+            //            _unitOfWork.GetRepository<Domain.Models.StoreService>().UpdateAsync(storeService);
+            //        }
+            //    }
+            //}
             store.Deflag = true;
             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
             return await _unitOfWork.CommitAsync() > 0
@@ -321,7 +311,7 @@ namespace VegaCityApp.API.Services.Implement
             foreach (var Category in selectField)
             {
                 var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
-                    predicate: x=> x.Name == Category.ProductCategory && x.MenuId == MenuId);
+                    predicate: x=> x.Name == Category.ProductCategory );
                 if (productCategory == null)
                 {
                     foreach (var product in listProduct)
@@ -344,9 +334,9 @@ namespace VegaCityApp.API.Services.Implement
                         Id = Guid.NewGuid(),
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         Name = Category.ProductCategory,
-                        ProductJson = json,
+                        //ProductJson = json,
                         UpsDate = TimeUtils.GetCurrentSEATime(),
-                        MenuId = MenuId
+                        //MenuId = MenuId
                     };
                     await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCateGory);
                     await _unitOfWork.CommitAsync();
@@ -371,7 +361,7 @@ namespace VegaCityApp.API.Services.Implement
 
                     var json = JsonConvert.SerializeObject(products);
                     productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
-                    productCategory.ProductJson = json;
+                    //productCategory.ProductJson = json;
                     _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
                     await _unitOfWork.CommitAsync();
                     //xoa product

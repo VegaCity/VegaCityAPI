@@ -15,7 +15,6 @@ namespace VegaCityApp.API.Payload.Response.PackageResponse
         public bool? Deflag {get; set; }
         public string? ImageUrl { get; set; }
         public virtual MarketZone? MarketZone { get; set; }
-        public List<PackageETagTypeMapping> PackageETagTypeMappings { get; set; }
 
     }
 
@@ -34,7 +33,5 @@ namespace VegaCityApp.API.Payload.Response.PackageResponse
         [JsonIgnore]
         public virtual MarketZone? MarketZone { get; set; }  
 
-        [JsonIgnore]
-        public List<PackageETagTypeMapping>? PackageETagTypeMappings { get; set; }
     }
 }

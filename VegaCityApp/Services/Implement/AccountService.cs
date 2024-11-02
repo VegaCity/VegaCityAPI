@@ -547,30 +547,11 @@ namespace VegaCityApp.Service.Implement
         {
             Guid apiKey = GetMarketZoneIdFromJwt();
             string roleName = GetRoleFromJwt();
-            var house = await _unitOfWork.GetRepository<House>().SingleOrDefaultAsync(
-                predicate: x => x.Location == req.LocationHouse.Trim() && !x.Deflag && x.Address == req.AddressHouse.Trim());
-            if (house != null)
-            {
-                if (house.IsRent)
-                {
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.HouseIsRent
-                    };
-                }
-            }
-            else
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.HouseNotFound
-                };
-            }
             var user = await _unitOfWork.GetRepository<User>()
             .SingleOrDefaultAsync(predicate: x => x.Id == userId && x.MarketZoneId == apiKey,
                                   include: role => role.Include(z => z.Role));
+            var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Location == req.LocationZone && !x.Deflag)
+                ?? throw new BadHttpRequestException("Zone not found");
             if (user.Status == (int) UserStatusEnum.Active)
             {
                 return new ResponseAPI
@@ -651,7 +632,7 @@ namespace VegaCityApp.Service.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime(),
                         MarketZoneId = apiKey,
                         Deflag = false,
-                        HouseId = house.Id
+                        ZoneId = zone.Id
                     };
                     await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
                     var wallet = new Wallet
@@ -671,9 +652,6 @@ namespace VegaCityApp.Service.Implement
                     await _unitOfWork.CommitAsync();
                     #endregion
                     //update user
-                    house.IsRent = true;
-                    house.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<House>().UpdateAsync(house);
                     var result = await UpdateUserApproving(user, newStore.Id);
                     await _unitOfWork.CommitAsync();
                     if (result != Guid.Empty)
@@ -858,7 +836,7 @@ namespace VegaCityApp.Service.Implement
                 && (x.Status ==(int) UserStatusEnum.Active || x.Status ==(int)UserStatusEnum.PendingVerify),
                 include: user => user
                         .Include(y => y.Wallets)
-                        .Include(y => y.Store)
+                        .Include(y => y.UserStoreMappings).ThenInclude(y => y.Store)
                         .Include(y => y.Role)
             );
             if (user == null)
@@ -873,10 +851,7 @@ namespace VegaCityApp.Service.Implement
             {
                 MessageResponse = UserMessage.GetUserSuccess,
                 StatusCode = HttpStatusCodes.OK,
-                Data = new
-                {
-                    user
-                }
+                Data = user
             };
         }
         public async Task<ResponseAPI> UpdateUser(Guid userId, UpdateUserAccountRequest req)
@@ -1030,9 +1005,9 @@ namespace VegaCityApp.Service.Implement
 
             DateTime? endDate = startDate.AddDays(((int)req.Days));
             var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
-                                                       && x.CrDate <= endDate && x.Status == OrderStatus.Completed, null, include: etag => etag.Include(y => y.Etag));
-            var etags = await _unitOfWork.GetRepository<Etag>().GetListAsync(x => x.CrDate >= startDate
-                                                       && x.CrDate <= endDate, null, null);
+                                                       && x.CrDate <= endDate && x.Status == OrderStatus.Completed, null,null);
+            //var etags = await _unitOfWork.GetRepository<Etag>().GetListAsync(x => x.CrDate >= startDate
+            //                                           && x.CrDate <= endDate, null, null);
             var transactions = await _unitOfWork.GetRepository<Transaction>()
                                        .GetListAsync(x => x.CrDate >= startDate
                                                        && x.CrDate <= endDate
@@ -1066,7 +1041,7 @@ namespace VegaCityApp.Service.Implement
                    TotalTransactions = transactions.Count(o => o.CrDate.ToString("MMM") == g.Key),
                    TotalTransactionsAmount = g.Sum(t => t.Amount),
                    //  EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                   EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key && o.EtagId != null),
+                   EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key ),
                    OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
 
                }).ToList();
@@ -1080,13 +1055,13 @@ namespace VegaCityApp.Service.Implement
             else if (roleCurrent == "CashierWeb" || roleCurrent == "CashierApp")
             {
                 var groupedStaticsCashier = deposits
-              .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+              .GroupBy(t => t.CrDate?.ToString("MMM")) // Group by month name (e.g., "Oct")
               .Select(g => new
               {
                   Name = g.Key, // Month name
-                  TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                  TotalTransactions = deposits.Count(o => o.CrDate?.ToString("MMM") == g.Key),
                   TotalTransactionsAmount = g.Sum(t => t.Amount),
-                  EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key && o.EtagId != null),
+                  EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
                   OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
                   PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
               }).ToList();

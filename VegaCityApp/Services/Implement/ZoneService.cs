@@ -64,7 +64,7 @@ namespace VegaCityApp.API.Services.Implement
         {
           
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == Id && !x.Deflag,
-                include: z => z.Include(zone => zone.Houses));
+                include: z => z.Include(zone => zone.Store));
             if (zone == null)
             {
                 return new ResponseAPI()
@@ -149,7 +149,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(
                 predicate: x => x.Id == ZoneId && !x.Deflag,
-                include: zone => zone.Include(y => y.Houses));
+                include: zone => zone.Include(y => y.Store));
             if (zone == null)
             {
                 return new ResponseAPI()
@@ -172,37 +172,7 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> DeleteZone(Guid ZoneId)
         {
-            var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == ZoneId && !x.Deflag, 
-                    include: z => z.Include(zone => zone.Houses).ThenInclude(house => house.Stores));
-            if (zone == null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = PackageMessage.NotFoundPackage
-                };
-            }
-            //delete all houses,store in zone
-            if(zone.Houses.Count > 0)
-            {
-                foreach (var house in zone.Houses)
-                {
-                    if(house.Stores.Count > 0)
-                    {
-                        foreach (var store in house.Stores)
-                        {
-                            store.Deflag = true;
-                            store.UpsDate = TimeUtils.GetCurrentSEATime();
-                            _unitOfWork.GetRepository<Store>().UpdateAsync(store);
-                        }
-                    }
-                    house.UpsDate = TimeUtils.GetCurrentSEATime();
-                    house.Deflag = true;
-                    _unitOfWork.GetRepository<House>().UpdateAsync(house);
-                }
-            }
-            zone.Deflag = true;
-            _unitOfWork.GetRepository<Zone>().UpdateAsync(zone);
+            
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
                 MessageResponse = ZoneMessage.DeleteZoneSuccess,

@@ -76,8 +76,8 @@ namespace VegaCityApp.API.Services.Implement
                 Name = req.Name,
                 Description = req.Description,
                 Price = req.Price,
-                StartDate = req.StartDate,
-                EndDate = req.EndDate,
+                //StartDate = req.StartDate,
+                //EndDate = req.EndDate,
                 ImageUrl = req.ImageUrl,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -155,9 +155,9 @@ namespace VegaCityApp.API.Services.Implement
             }
             package.Name = req.Name;
             package.Description = req.Description;
-            package.Price = req.Price;
-            package.StartDate = req.StartDate;
-            package.EndDate = req.EndDate;
+            //package.Price = req.Price;
+            //package.StartDate = req.StartDate;
+            //package.EndDate = req.EndDate;
             package.ImageUrl = req.ImageUrl;
             package.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Package>().UpdateAsync(package);
@@ -196,8 +196,6 @@ namespace VegaCityApp.API.Services.Implement
                     Name = x.Name,
                     Description = x.Description,
                     Price = x.Price,
-                    StartDate = x.StartDate,
-                    EndDate = x.EndDate,
                     CrDate = x.CrDate,
                     UpsDate = x.UpsDate,
                     Deflag = x.Deflag,
@@ -236,10 +234,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> SearchPackage(Guid PackageId)
         {
             var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
-                predicate: x => x.Id == PackageId && x.Deflag==false,
-                include: user => user
-                    .Include(y => y.PackageETagTypeMappings)
-                    .ThenInclude(y => y.EtagType)
+                predicate: x => x.Id == PackageId && x.Deflag==false
             );
 
             if (package == null)
@@ -265,8 +260,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> DeletePackage(Guid PackageId)
         {
             var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
-                (predicate: x => x.Id == PackageId,
-                 include: map => map.Include(z => z.PackageETagTypeMappings));
+                (predicate: x => x.Id == PackageId);
             if (package == null)
             {
                 return new ResponseAPI()
@@ -276,13 +270,13 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             //delete mapping
-            if(package.PackageETagTypeMappings.Count > 0)
-            {
-                foreach (var item in package.PackageETagTypeMappings)
-                {
-                    _unitOfWork.GetRepository<PackageETagTypeMapping>().DeleteAsync(item);
-                }
-            }
+            //if(package.PackageETagTypeMappings.Count > 0)
+            //{
+            //    foreach (var item in package.PackageETagTypeMappings)
+            //    {
+            //        _unitOfWork.GetRepository<PackageETagTypeMapping>().DeleteAsync(item);
+            //    }
+            //}
             package.Deflag = true;
             _unitOfWork.GetRepository<Package>().UpdateAsync(package);
             return await _unitOfWork.CommitAsync() > 0

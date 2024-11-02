@@ -19,10 +19,10 @@ namespace VegaCityApp.API.Services.Implement
 {
     public class OrderService : BaseService<OrderService>, IOrderService
     {
-        private readonly IEtagService _etagService;
-        public OrderService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<OrderService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper, IEtagService etagService) : base(unitOfWork, logger, httpContextAccessor, mapper)
+
+        public OrderService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<OrderService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
-            _etagService = etagService;
+            
         }
 
 
@@ -54,16 +54,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(
-                predicate: x => x.EtagCode == req.EtagCode && !x.Deflag && x.Status ==(int) EtagStatusEnum.Active);
-            if (etag == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = OrderMessage.NotFoundETag,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
+    
             int amount = 0;
             int count = 0;
             foreach (var item in req.ProductData) {
@@ -86,7 +77,6 @@ namespace VegaCityApp.API.Services.Implement
                 Id = Guid.NewGuid(),
                 PaymentType = req.PaymentType,
                 StoreId = store.Id,
-                EtagId = etag.Id,
                 Name = req.OrderName,
                 TotalAmount = (int)(req.TotalAmount * (1 + EnvironmentVariableConstant.VATRate)),
                 CrDate = TimeUtils.GetCurrentSEATime(),
@@ -104,12 +94,9 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     Id = Guid.NewGuid(),
                     OrderId = newOrder.Id,
-                    ProductJson = json,
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
-                    TotalAmount = amount + (amount * EnvironmentVariableConstant.VATRate),
                     Quantity = count,
-                    Vatrate = EnvironmentVariableConstant.VATRate,
                 };
                 await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
             }
@@ -179,7 +166,6 @@ namespace VegaCityApp.API.Services.Implement
                     Status = x.Status,
                     InvoiceId = x.InvoiceId,
                     StoreId = x.StoreId,
-                    EtagId = x.EtagId
                 },
                 page: page,
                 size: size,
@@ -252,8 +238,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             order.TotalAmount = req.TotalAmount;
             order.PaymentType = req.PaymentType?? order.PaymentType;
-            var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync(predicate: x => x.Id == req.EtagId && !x.Deflag);
-            order.EtagId = etag != null ? etag.Id : null;
+
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
             //update order detail
@@ -266,8 +251,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
-            orderDetail.ProductJson = JsonConvert.SerializeObject(req.NewProducts);
-            orderDetail.TotalAmount = req.TotalAmount;
+  
             orderDetail.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(orderDetail);
             return await _unitOfWork.CommitAsync() > 0
@@ -292,20 +276,13 @@ namespace VegaCityApp.API.Services.Implement
         {
             var orderExist = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
                 predicate: x => (x.Id == OrderId || x.InvoiceId == InvoiceId)&& x.Status != OrderStatus.Canceled,
-                include: order => order.Include(o => o.Etag)
+                include: order => order
                     .Include(o => o.Store)
                     .Include(o => o.Deposits)
                     .Include(z => z.OrderDetails));
             string json = "";
             string? customerInfo = "";
-            foreach (var item in orderExist.OrderDetails)
-            {
-                json = item.ProductJson;
-            }
-            if (orderExist != null)
-            {
-                customerInfo = orderExist.CustomerInfo;
-            }
+
             List<OrderProductFromPosRequest>? productJson = JsonConvert.DeserializeObject<List<OrderProductFromPosRequest>>(json);
             if(customerInfo == null) customerInfo = "";
             CustomerInfo? customer = JsonConvert.DeserializeObject<CustomerInfo>(customerInfo);
@@ -378,7 +355,6 @@ namespace VegaCityApp.API.Services.Implement
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = OrderStatus.Pending,
                 InvoiceId = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
-                CustomerInfo = customerInfo,
                 SaleType = req.SaleType,
                 UserId = userId,
             };
@@ -388,12 +364,9 @@ namespace VegaCityApp.API.Services.Implement
             {
                 Id = Guid.NewGuid(),
                 OrderId = newOrder.Id,
-                ProductJson = json,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
-                TotalAmount = amount + (amount * EnvironmentVariableConstant.VATRate),
                 Quantity = count,
-                Vatrate = EnvironmentVariableConstant.VATRate,
             };
             await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
 
@@ -428,16 +401,7 @@ namespace VegaCityApp.API.Services.Implement
             string etagTypeName = "";
             string packageName = "";
             string json = "";
-            if (order.OrderDetails.Count > 0)
-            {
-                foreach (var item in order.OrderDetails)
-                {
-                    if (item.ProductJson != null)
-                    {
-                        json = item.ProductJson;
-                    }
-                }
-            }
+
             List<OrderProductFromCashierRequest> productJson = new List<OrderProductFromCashierRequest>();
             if (json != "") productJson = JsonConvert.DeserializeObject<List<OrderProductFromCashierRequest>>(json);
             int count = 0;
@@ -456,13 +420,11 @@ namespace VegaCityApp.API.Services.Implement
             }
             int quantityEtagType = 0;
             // fix lại cái response khi nhập saleType
-            var etagType = await _unitOfWork.GetRepository<EtagType>().SingleOrDefaultAsync(predicate: x => x.Name == etagTypeName && !x.Deflag);
             //generate etag
             if (order.SaleType == SaleType.Package)
             {
                 var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
-                    predicate: x => x.Name == packageName && !x.Deflag,
-                    include: packageInclude => packageInclude.Include(z => z.PackageETagTypeMappings).ThenInclude(a => a.EtagType));
+                    predicate: x => x.Name == packageName && !x.Deflag);
                 if (package == null)
                 {
                     return new ResponseAPI()
@@ -471,20 +433,8 @@ namespace VegaCityApp.API.Services.Implement
                         StatusCode = HttpStatusCodes.NotFound
                     };
                 }
-                foreach (var item in package.PackageETagTypeMappings)
-                {
-                    etagTypeName = item.EtagType.Name;
-                    quantityEtagType = item.QuantityEtagType;
-                }
-                var ListEtagFollowQuantity = await _etagService.GenerateEtag(quantityEtagType, etagType.Id, req.GenerateEtagRequest);
-                if (ListEtagFollowQuantity.StatusCode == HttpStatusCodes.BadRequest)
-                {
-                    return new ResponseAPI()
-                    {
-                        MessageResponse = OrderMessage.GenerateEtagFail,
-                        StatusCode = HttpStatusCodes.BadRequest
-                    };
-                }
+
+
                 order.Status = OrderStatus.Completed;
                 _unitOfWork.GetRepository<Order>().UpdateAsync(order);
                 return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
@@ -495,7 +445,6 @@ namespace VegaCityApp.API.Services.Implement
                     {
                         OrderId = order.Id,
                         invoiceId = order.InvoiceId,
-                        ListEtagGenerate = ListEtagFollowQuantity.Data
                     }
                 } : new ResponseAPI()
                 {
@@ -505,15 +454,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             else if (order.SaleType == SaleType.EtagType)
             {
-                var ListEtag = await _etagService.GenerateEtag(count, etagType.Id, req.GenerateEtagRequest);
-                if (ListEtag.StatusCode == HttpStatusCodes.BadRequest)
-                {
-                    return new ResponseAPI()
-                    {
-                        MessageResponse = OrderMessage.GenerateEtagFail,
-                        StatusCode = HttpStatusCodes.BadRequest
-                    };
-                }
+
                 order.Status = OrderStatus.Completed;
                 _unitOfWork.GetRepository<Order>().UpdateAsync(order);
                 return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
@@ -524,7 +465,6 @@ namespace VegaCityApp.API.Services.Implement
                     {
                         OrderId = order.Id,
                         invoiceId = order.InvoiceId,
-                        ListEtagGenerate = ListEtag.Data
                     }
                 } : new ResponseAPI()
                 {
@@ -539,8 +479,6 @@ namespace VegaCityApp.API.Services.Implement
                     order.Status = OrderStatus.Completed;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-                    var etag = await _unitOfWork.GetRepository<Etag>().SingleOrDefaultAsync
-                        (predicate: x => x.Id == order.EtagId && !x.Deflag, include: etag => etag.Include(z => z.Wallet));
                     //update wallet admin
                     var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(
                         predicate: x => x.Id == order.User.MarketZoneId);//..
@@ -560,10 +498,7 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Wallet>().UpdateRange(order.User.Wallets);
                     //..
                     //update wallet
-                    etag.Wallet.Balance += Int32.Parse(order.TotalAmount.ToString());
-                    etag.Wallet.BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
-                    etag.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(etag.Wallet);
+
                     //transacitons cash here admin + cashier 
                     var newAdminTransaction = new VegaCityApp.Domain.Models.Transaction
                     {
@@ -603,8 +538,7 @@ namespace VegaCityApp.API.Services.Implement
                         Amount = Int32.Parse(order.TotalAmount.ToString()),
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         UpsDate = TimeUtils.GetCurrentSEATime(),
-                        WalletId = etag.Wallet.Id,
-                        EtagId = etag.Id,
+    
                         OrderId = order.Id,
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);

@@ -40,8 +40,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             //check service store
             var serviceStore = await _unitOfWork.GetRepository<Domain.Models.StoreService>().SingleOrDefaultAsync(
-                predicate: x => x.Id == serviceStoreId && !x.Deflag,
-                include: z => z.Include(a => a.WalletTypeStoreServiceMappings));
+                predicate: x => x.Id == serviceStoreId && !x.Deflag);
             if (serviceStore == null)
             {
                 return new ResponseAPI
@@ -142,8 +141,8 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> DeleteWalletType(Guid id)
         {
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync
-                (predicate: x => x.Id == id && !x.Deflag,
-                 include: mapping => mapping.Include(a => a.WalletTypeStoreServiceMappings));
+                (predicate: x => x.Id == id && !x.Deflag
+                );
             if (walletType == null)
             {
                 return new ResponseAPI
@@ -152,13 +151,13 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = WalletTypeMessage.NotFoundWalletType
                 };
             }
-            if (walletType.WalletTypeStoreServiceMappings.Count > 0)
-            {
-                foreach (var item in walletType.WalletTypeStoreServiceMappings)
-                {
-                    _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().DeleteAsync(item);
-                }
-            }
+            //if (walletType.WalletTypeStoreServiceMappings.Count > 0)
+            //{
+            //    foreach (var item in walletType.WalletTypeStoreServiceMappings)
+            //    {
+            //        _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().DeleteAsync(item);
+            //    }
+            //}
             walletType.Deflag = true;
             walletType.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<WalletType>().UpdateAsync(walletType);
@@ -220,8 +219,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> GetWalletTypeById(Guid id)
         {
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
-                predicate: x => x.Id == id && !x.Deflag,
-                include: z => z.Include(y => y.WalletTypeStoreServiceMappings));
+                predicate: x => x.Id == id && !x.Deflag);
             if (walletType == null)
             {
                 return new ResponseAPI
@@ -267,7 +265,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             var currentTime = TimeUtils.GetCurrentSEATime();
             var wallet = (List<Wallet>)await _unitOfWork.GetRepository<Wallet>().GetListAsync
-                (predicate: x => x.ExpireDate < currentTime && !x.Deflag);
+                (predicate: x => x.EndDate < currentTime && !x.Deflag);
             if (wallet.Count > 0)
             {
                 foreach (var item in wallet)
@@ -376,7 +374,7 @@ namespace VegaCityApp.API.Services.Implement
             //wallet user
             var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync
                 (predicate: x => x.Id == id && !x.Deflag,
-                 include: userStore => userStore.Include(z => z.User).Include(x => x.Etags));
+                 include: userStore => userStore.Include(z => z.User));
             if (wallet == null)
             {
                 return new ResponseAPI
@@ -421,29 +419,29 @@ namespace VegaCityApp.API.Services.Implement
                     await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
                 }
             }
-            else if (wallet.Etags.Count > 0)
-            {
-                foreach (var item in wallet.Etags)
-                {
-                    if (item.WalletId == wallet.Id)
-                    {
-                        transaction = new Transaction
-                        {
-                            Id = Guid.NewGuid(),
-                            Type = TransactionType.WithdrawMoney,
-                            WalletId = wallet.Id,
-                            Amount = request.Amount, // wallet etag
-                            IsIncrease = false,
-                            Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                            CrDate = TimeUtils.GetCurrentSEATime(),
-                            Status = TransactionStatus.Pending,
-                            Description = "Withdraw money for etag",
-                        };
-                        await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
-                    }
-                    else throw new BadHttpRequestException(WalletTypeMessage.NotAllowWithdraw);
-                }
-            }
+            //else if (wallet.Etags.Count > 0)
+            //{
+            //    foreach (var item in wallet.Etags)
+            //    {
+            //        if (item.WalletId == wallet.Id)
+            //        {
+            //            transaction = new Transaction
+            //            {
+            //                Id = Guid.NewGuid(),
+            //                Type = TransactionType.WithdrawMoney,
+            //                WalletId = wallet.Id,
+            //                Amount = request.Amount, // wallet etag
+            //                IsIncrease = false,
+            //                Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+            //                CrDate = TimeUtils.GetCurrentSEATime(),
+            //                Status = TransactionStatus.Pending,
+            //                Description = "Withdraw money for etag",
+            //            };
+            //            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
+            //        }
+            //        else throw new BadHttpRequestException(WalletTypeMessage.NotAllowWithdraw);
+            //    }
+            //}
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.OK,
@@ -495,7 +493,7 @@ namespace VegaCityApp.API.Services.Implement
             //wallet user
             var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync
                 (predicate: x => x.Id == id && !x.Deflag,
-                 include: userStore => userStore.Include(z => z.User).Include(x => x.Etags));
+                 include: userStore => userStore.Include(z => z.User));
             if (wallet == null)
             {
                 return new ResponseAPI
@@ -534,30 +532,30 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
                 }
             }
-            else  if (wallet.Etags.Count > 0)
-            {
-                foreach (var item in wallet.Etags) {
+            //else  if (wallet.Etags.Count > 0)
+            //{
+            //    foreach (var item in wallet.Etags) {
 
-                    if (item.WalletId == wallet.Id)
-                    {
-                        transactionAvailable.Status = TransactionStatus.Success;
-                        transactionAvailable.UpsDate = TimeUtils.GetCurrentSEATime();
-                        _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionAvailable);
-                        wallet.Balance -= transactionAvailable.Amount;
-                        wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                        _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
-                    }
-                    else
-                    {
-                        return new ResponseAPI
-                        {
-                            StatusCode = HttpStatusCodes.BadRequest,
-                            MessageResponse = WalletTypeMessage.NotAllowWithdraw
-                        };
-                    }
-                }
+            //        if (item.WalletId == wallet.Id)
+            //        {
+            //            transactionAvailable.Status = TransactionStatus.Success;
+            //            transactionAvailable.UpsDate = TimeUtils.GetCurrentSEATime();
+            //            _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionAvailable);
+            //            wallet.Balance -= transactionAvailable.Amount;
+            //            wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+            //            _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+            //        }
+            //        else
+            //        {
+            //            return new ResponseAPI
+            //            {
+            //                StatusCode = HttpStatusCodes.BadRequest,
+            //                MessageResponse = WalletTypeMessage.NotAllowWithdraw
+            //            };
+            //        }
+            //    }
                 
-            }
+            //}
             var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
                 (predicate: x => x.Id == cashierWeb.MarketZoneId);
             var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync

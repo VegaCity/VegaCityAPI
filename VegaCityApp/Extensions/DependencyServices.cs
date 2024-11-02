@@ -50,16 +50,16 @@ public static class DependencyServices
         //string connectionString =
         //    $"Server={configuration.GetValue<string>(DatabaseConstant.Host)},{configuration.GetValue<string>(DatabaseConstant.Port)};User Id={configuration.GetValue<string>(DatabaseConstant.UserName)};Password={configuration.GetValue<string>(DatabaseConstant.Password)};Database={configuration.GetValue<string>(DatabaseConstant.Database)}";
         #region varDb
-        string Host = "14.225.204.144,6789";
-        string UserName = "sa";
-        string Password = "s@123456";
-        string Database = "VegaCityApp";
-        string Port = "6789";
-        //string Host = "LAPTOP-R0K7KBGI\\TRANGQUOCDAT";
+        //string Host = "14.225.204.144,6789";
         //string UserName = "sa";
-        //string Password = "12345";
+        //string Password = "s@123456";
         //string Database = "VegaCityApp";
-        //string Port = "1433";
+        //string Port = "6789";
+        string Host = "LAPTOP-R0K7KBGI\\TRANGQUOCDAT";
+        string UserName = "sa";
+        string Password = "12345";
+        string Database = "VegaCityApp";
+        string Port = "1433";
         #endregion
         string connectionString =
             $"Server={Host},{Port};User Id={UserName};Password={Password};Database={Database}";
@@ -79,11 +79,9 @@ public static class DependencyServices
         #endregion
         #region addScope
         services.AddScoped<IAccountService, AccountService>();
-        services.AddScoped<IEtagService, EtagService>();
         services.AddScoped<IPackageService, PackageService>();
         services.AddScoped<IStoreService, Services.Implement.StoreService>();
         services.AddScoped<IZoneService,ZoneService>();
-        services.AddScoped<IHouseService, HouseService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IWalletTypeService, WalletTypeService>();

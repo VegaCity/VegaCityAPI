@@ -15,7 +15,7 @@ namespace VegaCityApp.API.Extensions
             RecurringJob.AddOrUpdate<IWalletTypeService>(x => x.CheckExpireWallet(), corn, timeZone: timeZone);
             //RecurringJob.AddOrUpdate<IWalletTypeService>(x => x.EndDayCheckWalletCashier
             //(Guid.Parse(EnvironmentVariableConstant.marketZoneId)), cornDaily, timeZone: timeZone);
-            RecurringJob.AddOrUpdate<IEtagService>(x => x.CheckEtagExpire(), corn, timeZone: timeZone);
+            //RecurringJob.AddOrUpdate<IEtagService>(x => x.CheckEtagExpire(), corn, timeZone: timeZone);
         }
     }
 }

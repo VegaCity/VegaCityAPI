@@ -7,40 +7,35 @@ namespace VegaCityApp.Domain.Models
     {
         public Store()
         {
-            Deposits = new HashSet<Deposit>();
-            DisputeReports = new HashSet<DisputeReport>();
             Menus = new HashSet<Menu>();
             Orders = new HashSet<Order>();
+            StoreMoneyTransfers = new HashSet<StoreMoneyTransfer>();
             StoreServices = new HashSet<StoreService>();
             Transactions = new HashSet<Transaction>();
-            Users = new HashSet<User>();
-            Wallets = new HashSet<Wallet>();
+            UserStoreMappings = new HashSet<UserStoreMapping>();
         }
 
         public Guid Id { get; set; }
         public int? StoreType { get; set; }
         public string Name { get; set; } = null!;
-        public string? Address { get; set; }
+        public string Address { get; set; } = null!;
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
         public string PhoneNumber { get; set; } = null!;
         public string? ShortName { get; set; }
         public string Email { get; set; } = null!;
-        public Guid? HouseId { get; set; }
+        public Guid? ZoneId { get; set; }
         public Guid MarketZoneId { get; set; }
         public string? Description { get; set; }
-        public int? Status { get; set; }
+        public int Status { get; set; }
 
-        public virtual House? House { get; set; }
-        public virtual MarketZone MarketZone { get; set; } = null!;
-        public virtual ICollection<Deposit> Deposits { get; set; }
-        public virtual ICollection<DisputeReport> DisputeReports { get; set; }
+        public virtual Zone? Zone { get; set; }
         public virtual ICollection<Menu> Menus { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
+        public virtual ICollection<StoreMoneyTransfer> StoreMoneyTransfers { get; set; }
         public virtual ICollection<StoreService> StoreServices { get; set; }
         public virtual ICollection<Transaction> Transactions { get; set; }
-        public virtual ICollection<User> Users { get; set; }
-        public virtual ICollection<Wallet> Wallets { get; set; }
+        public virtual ICollection<UserStoreMapping> UserStoreMappings { get; set; }
     }
 }

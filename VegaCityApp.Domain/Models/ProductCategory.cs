@@ -5,13 +5,20 @@ namespace VegaCityApp.Domain.Models
 {
     public partial class ProductCategory
     {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = null!;
-        public DateTime CrDate { get; set; }
-        public DateTime UpsDate { get; set; }
-        public string ProductJson { get; set; } = null!;
-        public Guid MenuId { get; set; }
+        public ProductCategory()
+        {
+            Products = new HashSet<Product>();
+            WalletTypeMappings = new HashSet<WalletTypeMapping>();
+        }
 
-        public virtual Menu Menu { get; set; } = null!;
+        public Guid Id { get; set; }
+        public string? Name { get; set; }
+        public DateTime? CrDate { get; set; }
+        public DateTime? UpsDate { get; set; }
+        public bool? Deflag { get; set; }
+        public string? Description { get; set; }
+
+        public virtual ICollection<Product> Products { get; set; }
+        public virtual ICollection<WalletTypeMapping> WalletTypeMappings { get; set; }
     }
 }

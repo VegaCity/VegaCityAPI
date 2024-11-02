@@ -18,11 +18,11 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace VegaCityApp.API.Controllers.Admin
 {
     [ApiController]
-    public class AdminController : BaseController<AdminController>
+    public class UserController : BaseController<UserController>
     {
         private readonly IAccountService _service;
 
-        public AdminController(ILogger<AdminController> logger, IAccountService service) : base(logger)
+        public UserController(ILogger<UserController> logger, IAccountService service) : base(logger)
         {
             _service = service;
         }
