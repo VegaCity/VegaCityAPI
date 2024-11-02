@@ -53,7 +53,7 @@ try
     app.MapHangfireDashboard();
     
     BackgroundJobs.RecurringJobs();
-    RoleConfig.InitRole();
+    //RoleConfig.InitRole();
     app.MapControllers();
 
     app.Run();

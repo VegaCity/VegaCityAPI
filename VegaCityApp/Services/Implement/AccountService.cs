@@ -54,6 +54,8 @@ namespace VegaCityApp.Service.Implement
         }
         private async Task<bool> CreateUserWallet(Guid userId)
         {
+            var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
+                predicate: x => x.Name == WalletTypeEnum.UserWallet.GetDescriptionFromEnum());
             var newWallet = new Wallet
             {
                 Id = Guid.NewGuid(),
@@ -63,7 +65,7 @@ namespace VegaCityApp.Service.Implement
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Deflag = false,
-                WalletTypeId = Guid.Parse(EnvironmentVariableConstant.UserWallet)
+                WalletTypeId = walletType.Id
             };
             await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
             return await _unitOfWork.CommitAsync() > 0;
@@ -204,87 +206,7 @@ namespace VegaCityApp.Service.Implement
             };
 
         }
-        public async Task<ResponseAPI> RefreshToken(ReFreshTokenRequest req)
-        {
-            Tuple<string, Guid> guidClaim = null;
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                               predicate: x => x.Email == req.Email && x.MarketZoneId == req.apiKey,
-                                              include: User => User.Include(y => y.Role));
-            var refreshToken = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
-                               predicate: x => x.UserId == user.Id && x.Token == req.RefreshToken);
-            if(user == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = UserMessage.UserNotFound
-                };
-            }
-            if(refreshToken == null)
-            {
-                var check = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
-                                                  predicate: x => x.Name == user.Role.Name && x.UserId == user.Id);
-                if(check != null)
-                {
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.UserHadToken
-                    };
-                }
-                guidClaim = new Tuple<string, Guid>("MarketZoneId", user.MarketZoneId); 
-                var newToken = new UserRefreshToken
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = user.Id,
-                    Token = user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum() 
-                    ? JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(2)) 
-                    : JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(5)),
-                    Name = user.Role.Name,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime()
-                };
-                await _unitOfWork.GetRepository<UserRefreshToken>().InsertAsync(newToken);
-                await _unitOfWork.CommitAsync();
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.OK,
-                    MessageResponse = UserMessage.RefreshTokenSuccessfully,
-                    Data = new
-                    {
-                        RefreshToken = newToken.Token
-                    }
-                };
-            }
-            else
-            {
-                //delete refresh token
-                await DeleteRefreshToken(req.RefreshToken);
-                guidClaim = new Tuple<string, Guid>("MarketZoneId", user.MarketZoneId); 
-                var newRefreshToken = new UserRefreshToken
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = user.Id,
-                    Token = user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum() 
-                    ? JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(2)) 
-                    : JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(5)),
-                    Name = user.Role.Name,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime()
-                };
-                await _unitOfWork.GetRepository<UserRefreshToken>().InsertAsync(newRefreshToken);
-                await _unitOfWork.CommitAsync();
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.OK,
-                    MessageResponse = UserMessage.RefreshTokenSuccessfully,
-                    Data = new
-                    {
-                        RefreshToken = newRefreshToken.Token
-                    }
-                };
-            }
-        }
+       
         public async Task<ResponseAPI> GetRefreshTokenByEmail(string email, GetApiKey req)
         {
             //check email valid format
@@ -331,63 +253,27 @@ namespace VegaCityApp.Service.Implement
         {
             //check form Email, PhoneNumber, CCCD
             if (!ValidationUtils.IsEmail(req.Email))
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidEmail
-                };
-            }
+                throw new BadHttpRequestException(UserMessage.InvalidEmail);
 
             if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidPhoneNumber
-                };
-            }
+                throw new BadHttpRequestException(UserMessage.InvalidPhoneNumber);
 
             if (!ValidationUtils.IsCCCD(req.CccdPassport))
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.InvalidCCCD
-                };
-            }
+                throw new BadHttpRequestException(UserMessage.InvalidCCCD);
 
             //check if email is already exist
             var emailExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
                 x.Email == req.Email.Trim() && x.MarketZoneId == req.apiKey);
             if (emailExist != null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.EmailExist
-                };
-            }
+                throw new BadHttpRequestException(UserMessage.EmailExist, HttpStatusCodes.BadRequest);
             var phoneNumberExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
                 x.PhoneNumber == req.PhoneNumber.Trim() && x.MarketZoneId == req.apiKey);
             if (phoneNumberExist != null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.PhoneNumberExist
-                };
-            }
+                throw new BadHttpRequestException(UserMessage.PhoneNumberExist, HttpStatusCodes.BadRequest);
             var cccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
                 x.CccdPassport == req.CccdPassport.Trim() && x.MarketZoneId == req.apiKey);
             if (cccdExist != null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.CCCDExist
-                };
-            }
+                throw new BadHttpRequestException(UserMessage.CCCDExist, HttpStatusCodes.BadRequest);
 
             //create new user
             var newUser = await CreateUserRegister(req, req.apiKey);
@@ -404,13 +290,7 @@ namespace VegaCityApp.Service.Implement
                 //create wallet
                 var result = await CreateUserWallet(newUser.Id);
                 if (!result)
-                {
-                    return new ResponseAPI
-                    {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.CreateWalletFail
-                    };
-                }
+                    throw new BadHttpRequestException(UserMessage.CreateWalletFail); 
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.Created,
@@ -427,6 +307,87 @@ namespace VegaCityApp.Service.Implement
                 StatusCode = HttpStatusCodes.BadRequest,
                 MessageResponse = UserMessage.CreateUserFail
             };
+        }
+        public async Task<ResponseAPI> RefreshToken(ReFreshTokenRequest req)
+        {
+            Tuple<string, Guid> guidClaim = null;
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
+                               predicate: x => x.Email == req.Email && x.MarketZoneId == req.apiKey,
+                                              include: User => User.Include(y => y.Role));
+            var refreshToken = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
+                               predicate: x => x.UserId == user.Id && x.Token == req.RefreshToken);
+            if (user == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = UserMessage.UserNotFound
+                };
+            }
+            if (refreshToken == null)
+            {
+                var check = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
+                                                  predicate: x => x.Name == user.Role.Name && x.UserId == user.Id);
+                if (check != null)
+                {
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = UserMessage.UserHadToken
+                    };
+                }
+                guidClaim = new Tuple<string, Guid>("MarketZoneId", user.MarketZoneId);
+                var newToken = new UserRefreshToken
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Token = user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum()
+                    ? JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(2))
+                    : JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(5)),
+                    Name = user.Role.Name,
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime()
+                };
+                await _unitOfWork.GetRepository<UserRefreshToken>().InsertAsync(newToken);
+                await _unitOfWork.CommitAsync();
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = UserMessage.RefreshTokenSuccessfully,
+                    Data = new
+                    {
+                        RefreshToken = newToken.Token
+                    }
+                };
+            }
+            else
+            {
+                //delete refresh token
+                await DeleteRefreshToken(req.RefreshToken);
+                guidClaim = new Tuple<string, Guid>("MarketZoneId", user.MarketZoneId);
+                var newRefreshToken = new UserRefreshToken
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Token = user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum()
+                    ? JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(2))
+                    : JwtUtil.GenerateRefreshToken(user, guidClaim, TimeUtils.GetCurrentSEATime().AddDays(5)),
+                    Name = user.Role.Name,
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime()
+                };
+                await _unitOfWork.GetRepository<UserRefreshToken>().InsertAsync(newRefreshToken);
+                await _unitOfWork.CommitAsync();
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = UserMessage.RefreshTokenSuccessfully,
+                    Data = new
+                    {
+                        RefreshToken = newRefreshToken.Token
+                    }
+                };
+            }
         }
         public async Task<ResponseAPI> AdminCreateUser(RegisterRequest req)
         {
@@ -547,12 +508,11 @@ namespace VegaCityApp.Service.Implement
         {
             Guid apiKey = GetMarketZoneIdFromJwt();
             string roleName = GetRoleFromJwt();
-            var user = await _unitOfWork.GetRepository<User>()
-            .SingleOrDefaultAsync(predicate: x => x.Id == userId && x.MarketZoneId == apiKey,
-                                  include: role => role.Include(z => z.Role));
+            if (roleName != RoleEnum.Admin.GetDescriptionFromEnum()) throw new BadHttpRequestException("You are not allowed to access this function");
+            var user = await SearchUser(userId);
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Location == req.LocationZone && !x.Deflag)
                 ?? throw new BadHttpRequestException("Zone not found");
-            if (user.Status == (int) UserStatusEnum.Active)
+            if (user.Data.Status == (int) UserStatusEnum.Active)
             {
                 return new ResponseAPI
                 {
@@ -560,16 +520,8 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.Approved,
                     Data = new
                     {
-                        UserId = user.Id
+                        UserId = user.Data.Id
                     }
-                };
-            }
-            if (roleName != RoleEnum.Admin.GetDescriptionFromEnum())
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = UserMessage.RoleNotAllow
                 };
             }
             if (req.ApprovalStatus.Trim().Equals(ApproveStatus.REJECT))
@@ -583,8 +535,8 @@ namespace VegaCityApp.Service.Implement
                     };
                 }
 
-                user.Status = (int)UserStatusEnum.Disable;
-                _unitOfWork.GetRepository<User>().UpdateAsync(user);
+                user.Data.Status = (int)UserStatusEnum.Disable;
+                _unitOfWork.GetRepository<User>().UpdateAsync(user.Data);
                 await _unitOfWork.CommitAsync();
                 return new ResponseAPI
                 {
@@ -592,7 +544,7 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.ApproveReject,
                     Data = new
                     {
-                        UserId = user.Id
+                        UserId = user.Data.Id
                     }
                 };
             }
@@ -617,7 +569,7 @@ namespace VegaCityApp.Service.Implement
                     };
                 }
                 #endregion
-                if (user.RoleId == Guid.Parse(EnvironmentVariableConstant.StoreId))
+                if (user.Data.RoleId == Guid.Parse(EnvironmentVariableConstant.StoreId))
                 {
                     #region create store
                     var newStore = new Store
@@ -638,7 +590,7 @@ namespace VegaCityApp.Service.Implement
                     var wallet = new Wallet
                     {
                         Id = Guid.NewGuid(),
-                        UserId = user.Id,
+                        UserId = user.Data.Id,
                         Balance = 0,
                         BalanceHistory = 0,
                         CrDate = TimeUtils.GetCurrentSEATime(),
@@ -652,7 +604,7 @@ namespace VegaCityApp.Service.Implement
                     await _unitOfWork.CommitAsync();
                     #endregion
                     //update user
-                    var result = await UpdateUserApproving(user, newStore.Id);
+                    var result = await UpdateUserApproving(user.Data, newStore.Id);
                     await _unitOfWork.CommitAsync();
                     if (result != Guid.Empty)
                     {
@@ -662,8 +614,8 @@ namespace VegaCityApp.Service.Implement
                             try
                             {
                                 var subject = UserMessage.ApproveSuccessfully;
-                                var body = "Your account has been approved. Your password is: " + user.Password;
-                                await MailUtil.SendMailAsync(user.Email, subject, body);
+                                var body = "Your account has been approved. Your password is: " + user.Data.Password;
+                                await MailUtil.SendMailAsync(user.Data.Email, subject, body);
                             }
                             catch (Exception ex)
                             {
@@ -829,7 +781,7 @@ namespace VegaCityApp.Service.Implement
             }
         }
 
-        public async Task<ResponseAPI> SearchUser(Guid UserId)
+        public async Task<ResponseAPI<User>> SearchUser(Guid UserId)
         {
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
                 predicate: x => x.Id == UserId 
@@ -838,16 +790,8 @@ namespace VegaCityApp.Service.Implement
                         .Include(y => y.Wallets)
                         .Include(y => y.UserStoreMappings).ThenInclude(y => y.Store)
                         .Include(y => y.Role)
-            );
-            if (user == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = UserMessage.NotFoundUser,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
-            return new ResponseAPI()
+            ) ?? throw new BadHttpRequestException(UserMessage.NotFoundUser);
+            return new ResponseAPI<User>
             {
                 MessageResponse = UserMessage.GetUserSuccess,
                 StatusCode = HttpStatusCodes.OK,

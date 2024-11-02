@@ -3,6 +3,7 @@ using VegaCityApp.API.Payload.Response;
 using VegaCityApp.Domain.Paginate;
 using VegaCityApp.API.Payload.Request.Admin;
 using VegaCityApp.API.Payload.Request.Auth;
+using VegaCityApp.Domain.Models;
 
 namespace VegaCityApp.Service.Interface
 {
@@ -24,7 +25,7 @@ namespace VegaCityApp.Service.Interface
 
         Task<ResponseAPI<IEnumerable<GetUserResponse>>> SearchAllUser(int size, int page);
 
-        Task<ResponseAPI> SearchUser(Guid UserId);
+        Task<ResponseAPI<User>> SearchUser(Guid UserId);
 
         Task<ResponseAPI> UpdateUser(Guid userId, UpdateUserAccountRequest req);
 

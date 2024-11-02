@@ -145,34 +145,26 @@ namespace VegaCityApp.API.Services.Implement
             }
 
         }
-        public async Task<ResponseAPI> SearchZone(Guid ZoneId)
+        public async Task<ResponseAPI<Zone>> SearchZone(Guid ZoneId)
         {
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(
                 predicate: x => x.Id == ZoneId && !x.Deflag,
-                include: zone => zone.Include(y => y.Store));
-            if (zone == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = ZoneMessage.SearchZoneFail,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
+                include: zone => zone.Include(y => y.Store))
+                ?? throw new BadHttpRequestException(ZoneMessage.SearchZoneFail, HttpStatusCodes.NotFound);
 
-            return new ResponseAPI()
+            return new ResponseAPI<Zone>
             {
                 MessageResponse = ZoneMessage.SearchZoneSuccess,
                 StatusCode = HttpStatusCodes.OK,
-                Data = new
-                {
-                   zone
-                }
+                Data = zone
             };
         }
 
         public async Task<ResponseAPI> DeleteZone(Guid ZoneId)
         {
-            
+            var zone = await SearchZone(ZoneId);
+            zone.Data.Deflag = true;
+            _unitOfWork.GetRepository<Zone>().UpdateAsync(zone.Data);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
                 MessageResponse = ZoneMessage.DeleteZoneSuccess,
