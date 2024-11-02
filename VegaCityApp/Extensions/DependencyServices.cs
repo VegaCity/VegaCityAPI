@@ -78,6 +78,7 @@ public static class DependencyServices
         //}, "[DEFAULT]");
         #endregion
         #region addScope
+        services.AddScoped<IMarketZoneService, MarketZoneService>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IPackageService, PackageService>();
         services.AddScoped<IStoreService, Services.Implement.StoreService>();

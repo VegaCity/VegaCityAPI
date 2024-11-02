@@ -19,15 +19,13 @@ public static class ApiEndPointConstant
         public const string RefreshToken = Authentication + "/refresh-token";
         public const string GetRefreshTokenByEmail = Authentication + "/refresh-token/{email}";
     }
-    public static class EtagTypeEndpoint
+    public static class MarketZoneEndpoint
     {
-        public const string CreateEtagType = ApiEndpoint + "/etag-type";
-        public const string DeleteEtagType = ApiEndpoint + "/etag-type/{id}";
-        public const string UpdateEtagType = ApiEndpoint + "/etag-type/{id}";
-        public const string SearchEtagType = ApiEndpoint + "/etag-type/{id}";
-        public const string SearchAllEtagType = ApiEndpoint + "/etag-types";
-        public const string AddEtagTypeToPackage = ApiEndpoint + "/etag-type/{etagTypeId}/package/{packageId}";
-        public const string RemoveEtagTypeFromPackage = ApiEndpoint + "/etag-type/{etagTypeId}/package/{packageId}";
+        public const string CreateMarketZone = ApiEndpoint + "/market-zone";
+        public const string UpdateMarketZone = ApiEndpoint + "/market-zone/{id}";
+        public const string GetListMarketZone = ApiEndpoint + "/market-zones";
+        public const string GetMarketZone = ApiEndpoint + "/market-zone/{id}";
+        public const string DeleteMarketZone = ApiEndpoint + "/market-zone/{id}";
     }
     public static class EtagEndpoint
     {
@@ -43,7 +41,7 @@ public static class ApiEndPointConstant
     }
     public static class UserEndpoint
     {
-        public const string ApproveUser = ApiEndpoint + "/approve-user/{userId}";
+        public const string ApproveUser = ApiEndpoint + "/user/{userId}/approve-user";
         public const string GetListUser = ApiEndpoint + "/users";
         public const string GetListUserByRoleId = ApiEndpoint + "/users";
         public const string UpdateUserRoleById = ApiEndpoint + "/user";

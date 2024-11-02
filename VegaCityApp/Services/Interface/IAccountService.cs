@@ -8,6 +8,7 @@ namespace VegaCityApp.Service.Interface
 {
     public interface IAccountService
     {
+        Task AddRole();
         Task<LoginResponse> Login(LoginRequest req);
 
         Task<ResponseAPI> RefreshToken(ReFreshTokenRequest req);

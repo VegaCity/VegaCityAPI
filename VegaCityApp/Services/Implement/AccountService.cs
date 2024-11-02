@@ -1119,5 +1119,46 @@ namespace VegaCityApp.Service.Implement
             }
             return UserMessage.ReAssignEmailSuccess;
         }
+
+        public async Task AddRole()
+        {
+            var role = await _unitOfWork.GetRepository<Role>().GetListAsync();
+            if (role.Count == 0)
+            {
+                role = new List<Role>
+                {
+                    new Role
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = RoleEnum.Admin.GetDescriptionFromEnum(),
+                        Deflag = false
+                    },
+                    new Role
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = RoleEnum.CashierWeb.GetDescriptionFromEnum(),
+                        Deflag = false
+                    },
+                    new Role
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = RoleEnum.CashierApp.GetDescriptionFromEnum(),
+                        Deflag = false
+                    },
+                    new Role
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = RoleEnum.Store.GetDescriptionFromEnum(),
+                        Deflag = false
+                    }
+                };
+                await _unitOfWork.GetRepository<Role>().InsertRangeAsync(role);
+                await _unitOfWork.CommitAsync();
+            }
+            else
+            {
+                return;
+            }
+        }
     }
 }
