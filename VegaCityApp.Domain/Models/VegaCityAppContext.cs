@@ -993,6 +993,12 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.UpsDate)
                     .HasColumnType("datetime")
                     .HasColumnName("upsDate");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.UserRefreshTokens)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_UserRefreshToken_User");
             });
 
             modelBuilder.Entity<UserSession>(entity =>

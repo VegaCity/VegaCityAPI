@@ -39,7 +39,7 @@ namespace VegaCityApp.Service.Implement
                 Email = req.Email.Trim(),
                 Description = req.Description.Trim(),
                 MarketZoneId = apiKey,
-                RoleId = role != null ? role.Id : Guid.Parse(EnvironmentVariableConstant.StoreId),
+                RoleId = role.Id,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Gender = (int)GenderEnum.Other,
@@ -49,7 +49,6 @@ namespace VegaCityApp.Service.Implement
             };
             await _unitOfWork.GetRepository<User>().InsertAsync(newUser);
             await _unitOfWork.CommitAsync();
-            newUser.Role = role;
             return  newUser;
         }
         private async Task<bool> CreateUserWallet(Guid userId)
@@ -504,6 +503,7 @@ namespace VegaCityApp.Service.Implement
                 }
             };
         }
+        //get ready !!
         public async Task<ResponseAPI> ApproveUser(Guid userId, ApproveRequest req)
         {
             Guid apiKey = GetMarketZoneIdFromJwt();
@@ -569,7 +569,7 @@ namespace VegaCityApp.Service.Implement
                     };
                 }
                 #endregion
-                if (user.Data.RoleId == Guid.Parse(EnvironmentVariableConstant.StoreId))
+                if (user.Data.Role.Name == RoleEnum.Store.GetDescriptionFromEnum())
                 {
                     #region create store
                     var newStore = new Store
@@ -587,6 +587,8 @@ namespace VegaCityApp.Service.Implement
                         ZoneId = zone.Id
                     };
                     await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
+                    var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
+                        predicate: x => x.Name == WalletTypeEnum.StoreWallet.GetDescriptionFromEnum());
                     var wallet = new Wallet
                     {
                         Id = Guid.NewGuid(),
@@ -598,7 +600,7 @@ namespace VegaCityApp.Service.Implement
                         Deflag = false,
                         StartDate = TimeUtils.GetCurrentSEATime(),
                         StoreId = newStore.Id,
-                        WalletTypeId = Guid.Parse(EnvironmentVariableConstant.StoreWallet)
+                        WalletTypeId = walletType.Id
                     };
                     await _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
                     await _unitOfWork.CommitAsync();

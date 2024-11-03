@@ -21,7 +21,7 @@ namespace VegaCityApp.API.Controllers
 
         [HttpPost(AuthenticationEndpoint.Login)]
         [ProducesResponseType(typeof(LoginResponse), HttpStatusCodes.OK)]
-        [SwaggerOperation(Summary = "Login for user")]
+        [SwaggerOperation(Summary = "Login for user !! Get Ready")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var result = await _accountService.Login(request);
@@ -29,7 +29,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(AuthenticationEndpoint.Register)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [SwaggerOperation(Summary = "Register new user for Store")]
+        [SwaggerOperation(Summary = "Register new user for Store !! Get Ready !!")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             var result = await _accountService.Register(request);
@@ -37,6 +37,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(AuthenticationEndpoint.ChangePassword)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [SwaggerOperation(Summary = "Change Password user !! Get Ready !!")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
             var result = await _accountService.ChangePassword(request);
@@ -44,6 +45,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(AuthenticationEndpoint.RefreshToken)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [SwaggerOperation(Summary = "ReAssign refresh token user !! Get Ready !!")]
         public async Task<IActionResult> RefreshToken([FromBody] ReFreshTokenRequest request)
         {
             var result = await _accountService.RefreshToken(request);
@@ -51,6 +53,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(AuthenticationEndpoint.GetRefreshTokenByEmail)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [SwaggerOperation(Summary = "Get refresh token user !! Get Ready !!")]
         public async Task<IActionResult> GetRefreshTokenByEmail(string email, [FromBody] GetApiKey req)
         {
             var result = await _accountService.GetRefreshTokenByEmail(email, req);

@@ -11,5 +11,7 @@ namespace VegaCityApp.Domain.Models
         public string Name { get; set; } = null!;
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
+
+        public virtual User User { get; set; } = null!;
     }
 }

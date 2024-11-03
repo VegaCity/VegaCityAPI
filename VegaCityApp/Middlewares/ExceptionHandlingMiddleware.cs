@@ -22,7 +22,8 @@ public class ExceptionHandlingMiddleware
 		}
 		catch (Exception ex)
 		{
-			await HandleExceptionAsync(context, ex);
+            Exception exception = ex.InnerException ?? ex;
+            await HandleExceptionAsync(context, exception);
 		}
 	}
 
