@@ -38,6 +38,7 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpPost(UserEndpoint.ApproveUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         [CustomAuthorize(RoleEnum.Admin)]
+        [SwaggerOperation(Summary = "Approve user !! Get Ready !!")]
         public async Task<IActionResult> ApproveUser(Guid userId, [FromBody] ApproveRequest request)
         {
             var result = await _service.ApproveUser(userId, request);
@@ -55,6 +56,7 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpGet(UserEndpoint.GetUserInfo)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb, RoleEnum.Store)]
+        [SwaggerOperation(Summary = "Search user by id !! Get Ready !!")]
         public async Task<IActionResult> SearchUser(Guid id)
         {
             var result = await _service.SearchUser(id);
