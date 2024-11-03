@@ -23,85 +23,6 @@ namespace VegaCityApp.API.Services.Implement
         {
         }
 
-        //public async Task<ResponseAPI> CreateZone(CreateZoneRequest req)
-        //{
-        //    Guid apiKey = GetMarketZoneIdFromJwt();
-        //    var zoneExisted = await _unitOfWork.GetRepository<Zone>()
-        //        .SingleOrDefaultAsync(predicate: x => x.Name == req.Name && x.Location == req.Location && !x.Deflag);
-        //    if (zoneExisted != null)
-        //    {
-        //        return new ResponseAPI()
-        //        {
-        //            StatusCode = HttpStatusCodes.Conflict,
-        //            MessageResponse = ZoneMessage.ZoneExisted
-        //        };
-        //    }
-        //    var newZone = new Zone()
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        Name = req.Name,
-        //        Location = req.Location,
-        //        MarketZoneId = apiKey,
-        //        Deflag = false,
-        //        CrDate = TimeUtils.GetCurrentSEATime(),
-        //        UpsDate = TimeUtils.GetCurrentSEATime(),
-        //    };
-        //    await _unitOfWork.GetRepository<Zone>().InsertAsync(newZone);
-        //    var response = new ResponseAPI()
-        //    {
-        //        MessageResponse = ZoneMessage.CreateZoneSuccess,
-        //        StatusCode = HttpStatusCodes.Created,
-        //        Data = newZone.Id
-
-        //    };
-        //    int check = await _unitOfWork.CommitAsync();
-
-        //    return check > 0 ? response : new ResponseAPI()
-        //    {
-        //        StatusCode = HttpStatusCodes.BadRequest,
-        //        MessageResponse = ZoneMessage.CreateZoneFail
-        //    };
-        //}
-
-        //public async Task<ResponseAPI> UpdateZone(Guid Id, UpdateZoneRequest req)
-        //{
-
-        //    var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == Id && !x.Deflag,
-        //        include: z => z.Include(zone => zone.Store));
-        //    if (zone == null)
-        //    {
-        //        return new ResponseAPI()
-        //        {
-        //            StatusCode = HttpStatusCodes.NotFound,
-        //            MessageResponse = ZoneMessage.SearchZoneFail
-        //        };
-        //    }
-        //    zone.Name = req.ZoneName != null ? req.ZoneName.Trim() : zone.Name;
-        //    zone.Location = req.ZoneLocation != null ? req.ZoneLocation.Trim() : zone.Location;
-        //    zone.UpsDate = TimeUtils.GetCurrentSEATime();
-        //    _unitOfWork.GetRepository<Zone>().UpdateAsync(zone);
-        //    var result = await _unitOfWork.CommitAsync();
-        //    if (result > 0)
-        //    {
-        //        return new ResponseAPI()
-        //        {
-        //            MessageResponse = ZoneMessage.UpdateZoneSuccess,
-        //            StatusCode = HttpStatusCodes.OK,
-        //            Data = new
-        //            {
-        //                zone
-        //            }
-        //        };
-        //    }
-        //    else
-        //    {
-        //        return new ResponseAPI()
-        //        {
-        //            MessageResponse = ZoneMessage.UpdateZoneFail,
-        //            StatusCode = HttpStatusCodes.BadRequest
-        //        };
-        //    }
-        //}
         public async Task<ResponseAPI> CreatePromotion(PromotionRequest req)
         {
             var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(predicate: x => x.PromotionCode == req.PromotionCode);
@@ -163,6 +84,60 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.BadRequest
             };
 
+        }
+        public async Task <ResponseAPI> UpdatePromotion(Guid PromotionId ,UpdatePromotionRequest req)
+        {
+            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(predicate: x => x.Id == PromotionId && x.Status == (int)PromotionStatusEnum.Inactive);
+            if(promotion == null)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = PromotionMessage.NotFoundPromotion,
+                    StatusCode= HttpStatusCodes.NotFound
+                };
+            }
+            if (req.EndDate <= TimeUtils.GetCurrentSEATime())
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = PromotionMessage.InvalidEndDate,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            if (req.EndDate <= req.StartDate)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = PromotionMessage.InvalidDuration,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            if (req.Quantity <= 0)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = "Invalid Quantity, Must greater than 0",
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            promotion.Name = req.Name;
+            promotion.Description = req.Description;
+            promotion.MaxDiscount = req.MaxDiscount;
+            promotion.DiscountPercent = req.DiscountPercent;
+            promotion.StartDate = req.StartDate;
+            promotion.EndDate = req.EndDate;    
+            promotion.Quantity = req.Quantity;
+            _unitOfWork.GetRepository<Promotion>().UpdateAsync(promotion);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            {
+                MessageResponse = PromotionMessage.UpdatePromotionSuccessfully,
+                StatusCode = HttpStatusCodes.OK
+            }
+            : new ResponseAPI()
+            {
+                MessageResponse = PromotionMessage.UpdatePromotionFail,
+                StatusCode = HttpStatusCodes.BadRequest
+            };
         }
         public async Task<ResponseAPI<IEnumerable<GetListPromotionResponse>>> SearchPromotions(int size, int page)
         {

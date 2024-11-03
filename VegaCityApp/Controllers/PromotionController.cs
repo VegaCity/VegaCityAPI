@@ -31,14 +31,14 @@ namespace VegaCityApp.API.Controllers
             var result = await _promotionService.CreatePromotion(request);
             return StatusCode(result.StatusCode, result);
         }
-        //[HttpPatch(ZoneEndPoint.UpdateZone)]
-        //[ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [HttpPatch(PromotionEndPoint.UpdatePromotion)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         //[CustomAuthorize(RoleEnum.Admin)]
-        //public async Task<IActionResult> UpdateZone(Guid id, [FromBody] UpdateZoneRequest request)
-        //{
-        //    var result = await _zoneService.UpdateZone(id, request);
-        //    return StatusCode(result.StatusCode, result);
-        //}
+        public async Task<IActionResult> UpdatePromotion(Guid id, [FromBody] UpdatePromotionRequest request)
+        {
+            var result = await _promotionService.UpdatePromotion(id, request);
+            return StatusCode(result.StatusCode, result);
+        }
         [HttpGet(PromotionEndPoint.SearchAllPromotions)]
         [ProducesResponseType(typeof(ResponseAPI<IEnumerable<GetZoneResponse>>), HttpStatusCodes.OK)]
        // [CustomAuthorize(RoleEnum.Admin)]

@@ -9,7 +9,7 @@ namespace VegaCityApp.API.Services.Interface
     public interface IPromotionService
     {
         Task<ResponseAPI> CreatePromotion(PromotionRequest req);
-        //Task<ResponseAPI> UpdateZone(Guid ZoneId, UpdateZoneRequest req);
+        Task<ResponseAPI> UpdatePromotion(Guid PromotionId, UpdatePromotionRequest req);
         Task<ResponseAPI<IEnumerable<GetListPromotionResponse>>> SearchPromotions(int size, int page);
         Task<ResponseAPI> SearchPromotion(Guid promotionId);
         Task<ResponseAPI> DeletePromotion(Guid promotionId);
