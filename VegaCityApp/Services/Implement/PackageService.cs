@@ -26,21 +26,17 @@ namespace VegaCityApp.API.Services.Implement
         {
             var result = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Name == req.Name);
             if (result != null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.ExistedPackageName, 
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
+            throw new BadHttpRequestException(PackageMessage.ExistedPackageName, HttpStatusCodes.BadRequest);
+            var packageType = await SearchPackageType(req.PackageTypeId);
             var newPackage = new Package()
             {
                 Id = Guid.NewGuid(),
                 Name = req.Name,
                 Description = req.Description,
                 Price = req.Price,
-                //StartDate = req.StartDate,
-                //EndDate = req.EndDate,
+                Deflag = false,
+                Duration = req.Duration,
+                PackageTypeId = req.PackageTypeId,
                 ImageUrl = req.ImageUrl,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -77,51 +73,11 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = PackageMessage.NotFoundPackage
                 };
             }
-            DateTime currentDate = TimeUtils.GetCurrentSEATime();
-            if (req.EndDate < currentDate)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.EndateInThePast,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-            if (req.EndDate == req.StartDate)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.SameStrAndEndDate,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-
-            TimeSpan? duration = req.EndDate - req.StartDate;
-            if (duration.HasValue)
-            {
-                double totalHours = duration.Value.TotalHours;
-                if (totalHours < 48)
-                {
-                    return new ResponseAPI()
-                    {
-                        MessageResponse = PackageMessage.durationLimit,
-                        StatusCode = HttpStatusCodes.BadRequest
-                    };
-                }
-            }
-            else
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.InvalidDuration,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-            package.Name = req.Name;
-            package.Description = req.Description;
-            //package.Price = req.Price;
-            //package.StartDate = req.StartDate;
-            //package.EndDate = req.EndDate;
-            package.ImageUrl = req.ImageUrl;
+            package.Name = req.Name ?? package.Name;
+            package.Description = req.Description ?? package.Description;
+            package.Price = req.Price;
+            package.Duration = req.Duration ?? package.Duration;
+            package.ImageUrl = req.ImageUrl ?? package.ImageUrl;
             package.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Package>().UpdateAsync(package);
             var result = await _unitOfWork.CommitAsync();
@@ -163,6 +119,7 @@ namespace VegaCityApp.API.Services.Implement
                     UpsDate = x.UpsDate,
                     Deflag = x.Deflag,
                     ImageUrl = x.ImageUrl,
+                    Duration = x.Duration,
                 },
                 page: page,
                 size: size,
@@ -233,14 +190,6 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = PackageMessage.NotFoundPackage
                 };
             }
-            //delete mapping
-            //if(package.PackageETagTypeMappings.Count > 0)
-            //{
-            //    foreach (var item in package.PackageETagTypeMappings)
-            //    {
-            //        _unitOfWork.GetRepository<PackageETagTypeMapping>().DeleteAsync(item);
-            //    }
-            //}
             package.Deflag = true;
             _unitOfWork.GetRepository<Package>().UpdateAsync(package);
             return await _unitOfWork.CommitAsync() > 0
@@ -315,12 +264,6 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             packageType.Name = req.Name;
-            //package.Description = req.Description;
-            //package.Price = req.Price;
-            //package.StartDate = req.StartDate;
-            //package.EndDate = req.EndDate;
-            //packageType.MarketZoneId = req.MarketZoneId ?? packageType.MarketZoneId;
-            packageType.ZoneId = req.ZoneId;
             packageType.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<PackageType>().UpdateAsync(packageType);
             var result = await _unitOfWork.CommitAsync();
@@ -393,30 +336,19 @@ namespace VegaCityApp.API.Services.Implement
 
         }
 
-        public async Task<ResponseAPI> SearchPackageType(Guid PackageTypeId)
+        public async Task<ResponseAPI<PackageType>> SearchPackageType(Guid PackageTypeId)
         {
             var packageType = await _unitOfWork.GetRepository<PackageType>().SingleOrDefaultAsync(
                 predicate: x => x.Id == PackageTypeId && x.Deflag == false,
                 include: package => package.Include(y => y.Packages)
-            );
+            ) ?? throw new BadHttpRequestException(PackageTypeMessage.NotFoundPackageType, HttpStatusCodes.NotFound);
 
-            if (packageType == null)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageTypeMessage.NotFoundPackageType,
-                    StatusCode = HttpStatusCodes.NotFound
-                };
-            }
-
-            return new ResponseAPI()
+            return new ResponseAPI<PackageType>()
             {
                 MessageResponse = PackageTypeMessage.GetPackageTypesSuccessfully,
                 StatusCode = HttpStatusCodes.OK,
-                Data = new
-                {
-                    packageType
-                }
+                Data = packageType
+                
             };
         }
 
@@ -432,14 +364,6 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = PackageTypeMessage.NotFoundPackageType
                 };
             }
-            //delete mapping
-            //if(package.PackageETagTypeMappings.Count > 0)
-            //{
-            //    foreach (var item in package.PackageETagTypeMappings)
-            //    {
-            //        _unitOfWork.GetRepository<PackageETagTypeMapping>().DeleteAsync(item);
-            //    }
-            //}
             packageType.Deflag = true;
             _unitOfWork.GetRepository<PackageType>().UpdateAsync(packageType);
             return await _unitOfWork.CommitAsync() > 0

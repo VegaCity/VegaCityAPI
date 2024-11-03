@@ -2,6 +2,7 @@
 using VegaCityApp.API.Payload.Request.Package;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.PackageResponse;
+using VegaCityApp.Domain.Models;
 using VegaCityApp.Domain.Paginate;
 
 namespace VegaCityApp.API.Services.Interface
@@ -18,7 +19,7 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> CreatePackageType(CreatePackageTypeRequest req);
         Task<ResponseAPI> UpdatePackageType(Guid packageId, UpdatePackageTypeRequest req);
         Task<ResponseAPI<IEnumerable<GetPackageTypeResponse>>> SearchAllPackageType(int size, int page);
-        Task<ResponseAPI> SearchPackageType(Guid PackageTypeId);
+        Task<ResponseAPI<PackageType>> SearchPackageType(Guid PackageTypeId);
         Task<ResponseAPI> DeletePackageType(Guid PackageTypeId);
 
         //Task<ResponseAPI> CreatePackageType(CreatePackageTypeRequest req);
