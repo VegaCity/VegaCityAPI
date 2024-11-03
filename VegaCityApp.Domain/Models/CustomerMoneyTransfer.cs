@@ -13,8 +13,10 @@ namespace VegaCityApp.Domain.Models
         public bool? IsIncrease { get; set; }
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
+        public Guid? TransactionId { get; set; }
 
         public virtual MarketZone? MarketZone { get; set; }
         public virtual PackageItem? PackageItem { get; set; }
+        public virtual Transaction? Transaction { get; set; }
     }
 }

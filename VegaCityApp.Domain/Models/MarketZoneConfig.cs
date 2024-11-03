@@ -7,7 +7,7 @@ namespace VegaCityApp.Domain.Models
     {
         public Guid Id { get; set; }
         public Guid MarketZoneId { get; set; }
-        public double? ChargeRate { get; set; }
+        public double? StoreStranferRate { get; set; }
         public double? WithdrawExpireRate { get; set; }
 
         public virtual MarketZone MarketZone { get; set; } = null!;

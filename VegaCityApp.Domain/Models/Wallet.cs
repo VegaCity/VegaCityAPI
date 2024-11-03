@@ -7,6 +7,7 @@ namespace VegaCityApp.Domain.Models
     {
         public Wallet()
         {
+            Deposits = new HashSet<Deposit>();
             PackageItems = new HashSet<PackageItem>();
             Transactions = new HashSet<Transaction>();
         }
@@ -23,8 +24,10 @@ namespace VegaCityApp.Domain.Models
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
 
+        public virtual Store? Store { get; set; }
         public virtual User? User { get; set; }
         public virtual WalletType WalletType { get; set; } = null!;
+        public virtual ICollection<Deposit> Deposits { get; set; }
         public virtual ICollection<PackageItem> PackageItems { get; set; }
         public virtual ICollection<Transaction> Transactions { get; set; }
     }

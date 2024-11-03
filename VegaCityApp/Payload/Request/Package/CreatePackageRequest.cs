@@ -8,6 +8,7 @@
         public int Price { get; set; }
         public int Duration { get; set; }
         public Guid PackageTypeId { get; set; }
-
+        public Guid WalletTypeId { get; set; }
+        public int MoneyStart { get; set; }
     }
 }

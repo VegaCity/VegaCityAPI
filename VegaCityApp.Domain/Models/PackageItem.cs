@@ -24,6 +24,8 @@ namespace VegaCityApp.Domain.Models
         public string? Gender { get; set; }
         public bool? IsAdult { get; set; }
         public Guid? WalletId { get; set; }
+        public bool? IsChanged { get; set; }
+        public string? PhoneNumber { get; set; }
 
         public virtual Package Package { get; set; } = null!;
         public virtual Wallet? Wallet { get; set; }

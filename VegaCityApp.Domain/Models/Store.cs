@@ -13,6 +13,7 @@ namespace VegaCityApp.Domain.Models
             StoreServices = new HashSet<StoreService>();
             Transactions = new HashSet<Transaction>();
             UserStoreMappings = new HashSet<UserStoreMapping>();
+            Wallets = new HashSet<Wallet>();
         }
 
         public Guid Id { get; set; }
@@ -37,5 +38,6 @@ namespace VegaCityApp.Domain.Models
         public virtual ICollection<StoreService> StoreServices { get; set; }
         public virtual ICollection<Transaction> Transactions { get; set; }
         public virtual ICollection<UserStoreMapping> UserStoreMappings { get; set; }
+        public virtual ICollection<Wallet> Wallets { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using VegaCityApp.API.Enums;
+using VegaCityApp.API.Payload.Request.Order;
 using VegaCityApp.API.Payload.Request.Package;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.PackageResponse;
@@ -105,16 +106,17 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         //PackageItem
-        //[HttpPost(PackageEndpoint.CreatePackageType)]
-        //[CustomAuthorize(RoleEnum.Admin)]
-        //[ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
-        //public async Task<IActionResult> CreatePackageType([FromBody] CreatePackageTypeRequest request)
-        //{
-        //    var result = await _packageService.CreatePackageType(request);
-        //    return StatusCode(result.StatusCode, result);
-        //}
+        [HttpPost(PackageEndpoint.CreatePackageItem)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [SwaggerOperation(Summary = "Generate package item as v-card")]
+        public async Task<IActionResult> CreatePackageItem([FromQuery] int quantity, [FromBody] CreatePackageItemRequest request)
+        {
+            var result = await _packageService.CreatePackageItem(quantity, request);
+            return StatusCode(result.StatusCode, result);
+        }
         [HttpPatch(PackageEndpoint.UpdatePackageItem)]
-        //[CustomAuthorize(RoleEnum.Admin)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> UpdatePackageItem(Guid id, [FromBody] UpdatePackageItemRequest request)
         {
@@ -122,7 +124,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(PackageEndpoint.GetListPackageItem)]
-        //[CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> SearchAllPackageItem([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
@@ -130,11 +132,36 @@ namespace VegaCityApp.API.Controllers
             return Ok(result);
         }
         [HttpGet(PackageEndpoint.GetPackageItemById)]
-        // [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> SearchPackageItem(Guid id)
         {
             var result = await _packageService.SearchPackageItem(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch(PackageEndpoint.ActivePackageItem)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [SwaggerOperation(Summary = "Get ready to active")]
+        public async Task<IActionResult> ActivePackageItem(Guid id, [FromBody] ActivatePackageItemRequest request)
+        {
+            var result = await _packageService.ActivePackageItem(id, request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPost(PackageEndpoint.PrepareChargeMoney)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [SwaggerOperation(Summary = "Get ready to prepare charging")]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        public async Task<IActionResult> PrepareChargeMoneyEtag([FromBody] ChargeMoneyRequest request)
+        {
+            var result = await _packageService.PrepareChargeMoneyEtag(request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPost(PackageEndpoint.PackageItemPayment)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        public async Task<IActionResult> PackageItemPayment([FromQuery] Guid packageItemId,
+            [FromQuery] int price, [FromQuery] Guid storeId, [FromBody] List<OrderProduct> products)
+        {
+            var result = await _packageService.PackageItemPayment(packageItemId, price, storeId, products);
             return StatusCode(result.StatusCode, result);
         }
     }

@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using VegaCityApp.API.Constants;
 using VegaCityApp.API.Enums;
-using VegaCityApp.API.Payload.Request.Etag;
 using VegaCityApp.API.Payload.Request.Order;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.HouseResponse;
@@ -474,7 +473,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             else
             {
-                if (PaymentTypeHelper.allowedPaymentTypes.Contains(order.PaymentType) && PaymentTypeHelper.allowedPaymentTypes.Contains(order.PaymentType) && order.SaleType == SaleType.EtagCharge)
+                if (PaymentTypeHelper.allowedPaymentTypes.Contains(order.PaymentType) && PaymentTypeHelper.allowedPaymentTypes.Contains(order.PaymentType) && order.SaleType == SaleType.PackageItemCharge)
                 {
                     order.Status = OrderStatus.Completed;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();

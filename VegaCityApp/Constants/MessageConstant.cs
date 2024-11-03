@@ -117,6 +117,7 @@ public static class MessageConstant
         public const string PaymentQrCodeSuccess = "Payment With Etag Successfully!!";
         public const string FailedToPay = "Failed To Payment With Etag!!";
     }
+
     public static class UserMessage
     {   
         public const string CreateSessionSuccessfully = "Create Session Successfully !!";
@@ -243,6 +244,8 @@ public static class MessageConstant
     }
     public static class PackageItemMessage
     {
+        public const string EmailExist = "Email already exist !!";
+        public const string EmailInvalid = "Email Invalid";
         public const string CreatePackageItemSuccessfully = "Create Package Item Successfully!";
         public const string CreatePackageItemFail = "Create Package Item Failed!";
         public const string GetPackageItemsSuccessfully = "Get Package Items Successfully!";
@@ -256,10 +259,35 @@ public static class MessageConstant
         public const string DeletePackageItemSuccessfully = "Delete Package Item Successfully!";
         public const string DeletePackageItemFail = "Delete Package Item Failed!";
         public const string PackageItemExists = "Package Item Name already exists!";
+        public const string PhoneNumberExist = "Phone Number already exist !!";
+        public const string CCCDExist = "CCCD already exist !!";
+        public const string PackageItemExpired = "PackageItem Expired !!";
+        public const string CreateSuccessFully = "Create PackageItem Successfully !!";
+        public const string SearchPackageItemSuccess = "Search PackageItem Successfully !!";
+        public const string SearchAllPackageItemsSuccess = "Search All PackageItems Successfully !!";
+        public const string SearchAllPackageItemsFailed = "Failed To Search All PackageItems !!";
+        public const string UserNotFound = "User Not Found !!";
+        public const string PackageItemTypeNotFound = "PackageItemType Not Found !!";
+        public const string CreateFail = "Create PackageItem Fail :( !!";
+        public const string MarketZoneNotFound = "MarketZone Not Found !!";
+        public const string GetPackageItemsSuccess = "Get List PackageItems Successfully !!";
+        public const string UpdateSuccessFully = "Update PackageItem Successfully !!";
+        public const string UpdateFail = "Update PackageItem Fail :( !!";
+        public const string CCCDInvalid = "CCCD Invalid !!";
+        public const string PhoneNumberInvalid = "PhoneNumber Invalid !!";
+        public const string ActivatePackageItemSuccess = "Activate PackageItem Successfully !!";
+        public const string ActivatePackageItemFail = "Activate PackageItem Fail :( !!";
+        public const string CreateOrderForCharge = "Create Order For Charging PackageItem Money Successfully!";
+        public const string CreateOrderForChargeFail = "Create Order For Charging PackageItem Money Failed!";
+        public const string NotParentPackageItem = "PackageItem Must Be Parent To Generate Child's PackageItem";
+        public const string PaymentQrCodeSuccess = "Payment With PackageItem Successfully!!";
+        public const string FailedToPay = "Failed To Payment With PackageItem!!";
     }
 
     public static class PromotionMessage
     {
+        public const string PromotionOutOfStock = "Promotion Out Of Stock!";
+        public const string PromotionExpired = "Promotion Expired!";
         public const string CreatePromotionSuccessfully = "Create Promotion Successfully!";
         public const string CreatePromotionFail = "Create Promotion Failed!";
         public const string GetPromotionsSuccessfully = "Get Promotions Successfully!";

@@ -5,6 +5,12 @@ namespace VegaCityApp.Domain.Models
 {
     public partial class Transaction
     {
+        public Transaction()
+        {
+            CustomerMoneyTransfers = new HashSet<CustomerMoneyTransfer>();
+            StoreMoneyTransfers = new HashSet<StoreMoneyTransfer>();
+        }
+
         public Guid Id { get; set; }
         public string? Type { get; set; }
         public Guid? WalletId { get; set; }
@@ -22,5 +28,7 @@ namespace VegaCityApp.Domain.Models
         public virtual Store? Store { get; set; }
         public virtual User? User { get; set; }
         public virtual Wallet? Wallet { get; set; }
+        public virtual ICollection<CustomerMoneyTransfer> CustomerMoneyTransfers { get; set; }
+        public virtual ICollection<StoreMoneyTransfer> StoreMoneyTransfers { get; set; }
     }
 }

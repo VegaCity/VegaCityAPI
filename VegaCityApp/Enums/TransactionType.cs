@@ -5,7 +5,8 @@
         public const string EndDayCheckWalletCashier = "EndDayCheckWalletCashier";
         public const string WithdrawMoney = "WithdrawMoney";
         public const string ChargeMoney = "ChargeMoney";
-
+        public const string Payment = "Payment";
+        public const string StoreTransfer = "StoreTransfer";
     }
     public class TransactionStatus
     {

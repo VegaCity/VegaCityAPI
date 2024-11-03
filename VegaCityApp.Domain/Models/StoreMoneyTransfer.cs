@@ -14,8 +14,10 @@ namespace VegaCityApp.Domain.Models
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
         public string? Status { get; set; }
+        public Guid? TransactionId { get; set; }
 
         public virtual MarketZone? MarketZone { get; set; }
         public virtual Store? Store { get; set; }
+        public virtual Transaction? Transaction { get; set; }
     }
 }

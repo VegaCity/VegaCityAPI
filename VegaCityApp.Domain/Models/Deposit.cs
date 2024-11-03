@@ -18,6 +18,6 @@ namespace VegaCityApp.Domain.Models
 
         public virtual Order? Order { get; set; }
         public virtual PackageItem? PackageItem { get; set; }
-        public virtual WalletType? Wallet { get; set; }
+        public virtual Wallet? Wallet { get; set; }
     }
 }

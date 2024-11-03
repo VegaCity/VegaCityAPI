@@ -65,7 +65,7 @@ namespace VegaCityApp.Domain.Models
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=LEVIATHAN;Database=VegaCityApp;User Id=sa;Password=12345;Encrypt=True;TrustServerCertificate=True");
+                optionsBuilder.UseSqlServer("Server=LAPTOP-R0K7KBGI\\TRANGQUOCDAT,1433;Database=VegaCityApp;User Id=sa;Password=12345;Encrypt=True;TrustServerCertificate=True");
             }
         }
 
@@ -123,6 +123,11 @@ namespace VegaCityApp.Domain.Models
                     .WithMany(p => p.CustomerMoneyTransfers)
                     .HasForeignKey(d => d.PackageItemId)
                     .HasConstraintName("FK_CustomerMoneyTransfer_PackageItem");
+
+                entity.HasOne(d => d.Transaction)
+                    .WithMany(p => p.CustomerMoneyTransfers)
+                    .HasForeignKey(d => d.TransactionId)
+                    .HasConstraintName("FK_CustomerMoneyTransfer_Transaction");
             });
 
             modelBuilder.Entity<Deposit>(entity =>
@@ -133,9 +138,7 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.CrDate).HasColumnType("datetime");
 
-                entity.Property(e => e.Name)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.Property(e => e.PaymentType)
                     .HasMaxLength(50)
@@ -156,7 +159,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Wallet)
                     .WithMany(p => p.Deposits)
                     .HasForeignKey(d => d.WalletId)
-                    .HasConstraintName("FK_Deposit_WalletType");
+                    .HasConstraintName("FK_Deposit_Wallet");
             });
 
             modelBuilder.Entity<Hash>(entity =>
@@ -476,6 +479,11 @@ namespace VegaCityApp.Domain.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
+
+                entity.Property(e => e.PhoneNumber)
+                    .HasMaxLength(10)
+                    .IsUnicode(false)
+                    .IsFixedLength();
 
                 entity.Property(e => e.Status)
                     .HasMaxLength(50)
@@ -822,6 +830,11 @@ namespace VegaCityApp.Domain.Models
                     .WithMany(p => p.StoreMoneyTransfers)
                     .HasForeignKey(d => d.StoreId)
                     .HasConstraintName("FK_StoreMoneyTransfer_Store");
+
+                entity.HasOne(d => d.Transaction)
+                    .WithMany(p => p.StoreMoneyTransfers)
+                    .HasForeignKey(d => d.TransactionId)
+                    .HasConstraintName("FK_StoreMoneyTransfer_Transaction");
             });
 
             modelBuilder.Entity<StoreService>(entity =>
@@ -1032,6 +1045,11 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.StartDate).HasColumnType("datetime");
 
                 entity.Property(e => e.UpsDate).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Store)
+                    .WithMany(p => p.Wallets)
+                    .HasForeignKey(d => d.StoreId)
+                    .HasConstraintName("FK_Wallet_Store");
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Wallets)
