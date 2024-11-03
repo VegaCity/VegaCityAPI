@@ -113,14 +113,14 @@ namespace VegaCityApp.API.Controllers
         //    var result = await _packageService.CreatePackageType(request);
         //    return StatusCode(result.StatusCode, result);
         //}
-        //[HttpPatch(PackageEndpoint.UpdatePackageType)]
-        ////[CustomAuthorize(RoleEnum.Admin)]
-        //[ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        //public async Task<IActionResult> UpdatePackageType(Guid id, [FromBody] UpdatePackageTypeRequest request)
-        //{
-        //    var result = await _packageService.UpdatePackageType(id, request);
-        //    return StatusCode(result.StatusCode, result);
-        //}
+        [HttpPatch(PackageEndpoint.UpdatePackageItem)]
+        //[CustomAuthorize(RoleEnum.Admin)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> UpdatePackageItem(Guid id, [FromBody] UpdatePackageItemRequest request)
+        {
+            var result = await _packageService.UpdatePackageItem(id, request);
+            return StatusCode(result.StatusCode, result);
+        }
         [HttpGet(PackageEndpoint.GetListPackageItem)]
         //[CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]

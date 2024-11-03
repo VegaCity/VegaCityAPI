@@ -5,7 +5,7 @@ namespace VegaCityApp.API.Payload.Response.PackageResponse
     public class GetPackageTypeResponse : ResponseAPI
     {
         public Guid Id { get; set; }
-        public Guid? MarketZoneId { get; set; }
+        public Guid? ZoneId { get; set; }
         public string? Name { get; set; }
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }
@@ -18,7 +18,7 @@ namespace VegaCityApp.API.Payload.Response.PackageResponse
     public class GetListPackageTypeResponse : ResponseAPI
     {
         public Guid Id { get; set; }
-        public Guid? MarketZoneId { get; set; }
+        public Guid? ZoneId { get; set; }
         public string? Name { get; set; }
         public DateTime? CrDate { get; set; }
         public DateTime? UpsDate { get; set; }

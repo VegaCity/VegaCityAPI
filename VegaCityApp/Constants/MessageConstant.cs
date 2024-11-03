@@ -257,6 +257,26 @@ public static class MessageConstant
         public const string PackageItemExists = "Package Item Name already exists!";
     }
 
+    public static class PromotionMessage
+    {
+        public const string CreatePromotionSuccessfully = "Create Promotion Successfully!";
+        public const string CreatePromotionFail = "Create Promotion Failed!";
+        public const string GetPromotionsSuccessfully = "Get Promotions Successfully!";
+        public const string GetPromotionsFail = "Get Promotions Failed!";
+        public const string GetPromotionSuccessfully = "Get Promotion Successfully!";
+        public const string GetPromotionFail = "Get Promotion Failed!";
+        public const string NotFoundPromotion = "Promotion Not Found!";
+        public const string FoundPromotion = "Get Promotion Successfully!";
+        public const string UpdatePromotionSuccessfully = "Update Promotion Successfully!";
+        public const string UpdatePromotionFail = "Update Promotion Failed!";
+        public const string DeletePromotionSuccessfully = "Delete Promotion Successfully!";
+        public const string DeletePromotionFail = "Delete Promotion Failed!";
+        public const string PromotionExists = "Promotion Name already exists!";
+        public const string PromotionOrderExists = "Promotion Order Still exists!";
+        public const string InvalidEndDate = "EndDate not selects from the Past!";
+        public const string InvalidDuration = "StartDate Must not Sonner Than EndDate!";
+
+    }
 
     public static class ZoneMessage
     {

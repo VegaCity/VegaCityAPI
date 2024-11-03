@@ -22,7 +22,7 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> DeletePackageType(Guid PackageTypeId);
 
         //Task<ResponseAPI> CreatePackageType(CreatePackageTypeRequest req);
-        //Task<ResponseAPI> UpdatePackageType(Guid packageId, UpdatePackageTypeRequest req);
+        Task<ResponseAPI> UpdatePackageItem(Guid packageItemId, UpdatePackageItemRequest req);
         Task<ResponseAPI<IEnumerable<GetListPackageItemResponse>>> SearchAllPackageItem(int size, int page);
         Task<ResponseAPI> SearchPackageItem(Guid PackageItemId);
         //Task<ResponseAPI> DeletePackageType(Guid PackageTypeId);

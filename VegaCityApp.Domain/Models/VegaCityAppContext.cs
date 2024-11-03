@@ -65,7 +65,7 @@ namespace VegaCityApp.Domain.Models
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=LAPTOP-R0K7KBGI\\TRANGQUOCDAT,1433;Database=VegaCityApp;User Id=sa;Password=12345;Encrypt=True;TrustServerCertificate=True");
+                optionsBuilder.UseSqlServer("Server=LEVIATHAN;Database=VegaCityApp;User Id=sa;Password=12345;Encrypt=True;TrustServerCertificate=True");
             }
         }
 
@@ -548,10 +548,11 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.UpsDate).HasColumnType("datetime");
 
-                entity.HasOne(d => d.MarketZone)
+                entity.HasOne(d => d.Zone)
                     .WithMany(p => p.PackageTypes)
-                    .HasForeignKey(d => d.MarketZoneId)
-                    .HasConstraintName("FK_PackageType_MarketZone");
+                    .HasForeignKey(d => d.ZoneId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PackageType_Zone");
             });
 
             modelBuilder.Entity<Product>(entity =>
@@ -927,14 +928,16 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Address).HasMaxLength(200);
 
-                entity.Property(e => e.Birthday).HasColumnType("datetime");
+                entity.Property(e => e.Birthday).HasColumnType("date");
 
                 entity.Property(e => e.CccdPassport)
                     .HasMaxLength(12)
                     .IsUnicode(false)
                     .HasColumnName("CCCD_Passport");
 
-                entity.Property(e => e.CrDate).HasColumnType("datetime");
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate");
 
                 entity.Property(e => e.Description).HasMaxLength(400);
 
@@ -955,7 +958,9 @@ namespace VegaCityApp.Domain.Models
                     .IsUnicode(false)
                     .IsFixedLength();
 
-                entity.Property(e => e.UpsDate).HasColumnType("datetime");
+                entity.Property(e => e.UpsDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("upsDate");
 
                 entity.HasOne(d => d.MarketZone)
                     .WithMany(p => p.Users)
@@ -976,7 +981,9 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
-                entity.Property(e => e.CrDate).HasColumnType("datetime");
+                entity.Property(e => e.CrDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("crDate");
 
                 entity.Property(e => e.Name)
                     .HasMaxLength(50)
@@ -984,7 +991,9 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Token).IsUnicode(false);
 
-                entity.Property(e => e.UpsDate).HasColumnType("datetime");
+                entity.Property(e => e.UpsDate)
+                    .HasColumnType("datetime")
+                    .HasColumnName("upsDate");
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.UserRefreshTokens)

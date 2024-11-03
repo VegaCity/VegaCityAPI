@@ -7,6 +7,7 @@ namespace VegaCityApp.Domain.Models
     {
         public Zone()
         {
+            PackageTypes = new HashSet<PackageType>();
             UserSessions = new HashSet<UserSession>();
         }
 
@@ -20,6 +21,7 @@ namespace VegaCityApp.Domain.Models
 
         public virtual MarketZone MarketZone { get; set; } = null!;
         public virtual Store? Store { get; set; }
+        public virtual ICollection<PackageType> PackageTypes { get; set; }
         public virtual ICollection<UserSession> UserSessions { get; set; }
     }
 }
