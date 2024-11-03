@@ -33,45 +33,6 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            DateTime currentDate = DateTime.UtcNow;
-            if (req.EndDate < currentDate)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.EndateInThePast,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-            if (req.EndDate == req.StartDate)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.SameStrAndEndDate,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-
-            TimeSpan? duration = req.EndDate - req.StartDate;
-            if (duration.HasValue)
-            {
-                double totalHours = duration.Value.TotalHours;
-                if (totalHours < 48)
-                {
-                    return new ResponseAPI()
-                    {
-                        MessageResponse = PackageMessage.durationLimit,
-                        StatusCode = HttpStatusCodes.BadRequest
-                    };
-                }
-            }
-            else
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.InvalidDuration,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
             var newPackage = new Package()
             {
                 Id = Guid.NewGuid(),
@@ -308,23 +269,6 @@ namespace VegaCityApp.API.Services.Implement
                 return new ResponseAPI()
                 {
                     MessageResponse = PackageMessage.ExistedPackageName,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-            DateTime currentDate = DateTime.UtcNow;
-            if (req.EndDate < currentDate)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.EndateInThePast,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-            }
-            if (req.EndDate == req.StartDate)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.SameStrAndEndDate,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
