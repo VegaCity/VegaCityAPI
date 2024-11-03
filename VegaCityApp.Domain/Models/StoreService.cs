@@ -8,7 +8,7 @@ namespace VegaCityApp.Domain.Models
         public StoreService()
         {
             OrderDetails = new HashSet<OrderDetail>();
-            StoreServiceWalletTypeMappings = new HashSet<StoreServiceWalletTypeMapping>();
+            WalletTypeStoreServiceMappings = new HashSet<WalletTypeStoreServiceMapping>();
         }
 
         public Guid Id { get; set; }
@@ -21,6 +21,6 @@ namespace VegaCityApp.Domain.Models
 
         public virtual Store Store { get; set; } = null!;
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
-        public virtual ICollection<StoreServiceWalletTypeMapping> StoreServiceWalletTypeMappings { get; set; }
+        public virtual ICollection<WalletTypeStoreServiceMapping> WalletTypeStoreServiceMappings { get; set; }
     }
 }

@@ -76,6 +76,13 @@ namespace VegaCityApp.Service.Implement
             user.Password = PasswordUtil.GenerateCharacter(10);
             user.StoreId = storeId;
             _unitOfWork.GetRepository<User>().UpdateAsync(user);
+            var mapping = new UserStoreMapping
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                StoreId = storeId
+            };
+            await _unitOfWork.GetRepository<UserStoreMapping>().InsertAsync(mapping);
             await _unitOfWork.CommitAsync();
             return user.Id;
         }
@@ -116,6 +123,13 @@ namespace VegaCityApp.Service.Implement
             switch (user.Status)
             {
                 case (int)UserStatusEnum.Active:
+                    if(user.Role.Name == RoleEnum.Store.GetDescriptionFromEnum())
+                    {
+                        //check mapping store
+                        var store = await _unitOfWork.GetRepository<UserStoreMapping>().SingleOrDefaultAsync(
+                            predicate: x => x.UserId == user.Id) 
+                            ?? throw new BadHttpRequestException("Store Not Mapping with account", HttpStatusCodes.BadRequest);
+                    }
                     if (user.Password == PasswordUtil.HashPassword(req.Password))
                     {
                         //generate Access Token
@@ -205,7 +219,31 @@ namespace VegaCityApp.Service.Implement
             };
 
         }
-       
+        public async Task<ResponseAPI<UserSession>> CreateUserSession(Guid userId, SessionRequest req)
+        {
+            var user = await SearchUser(userId);
+            var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == req.ZoneId && !x.Deflag)
+                ?? throw new BadHttpRequestException("Zone not found");
+            var session = new UserSession
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                ZoneId = req.ZoneId,
+                StartDate = req.StartDate,
+                EndDate = req.EndDate,
+                TotalChangeCash = 0,
+                Status = SessionStatusEnum.Active.GetDescriptionFromEnum(),
+                TotalFinalAmount = 0
+            };
+            await _unitOfWork.GetRepository<UserSession>().InsertAsync(session);
+            await _unitOfWork.CommitAsync();
+            return new ResponseAPI<UserSession>
+            {
+                StatusCode = HttpStatusCodes.Created,
+                MessageResponse = UserMessage.CreateSessionSuccessfully,
+                Data = session
+            };
+        }
         public async Task<ResponseAPI> GetRefreshTokenByEmail(string email, GetApiKey req)
         {
             //check email valid format

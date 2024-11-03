@@ -41,6 +41,7 @@ public static class ApiEndPointConstant
     }
     public static class UserEndpoint
     {
+        public const string CreateSession = ApiEndpoint + "/user/{id}/session";
         public const string ApproveUser = ApiEndpoint + "/user/{userId}/approve-user";
         public const string GetListUser = ApiEndpoint + "/users";
         public const string GetListUserByRoleId = ApiEndpoint + "/users";
@@ -78,7 +79,7 @@ public static class ApiEndPointConstant
         public const string GetListStore = ApiEndpoint + "/stores";
         public const string GetStore = ApiEndpoint + "/store/{id}";
         public const string DeleteStore = ApiEndpoint + "/store/{id}";
-        public const string GetMenu = ApiEndpoint + "/store/{id}/menu";
+        public const string GetMenu = ApiEndpoint + "/store/{phone}/menu";
     }
     public static class HouseEndpoint
     {

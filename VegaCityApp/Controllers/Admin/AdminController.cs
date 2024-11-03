@@ -26,6 +26,14 @@ namespace VegaCityApp.API.Controllers.Admin
         {
             _service = service;
         }
+        [HttpPost(UserEndpoint.CreateSession)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [SwaggerOperation(Summary = "Create new session for user")]
+        public async Task<IActionResult> CreateSession(Guid id,[FromBody] SessionRequest request)
+        {
+            var result = await _service.CreateUserSession(id, request);
+            return StatusCode(result.StatusCode, result);
+        }
         [HttpPost(UserEndpoint.CreateUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [SwaggerOperation(Summary = "Create new user for admin, cashier web, cashier app")]

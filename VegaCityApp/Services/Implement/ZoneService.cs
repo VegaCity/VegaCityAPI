@@ -1,10 +1,8 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using VegaCityApp.API.Constants;
 using VegaCityApp.API.Payload.Request.Zone;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.GetZoneResponse;
-using VegaCityApp.API.Payload.Response.WalletResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
 using VegaCityApp.Domain.Models;
@@ -64,7 +62,7 @@ namespace VegaCityApp.API.Services.Implement
         {
           
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == Id && !x.Deflag,
-                include: z => z.Include(zone => zone.Store));
+                include: z => z.Include(zone => zone.Stores));
             if (zone == null)
             {
                 return new ResponseAPI()
@@ -149,7 +147,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(
                 predicate: x => x.Id == ZoneId && !x.Deflag,
-                include: zone => zone.Include(y => y.Store))
+                include: zone => zone.Include(y => y.Stores))
                 ?? throw new BadHttpRequestException(ZoneMessage.SearchZoneFail, HttpStatusCodes.NotFound);
 
             return new ResponseAPI<Zone>

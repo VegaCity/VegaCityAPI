@@ -55,8 +55,7 @@ namespace VegaCityApp.API.Services.Implement
                 Id = Guid.NewGuid(),
                 WalletTypeId = id,
                 StoreServiceId = serviceStoreId,
-                CrDate = TimeUtils.GetCurrentSEATime(),
-                UpsDate = TimeUtils.GetCurrentSEATime(),
+                CrDate = TimeUtils.GetCurrentSEATime()
             };
             await _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().InsertAsync(newMapping);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
@@ -141,7 +140,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> DeleteWalletType(Guid id)
         {
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync
-                (predicate: x => x.Id == id && !x.Deflag
+                (predicate: x => x.Id == id && !x.Deflag, include: z => z.Include(a => a.WalletTypeStoreServiceMappings)
                 );
             if (walletType == null)
             {
@@ -151,13 +150,13 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = WalletTypeMessage.NotFoundWalletType
                 };
             }
-            //if (walletType.WalletTypeStoreServiceMappings.Count > 0)
-            //{
-            //    foreach (var item in walletType.WalletTypeStoreServiceMappings)
-            //    {
-            //        _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().DeleteAsync(item);
-            //    }
-            //}
+            if (walletType.WalletTypeStoreServiceMappings.Count > 0)
+            {
+                foreach (var item in walletType.WalletTypeStoreServiceMappings)
+                {
+                    _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().DeleteAsync(item);
+                }
+            }
             walletType.Deflag = true;
             walletType.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<WalletType>().UpdateAsync(walletType);
@@ -280,9 +279,9 @@ namespace VegaCityApp.API.Services.Implement
         public async Task EndDayCheckWalletCashier(Guid apiKey)
         {
             var data = (List<User>)await _unitOfWork.GetRepository<User>().GetListAsync
-                (predicate: x => (x.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierAppId)
-                                || x.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierWebId))
-                                && x.Status == (int)UserStatusEnum.Active);
+                (predicate: x => (x.Role.Name == RoleEnum.CashierApp.GetDescriptionFromEnum()
+                                || x.Role.Name == RoleEnum.CashierWeb.GetDescriptionFromEnum())
+                                && x.Status == (int)UserStatusEnum.Active, include: z => z.Include(a => a.Role));
             var maketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
                         (predicate: x => x.Id == apiKey);
             var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync

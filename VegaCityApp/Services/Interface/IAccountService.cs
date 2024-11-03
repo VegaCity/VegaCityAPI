@@ -11,7 +11,7 @@ namespace VegaCityApp.Service.Interface
     {
         Task AddRole();
         Task<LoginResponse> Login(LoginRequest req);
-
+        Task<ResponseAPI<UserSession>> CreateUserSession(Guid userId, SessionRequest req);
         Task<ResponseAPI> RefreshToken(ReFreshTokenRequest req);
 
         Task<ResponseAPI> GetRefreshTokenByEmail(string email, GetApiKey req);

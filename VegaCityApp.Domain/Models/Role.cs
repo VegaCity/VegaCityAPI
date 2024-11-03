@@ -5,10 +5,15 @@ namespace VegaCityApp.Domain.Models
 {
     public partial class Role
     {
+        public Role()
+        {
+            Users = new HashSet<User>();
+        }
+
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
         public bool Deflag { get; set; }
 
-        public virtual User? User { get; set; }
+        public virtual ICollection<User> Users { get; set; }
     }
 }

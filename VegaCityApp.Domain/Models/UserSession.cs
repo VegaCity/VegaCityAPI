@@ -12,6 +12,7 @@ namespace VegaCityApp.Domain.Models
         public int? TotalChangeCash { get; set; }
         public int? TotalFinalAmount { get; set; }
         public Guid ZoneId { get; set; }
+        public string? Status { get; set; }
 
         public virtual User User { get; set; } = null!;
         public virtual Zone Zone { get; set; } = null!;

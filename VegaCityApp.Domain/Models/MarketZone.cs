@@ -8,7 +8,6 @@ namespace VegaCityApp.Domain.Models
         public MarketZone()
         {
             CustomerMoneyTransfers = new HashSet<CustomerMoneyTransfer>();
-            PackageTypes = new HashSet<PackageType>();
             Promotions = new HashSet<Promotion>();
             StoreMoneyTransfers = new HashSet<StoreMoneyTransfer>();
             Users = new HashSet<User>();
@@ -31,7 +30,6 @@ namespace VegaCityApp.Domain.Models
 
         public virtual MarketZoneConfig? MarketZoneConfig { get; set; }
         public virtual ICollection<CustomerMoneyTransfer> CustomerMoneyTransfers { get; set; }
-        public virtual ICollection<PackageType> PackageTypes { get; set; }
         public virtual ICollection<Promotion> Promotions { get; set; }
         public virtual ICollection<StoreMoneyTransfer> StoreMoneyTransfers { get; set; }
         public virtual ICollection<User> Users { get; set; }

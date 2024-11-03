@@ -136,22 +136,11 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> SearchStore(Guid StoreId)
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
-                predicate: x => x.Id == StoreId && !x.Deflag
+                predicate: x => x.Id == StoreId && !x.Deflag, 
+                include: z => z.Include(a => a.StoreServices)
+                               .Include(a => a.Menus).ThenInclude(a => a.Products)
             );
-            //store.Users = store.Users.Select(x => new User{ 
-            //    Id = x.Id,
-            //    //FullName = x.FullName,
-            //    IsChange = x.IsChange,
-            //    PhoneNumber = x.PhoneNumber,
-            //    Address = x.Address,
-            //    Email = x.Email,
-            //    Gender = x.Gender,
-            //    Birthday = x.Birthday,
-            //    CccdPassport = x.CccdPassport,
-            //    Description = x.Description,
-            //    ImageUrl = x.ImageUrl,
-            //    Status = x.Status
-            //}).ToList();
+
             if (store == null)
             {
                 return new ResponseAPI()
@@ -235,35 +224,38 @@ namespace VegaCityApp.API.Services.Implement
         }
 
 
-        public async Task<ResponseAPI> GetMenuFromPos(Guid id)
+        public async Task<ResponseAPI> GetMenuFromPos(string phone)
         {
              //call api pos - take n parse into Object Menu
              var data = await CallApiUtils.CallApiGetEndpoint(
               // "https://6504066dc8869921ae2466d4.mockapi.io/api/Product"
-              $"https://localhost:7131/api/v1/menus/{id}/menus"
+              $"https://localhost:7131/api/v1/menus/{phone}/menus"
                  );
-             var productsPosResponse = await CallApiUtils.GenerateObjectFromResponse<List<ProductsPosResponse>>(data);
+            var productsPosResponse = await CallApiUtils.GenerateObjectFromResponse<List<ProductsPosResponse>>(data);
              //lưu chuỗi json này
              //parse object list sang json
              string json = JsonConvert.SerializeObject(productsPosResponse);
              //check menu
              var checkMenu = await _unitOfWork.GetRepository<Menu>()
-                 .SingleOrDefaultAsync(predicate: x => x.StoreId == id && !x.Deflag);
+                 .SingleOrDefaultAsync(predicate: x => x.Store.PhoneNumber == phone && !x.Deflag);
              var store = await _unitOfWork.GetRepository<Store>()
-                 .SingleOrDefaultAsync(predicate: x => x.Id == id && !x.Deflag);
+                 .SingleOrDefaultAsync(predicate: x => x.PhoneNumber == phone && !x.Deflag);
+            if(store.StoreType.GetDescriptionFromEnum() == StoreTypeEnum.Service.GetDescriptionFromEnum())
+                throw new BadHttpRequestException("This store is service store, not support menu");
             if (checkMenu == null)
             {
                 var newMenu = new Menu()
                 {
                     Id = Guid.NewGuid(),
-                    StoreId = id,
+                    StoreId = store.Id,
                     Deflag = false,
                     Address = store.Address,
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     ImageUrl = "string",
                     MenuJson = json,
                     Name = store.ShortName + "Menu",
-                    PhoneNumber = store.PhoneNumber
+                    PhoneNumber = store.PhoneNumber,
+                    UpsDate = TimeUtils.GetCurrentSEATime()
                 };
                 await _unitOfWork.GetRepository<Menu>().InsertAsync(newMenu);
                 await _unitOfWork.CommitAsync();
@@ -314,31 +306,35 @@ namespace VegaCityApp.API.Services.Implement
                     predicate: x=> x.Name == Category.ProductCategory );
                 if (productCategory == null)
                 {
-                    foreach (var product in listProduct)
-                    {
-                        if (product.ProductCategory == Category.ProductCategory)
-                        {
-                            products.Add(new ProductFromPos()
-                            {
-                                Name = product.Name,
-                                Id = product.Id,
-                                ImgUrl = product.ImgUrl,
-                                Price = product.Price
-                            });
-                        }
-                    }
-
-                    var json = JsonConvert.SerializeObject(products);
                     var newProductCateGory = new ProductCategory()
                     {
                         Id = Guid.NewGuid(),
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         Name = Category.ProductCategory,
-                        //ProductJson = json,
-                        UpsDate = TimeUtils.GetCurrentSEATime(),
-                        //MenuId = MenuId
+                        Deflag = false,
+                        Description = "string",
+                        UpsDate = TimeUtils.GetCurrentSEATime()
                     };
                     await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCateGory);
+                    foreach(var product in listProduct)
+                    {
+                        if(product.ProductCategory == Category.ProductCategory)
+                        {
+                            var newProduct = new Product()
+                            {
+                                Id = Guid.NewGuid(),
+                                CrDate = TimeUtils.GetCurrentSEATime(),
+                                ImageUrl = product.ImgUrl,
+                                ProductCategoryId = newProductCateGory.Id,
+                                Status = "Active",
+                                MenuId = MenuId,
+                                Name = product.Name,
+                                Price = product.Price,
+                                UpsDate = TimeUtils.GetCurrentSEATime()
+                            };
+                            await _unitOfWork.GetRepository<Product>().InsertAsync(newProduct);
+                        }
+                    }
                     await _unitOfWork.CommitAsync();
                     //xoa product
                     products.Clear();
