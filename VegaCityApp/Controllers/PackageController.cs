@@ -62,5 +62,80 @@ namespace VegaCityApp.API.Controllers
             var result = await _packageService.DeletePackage(id);
             return StatusCode(result.StatusCode, result);
         }
+        //PackageType
+        [HttpPost(PackageEndpoint.CreatePackageType)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        public async Task<IActionResult> CreatePackageType([FromBody] CreatePackageTypeRequest request)
+        {
+            var result = await _packageService.CreatePackageType(request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch(PackageEndpoint.UpdatePackageType)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> UpdatePackageType(Guid id, [FromBody] UpdatePackageTypeRequest request)
+        {
+            var result = await _packageService.UpdatePackageType(id, request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(PackageEndpoint.GetListPackageType)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchAllPackageType([FromQuery] int size = 10, [FromQuery] int page = 1)
+        {
+            var result = await _packageService.SearchAllPackageType(size, page);
+            return Ok(result);
+        }
+        [HttpGet(PackageEndpoint.GetPackageTypeById)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchPackageType(Guid id)
+        {
+            var result = await _packageService.SearchPackageType(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpDelete(PackageEndpoint.DeletePackageType)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [SwaggerOperation(Summary = "If delete PackageType, Everything in package type will be deleted")]
+        public async Task<IActionResult> DeletePackageType(Guid id)
+        {
+            var result = await _packageService.DeletePackageType(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        //PackageItem
+        //[HttpPost(PackageEndpoint.CreatePackageType)]
+        //[CustomAuthorize(RoleEnum.Admin)]
+        //[ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        //public async Task<IActionResult> CreatePackageType([FromBody] CreatePackageTypeRequest request)
+        //{
+        //    var result = await _packageService.CreatePackageType(request);
+        //    return StatusCode(result.StatusCode, result);
+        //}
+        [HttpPatch(PackageEndpoint.UpdatePackageItem)]
+        //[CustomAuthorize(RoleEnum.Admin)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> UpdatePackageItem(Guid id, [FromBody] UpdatePackageItemRequest request)
+        {
+            var result = await _packageService.UpdatePackageItem(id, request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(PackageEndpoint.GetListPackageItem)]
+        //[CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchAllPackageItem([FromQuery] int size = 10, [FromQuery] int page = 1)
+        {
+            var result = await _packageService.SearchAllPackageItem(size, page);
+            return Ok(result);
+        }
+        [HttpGet(PackageEndpoint.GetPackageItemById)]
+        // [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchPackageItem(Guid id)
+        {
+            var result = await _packageService.SearchPackageItem(id);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }

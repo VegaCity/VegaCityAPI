@@ -63,6 +63,16 @@ public static class ApiEndPointConstant
         public const string GetListPackage = ApiEndpoint + "/packages";
         public const string GetPackageById = ApiEndpoint + "/package/{id}";
         public const string DeletePackage = ApiEndpoint + "/package/{id}";
+        public const string GetListPackageType = ApiEndpoint + "/package-types";
+        public const string GetPackageTypeById = ApiEndpoint + "/package-type/{id}";
+        public const string CreatePackageType = ApiEndpoint + "/package-type";
+        public const string UpdatePackageType = ApiEndpoint + "/package-type/{id}";
+        public const string DeletePackageType = ApiEndpoint + "/package-type/{id}";
+        public const string GetListPackageItem = ApiEndpoint + "/package-items";
+        public const string GetPackageItemById = ApiEndpoint + "/package-item/{id}";
+        public const string CreatePackageItem = ApiEndpoint + "/package-item";
+        public const string UpdatePackageItem = ApiEndpoint + "/package-item/{id}";
+
     }
 
     public static class ZoneEndPoint
@@ -151,5 +161,13 @@ public static class ApiEndPointConstant
         public const string UpdateReport = ApiEndpoint + "/report/{id}";
         public const string GetListIssueType = ApiEndpoint + "/report/issue-types";
         public const string GetListReports = ApiEndpoint + "/reports";
+    }
+    public static class PromotionEndPoint
+    {
+        public const string CreatePromotion = ApiEndpoint + "/promotion";
+        public const string UpdatePromotion = ApiEndpoint + "/promotion/{id}";
+        public const string SearchAllPromotions = ApiEndpoint + "/promotions";
+        public const string SearchPromotion = ApiEndpoint + "/promotion/{id}";
+        public const string DeletePromotion = ApiEndpoint + "/promotion/{id}";
     }
 }
