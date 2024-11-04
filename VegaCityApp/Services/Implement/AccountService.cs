@@ -221,6 +221,15 @@ namespace VegaCityApp.Service.Implement
         }
         public async Task<ResponseAPI<UserSession>> CreateUserSession(Guid userId, SessionRequest req)
         {
+            if (req.EndDate < req.StartDate)
+            {
+                return new ResponseAPI<UserSession>
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = UserMessage.EndDateInvalid
+                };
+            }
+            
             var user = await SearchUser(userId);
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == req.ZoneId && !x.Deflag)
                 ?? throw new BadHttpRequestException("Zone not found");
@@ -231,9 +240,11 @@ namespace VegaCityApp.Service.Implement
                 ZoneId = req.ZoneId,
                 StartDate = req.StartDate,
                 EndDate = req.EndDate,
-                TotalChangeCash = 0,
+                TotalCashReceive = 0,
                 Status = SessionStatusEnum.Active.GetDescriptionFromEnum(),
-                TotalFinalAmount = 0
+                TotalFinalAmountOrder = 0,
+                TotalQuantityOrder = 0,
+                TotalWithrawCash = 0
             };
             await _unitOfWork.GetRepository<UserSession>().InsertAsync(session);
             await _unitOfWork.CommitAsync();

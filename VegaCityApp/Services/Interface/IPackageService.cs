@@ -24,7 +24,7 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> ActivePackageItem(Guid packageItem, ActivatePackageItemRequest req);
         Task<ResponseAPI> UpdatePackageItem(Guid packageItemId, UpdatePackageItemRequest req);
         Task<ResponseAPI<IEnumerable<GetListPackageItemResponse>>> SearchAllPackageItem(int size, int page);
-        Task<ResponseAPI> SearchPackageItem(Guid PackageItemId);
+        Task<ResponseAPI<PackageItem>> SearchPackageItem(Guid PackageItemId);
         Task<ResponseAPI> PrepareChargeMoneyEtag(ChargeMoneyRequest req);
         Task<ResponseAPI> PackageItemPayment(Guid packageItemId, int price, Guid storeId, List<OrderProduct> products);
     }

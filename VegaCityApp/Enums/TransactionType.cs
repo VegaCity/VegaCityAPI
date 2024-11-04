@@ -7,6 +7,9 @@
         public const string ChargeMoney = "ChargeMoney";
         public const string Payment = "Payment";
         public const string StoreTransfer = "StoreTransfer";
+        public const string ReceiveMoney = "ReceiveMoney";
+        public const string RefundMoney = "RefundMoney";
+
     }
     public class TransactionStatus
     {

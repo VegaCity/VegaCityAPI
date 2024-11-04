@@ -24,7 +24,9 @@ namespace VegaCityApp.Domain.Models
         public DateTime UpsDate { get; set; }
         public int Amount { get; set; }
         public string Currency { get; set; } = null!;
+        public Guid? OrderId { get; set; }
 
+        public virtual Order? Order { get; set; }
         public virtual Store? Store { get; set; }
         public virtual User? User { get; set; }
         public virtual Wallet? Wallet { get; set; }

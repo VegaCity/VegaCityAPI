@@ -20,6 +20,7 @@ namespace VegaCityApp.API.Services.Implement
         {
         }
 
+        #region admin
         public async Task<ResponseAPI> CreatePackage(CreatePackageRequest req)
         {
             var result = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Name == req.Name);
@@ -160,22 +161,6 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
-        public async Task<ResponseAPI<Package>> SearchPackage(Guid PackageId)
-        {
-            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
-                predicate: x => x.Id == PackageId && x.Deflag==false,
-                include: package => package.Include(a => a.PackageDetails).Include(b => b.PackageOrders).Include(c => c.PackageItems)
-            ) ?? throw new BadHttpRequestException(PackageMessage.NotFoundPackage, HttpStatusCodes.NotFound);
-
-            return new ResponseAPI<Package>()
-            {
-                MessageResponse = PackageMessage.GetPackagesSuccessfully,
-                StatusCode = HttpStatusCodes.OK,
-                Data = package
-                
-            };
-        }
-
         public async Task<ResponseAPI> DeletePackage(Guid PackageId)
         {
             var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
@@ -206,8 +191,6 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
-
-        //Create PackageType
         public async Task<ResponseAPI> CreatePackageType(CreatePackageTypeRequest req)
         {
             var result = await _unitOfWork.GetRepository<PackageType>().SingleOrDefaultAsync(predicate: x => x.Name == req.Name);
@@ -247,8 +230,6 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = PackageTypeMessage.CreatePackageTypeFail
             };
         }
-
-       // Update PackageType
         public async Task<ResponseAPI> UpdatePackageType(Guid packageTypeId, UpdatePackageTypeRequest req)
         {
 
@@ -286,7 +267,55 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
+        public async Task<ResponseAPI> DeletePackageType(Guid PackageTypeId)
+        {
+            var packageType = await _unitOfWork.GetRepository<PackageType>().SingleOrDefaultAsync
+                (predicate: x => x.Id == PackageTypeId);
+            if (packageType == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = PackageTypeMessage.NotFoundPackageType
+                };
+            }
+            packageType.Deflag = true;
+            _unitOfWork.GetRepository<PackageType>().UpdateAsync(packageType);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    MessageResponse = PackageTypeMessage.DeletePackageTypeSuccessfully,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = new
+                    {
+                        PackageTypeId = packageType.Id
+                    }
+                }
+                : new ResponseAPI()
+                {
+                    MessageResponse = PackageTypeMessage.DeletePackageTypeFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+        }
+        #endregion
+        public async Task<ResponseAPI<Package>> SearchPackage(Guid PackageId)
+        {
+            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
+                predicate: x => x.Id == PackageId && x.Deflag==false,
+                include: package => package.Include(a => a.PackageDetails)
+                                           .Include(b => b.PackageOrders)
+                                           .Include(c => c.PackageItems)
+                                           .Include(x => x.PackageType)
+            ) ?? throw new BadHttpRequestException(PackageMessage.NotFoundPackage, HttpStatusCodes.NotFound);
 
+            return new ResponseAPI<Package>()
+            {
+                MessageResponse = PackageMessage.GetPackagesSuccessfully,
+                StatusCode = HttpStatusCodes.OK,
+                Data = package
+                
+            };
+        }
         public async Task<ResponseAPI<IEnumerable<GetPackageTypeResponse>>> SearchAllPackageType (int size, int page)
         {
             try
@@ -350,40 +379,23 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
 
-        public async Task<ResponseAPI> DeletePackageType(Guid PackageTypeId)
-        {
-            var packageType = await _unitOfWork.GetRepository<PackageType>().SingleOrDefaultAsync
-                (predicate: x => x.Id == PackageTypeId);
-            if (packageType == null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = PackageTypeMessage.NotFoundPackageType
-                };
-            }
-            packageType.Deflag = true;
-            _unitOfWork.GetRepository<PackageType>().UpdateAsync(packageType);
-            return await _unitOfWork.CommitAsync() > 0
-                ? new ResponseAPI()
-                {
-                    MessageResponse = PackageTypeMessage.DeletePackageTypeSuccessfully,
-                    StatusCode = HttpStatusCodes.OK,
-                    Data = new
-                    {
-                        PackageTypeId = packageType.Id
-                    }
-                }
-                : new ResponseAPI()
-                {
-                    MessageResponse = PackageTypeMessage.DeletePackageTypeFail,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-        }
+        
         public async Task<ResponseAPI> CreatePackageItem(int quantity, CreatePackageItemRequest req)
         {
             if (quantity <= 0) throw new BadHttpRequestException("Number Quantity must be more than 0", HttpStatusCodes.BadRequest);
             var package = await SearchPackage(req.PackageId);
+            #region check 
+            // after done main flow, make utils service to shorten this code
+            var userId = GetUserIdFromJwt();
+            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
+                predicate: x => x.UserId == userId && x.ZoneId == package.Data.PackageType.ZoneId
+                               && x.StartDate >= TimeUtils.GetCurrentSEATime() && x.EndDate <= TimeUtils.GetCurrentSEATime()
+                               && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
+            ) 
+                ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session", 
+                                                            HttpStatusCodes.BadRequest);
+            #endregion
+            List<GetListPackageItemResponse> packageItems = new List<GetListPackageItemResponse>();
             for (var i = 0; i < quantity; i++)
             {
                 var newWallet = new Wallet()
@@ -408,13 +420,15 @@ namespace VegaCityApp.API.Services.Implement
                     IsChanged = false,
                     WalletId = newWallet.Id
                 };
+                packageItems.Add(_mapper.Map<GetListPackageItemResponse>(newPackageItem));
                 await _unitOfWork.GetRepository<PackageItem>().InsertAsync(newPackageItem);
             }
             await _unitOfWork.CommitAsync();
             return new ResponseAPI()
             {
                 MessageResponse = PackageItemMessage.CreatePackageItemSuccessfully,
-                StatusCode = HttpStatusCodes.Created
+                StatusCode = HttpStatusCodes.Created,
+                Data = packageItems
             };
         }
 
@@ -430,14 +444,17 @@ namespace VegaCityApp.API.Services.Implement
                     Id = x.Id,
                     PackageId = x.PackageId,
                     Name = x.Name,
-                    CCCDPassport = x.Cccdpassport,
+                    Cccdpassport = x.Cccdpassport,
                     Email = x.Email,
                     Status = x.Status,
                     Gender = GenderEnum.Male.ToString(),
                     IsAdult = x.IsAdult,
                     WalletId = x.WalletId,
                     CrDate = x.CrDate,
-                    UpsDate = x.UpsDate,     
+                    UpsDate = x.UpsDate,
+                    IsChanged = x.IsChanged,
+                    PhoneNumber = x.PhoneNumber,
+                    Rfid = x.Rfid
                 },
                 page: page,
                 size: size,
@@ -472,7 +489,7 @@ namespace VegaCityApp.API.Services.Implement
 
         }
 
-        public async Task<ResponseAPI> SearchPackageItem(Guid PackageItemId)
+        public async Task<ResponseAPI<PackageItem>> SearchPackageItem(Guid PackageItemId)
         {
             var packageItem = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(
                 predicate: x => x.Id == PackageItemId && x.Status == PackageItemStatus.Active.ToString(),
@@ -483,29 +500,38 @@ namespace VegaCityApp.API.Services.Implement
 
             if (packageItem == null)
             {
-                return new ResponseAPI()
+                return new ResponseAPI<PackageItem>()
                 {
                     MessageResponse = PackageItemMessage.NotFoundPackageItem,
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
 
-            return new ResponseAPI()
+            return new ResponseAPI<PackageItem>()
             {
                 MessageResponse = PackageItemMessage.GetPackageItemSuccessfully,
                 StatusCode = HttpStatusCodes.OK,
-                Data = new
-                {
-                    packageItem
-                }
+                Data = packageItem
             };
         }
 
         public async Task<ResponseAPI> UpdatePackageItem(Guid packageItemId, UpdatePackageItemRequest req)
         {
             var packageItem = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync
-                (predicate: x => x.Id == packageItemId && x.Status == PackageItemStatus.Active.ToString()
+                (predicate: x => x.Id == packageItemId && x.Status == PackageItemStatus.Active.ToString(),
+                 include: packageItem => packageItem.Include(b => b.Package).ThenInclude(c => c.PackageType)
             );
+            #region check 
+            // after done main flow, make utils service to shorten this code
+            var userId = GetUserIdFromJwt();
+            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
+                predicate: x => x.UserId == userId && x.ZoneId == packageItem.Package.PackageType.ZoneId
+                               && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
+                               && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
+            )
+                ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
+                                                            HttpStatusCodes.BadRequest);
+            #endregion
             if (packageItem == null)
                 throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
             if(packageItem.IsChanged == true)
@@ -532,6 +558,7 @@ namespace VegaCityApp.API.Services.Implement
         //active Package Item
         public async Task<ResponseAPI> ActivePackageItem(Guid packageItem, ActivatePackageItemRequest req)
         {
+
             //check if cccd or passport 
             if(!ValidationUtils.IsCCCD(req.Cccdpassport))
                 throw new BadHttpRequestException(PackageItemMessage.CCCDInvalid, HttpStatusCodes.BadRequest);
@@ -540,9 +567,21 @@ namespace VegaCityApp.API.Services.Implement
             if(!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
                 throw new BadHttpRequestException(PackageItemMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
             var packageItemExist = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(
-                predicate: x => x.Id == packageItem && x.Status == PackageItemStatusEnum.Inactive.GetDescriptionFromEnum(), include: z => z.Include(a => a.Package))
+                predicate: x => x.Id == packageItem && x.Status == PackageItemStatusEnum.Inactive.GetDescriptionFromEnum(), 
+                include: z => z.Include(a => a.Package).ThenInclude(z => z.PackageType))
                     ?? throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
-            if(req.Cccdpassport == packageItemExist.Cccdpassport)
+            #region check 
+            // after done main flow, make utils service to shorten this code
+            var userId = GetUserIdFromJwt();
+            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
+                predicate: x => x.UserId == userId && x.ZoneId == packageItemExist.Package.PackageType.ZoneId
+                               && x.StartDate >= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
+                               && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
+            )
+                ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
+                                                            HttpStatusCodes.BadRequest);
+            #endregion
+            if (req.Cccdpassport == packageItemExist.Cccdpassport)
                 throw new BadHttpRequestException(PackageItemMessage.CCCDExist, HttpStatusCodes.BadRequest);
             if(req.Email == packageItemExist.Email)
                 throw new BadHttpRequestException(PackageItemMessage.EmailExist, HttpStatusCodes.BadRequest);
@@ -585,11 +624,20 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            //get user id from token
-            Guid userId = GetUserIdFromJwt();
             var packageItemExsit = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageItemId
-            && x.Cccdpassport == req.CccdPassport, include: w => w.Include(wallet => wallet.Wallet)) 
+            && x.Cccdpassport == req.CccdPassport, include: w => w.Include(wallet => wallet.Wallet).Include(z => z.Package).ThenInclude(i => i.PackageType)) 
                 ?? throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
+            #region check session
+            // after done main flow, make utils service to shorten this code
+            var userId = GetUserIdFromJwt();
+            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
+                predicate: x => x.UserId == userId && x.ZoneId == packageItemExsit.Package.PackageType.ZoneId
+                               && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
+                               && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
+            )
+                ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
+                                                            HttpStatusCodes.BadRequest);
+            #endregion
             if (packageItemExsit.Wallet.EndDate < TimeUtils.GetCurrentSEATime())
                 throw new BadHttpRequestException(PackageItemMessage.PackageItemExpired, HttpStatusCodes.BadRequest);
             if (PaymentTypeHelper.allowedPaymentTypes.Contains(req.PaymentType) == false)
@@ -632,6 +680,22 @@ namespace VegaCityApp.API.Services.Implement
                     Status = OrderStatus.Pending,
                 };
                 await _unitOfWork.GetRepository<PackageOrder>().InsertAsync(packageOrder);
+                var transactionCharge = new Transaction()
+                {
+                    Id = Guid.NewGuid(),
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    Amount = req.ChargeAmount,
+                    OrderId = newOrder.Id,
+                    Status = TransactionStatus.Pending,
+                    Type = TransactionType.ChargeMoney,
+                    WalletId = packageItemExsit.WalletId,
+                    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                    Description = "Charge Money for: " + packageItemExsit.Name + "with balance: " + req.ChargeAmount,
+                    IsIncrease = true,
+                    UserId = newOrder.UserId
+                };
+                await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionCharge);
                 return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
                 {
                     MessageResponse = PackageItemMessage.CreateOrderForCharge,
@@ -640,6 +704,9 @@ namespace VegaCityApp.API.Services.Implement
                     {
                         invoiceId = newOrder.InvoiceId,
                         balance = req.ChargeAmount,
+                        transactionChargeId = transactionCharge.Id,
+                        packageOrderId = packageOrder.Id,
+                        packageItemId = packageItemExsit.Id,
                         Key = key,
                         UrlDirect = $"https://api.vegacity.id.vn/api/v1/payment/{req.PaymentType.ToLower()}/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
                         UrlIpn = $"https://vegacity.id.vn/order-status?status=success&orderId={newOrder.Id}"
@@ -699,6 +766,22 @@ namespace VegaCityApp.API.Services.Implement
                     PhoneNumber = packageItemExsit.PhoneNumber
                 };
                 await _unitOfWork.GetRepository<PackageOrder>().InsertAsync(packageOrder);
+                var transactionCharge = new Transaction()
+                {
+                    Id = Guid.NewGuid(),
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    Amount = req.ChargeAmount,
+                    OrderId = newOrder.Id,
+                    Status = TransactionStatus.Pending,
+                    Type = TransactionType.ChargeMoney,
+                    WalletId = packageItemExsit.WalletId,
+                    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                    Description = "Charge Money for: " + packageItemExsit.Name + "with balance: " + req.ChargeAmount,
+                    IsIncrease = true,
+                    UserId = newOrder.UserId
+                };
+                await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionCharge);
                 await _unitOfWork.CommitAsync();
                 return new ResponseAPI()
                 {
@@ -707,6 +790,9 @@ namespace VegaCityApp.API.Services.Implement
                     Data = new
                     {
                         invoiceId = newOrder.InvoiceId,
+                        packageOrderId = packageOrder.Id,
+                        packageItemId = packageItemExsit.Id,
+                        transactionChargeId = transactionCharge.Id,
                         balance = req.ChargeAmount,
                         Key = req.PaymentType + "_" + newOrder.InvoiceId,
                         UrlDirect = $"https://api.vegacity.id.vn/api/v1/payment/{req.PaymentType.ToLower()}/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://
@@ -923,5 +1009,6 @@ namespace VegaCityApp.API.Services.Implement
                    MessageResponse = EtagMessage.FailedToPay
                };
         }
+
     }
 }

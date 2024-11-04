@@ -11,6 +11,7 @@ namespace VegaCityApp.Domain.Models
             OrderDetails = new HashSet<OrderDetail>();
             PackageOrders = new HashSet<PackageOrder>();
             PromotionOrders = new HashSet<PromotionOrder>();
+            Transactions = new HashSet<Transaction>();
         }
 
         public Guid Id { get; set; }
@@ -35,5 +36,6 @@ namespace VegaCityApp.Domain.Models
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
         public virtual ICollection<PackageOrder> PackageOrders { get; set; }
         public virtual ICollection<PromotionOrder> PromotionOrders { get; set; }
+        public virtual ICollection<Transaction> Transactions { get; set; }
     }
 }

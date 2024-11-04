@@ -485,6 +485,11 @@ namespace VegaCityApp.Domain.Models
                     .IsUnicode(false)
                     .IsFixedLength();
 
+                entity.Property(e => e.Rfid)
+                    .HasMaxLength(50)
+                    .IsUnicode(false)
+                    .HasColumnName("RFID");
+
                 entity.Property(e => e.Status)
                     .HasMaxLength(50)
                     .IsUnicode(false);
@@ -880,6 +885,11 @@ namespace VegaCityApp.Domain.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.UpsDate).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.Transactions)
+                    .HasForeignKey(d => d.OrderId)
+                    .HasConstraintName("FK_Transaction_Order");
 
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.Transactions)

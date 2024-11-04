@@ -26,6 +26,7 @@ namespace VegaCityApp.Domain.Models
         public Guid? WalletId { get; set; }
         public bool? IsChanged { get; set; }
         public string? PhoneNumber { get; set; }
+        public string? Rfid { get; set; }
 
         public virtual Package Package { get; set; } = null!;
         public virtual Wallet? Wallet { get; set; }

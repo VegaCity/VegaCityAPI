@@ -14,6 +14,15 @@ namespace VegaCityApp.API.Enums
             "QRCode"
         };
     }
+    public enum PaymentTypeEnum
+    {
+        ZaloPay,
+        Momo,
+        VnPay,
+        PayOS,
+        Cash,
+        QRCode
+    }
     public static class SaleTypeHelper
     {
         public static readonly string[] allowedSaleType =

@@ -9,8 +9,10 @@ namespace VegaCityApp.Domain.Models
         public Guid UserId { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public int? TotalChangeCash { get; set; }
-        public int? TotalFinalAmount { get; set; }
+        public int? TotalCashReceive { get; set; }
+        public int? TotalFinalAmountOrder { get; set; }
+        public int? TotalQuantityOrder { get; set; }
+        public int? TotalWithrawCash { get; set; }
         public Guid ZoneId { get; set; }
         public string? Status { get; set; }
 

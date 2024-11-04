@@ -24,7 +24,7 @@
     public class ConfirmOrderForCashierRequest
     {
         public string InvoiceId { get; set; }
-        //public GenerateEtagRequest? GenerateEtagRequest { get; set; }
+        public string? TransactionChargeId { get; set; }
     }
     public class CustomerInfo
     {
