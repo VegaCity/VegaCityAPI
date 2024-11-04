@@ -56,6 +56,7 @@ public static class DependencyServices
         //string Database = "VegaCityApp";
         //string Port = "6789";
         string Host = "LAPTOP-R0K7KBGI\\TRANGQUOCDAT";
+        //string Host = "LEVIATHAN";
         string UserName = "sa";
         string Password = "12345";
         string Database = "VegaCityApp";

@@ -724,7 +724,8 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> PayOSPayment(PaymentRequest req)
         {
-            var checkOrder = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.InvoiceId == req.InvoiceId && x.Status == OrderStatus.Pending);
+            var checkOrder = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.InvoiceId == req.InvoiceId && x.Status == OrderStatus.Pending,
+                     include: y => y.Include( a => a.PackageItem));
             if (checkOrder == null)
             {
                 return new ResponseAPI()
@@ -734,50 +735,52 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             List<PayOSItems> items = new List<PayOSItems>(); //xiu xai
-            foreach (var orderDetail in checkOrder.OrderDetails)
-            {
-                //if (!string.IsNullOrEmpty(orderDetail.ProductJson))
-                //{
-                //    //var products = JsonConvert.DeserializeObject<List<ProductFromPos>>(orderDetail.ProductJson);
-                //    //var dynamicProducts = JsonConvert.DeserializeObject<List<dynamic>>(orderDetail.ProductJson);
+            //foreach (var orderDetail in checkOrder.OrderDetails)
+            //{
+            //    //if (!string.IsNullOrEmpty(orderDetail.ProductJson))
+            //    //{
+            //    //    //var products = JsonConvert.DeserializeObject<List<ProductFromPos>>(orderDetail.ProductJson);
+            //    //    //var dynamicProducts = JsonConvert.DeserializeObject<List<dynamic>>(orderDetail.ProductJson);
 
-                //    for (int i = 0; i < products.Count; i++)
-                //    {
-                //        var product = products[i];
-                //        var dynamicProduct = dynamicProducts[i];
-                //        int quantity = dynamicProduct.Quantity != null ? (int)dynamicProduct.Quantity : (orderDetail.Quantity ?? 1);
+            //    //    for (int i = 0; i < products.Count; i++)
+            //    //    {
+            //    //        var product = products[i];
+            //    //        var dynamicProduct = dynamicProducts[i];
+            //    //        int quantity = dynamicProduct.Quantity != null ? (int)dynamicProduct.Quantity : (orderDetail.Quantity ?? 1);
 
-                //        items.Add(new PayOSItems
-                //        {
-                //            name = product.Name,
-                //            quantity = quantity,
-                //            price = product.Price
-                //        });
-                //    }
-                //}
-            }
+            //    //        items.Add(new PayOSItems
+            //    //        {
+            //    //            name = product.Name,
+            //    //            quantity = quantity,
+            //    //            price = product.Price   
+            //    //        });
+            //    //    }
+            //    //}
+            //}
             List<ItemData> itemDataList = items.Select(item => new ItemData(
              item.name,   // Mapping from PayOSItems model to ItemData of pay os's model
              item.quantity,
              item.price
              )).ToList();
-            if(req.Key != null && PaymentTypeHelper.allowedPaymentTypes.Contains(req.Key.Split('_')[0]) && req.Key.Split("_")[1] == checkOrder.InvoiceId)
+            string InnvoiceIdInt = req.InvoiceId.Substring(3);
+
+            if (req.Key != null && PaymentTypeHelper.allowedPaymentTypes.Contains(req.Key.Split('_')[0]) && req.Key.Split("_")[1] == checkOrder.InvoiceId)
             {
 
                 var paymentDataChargeMoney = new PaymentData(
-                    orderCode: Int64.Parse(checkOrder.InvoiceId.ToString()),  // Bạn có thể tạo mã đơn hàng tại đây
-                    amount: checkOrder.TotalAmount,
-                    description: "đơn hàng :" + req.InvoiceId,
-                    items: itemDataList,
-                    cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
-                    //returnUrl: PayOSConfiguration.ReturnUrlCharge,
-                     returnUrl: req.UrlDirect,
-                    // URL khi thanh toán thành công
-                    buyerName: null,//customerInfoEtag.EtagDetail.FullName,
-                    buyerEmail: "", // very require email here!
-                    buyerPhone: null,//customerInfoEtag.EtagDetail.PhoneNumber,
-                    buyerAddress: "",
-                    expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
+                     orderCode: Int64.Parse(InnvoiceIdInt),  // Bạn có thể tạo mã đơn hàng tại đây
+                     amount: checkOrder.TotalAmount,
+                     description: "đơn :" + req.InvoiceId,
+                     items: itemDataList,
+                     cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
+                                                                         //returnUrl: PayOSConfiguration.ReturnUrlCharge,
+                      returnUrl: req.UrlDirect,
+                     // URL khi thanh toán thành công
+                     buyerName: checkOrder.PackageItem.Name.ToString().Trim(),//customerInfoEtag.EtagDetail.FullName,
+                     buyerEmail: checkOrder.PackageItem.Email.ToString().Trim(), // very require email here!
+                     buyerPhone: checkOrder.PackageItem.PhoneNumber.ToString().Trim(),//customerInfoEtag.EtagDetail.PhoneNumber,
+                     buyerAddress: "VegaCity",
+                     expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
                 );
 
                 // Gọi hàm createPaymentLink từ PayOS với đối tượng PaymentData
@@ -797,7 +800,7 @@ namespace VegaCityApp.API.Services.Implement
                 try
                 {
                     var paymentData = new PaymentData(
-                        orderCode: Int64.Parse(checkOrder.InvoiceId.ToString()),  // Bạn có thể tạo mã đơn hàng tại đây
+                        orderCode: Int64.Parse(InnvoiceIdInt),  // Bạn có thể tạo mã đơn hàng tại đây
                         amount: checkOrder.TotalAmount,
                         description: "đơn hàng :" + req.InvoiceId,
                         items: itemDataList,
@@ -805,9 +808,9 @@ namespace VegaCityApp.API.Services.Implement
                         returnUrl: req.UrlDirect,  // URL khi thanh toán thành công
                         buyerName: null,//customerInfo.FullName.ToString(),//customerInfo.FullName.ToString(),
                         //buyerEmail: customerInfo.Email.ToString(), // very require email here!
-                        buyerEmail: "",
+                        buyerEmail: null,
                         buyerPhone: null,//customerInfo.PhoneNumber.ToString(),//,
-                        buyerAddress: "",// customerInfo.Email.ToString(),
+                        buyerAddress: null,// customerInfo.Email.ToString(),
                         expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
                     );
 
@@ -936,16 +939,17 @@ namespace VegaCityApp.API.Services.Implement
         {
             try
             {
-                string InvoiceId = orderCode;
+                string InvoiceId = orderCode;//take number and added vgc later
+                string ActualInvoiceId = ("VGC"+InvoiceId).ToString();
                 var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
-                predicate: x => x.InvoiceId == InvoiceId && x.Status == OrderStatus.Pending,
+                predicate: x => x.InvoiceId == ActualInvoiceId && x.Status == OrderStatus.Pending,
                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(x => x.PackageOrders)
                                        .Include(c => c.PackageItem).ThenInclude(r => r.Wallet)
                                        .Include(s => s.PromotionOrders));
                 //no delete
                 var orderCompleted = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                   (predicate: x => x.InvoiceId == orderCode && x.Status == OrderStatus.Completed);                                                                     //from here
+                   (predicate: x => x.InvoiceId == ActualInvoiceId && x.Status == OrderStatus.Completed);                                                                     //from here
                 if (order == null || order.Status == OrderStatus.Completed)
                 {
                     // If the order doesn't exist or is already processed, return not found
@@ -966,8 +970,8 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     if (order.PackageItem == null) throw new BadHttpRequestException("Package item or sale type not found", HttpStatusCodes.NotFound);
                 }
-                if (order.PaymentType != PaymentTypeEnum.ZaloPay.GetDescriptionFromEnum())
-                    throw new BadHttpRequestException("Payment is not ZaloPay", HttpStatusCodes.BadRequest);
+                if (order.PaymentType != PaymentTypeEnum.PayOS.GetDescriptionFromEnum())
+                    throw new BadHttpRequestException("Payment is not PayOS", HttpStatusCodes.BadRequest);
                 //bonus here
                 int PromotionAmount = 0; //not use
                 if (order.PromotionOrders.Count == 1)
@@ -1012,7 +1016,7 @@ namespace VegaCityApp.API.Services.Implement
                     IsIncrease = true,
                     Name = "Deposit from order " + order.InvoiceId,
                     PackageItemId = order.PackageItemId,
-                    PaymentType = PaymentTypeEnum.ZaloPay.GetDescriptionFromEnum()
+                    PaymentType = PaymentTypeEnum.PayOS.GetDescriptionFromEnum()
                 };
                 await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
                 //update wallet package item
