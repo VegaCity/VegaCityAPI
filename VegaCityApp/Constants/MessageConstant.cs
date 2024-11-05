@@ -287,6 +287,8 @@ public static class MessageConstant
 
     public static class PromotionMessage
     {
+        public const string AddPromotionFail = "Add Promotion Failed!";
+        public const string PromotionRequireAmount = "Amount required is not enough!";
         public const string PromotionOutOfStock = "Promotion Out Of Stock!";
         public const string PromotionExpired = "Promotion Expired!";
         public const string CreatePromotionSuccessfully = "Create Promotion Successfully!";

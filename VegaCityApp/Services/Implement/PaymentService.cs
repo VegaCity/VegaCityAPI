@@ -1274,125 +1274,239 @@ namespace VegaCityApp.API.Services.Implement
                 if (order.PaymentType != PaymentTypeEnum.ZaloPay.GetDescriptionFromEnum())
                     throw new BadHttpRequestException("Payment is not ZaloPay", HttpStatusCodes.BadRequest);
                 //bonus here
-                int PromotionAmount = 0; //not use
                 if (order.PromotionOrders.Count == 1)
                 {
-                    PromotionAmount = (int)(req.amount - order.PromotionOrders.SingleOrDefault().DiscountAmount);
-                }
-                order.Status = OrderStatus.Completed;
-                order.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                    order.Status = OrderStatus.Completed;
+                    order.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                    //session update
+                    sessionUser.TotalQuantityOrder += 1;
+                    sessionUser.TotalCashReceive += order.TotalAmount;
+                    sessionUser.TotalFinalAmountOrder += order.TotalAmount;
+                    _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
 
-                //session update
-                sessionUser.TotalQuantityOrder += 1;
-                sessionUser.TotalCashReceive += order.TotalAmount;
-                sessionUser.TotalFinalAmountOrder += order.TotalAmount;
-                _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
-
-                if (order.PackageOrders.Count != 0)
-                {
-                    foreach (var packageOrder in order.PackageOrders)
+                    if (order.PackageOrders.Count != 0)
                     {
-                        packageOrder.Status = OrderStatus.Completed;
-                        packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                        _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
+                        foreach (var packageOrder in order.PackageOrders)
+                        {
+                            packageOrder.Status = OrderStatus.Completed;
+                            packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                            _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
+                        }
                     }
-                }
-                else throw new BadHttpRequestException("Package order not found", HttpStatusCodes.NotFound);
+                    else throw new BadHttpRequestException("Package order not found", HttpStatusCodes.NotFound);
+                    //wallet cashier
+                    var wallet = order.User.Wallets.FirstOrDefault();
+                    wallet.Balance += order.TotalAmount;
+                    wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
 
-                //wallet cashier
-                var wallet = order.User.Wallets.FirstOrDefault();
-                wallet.Balance += order.TotalAmount;
-                wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
-                //create deposit
-                var deposit = new Deposit()
-                {
-                    Id = Guid.NewGuid(),
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    Amount = order.TotalAmount,
-                    WalletId = wallet.Id,
-                    OrderId = order.Id,
-                    IsIncrease = true,
-                    Name = "Deposit from order " + order.InvoiceId,
-                    PackageItemId = order.PackageItemId,
-                    PaymentType = PaymentTypeEnum.ZaloPay.GetDescriptionFromEnum()
-                };
-                await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
-                //update wallet package item
-                order.PackageItem.Wallet.Balance += order.TotalAmount;
-                order.PackageItem.Wallet.BalanceHistory += order.TotalAmount;
-                order.PackageItem.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.PackageItem.Wallet);
-
-                var transactionCharge = await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().SingleOrDefaultAsync
-                    (predicate: x => x.OrderId == order.Id)
-                    ?? throw new BadHttpRequestException("Transaction charge not found", HttpStatusCodes.NotFound);
-
-                transactionCharge.Status = TransactionStatus.Success.GetDescriptionFromEnum();
-                transactionCharge.UpsDate = TimeUtils.GetCurrentSEATime();
-                transactionCharge.DespositId = deposit.Id;
-                _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().UpdateAsync(transactionCharge);
-
-                //bill cashier receive money from packageItem
-                var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction()
-                {
-                    Id = Guid.NewGuid(),
-                    Amount = order.TotalAmount,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                    Description = "Receive money from order " + order.InvoiceId,
-                    IsIncrease = true,
-                    Status = TransactionStatus.Success.GetDescriptionFromEnum(),
-                    Type = TransactionType.ReceiveMoney,
-                    DespositId = deposit.Id,
-                    OrderId = order.Id,
-                    WalletId = order.User.Wallets.FirstOrDefault().Id,
-                    UserId = order.UserId,
-                    UpsDate = TimeUtils.GetCurrentSEATime()
-                };
-                await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
-
-                var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId);
-                if (marketZone == null) throw new BadHttpRequestException("Market zone not found", HttpStatusCodes.NotFound);
-                var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
-                    (predicate: x => x.Email == marketZone.Email && x.MarketZoneId == marketZone.Id, include: z => z.Include(w => w.Wallets));
-                if (admin == null) throw new BadHttpRequestException("Admin not found", HttpStatusCodes.NotFound);
-                var walletAdmin = admin.Wallets.FirstOrDefault();
-                //bill admin refund money to packageItem
-                var transactionAdminBalanceHistory = new VegaCityApp.Domain.Models.Transaction()
-                {
-                    Id = Guid.NewGuid(),
-                    Amount = order.TotalAmount,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                    Description = "Refund money from order: " + order.InvoiceId + "to PackageItem: " + order.PackageItem.Name,
-                    IsIncrease = false,
-                    Status = TransactionStatus.Success.GetDescriptionFromEnum(),
-                    Type = TransactionType.RefundMoney,
-                    DespositId = deposit.Id,
-                    OrderId = order.Id,
-                    WalletId = walletAdmin.Id,
-                    UserId = admin.Id,
-                    UpsDate = TimeUtils.GetCurrentSEATime()
-                };
-                await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionAdminBalanceHistory);
-
-
-                walletAdmin.BalanceHistory -= order.TotalAmount;
-                walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
-                return await _unitOfWork.CommitAsync() > 0
-                    ? new ResponseAPI()
+                    //create deposit
+                    var deposit = new Deposit()
                     {
-                        StatusCode      = HttpStatusCodes.NoContent,
-                        MessageResponse = PaymentZaloPay.ipnUrl + order.Id
-                    }
-                    : new ResponseAPI()
-                    {
-                        StatusCode = HttpStatusCodes.InternalServerError
+                        Id = Guid.NewGuid(),
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        Amount = order.TotalAmount + order.PromotionOrders.SingleOrDefault().DiscountAmount,
+                        WalletId = wallet.Id,
+                        OrderId = order.Id,
+                        IsIncrease = true,
+                        Name = "Deposit from order " + order.InvoiceId,
+                        PackageItemId = order.PackageItemId,
+                        PaymentType = PaymentTypeEnum.ZaloPay.GetDescriptionFromEnum()
                     };
+                    await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
+                    //update wallet package item
+                    order.PackageItem.Wallet.Balance += order.TotalAmount + order.PromotionOrders.SingleOrDefault().DiscountAmount;
+                    order.PackageItem.Wallet.BalanceHistory += order.TotalAmount + order.PromotionOrders.SingleOrDefault().DiscountAmount;
+                    order.PackageItem.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.PackageItem.Wallet);
+
+                    var transactionCharge = await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().SingleOrDefaultAsync
+                        (predicate: x => x.OrderId == order.Id)
+                        ?? throw new BadHttpRequestException("Transaction charge not found", HttpStatusCodes.NotFound);
+
+                    transactionCharge.Status = TransactionStatus.Success.GetDescriptionFromEnum();
+                    transactionCharge.UpsDate = TimeUtils.GetCurrentSEATime();
+                    transactionCharge.DespositId = deposit.Id;
+                    _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().UpdateAsync(transactionCharge);
+
+                    //bill cashier receive money from packageItem
+                    var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction()
+                    {
+                        Id = Guid.NewGuid(),
+                        Amount = order.TotalAmount,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                        Description = "Receive money from order " + order.InvoiceId,
+                        IsIncrease = true,
+                        Status = TransactionStatus.Success.GetDescriptionFromEnum(),
+                        Type = TransactionType.ReceiveMoney,
+                        DespositId = deposit.Id,
+                        OrderId = order.Id,
+                        WalletId = order.User.Wallets.FirstOrDefault().Id,
+                        UserId = order.UserId,
+                        UpsDate = TimeUtils.GetCurrentSEATime()
+                    };
+                    await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
+
+                    var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId);
+                    if (marketZone == null) throw new BadHttpRequestException("Market zone not found", HttpStatusCodes.NotFound);
+                    var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
+                        (predicate: x => x.Email == marketZone.Email && x.MarketZoneId == marketZone.Id, include: z => z.Include(w => w.Wallets));
+                    if (admin == null) throw new BadHttpRequestException("Admin not found", HttpStatusCodes.NotFound);
+                    var walletAdmin = admin.Wallets.FirstOrDefault();
+                    //bill admin refund money to packageItem
+                    var transactionAdminBalanceHistory = new VegaCityApp.Domain.Models.Transaction()
+                    {
+                        Id = Guid.NewGuid(),
+                        Amount = order.TotalAmount,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                        Description = "Refund money from order: " + order.InvoiceId + "to PackageItem: " + order.PackageItem.Name,
+                        IsIncrease = false,
+                        Status = TransactionStatus.Success.GetDescriptionFromEnum(),
+                        Type = TransactionType.RefundMoney,
+                        DespositId = deposit.Id,
+                        OrderId = order.Id,
+                        WalletId = walletAdmin.Id,
+                        UserId = admin.Id,
+                        UpsDate = TimeUtils.GetCurrentSEATime()
+                    };
+                    await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionAdminBalanceHistory);
+
+
+                    walletAdmin.BalanceHistory -= order.TotalAmount;
+                    walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
+                    return await _unitOfWork.CommitAsync() > 0
+                        ? new ResponseAPI()
+                        {
+                            StatusCode = HttpStatusCodes.NoContent,
+                            MessageResponse = PaymentZaloPay.ipnUrl + order.Id
+                        }
+                        : new ResponseAPI()
+                        {
+                            StatusCode = HttpStatusCodes.InternalServerError
+                        };
+                }
+                else
+                {
+                    order.Status = OrderStatus.Completed;
+                    order.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+                    //session update
+                    sessionUser.TotalQuantityOrder += 1;
+                    sessionUser.TotalCashReceive += order.TotalAmount;
+                    sessionUser.TotalFinalAmountOrder += order.TotalAmount;
+                    _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
+
+                    if (order.PackageOrders.Count != 0)
+                    {
+                        foreach (var packageOrder in order.PackageOrders)
+                        {
+                            packageOrder.Status = OrderStatus.Completed;
+                            packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                            _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
+                        }
+                    }
+                    else throw new BadHttpRequestException("Package order not found", HttpStatusCodes.NotFound);
+
+                    //wallet cashier
+                    var wallet = order.User.Wallets.FirstOrDefault();
+                    wallet.Balance += order.TotalAmount;
+                    wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+                    //create deposit
+                    var deposit = new Deposit()
+                    {
+                        Id = Guid.NewGuid(),
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        Amount = order.TotalAmount,
+                        WalletId = wallet.Id,
+                        OrderId = order.Id,
+                        IsIncrease = true,
+                        Name = "Deposit from order " + order.InvoiceId,
+                        PackageItemId = order.PackageItemId,
+                        PaymentType = PaymentTypeEnum.ZaloPay.GetDescriptionFromEnum()
+                    };
+                    await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
+                    //update wallet package item
+                    order.PackageItem.Wallet.Balance += order.TotalAmount;
+                    order.PackageItem.Wallet.BalanceHistory += order.TotalAmount;
+                    order.PackageItem.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.PackageItem.Wallet);
+
+                    var transactionCharge = await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().SingleOrDefaultAsync
+                        (predicate: x => x.OrderId == order.Id)
+                        ?? throw new BadHttpRequestException("Transaction charge not found", HttpStatusCodes.NotFound);
+
+                    transactionCharge.Status = TransactionStatus.Success.GetDescriptionFromEnum();
+                    transactionCharge.UpsDate = TimeUtils.GetCurrentSEATime();
+                    transactionCharge.DespositId = deposit.Id;
+                    _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().UpdateAsync(transactionCharge);
+
+                    //bill cashier receive money from packageItem
+                    var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction()
+                    {
+                        Id = Guid.NewGuid(),
+                        Amount = order.TotalAmount,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                        Description = "Receive money from order " + order.InvoiceId,
+                        IsIncrease = true,
+                        Status = TransactionStatus.Success.GetDescriptionFromEnum(),
+                        Type = TransactionType.ReceiveMoney,
+                        DespositId = deposit.Id,
+                        OrderId = order.Id,
+                        WalletId = order.User.Wallets.FirstOrDefault().Id,
+                        UserId = order.UserId,
+                        UpsDate = TimeUtils.GetCurrentSEATime()
+                    };
+                    await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
+
+                    var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId);
+                    if (marketZone == null) throw new BadHttpRequestException("Market zone not found", HttpStatusCodes.NotFound);
+                    var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
+                        (predicate: x => x.Email == marketZone.Email && x.MarketZoneId == marketZone.Id, include: z => z.Include(w => w.Wallets));
+                    if (admin == null) throw new BadHttpRequestException("Admin not found", HttpStatusCodes.NotFound);
+                    var walletAdmin = admin.Wallets.FirstOrDefault();
+                    //bill admin refund money to packageItem
+                    var transactionAdminBalanceHistory = new VegaCityApp.Domain.Models.Transaction()
+                    {
+                        Id = Guid.NewGuid(),
+                        Amount = order.TotalAmount,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                        Description = "Refund money from order: " + order.InvoiceId + "to PackageItem: " + order.PackageItem.Name,
+                        IsIncrease = false,
+                        Status = TransactionStatus.Success.GetDescriptionFromEnum(),
+                        Type = TransactionType.RefundMoney,
+                        DespositId = deposit.Id,
+                        OrderId = order.Id,
+                        WalletId = walletAdmin.Id,
+                        UserId = admin.Id,
+                        UpsDate = TimeUtils.GetCurrentSEATime()
+                    };
+                    await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionAdminBalanceHistory);
+
+
+                    walletAdmin.BalanceHistory -= order.TotalAmount;
+                    walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
+                    return await _unitOfWork.CommitAsync() > 0
+                        ? new ResponseAPI()
+                        {
+                            StatusCode = HttpStatusCodes.NoContent,
+                            MessageResponse = PaymentZaloPay.ipnUrl + order.Id
+                        }
+                        : new ResponseAPI()
+                        {
+                            StatusCode = HttpStatusCodes.InternalServerError
+                        };
+                }
             }
             catch (Exception ex)
             {

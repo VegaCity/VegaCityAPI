@@ -362,7 +362,6 @@ namespace VegaCityApp.API.Services.Implement
             }
 
         }
-
         public async Task<ResponseAPI<PackageType>> SearchPackageType(Guid PackageTypeId)
         {
             var packageType = await _unitOfWork.GetRepository<PackageType>().SingleOrDefaultAsync(
@@ -377,9 +376,7 @@ namespace VegaCityApp.API.Services.Implement
                 Data = packageType
                 
             };
-        }
-
-        
+        } 
         public async Task<ResponseAPI> CreatePackageItem(int quantity, CreatePackageItemRequest req)
         {
             if (quantity <= 0) throw new BadHttpRequestException("Number Quantity must be more than 0", HttpStatusCodes.BadRequest);
@@ -389,7 +386,7 @@ namespace VegaCityApp.API.Services.Implement
             var userId = GetUserIdFromJwt();
             var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
                 predicate: x => x.UserId == userId && x.ZoneId == package.Data.PackageType.ZoneId
-                               && x.StartDate >= TimeUtils.GetCurrentSEATime() && x.EndDate <= TimeUtils.GetCurrentSEATime()
+                               && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
                                && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
             ) 
                 ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session", 
@@ -431,8 +428,6 @@ namespace VegaCityApp.API.Services.Implement
                 Data = packageItems
             };
         }
-
-        //delete
         public async Task<ResponseAPI<IEnumerable<GetListPackageItemResponse>>> SearchAllPackageItem(int size, int page)
         {
             try
@@ -488,7 +483,6 @@ namespace VegaCityApp.API.Services.Implement
             }
 
         }
-
         public async Task<ResponseAPI<PackageItem>> SearchPackageItem(Guid PackageItemId)
         {
             var packageItem = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(
@@ -514,7 +508,6 @@ namespace VegaCityApp.API.Services.Implement
                 Data = packageItem
             };
         }
-
         public async Task<ResponseAPI> UpdatePackageItem(Guid packageItemId, UpdatePackageItemRequest req)
         {
             var packageItem = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync
@@ -554,8 +547,6 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.BadRequest
             };
         }
-
-        //active Package Item
         public async Task<ResponseAPI> ActivePackageItem(Guid packageItem, ActivatePackageItemRequest req)
         {
 
@@ -575,7 +566,7 @@ namespace VegaCityApp.API.Services.Implement
             var userId = GetUserIdFromJwt();
             var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
                 predicate: x => x.UserId == userId && x.ZoneId == packageItemExist.Package.PackageType.ZoneId
-                               && x.StartDate >= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
+                               && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
                                && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
             )
                 ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
@@ -611,8 +602,6 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.BadRequest
             };
         }
-
-        //CREATE MONEY REQUEST
         public async Task<ResponseAPI> PrepareChargeMoneyEtag(ChargeMoneyRequest req)
         {
             if (req.ChargeAmount <= 0) throw new BadHttpRequestException("The number must be more than 0", HttpStatusCodes.BadRequest);
@@ -719,13 +708,17 @@ namespace VegaCityApp.API.Services.Implement
             }
             else
             {
-                var checkPromo = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
-                    (predicate: x => x.PromotionCode == req.PromoCode && x.Status == (int)PromotionStatusEnum.Active)
-                    ?? throw new BadHttpRequestException(PromotionMessage.NotFoundPromotion, HttpStatusCodes.NotFound);
-                if (checkPromo.EndDate < TimeUtils.GetCurrentSEATime())
-                    throw new BadHttpRequestException(PromotionMessage.PromotionExpired, HttpStatusCodes.BadRequest);
-                if (checkPromo.Quantity <= 0)
-                    throw new BadHttpRequestException(PromotionMessage.PromotionOutOfStock, HttpStatusCodes.BadRequest);
+                Promotion checkPromo = await CheckPromo(req.PromoCode, req.ChargeAmount)
+                    ?? throw new BadHttpRequestException(PromotionMessage.AddPromotionFail, HttpStatusCodes.BadRequest);
+                int amountPromo = 0;
+                if(checkPromo.MaxDiscount < req.ChargeAmount * (int)checkPromo.DiscountPercent)
+                {
+                    amountPromo = (int)checkPromo.MaxDiscount;
+                }
+                else
+                {
+                    amountPromo = req.ChargeAmount * (int)checkPromo.DiscountPercent;
+                }
                 var newPromotionOrder = new PromotionOrder()
                 {
                     Id = Guid.NewGuid(),
@@ -734,7 +727,7 @@ namespace VegaCityApp.API.Services.Implement
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
                     Deflag = false,
-                    DiscountAmount = req.ChargeAmount * (int)checkPromo.DiscountPercent
+                    DiscountAmount = amountPromo
                 };
                 await _unitOfWork.GetRepository<PromotionOrder>().InsertAsync(newPromotionOrder);
                 var newOrder = new Order()
@@ -748,7 +741,7 @@ namespace VegaCityApp.API.Services.Implement
                     PackageItemId = req.PackageItemId,
                     UserId = userId,
                     SaleType = SaleType.PackageItemCharge,
-                    TotalAmount = req.ChargeAmount + newPromotionOrder.DiscountAmount,
+                    TotalAmount = req.ChargeAmount - amountPromo,
                     UpsDate = TimeUtils.GetCurrentSEATime()
                 };
                 await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
@@ -802,7 +795,19 @@ namespace VegaCityApp.API.Services.Implement
                 };
             } 
         }
-
+        private async Task<Promotion> CheckPromo(string promoCode, int amount)
+        {
+            var checkPromo = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
+                    (predicate: x => x.PromotionCode == promoCode && x.Status == (int)PromotionStatusEnum.Active)
+                    ?? throw new BadHttpRequestException(PromotionMessage.NotFoundPromotion, HttpStatusCodes.NotFound);
+            if (checkPromo.EndDate < TimeUtils.GetCurrentSEATime())
+                throw new BadHttpRequestException(PromotionMessage.PromotionExpired, HttpStatusCodes.BadRequest);
+            if (checkPromo.Quantity <= 0)
+                throw new BadHttpRequestException(PromotionMessage.PromotionOutOfStock, HttpStatusCodes.BadRequest);
+            if(checkPromo.RequireAmount > amount)
+                throw new BadHttpRequestException(PromotionMessage.PromotionRequireAmount, HttpStatusCodes.BadRequest);
+            return checkPromo;
+        }
         //MONEY AND EXPIRE 
         //public async Task CheckEtagExpire()
         //{
