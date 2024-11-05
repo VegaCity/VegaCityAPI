@@ -2,17 +2,17 @@
 {
     public class OrderProductFromPosRequest
     {
-        public string Id { get; set; } // product id, package id, etag id
-        public string Name { get; set; } // product name, package name, etag name
-        public string? ProductCategory { get; set; } // product category, etag type
+        public string? Id { get; set; } // product id, service Id
+        public string? Name { get; set; } // product name, serviceName
+        public string? ProductCategory { get; set; } // product category
         public int Price { get; set; }
         public string? ImgUrl { get; set; }
         public int Quantity { get; set; }
     }
     public class OrderProductFromCashierRequest
     {
-        public string Id { get; set; } // package id, etag id
-        public string Name { get; set; } // package name, etagType name
+        public string Id { get; set; } // package id
+        public string Name { get; set; } // package name
         public int Price { get; set; }
         public string? ImgUrl { get; set; }
         public int Quantity { get; set; }
