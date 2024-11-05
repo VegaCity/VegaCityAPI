@@ -12,8 +12,8 @@ namespace VegaCityApp.API.Enums
     {
         public const string PackageItemCharge = "PackageItem Charge";
         public const string Package = "Package";
-        public const string EtagType = "EtagType";
         public const string StoreService = "StoreService";
         public const string PackageItemPayment = "PackageItem Payment";
+        public const string Product = "Product";
     }
 }

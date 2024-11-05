@@ -28,9 +28,10 @@ namespace VegaCityApp.API.Enums
         public static readonly string[] allowedSaleType =
         {
             "Package",
-            "EtagType",
-            "Etag Charge",
-            "StoreService"
+            "PackageItem Charge",
+            "StoreService",
+            "PackageItem Payment",
+            "Product"
         };
     }
     public class PaymentMomo
