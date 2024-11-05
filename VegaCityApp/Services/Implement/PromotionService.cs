@@ -68,6 +68,7 @@ namespace VegaCityApp.API.Services.Implement
                 Description = req.Description,
                 DiscountPercent = req.DiscountPercent,
                 MaxDiscount = req.MaxDiscount,
+                RequireAmount = req.RequireAmount,
                 Quantity = req.Quantity,
                 Status = (int)PromotionStatusEnum.Active,
                 Name = req.Name,
@@ -87,7 +88,7 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task <ResponseAPI> UpdatePromotion(Guid PromotionId ,UpdatePromotionRequest req)
         {
-            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(predicate: x => x.Id == PromotionId && x.Status == (int)PromotionStatusEnum.Inactive);
+            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(predicate: x => x.Id == PromotionId && x.Status == (int)PromotionStatusEnum.Inactive); // Only Inactive Promotion can be updated
             if(promotion == null)
             {
                 return new ResponseAPI
@@ -123,6 +124,7 @@ namespace VegaCityApp.API.Services.Implement
             promotion.Name = req.Name;
             promotion.Description = req.Description;
             promotion.MaxDiscount = req.MaxDiscount;
+            promotion.RequireAmount = req.RequireAmount;
             promotion.DiscountPercent = req.DiscountPercent;
             promotion.StartDate = req.StartDate;
             promotion.EndDate = req.EndDate;    
@@ -152,6 +154,7 @@ namespace VegaCityApp.API.Services.Implement
                     Description = x.Description,
                     DiscountPercent = x.DiscountPercent,
                     MaxDiscount = x.MaxDiscount,
+                    RequireAmount = x.RequireAmount,
                     PromotionCode = x.PromotionCode,
                     Quantity = x.Quantity,
                     Status = x.Status,
@@ -161,7 +164,9 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => x.Status == (int)PromotionStatusEnum.Active && x.EndDate >= TimeUtils.GetCurrentSEATime()
+                    predicate: x => 
+                     // x.Status == (int)PromotionStatusEnum.Active &&
+                     x.EndDate >= TimeUtils.GetCurrentSEATime()
                 );
                 return new ResponseAPI<IEnumerable<GetListPromotionResponse>>
                 {
