@@ -241,16 +241,9 @@ namespace VegaCityApp.API.Services.Implement
             var store = await _unitOfWork.GetRepository<Store>()
                 .SingleOrDefaultAsync(predicate: x => x.PhoneNumber == phone && !x.Deflag, include: z => z.Include(a => a.Wallets))
                    ?? throw new BadHttpRequestException("Store not found", HttpStatusCodes.NotFound);
-            Wallet walletStore = null;
             if (store.Wallets.Count > 0)
             {
-                foreach (var item in store.Wallets)
-                {
-                    if (item.StoreId == store.Id)
-                    {
-                        walletStore = item;
-                    }
-                }
+                
                 if (store.StoreType.GetDescriptionFromEnum() == StoreTypeEnum.Service.GetDescriptionFromEnum())
                     throw new BadHttpRequestException("This store is service store, not support menu");
                 if (checkMenu == null)
@@ -271,7 +264,7 @@ namespace VegaCityApp.API.Services.Implement
                     await _unitOfWork.GetRepository<Menu>().InsertAsync(newMenu);
                     await _unitOfWork.CommitAsync();
                     // tim productcategory, insert vao
-                    bool check = await InsertProductCategory(productsPosResponse, newMenu.Id, walletStore);
+                    bool check = await InsertProductCategory(productsPosResponse, newMenu.Id);
                     return check ? new ResponseAPI()
                     {
                         MessageResponse = "Get Successfully!!",
@@ -289,7 +282,7 @@ namespace VegaCityApp.API.Services.Implement
                     checkMenu.CrDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Menu>().UpdateAsync(checkMenu);
                     await _unitOfWork.CommitAsync();
-                    bool check = await InsertProductCategory(productsPosResponse, checkMenu.Id, walletStore);
+                    bool check = await InsertProductCategory(productsPosResponse, checkMenu.Id);
                     return check ? new ResponseAPI()
                     {
                         MessageResponse = "Get Successfully!!",
@@ -308,7 +301,7 @@ namespace VegaCityApp.API.Services.Implement
             }
         }
 
-        private async Task<bool> InsertProductCategory(List<ProductsPosResponse> listProduct, Guid MenuId, Wallet walletStore)
+        private async Task<bool> InsertProductCategory(List<ProductsPosResponse> listProduct, Guid MenuId)
         {
             List<ProductFromPos> products = new List<ProductFromPos>();
             //chay ham for cho productCate name
@@ -332,13 +325,18 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime()
                     };
                     await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCateGory);
-                    var mappingWallet = new WalletTypeMapping
+                    var walletTypes =(List<WalletType>) await _unitOfWork.GetRepository<WalletType>().GetListAsync
+                        (predicate: x => x.Name == "SpecificWallet" || x.Name == "ServiceWallet");
+                    foreach (var item in walletTypes)
                     {
-                        Id = Guid.NewGuid(),
-                        ProductCategoryId = newProductCateGory.Id,
-                        WalletTypeId = walletStore.WalletTypeId
-                    };
-                    await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(mappingWallet);
+                        var mapping = new WalletTypeMapping()
+                        {
+                            Id = Guid.NewGuid(),
+                            ProductCategoryId = newProductCateGory.Id,
+                            WalletTypeId = item.Id
+                        };
+                        await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(mapping);
+                    }
                     foreach (var product in listProduct)
                     {
                         if (product.ProductCategory == Category.ProductCategory)
@@ -365,17 +363,23 @@ namespace VegaCityApp.API.Services.Implement
                 else
                 {
                     //check mapping
-                    var mapping = await _unitOfWork.GetRepository<WalletTypeMapping>().SingleOrDefaultAsync(
-                        predicate: x => x.ProductCategoryId == productCategory.Id && x.WalletTypeId == walletStore.WalletTypeId);
-                    if (mapping == null)
+                    var walletTypes = (List<WalletType>)await _unitOfWork.GetRepository<WalletType>().GetListAsync
+                        (predicate: x => x.Name == "SpecificWallet" || x.Name == "ServiceWallet");
+                    
+                    foreach (var item in walletTypes)
                     {
-                        var mappingWallet = new WalletTypeMapping
+                        var mapping = await _unitOfWork.GetRepository<WalletTypeMapping>().SingleOrDefaultAsync
+                            (predicate: x => x.ProductCategoryId == productCategory.Id && x.WalletTypeId == item.Id);
+                        if(mapping == null)
                         {
-                            Id = Guid.NewGuid(),
-                            ProductCategoryId = productCategory.Id,
-                            WalletTypeId = walletStore.WalletTypeId
-                        };
-                        await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(mappingWallet);
+                            var newMapping = new WalletTypeMapping()
+                            {
+                                Id = Guid.NewGuid(),
+                                ProductCategoryId = productCategory.Id,
+                                WalletTypeId = item.Id
+                            };
+                            await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(newMapping);
+                        }
                     }
                     foreach (var product in listProduct)
                     {

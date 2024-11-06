@@ -465,7 +465,8 @@ namespace VegaCityApp.API.Services.Implement
         {
             Guid cashierWebId = GetUserIdFromJwt();
             string role = GetRoleFromJwt();
-            var transactionAvailable = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync(predicate: x => x.Id == transactionId && x.Status == TransactionStatus.Pending);
+            var transactionAvailable = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
+                (predicate: x => x.Id == transactionId && x.Status == TransactionStatus.Pending);
             if(transactionAvailable == null)
             {
                 return new ResponseAPI

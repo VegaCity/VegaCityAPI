@@ -2,8 +2,6 @@
 {
     public class CreateOrderRequest
     {
-        
-        public string PaymentType { get; set; }
         public string SaleType { get; set; }
         public Guid StoreId { get; set; }
         public int TotalAmount { get; set; }

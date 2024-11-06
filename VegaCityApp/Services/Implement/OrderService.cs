@@ -27,14 +27,6 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> CreateOrder(CreateOrderRequest req)
         {
-            if(PaymentTypeHelper.allowedPaymentTypes.Contains(req.PaymentType) == false)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = OrderMessage.PaymentTypeInvalid,
-                };
-            }
             if (SaleTypeHelper.allowedSaleType.Contains(req.SaleType) == false)
             {
                 return new ResponseAPI()
@@ -54,12 +46,16 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
+            var packageItemExsit = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync
+                (predicate: x => x.Id == req.PackageItemId, include: z => z.Include(x => x.Wallet))
+                ?? throw new BadHttpRequestException("Package item not found", HttpStatusCodes.NotFound);
+            if(packageItemExsit.Wallet.Balance < req.TotalAmount) throw new BadHttpRequestException("Balance not enough", HttpStatusCodes.BadRequest);
             //add user ID for Store Type
             Guid userID = GetUserIdFromJwt();
             var newOrder = new Order()
             {
                 Id = Guid.NewGuid(),
-                PaymentType = req.PaymentType,
+                PaymentType = PaymentTypeEnum.QRCode.GetDescriptionFromEnum(),
                 StoreId = store.Id,
                 Name = req.OrderName ?? "Order Sale " + req.SaleType + " At Vega City: " + TimeUtils.GetCurrentSEATime(),
                 TotalAmount = req.TotalAmount,
@@ -810,7 +806,7 @@ namespace VegaCityApp.API.Services.Implement
                                        .Include(x => x.OrderDetails)
                                        .Include(c => c.Store)
                                        .Include(p => p.PromotionOrders)
-                                       .Include(f => f.PackageItem)
+                                       .Include(f => f.PackageItem).ThenInclude(r => r.Wallet)
                 ) ?? throw new BadHttpRequestException("Order not found", HttpStatusCodes.NotFound);
             var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
                     (predicate: x => x.UserId == order.UserId)
@@ -885,7 +881,7 @@ namespace VegaCityApp.API.Services.Implement
                 OrderId = order.Id
             };
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionStoreTransfer);
-            walletStore.Balance += order.TotalAmount;
+            walletStore.Balance += (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate);
             walletStore.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletStore);
             var transfer = new StoreMoneyTransfer()
