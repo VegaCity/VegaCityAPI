@@ -259,13 +259,9 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
                     //quantity promotion -
                     //
-                    var promotionQuant = order.PromotionOrders.SingleOrDefault().Promotion.Quantity;
-                    if (promotionQuant == null)
-                    {
-                        throw new BadHttpRequestException("Please Check Promotion's Quantity Left!", HttpStatusCodes.NotFound);
-                    }
-                    promotionQuant -= 1;
+                    order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
                     _unitOfWork.GetRepository<Promotion>().UpdateAsync(order.PromotionOrders.SingleOrDefault().Promotion);
+                    //session update
                     //
                     //session update
                     sessionUser.TotalQuantityOrder += 1;
@@ -724,14 +720,8 @@ namespace VegaCityApp.API.Services.Implement
                     order.Status = OrderStatus.Completed;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-                    //quantity promotion -
-                    //
-                    var promotionQuant = order.PromotionOrders.SingleOrDefault().Promotion.Quantity;
-                    if (promotionQuant == null)
-                    {
-                        throw new BadHttpRequestException("Please Check Promotion's Quantity Left!", HttpStatusCodes.NotFound);
-                    }
-                    promotionQuant -= 1;
+                   
+                    order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
                     _unitOfWork.GetRepository<Promotion>().UpdateAsync(order.PromotionOrders.SingleOrDefault().Promotion);
                     //session update
                     sessionUser.TotalQuantityOrder += 1;
@@ -1233,13 +1223,9 @@ namespace VegaCityApp.API.Services.Implement
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
                     //quantity promotion -
-                    var promotionQuant = order.PromotionOrders.SingleOrDefault().Promotion.Quantity;
-                    if (promotionQuant == null)
-                    {
-                        throw new BadHttpRequestException("Please Check Promotion's Quantity Left!", HttpStatusCodes.NotFound);
-                    }
-                    promotionQuant -= 1;
+                    order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
                     _unitOfWork.GetRepository<Promotion>().UpdateAsync(order.PromotionOrders.SingleOrDefault().Promotion);
+                    //session update
                     //session update
                     sessionUser.TotalQuantityOrder += 1;
                     sessionUser.TotalCashReceive += order.TotalAmount;
@@ -1639,7 +1625,7 @@ namespace VegaCityApp.API.Services.Implement
                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(x => x.PackageOrders)
                                        .Include(c => c.PackageItem).ThenInclude(r => r.Wallet)
-                                       .Include(s => s.PromotionOrders));
+                                       .Include(s => s.PromotionOrders).ThenInclude(n => n.Promotion));
                 var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
                     (predicate: x => x.UserId == order.UserId)
                     ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
@@ -1658,13 +1644,9 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
                     //quantity promotion -
                     //
-                    var promotionQuant = order.PromotionOrders.SingleOrDefault().Promotion.Quantity;
-                    if (promotionQuant == null)
-                    {
-                        throw new BadHttpRequestException("Please Check Promotion's Quantity Left!", HttpStatusCodes.NotFound);
-                    }
-                    promotionQuant -= 1;
+                    order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
                     _unitOfWork.GetRepository<Promotion>().UpdateAsync(order.PromotionOrders.SingleOrDefault().Promotion);
+                    //session update
                     //
                     //session update
                     sessionUser.TotalQuantityOrder += 1;
