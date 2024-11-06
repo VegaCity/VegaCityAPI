@@ -65,7 +65,7 @@ namespace VegaCityApp.Domain.Models
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=LAPTOP-R0K7KBGI\\TRANGQUOCDAT,1433;Database=VegaCityApp;User Id=sa;Password=12345;Encrypt=True;TrustServerCertificate=True");
+                optionsBuilder.UseSqlServer("Server=LEVIATHAN;Database=VegaCityApp;User Id=sa;Password=12345;Encrypt=True;TrustServerCertificate=True");
             }
         }
 
@@ -351,7 +351,7 @@ namespace VegaCityApp.Domain.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.Name).HasMaxLength(50);
+                entity.Property(e => e.Name).HasMaxLength(100);
 
                 entity.Property(e => e.PaymentType)
                     .HasMaxLength(50)
@@ -474,6 +474,8 @@ namespace VegaCityApp.Domain.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
+                entity.Property(e => e.EndDate).HasColumnType("datetime");
+
                 entity.Property(e => e.Gender)
                     .HasMaxLength(5)
                     .IsUnicode(false);
@@ -489,6 +491,8 @@ namespace VegaCityApp.Domain.Models
                     .HasMaxLength(50)
                     .IsUnicode(false)
                     .HasColumnName("RFID");
+
+                entity.Property(e => e.StartDate).HasColumnType("datetime");
 
                 entity.Property(e => e.Status)
                     .HasMaxLength(50)
@@ -776,9 +780,6 @@ namespace VegaCityApp.Domain.Models
                     .IsUnique();
 
                 entity.HasIndex(e => e.PhoneNumber, "IX_Store_PhoneNumber")
-                    .IsUnique();
-
-                entity.HasIndex(e => e.ShortName, "IX_Store_ShortName")
                     .IsUnique();
 
                 entity.Property(e => e.Id).ValueGeneratedNever();

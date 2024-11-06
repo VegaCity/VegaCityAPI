@@ -261,6 +261,7 @@ namespace VegaCityApp.API.Services.Implement
                 await _unitOfWork.CommitAsync();
                 // tim productcategory, insert vao
                 bool check = await InsertProductCategory(productsPosResponse, newMenu.Id);
+                //mapping wallettype va ProductCategory
                 return check?new ResponseAPI()
                 {
                     MessageResponse = "Get Successfully!!",
@@ -304,6 +305,9 @@ namespace VegaCityApp.API.Services.Implement
             {
                 var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
                     predicate: x=> x.Name == Category.ProductCategory );
+                var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync(predicate: x => x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId), 
+                        include: m => m.Include(n => n.WalletTypeMappings));
+
                 if (productCategory == null)
                 {
                     var newProductCateGory = new ProductCategory()
@@ -316,6 +320,22 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime()
                     };
                     await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCateGory);
+                    //mapping wallet Type
+                    //get all WalletType
+                    //Take Specific and Service type's Ids
+                    foreach (var walletType in walletTypes)
+                    {
+                        if(walletType.Name == "SpecificWallet" || walletType.Name == "ServiceWallet")
+                        {
+                            var newProductCategoryMappingWallet = new WalletTypeMapping
+                            {
+                                Id = Guid.NewGuid(),
+                                WalletTypeId = walletType.Id,
+                                ProductCategoryId = newProductCateGory.Id,
+                            };
+                            await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(newProductCategoryMappingWallet);
+                        }
+                    }
                     foreach(var product in listProduct)
                     {
                         if(product.ProductCategory == Category.ProductCategory)
@@ -341,6 +361,34 @@ namespace VegaCityApp.API.Services.Implement
                 }
                 else
                 {
+
+                    foreach (var walletType in walletTypes)
+                    {
+                        if (walletType.Name == "SpecificWallet")
+                        {
+                            if(walletType.WalletTypeMappings.Count == 0)
+                            {
+                                foreach (var item in selectField)
+                                {
+                                    //if (walletType.Id == productCategory.Id)
+                                    //{
+                                    //    break;
+                                    //}
+                                   // else
+                                    //{
+                                        var newProductCategoryMappingWallet = new WalletTypeMapping
+                                        {
+                                            Id = Guid.NewGuid(),
+                                            WalletTypeId = walletType.Id,
+                                            ProductCategoryId = productCategory.Id,
+                                        };
+                                        await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(newProductCategoryMappingWallet);
+                                    //}
+                                }
+                            }
+                            
+                        }
+                    }
                     foreach (var product in listProduct)
                     {
                         if (product.ProductCategory == Category.ProductCategory)

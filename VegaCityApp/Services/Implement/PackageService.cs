@@ -486,7 +486,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI<PackageItem>> SearchPackageItem(Guid PackageItemId)
         {
             var packageItem = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(
-                predicate: x => x.Id == PackageItemId && x.Status == PackageItemStatus.Active.ToString(),
+                predicate: x => x.Id == PackageItemId ,
                 include: packageItem => packageItem.Include(b => b.Reports)
                 .Include(c => c.Orders).Include(d => d.Deposits).Include(z => z.CustomerMoneyTransfers)
                 .Include(e => e.Wallet).ThenInclude(y => y.Transactions)
