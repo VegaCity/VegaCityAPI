@@ -566,36 +566,44 @@ namespace VegaCityApp.API.Services.Implement
             var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
                 (predicate: x => x.Email == marketZone.Email && x.Status == (int)UserStatusEnum.Active,
                     include: wallet => wallet.Include(z => z.Wallets));
+            Wallet adminWallet = admin.Wallets.SingleOrDefault();
+            string name = wallet.User != null ? wallet.User.FullName : wallet.PackageItems.SingleOrDefault().Name;
             var transactionBalanceAdmin = new Transaction
             {
                 Id = Guid.NewGuid(),
+                WalletId = adminWallet.Id,
                 Type = TransactionType.WithdrawMoney,
-                WalletId = admin.Wallets.SingleOrDefault().Id,
-                Amount =  transactionAvailable.Amount, //return money from etag admin.Wallets.SingleOrDefault().Balance -
+                Amount = transactionAvailable.Amount,
                 IsIncrease = false,
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                UserId = admin.Id,
                 CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = TransactionStatus.Success,
-                Description = "Withdraw balance from admin: " + admin.FullName,
+                Description = "Withdraw money for: " + name
             };
+            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceAdmin);
             //admin wallet
-            admin.Wallets.SingleOrDefault().Balance -= transactionAvailable.Amount;
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(admin.Wallets.SingleOrDefault());
+            adminWallet.Balance -= transactionAvailable.Amount;
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(adminWallet);
+            Wallet cashierWallet = cashierWeb.Wallets.SingleOrDefault();
             var transactionBalanceHistory = new Transaction
             {
                 Id = Guid.NewGuid(),
                 Type = TransactionType.WithdrawMoney,
-                WalletId = cashierWeb.Wallets.SingleOrDefault().Id,
-                Amount =  transactionAvailable.Amount, //cashierWeb.Wallets.SingleOrDefault().BalanceHistory +
+                WalletId = cashierWallet.Id,
+                Amount = transactionAvailable.Amount, //cashierWeb.Wallets.SingleOrDefault().BalanceHistory +
                 IsIncrease = true,
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 Status = TransactionStatus.Success,
                 Description = "Add balance history to cashier web: " + cashierWeb.FullName,
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                UserId = cashierWebId
             };
-            cashierWeb.Wallets.SingleOrDefault().BalanceHistory += transactionAvailable.Amount;
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(cashierWeb.Wallets.SingleOrDefault());
-            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceAdmin);
+            cashierWallet.BalanceHistory += transactionAvailable.Amount;
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(cashierWallet);
+
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceHistory);
             return await _unitOfWork.CommitAsync() > 0? new ResponseAPI
             {
