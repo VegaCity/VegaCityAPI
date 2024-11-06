@@ -53,7 +53,6 @@ namespace VegaCityApp.API.Controllers
 
         [HttpGet(WalletTypeEndpoint.GetWalletTypeById)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> GetWalletTypeById(Guid id)
         {
             var result = await _walletTypeService.GetWalletTypeById(id);
@@ -62,7 +61,6 @@ namespace VegaCityApp.API.Controllers
 
         [HttpGet(WalletTypeEndpoint.GetAllWalletType)]
         [ProducesResponseType(typeof(ResponseAPI<IEnumerable<WalletTypeResponse>>), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> GetAllWalletType(int size = 10, int page = 1)
         {
             var result = await _walletTypeService.GetAllWalletType(size, page);

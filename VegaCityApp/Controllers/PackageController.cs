@@ -164,13 +164,5 @@ namespace VegaCityApp.API.Controllers
             var result = await _packageService.PackageItemPayment(packageItemId, price, storeId, products);
             return StatusCode(result.StatusCode, result);
         }
-        //[HttpPost(PackageEndpoint.ConfirmOrder)]
-        //[CustomAuthorize(RoleEnum.CashierWeb)]
-        //[ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
-        //public async Task<IActionResult> ConfirmOrder([FromBody] ConfirmOrderRequest request)
-        //{
-        //    var result = await _packageService.c(request);
-        //    return StatusCode(result.StatusCode, result);
-        //}
     }
 }

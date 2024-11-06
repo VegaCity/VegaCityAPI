@@ -120,6 +120,11 @@ public static class MessageConstant
 
     public static class UserMessage
     {   
+        public const string DeleteSessionSuccessfully = "Delete Session Successfully !!";
+        public const string GetAllSessionSuccessfully = "Get All Session Successfully !!";
+        public const string GetAllSessionFail = "Get All Session Fail !!";
+        public const string SessionNotFound = "Session Not Found !!";
+        public const string GetSessionSuccessfully = "Get Session Successfully !!";
         public const string EndDateInvalid = "End Date Invalid";
         public const string CreateSessionSuccessfully = "Create Session Successfully !!";
         public const string ReAssignEmailSuccess = "Re-Assign Email Successfully !!";

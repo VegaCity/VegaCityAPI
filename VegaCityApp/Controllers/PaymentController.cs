@@ -22,7 +22,7 @@ namespace VegaCityApp.API.Controllers
 
         [HttpPost(PaymentEndpoint.MomoPayment)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
-       // [CustomAuthorize(RoleEnum.CashierWeb, RoleEnum.CashierApp)]
+        [SwaggerOperation(Summary = "Payment Just for Momo")]
         public async Task<IActionResult> MomoPayment([FromBody] PaymentRequest request)
         {
             var result = await _service.MomoPayment(request);
@@ -52,11 +52,9 @@ namespace VegaCityApp.API.Controllers
             }
             return BadRequest();
         }
-
-
         [HttpPost(PaymentEndpoint.VnPayPayment)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
-        //[CustomAuthorize(RoleEnum.CashierWeb, RoleEnum.CashierApp)]
+        [SwaggerOperation(Summary = "Payment Just for VnPay")]
         public async Task<IActionResult> CreateVnPayUrl([FromBody] PaymentRequest request)
         {
             if (!ModelState.IsValid)
@@ -91,11 +89,9 @@ namespace VegaCityApp.API.Controllers
             }
             return BadRequest();
         }
-
-        //payos 
         [HttpPost(PaymentEndpoint.PayOSPayment)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
-        // [CustomAuthorize(RoleEnum.CashierWeb, RoleEnum.CashierApp)]
+        [SwaggerOperation(Summary = "Payment Just for PayOs")]
         public async Task<IActionResult> PayOSPayment([FromBody] PaymentRequest request)
         {
 
@@ -187,6 +183,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(PaymentEndpoint.ZaloPayPayment)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [SwaggerOperation(Summary = "Payment Just for ZaloPay")]
         public async Task<IActionResult> ZaloPayPayment([FromBody] PaymentRequest request)
         {
             var result = await _service.ZaloPayPayment(request);

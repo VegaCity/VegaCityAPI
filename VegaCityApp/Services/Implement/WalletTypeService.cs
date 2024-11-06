@@ -278,7 +278,7 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task EndDayCheckWalletCashier(Guid apiKey)
         {
-            var data = (List<User>)await _unitOfWork.GetRepository<User>().GetListAsync
+            var listCashiers = (List<User>) await _unitOfWork.GetRepository<User>().GetListAsync
                 (predicate: x => (x.Role.Name == RoleEnum.CashierApp.GetDescriptionFromEnum()
                                 || x.Role.Name == RoleEnum.CashierWeb.GetDescriptionFromEnum())
                                 && x.Status == (int)UserStatusEnum.Active, include: z => z.Include(a => a.Role));
@@ -287,7 +287,7 @@ namespace VegaCityApp.API.Services.Implement
             var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
                 (predicate: x => x.Email == maketZone.Email && x.Status == (int)UserStatusEnum.Active,
                     include: wallet => wallet.Include(z => z.Wallets));
-            foreach (var user in data)
+            foreach (var user in listCashiers)
             {
                 //wallet cashier
                 var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync
@@ -298,8 +298,8 @@ namespace VegaCityApp.API.Services.Implement
                     {
                         foreach (var item in admin.Wallets)
                         {
-                            item.Balance += wallet.Balance;
-                            wallet.Balance = 0;
+                            item.Balance += wallet.Balance; //wallet admin
+                            wallet.Balance = 0; //wallet cashier
                             var transaction = new Transaction
                             {
                                 Id = Guid.NewGuid(),
@@ -310,11 +310,11 @@ namespace VegaCityApp.API.Services.Implement
                                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                                 CrDate = TimeUtils.GetCurrentSEATime(),
                                 Status = TransactionStatus.Success,
-                                Description = "End day check wallet cashier: Balance",
+                                Description = "End day check wallet cashier: Balance " + wallet.Balance,
+                                UpsDate = TimeUtils.GetCurrentSEATime(),
+                                UserId = admin.Id
                             };
                             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
-                            item.BalanceHistory += wallet.BalanceHistory;
-                            wallet.BalanceHistory = 0;
                             var transactionHistory = new Transaction
                             {
                                 Id = Guid.NewGuid(),
@@ -325,9 +325,14 @@ namespace VegaCityApp.API.Services.Implement
                                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                                 CrDate = TimeUtils.GetCurrentSEATime(),
                                 Status = TransactionStatus.Success,
-                                Description = "End day check wallet cashier: Balance History",
+                                Description = "End day check wallet cashier: Balance History " + wallet.BalanceHistory,
+                                UserId = admin.Id,
+                                UpsDate = TimeUtils.GetCurrentSEATime()
                             };
                             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionHistory);
+
+                            item.BalanceHistory += wallet.BalanceHistory; //wallet admin
+                            wallet.BalanceHistory = 0; //wallet cashier
                             item.UpsDate = TimeUtils.GetCurrentSEATime();
                             _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
                         }

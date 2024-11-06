@@ -41,6 +41,9 @@ public static class ApiEndPointConstant
     }
     public static class UserEndpoint
     {
+        public const string GetSession = ApiEndpoint + "/user/session/{id}";
+        public const string DeleteSession = ApiEndpoint + "/user/session/{id}";
+        public const string GetAllSessions = ApiEndpoint + "/user/sessions";
         public const string CreateSession = ApiEndpoint + "/user/{id}/session";
         public const string ApproveUser = ApiEndpoint + "/user/{userId}/approve-user";
         public const string GetListUser = ApiEndpoint + "/users";

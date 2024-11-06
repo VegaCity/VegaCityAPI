@@ -28,10 +28,38 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpPost(UserEndpoint.CreateSession)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [CustomAuthorize(RoleEnum.Admin)]
         [SwaggerOperation(Summary = "Create new session for user")]
         public async Task<IActionResult> CreateSession(Guid id,[FromBody] SessionRequest request)
         {
             var result = await _service.CreateUserSession(id, request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(UserEndpoint.GetSession)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        [SwaggerOperation(Summary = "Get session by user id")]
+        public async Task<IActionResult> GetSession(Guid id)
+        {
+            var result = await _service.GetUserSessionById(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(UserEndpoint.GetAllSessions)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        [SwaggerOperation(Summary = "Get all session")]
+        public async Task<IActionResult> GetAllSessions([FromQuery] int size = 10, [FromQuery] int page = 1)
+        {
+            var result = await _service.GetAllUserSessions(page, size);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpDelete(UserEndpoint.DeleteSession)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        [SwaggerOperation(Summary = "Delete session by user id")]
+        public async Task<IActionResult> DeleteSession(Guid id)
+        {
+            var result = await _service.DeleteSession(id);
             return StatusCode(result.StatusCode, result);
         }
         [HttpPost(UserEndpoint.CreateUser)]
@@ -52,7 +80,6 @@ namespace VegaCityApp.API.Controllers.Admin
             var result = await _service.ApproveUser(userId, request);
             return StatusCode(result.StatusCode, result);
         }
-
         [HttpGet(UserEndpoint.GetListUser)]
         [ProducesResponseType(typeof(ResponseAPI<IEnumerable<GetUserResponse>>), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]
@@ -72,7 +99,7 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpPatch(UserEndpoint.UpdateUserProfile)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb, RoleEnum.Store)]
         public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserAccountRequest request)
         {
             var result = await _service.UpdateUser(id, request);

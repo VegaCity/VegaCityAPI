@@ -27,5 +27,7 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI<PackageItem>> SearchPackageItem(Guid PackageItemId);
         Task<ResponseAPI> PrepareChargeMoneyEtag(ChargeMoneyRequest req);
         Task<ResponseAPI> PackageItemPayment(Guid packageItemId, int price, Guid storeId, List<OrderProduct> products);
+        Task CheckPackageItemExpire();
+        Task SolveWalletPackageItem(Guid apiKey);
     }
 }

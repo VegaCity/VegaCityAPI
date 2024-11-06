@@ -3,6 +3,7 @@
     public enum SessionStatusEnum
     {
         Active = 1,
-        Expired = 2
+        Expired = 2,
+        Canceled = 3
     }
 }
