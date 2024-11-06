@@ -17,6 +17,8 @@ namespace VegaCityApp.API.Payload.Response.PackageResponse
         public Guid? WalletId { get; set; }   
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
     }
 
     public class GetListPackageItemResponse
@@ -35,5 +37,7 @@ namespace VegaCityApp.API.Payload.Response.PackageResponse
         public bool? IsChanged { get; set; }
         public string? PhoneNumber { get; set; }
         public string? Rfid { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
     }
 }

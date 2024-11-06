@@ -380,6 +380,22 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> CreatePackageItem(int quantity, CreatePackageItemRequest req)
         {
             if (quantity <= 0) throw new BadHttpRequestException("Number Quantity must be more than 0", HttpStatusCodes.BadRequest);
+            if(req.StartDate < TimeUtils.GetCurrentSEATime().AddDays(-1) || req.EndDate <= TimeUtils.GetCurrentSEATime())
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = PackageMessage.InvalidDuration,
+                    StatusCode = HttpStatusCodes.BadRequest,
+                };
+            }
+            if(req.StartDate >= req.EndDate)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = PackageMessage.SameStrAndEndDate,
+                    StatusCode = HttpStatusCodes.BadRequest,
+                };
+            }
             var package = await SearchPackage(req.PackageId);
             #region check 
             // after done main flow, make utils service to shorten this code
@@ -415,7 +431,9 @@ namespace VegaCityApp.API.Services.Implement
                     Status = PackageItemStatus.Inactive.GetDescriptionFromEnum(),
                     Gender = GenderEnum.Other.GetDescriptionFromEnum(),
                     IsChanged = false,
-                    WalletId = newWallet.Id
+                    WalletId = newWallet.Id,
+                    StartDate = TimeUtils.GetCurrentSEATime(),
+                    EndDate = req.EndDate,
                 };
                 packageItems.Add(_mapper.Map<GetListPackageItemResponse>(newPackageItem));
                 await _unitOfWork.GetRepository<PackageItem>().InsertAsync(newPackageItem);
@@ -449,7 +467,9 @@ namespace VegaCityApp.API.Services.Implement
                     UpsDate = x.UpsDate,
                     IsChanged = x.IsChanged,
                     PhoneNumber = x.PhoneNumber,
-                    Rfid = x.Rfid
+                    Rfid = x.Rfid,
+                    StartDate = x.StartDate,
+                    EndDate = x.EndDate,
                 },
                 page: page,
                 size: size,
@@ -486,7 +506,9 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI<PackageItem>> SearchPackageItem(Guid PackageItemId)
         {
             var packageItem = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(
-                predicate: x => x.Id == PackageItemId && x.Status == PackageItemStatus.Active.ToString(),
+                predicate: x => x.Id == PackageItemId
+                //&& x.Status == PackageItemStatus.Active.ToString() && x.Status == PackageItemStatus.Inactive.ToString()
+                ,
                 include: packageItem => packageItem.Include(b => b.Reports)
                 .Include(c => c.Orders).Include(d => d.Deposits).Include(z => z.CustomerMoneyTransfers)
                 .Include(e => e.Wallet).ThenInclude(y => y.Transactions)
@@ -549,9 +571,24 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> ActivePackageItem(Guid packageItem, ActivatePackageItemRequest req)
         {
-
+            if (req.StartDate < TimeUtils.GetCurrentSEATime().AddDays(-1) || req.EndDate <= TimeUtils.GetCurrentSEATime())
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = PackageMessage.InvalidDuration,
+                    StatusCode = HttpStatusCodes.BadRequest,
+                };
+            }
+            if (req.StartDate >= req.EndDate)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = PackageMessage.SameStrAndEndDate,
+                    StatusCode = HttpStatusCodes.BadRequest,
+                };
+            }
             //check if cccd or passport 
-            if(!ValidationUtils.IsCCCD(req.Cccdpassport))
+            if (!ValidationUtils.IsCCCD(req.Cccdpassport))
                 throw new BadHttpRequestException(PackageItemMessage.CCCDInvalid, HttpStatusCodes.BadRequest);
             if (!ValidationUtils.IsEmail(req.Email))
                 throw new BadHttpRequestException(PackageItemMessage.EmailInvalid, HttpStatusCodes.BadRequest);
@@ -582,6 +619,8 @@ namespace VegaCityApp.API.Services.Implement
             packageItemExist.Cccdpassport = req.Cccdpassport.Trim();
             packageItemExist.Email = req.Email.Trim();
             packageItemExist.Gender = req.Gender.Trim();
+            packageItemExist.StartDate = TimeUtils.GetCurrentSEATime() ;
+            packageItemExist.EndDate = req.EndDate ?? packageItemExist.EndDate;
             packageItemExist.IsAdult = req.IsAdult;
             packageItemExist.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItemExist);
@@ -616,6 +655,10 @@ namespace VegaCityApp.API.Services.Implement
             var packageItemExsit = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageItemId
             && x.Cccdpassport == req.CccdPassport, include: w => w.Include(wallet => wallet.Wallet).Include(z => z.Package).ThenInclude(i => i.PackageType)) 
                 ?? throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
+            if(packageItemExsit.EndDate <= TimeUtils.GetCurrentSEATime())
+            {
+                throw new BadHttpRequestException(PackageItemMessage.PackageItemExpired, HttpStatusCodes.NotFound);
+            }    
             #region check session
             // after done main flow, make utils service to shorten this code
             var userId = GetUserIdFromJwt();
@@ -809,22 +852,23 @@ namespace VegaCityApp.API.Services.Implement
             return checkPromo;
         }
         //MONEY AND EXPIRE 
-        //public async Task CheckEtagExpire()
-        //{
-        //    var currentDate = TimeUtils.GetCurrentSEATime();
-        //    var etags = (List<Etag>)await _unitOfWork.GetRepository<Etag>().GetListAsync
-        //        (predicate: x => x.EndDate < currentDate && x.Status == (int)EtagStatusEnum.Active && !x.Deflag);
-        //    foreach (var etag in etags)
-        //    {
-        //        etag.Status = (int)EtagStatusEnum.Expired;
-        //        etag.UpsDate = currentDate;
-        //    }
-        //    _unitOfWork.GetRepository<Etag>().UpdateRange(etags);
-        //    await _unitOfWork.CommitAsync();
-        //}
+        public async Task CheckPackageItemExpire()
+        {
+            var currentDate = TimeUtils.GetCurrentSEATime();
+            var packageItems = (List<PackageItem>)await _unitOfWork.GetRepository<PackageItem>().GetListAsync
+                (predicate: x => x.EndDate < currentDate && x.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum());
+            foreach (var item in packageItems)
+            {
+                item.Status = PackageItemStatusEnum.Expired.GetDescriptionFromEnum();
+                item.UpsDate = currentDate;
+            }
+            _unitOfWork.GetRepository<PackageItem>().UpdateRange(packageItems);
+            await _unitOfWork.CommitAsync();
+        }
 
         public async Task<ResponseAPI> PackageItemPayment(Guid packageItemId, int price, Guid storeId, List<OrderProduct> products)
         {
+           
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
                 (predicate: x => !x.Deflag && x.Id == storeId && x.Status == (int)StoreStatusEnum.Opened, 
                 include: z => z.Include(a => a.UserStoreMappings).Include(z => z.Wallets));
@@ -839,6 +883,10 @@ namespace VegaCityApp.API.Services.Implement
             var packageItem = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(predicate: x => x.Id == packageItemId 
                 && x.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum(), include: etag => etag.Include(y => y.Wallet))
                 ?? throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
+            if (packageItem.EndDate <= TimeUtils.GetCurrentSEATime())
+            {
+                throw new BadHttpRequestException(PackageItemMessage.PackageItemExpired, HttpStatusCodes.NotFound);
+            }
             if (packageItem.Wallet.EndDate <= TimeUtils.GetCurrentSEATime())
             {
                 return new ResponseAPI
