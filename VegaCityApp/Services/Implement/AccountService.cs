@@ -1121,11 +1121,11 @@ namespace VegaCityApp.Service.Implement
             else if (roleCurrent == "CashierWeb" || roleCurrent == "CashierApp")
             {
                 var groupedStaticsCashier = deposits
-              .GroupBy(t => t.CrDate?.ToString("MMM")) // Group by month name (e.g., "Oct")
+              .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
               .Select(g => new
               {
                   Name = g.Key, // Month name
-                  TotalTransactions = deposits.Count(o => o.CrDate?.ToString("MMM") == g.Key),
+                  TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
                   TotalTransactionsAmount = g.Sum(t => t.Amount),
                   EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
                   OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 

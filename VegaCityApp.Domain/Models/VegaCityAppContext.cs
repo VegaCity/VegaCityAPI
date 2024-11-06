@@ -65,7 +65,7 @@ namespace VegaCityApp.Domain.Models
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=LEVIATHAN;Database=VegaCityApp;User Id=sa;Password=12345;Encrypt=True;TrustServerCertificate=True");
+                optionsBuilder.UseSqlServer("Server=14.225.204.144,6789;Database=VegaCityApp;User Id=sa;Password=s@123456;Encrypt=True;TrustServerCertificate=True");
             }
         }
 
@@ -149,16 +149,19 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.Deposits)
                     .HasForeignKey(d => d.OrderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Deposit_Order");
 
                 entity.HasOne(d => d.PackageItem)
                     .WithMany(p => p.Deposits)
                     .HasForeignKey(d => d.PackageItemId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Deposit_PackageItem");
 
                 entity.HasOne(d => d.Wallet)
                     .WithMany(p => p.Deposits)
                     .HasForeignKey(d => d.WalletId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Deposit_Wallet");
             });
 
@@ -435,6 +438,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.PackageType)
                     .WithMany(p => p.Packages)
                     .HasForeignKey(d => d.PackageTypeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Package_PackageType");
             });
 
@@ -449,11 +453,13 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Package)
                     .WithMany(p => p.PackageDetails)
                     .HasForeignKey(d => d.PackageId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PackageDetail_Package");
 
                 entity.HasOne(d => d.WalletType)
                     .WithMany(p => p.PackageDetails)
                     .HasForeignKey(d => d.WalletTypeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PackageDetail_WalletType");
             });
 
@@ -546,11 +552,13 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.PackageOrders)
                     .HasForeignKey(d => d.OrderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PackageOrder_Order");
 
                 entity.HasOne(d => d.Package)
                     .WithMany(p => p.PackageOrders)
                     .HasForeignKey(d => d.PackageId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PackageOrder_Package");
             });
 
@@ -594,11 +602,13 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Menu)
                     .WithMany(p => p.Products)
                     .HasForeignKey(d => d.MenuId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Product_Menu");
 
                 entity.HasOne(d => d.ProductCategory)
                     .WithMany(p => p.Products)
                     .HasForeignKey(d => d.ProductCategoryId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Product_ProductCategory");
             });
 
@@ -831,16 +841,19 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.MarketZone)
                     .WithMany(p => p.StoreMoneyTransfers)
                     .HasForeignKey(d => d.MarketZoneId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_StoreMoneyTransfer_MarketZone");
 
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.StoreMoneyTransfers)
                     .HasForeignKey(d => d.StoreId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_StoreMoneyTransfer_Store");
 
                 entity.HasOne(d => d.Transaction)
                     .WithMany(p => p.StoreMoneyTransfers)
                     .HasForeignKey(d => d.TransactionId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_StoreMoneyTransfer_Transaction");
             });
 
@@ -901,6 +914,7 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Transactions)
                     .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Transaction_User");
 
                 entity.HasOne(d => d.Wallet)
@@ -1036,11 +1050,13 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.UserStoreMappings)
                     .HasForeignKey(d => d.StoreId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_UserStoreMapping_Store");
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.UserStoreMappings)
                     .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_UserStoreMapping_User");
             });
 
@@ -1103,11 +1119,13 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.ProductCategory)
                     .WithMany(p => p.WalletTypeMappings)
                     .HasForeignKey(d => d.ProductCategoryId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_WalletTypeMapping_ProductCategory");
 
                 entity.HasOne(d => d.WalletType)
                     .WithMany(p => p.WalletTypeMappings)
                     .HasForeignKey(d => d.WalletTypeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_WalletTypeMapping_WalletType");
             });
 

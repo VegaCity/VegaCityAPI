@@ -300,7 +300,7 @@ namespace VegaCityApp.API.Services.Implement
                         OrderId = order.Id,
                         IsIncrease = true,
                         Name = "Deposit from order " + order.InvoiceId,
-                        PackageItemId = order.PackageItemId,
+                        PackageItemId = (Guid)order.PackageItemId,
                         PaymentType = PaymentTypeEnum.Momo.GetDescriptionFromEnum()
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
@@ -418,7 +418,7 @@ namespace VegaCityApp.API.Services.Implement
                         OrderId = order.Id,
                         IsIncrease = true,
                         Name = "Deposit from order " + order.InvoiceId,
-                        PackageItemId = order.PackageItemId,
+                        PackageItemId = (Guid)order.PackageItemId,
                         PaymentType = PaymentTypeEnum.ZaloPay.GetDescriptionFromEnum()
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
@@ -766,7 +766,7 @@ namespace VegaCityApp.API.Services.Implement
                         OrderId = order.Id,
                         IsIncrease = true,
                         Name = "Deposit from order " + order.InvoiceId,
-                        PackageItemId = order.PackageItemId,
+                        PackageItemId = (Guid)order.PackageItemId,
                         PaymentType = PaymentTypeEnum.VnPay.GetDescriptionFromEnum()
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
@@ -883,7 +883,7 @@ namespace VegaCityApp.API.Services.Implement
                         OrderId = order.Id,
                         IsIncrease = true,
                         Name = "Deposit from order " + order.InvoiceId,
-                        PackageItemId = order.PackageItemId,
+                        PackageItemId = (Guid)order.PackageItemId,
                         PaymentType = PaymentTypeEnum.ZaloPay.GetDescriptionFromEnum()
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
@@ -1273,7 +1273,7 @@ namespace VegaCityApp.API.Services.Implement
                         OrderId = order.Id,
                         IsIncrease = true,
                         Name = "Deposit from order " + order.InvoiceId,
-                        PackageItemId = order.PackageItemId,
+                        PackageItemId = (Guid)order.PackageItemId,
                         PaymentType = PaymentTypeEnum.PayOS.GetDescriptionFromEnum()
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
@@ -1391,7 +1391,7 @@ namespace VegaCityApp.API.Services.Implement
                         OrderId = order.Id,
                         IsIncrease = true,
                         Name = "Deposit from order " + order.InvoiceId,
-                        PackageItemId = order.PackageItemId,
+                        PackageItemId = (Guid)order.PackageItemId,
                         PaymentType = PaymentTypeEnum.PayOS.GetDescriptionFromEnum()
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
@@ -1699,7 +1699,7 @@ namespace VegaCityApp.API.Services.Implement
                         OrderId = order.Id,
                         IsIncrease = true,
                         Name = "Deposit from order " + order.InvoiceId,
-                        PackageItemId = order.PackageItemId,
+                        PackageItemId = (Guid)order.PackageItemId,
                         PaymentType = PaymentTypeEnum.ZaloPay.GetDescriptionFromEnum()
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
@@ -1816,7 +1816,7 @@ namespace VegaCityApp.API.Services.Implement
                         OrderId = order.Id,
                         IsIncrease = true,
                         Name = "Deposit from order " + order.InvoiceId,
-                        PackageItemId = order.PackageItemId,
+                        PackageItemId = (Guid)order.PackageItemId,
                         PaymentType = PaymentTypeEnum.ZaloPay.GetDescriptionFromEnum()
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);

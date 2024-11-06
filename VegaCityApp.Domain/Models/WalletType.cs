@@ -14,7 +14,7 @@ namespace VegaCityApp.Domain.Models
         }
 
         public Guid Id { get; set; }
-        public string? Name { get; set; }
+        public string Name { get; set; } = null!;
         public Guid MarketZoneId { get; set; }
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }

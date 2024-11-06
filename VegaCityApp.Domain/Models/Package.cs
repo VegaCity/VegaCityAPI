@@ -21,10 +21,10 @@ namespace VegaCityApp.Domain.Models
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
-        public int? Duration { get; set; }
-        public Guid? PackageTypeId { get; set; }
+        public int Duration { get; set; }
+        public Guid PackageTypeId { get; set; }
 
-        public virtual PackageType? PackageType { get; set; }
+        public virtual PackageType PackageType { get; set; } = null!;
         public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<PackageDetail> PackageDetails { get; set; }
         public virtual ICollection<PackageItem> PackageItems { get; set; }

@@ -558,7 +558,7 @@ namespace VegaCityApp.API.Services.Implement
                         OrderId = order.Id,
                         IsIncrease = true,
                         Name = "Deposit from order " + order.InvoiceId,
-                        PackageItemId = order.PackageItemId,
+                        PackageItemId = (Guid)order.PackageItemId,
                         PaymentType = PaymentTypeEnum.Cash.GetDescriptionFromEnum()
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
@@ -673,7 +673,7 @@ namespace VegaCityApp.API.Services.Implement
                         OrderId = order.Id,
                         IsIncrease = true,
                         Name = "Deposit from order " + order.InvoiceId,
-                        PackageItemId = order.PackageItemId,
+                        PackageItemId = (Guid)order.PackageItemId,
                         PaymentType = PaymentTypeEnum.Cash.GetDescriptionFromEnum()
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
@@ -846,7 +846,7 @@ namespace VegaCityApp.API.Services.Implement
                 IsIncrease = false,
                 Name = "Deposit from order " + order.InvoiceId,
                 PaymentType = PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
-                PackageItemId = order.PackageItemId
+                PackageItemId = (Guid)order.PackageItemId
             };
             await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
             order.PackageItem.Wallet.Balance -= order.TotalAmount;
@@ -889,10 +889,10 @@ namespace VegaCityApp.API.Services.Implement
                 Id = Guid.NewGuid(),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
-                Amount = (int?)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate),
+                Amount = (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate),
                 IsIncrease = true,
                 MarketZoneId = order.User.MarketZoneId,
-                StoreId = order.StoreId,
+                StoreId = (Guid)order.StoreId,
                 TransactionId = transactionStoreTransfer.Id,
                 Status = OrderStatus.Completed,
                 Description = "Transfer money from order " + order.InvoiceId + " to store"
@@ -922,13 +922,13 @@ namespace VegaCityApp.API.Services.Implement
             var transfertoVega = new StoreMoneyTransfer
             {
                 Id = Guid.NewGuid(),
-                Amount = (int?)(order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate),
+                Amount = (int)(order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 Description = "Transfer money from order " + order.InvoiceId + " to Vega",
                 IsIncrease = true,
                 MarketZoneId = order.User.MarketZoneId,
                 Status = OrderStatus.Completed,
-                StoreId = order.StoreId,
+                StoreId = (Guid)order.StoreId,
                 TransactionId = transactionVega.Id,
                 UpsDate = TimeUtils.GetCurrentSEATime()
             };

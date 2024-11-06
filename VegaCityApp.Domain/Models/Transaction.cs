@@ -12,9 +12,9 @@ namespace VegaCityApp.Domain.Models
         }
 
         public Guid Id { get; set; }
-        public string? Type { get; set; }
+        public string Type { get; set; } = null!;
         public Guid? WalletId { get; set; }
-        public Guid? UserId { get; set; }
+        public Guid UserId { get; set; }
         public Guid? DespositId { get; set; }
         public Guid? StoreId { get; set; }
         public string Status { get; set; } = null!;
@@ -28,7 +28,7 @@ namespace VegaCityApp.Domain.Models
 
         public virtual Order? Order { get; set; }
         public virtual Store? Store { get; set; }
-        public virtual User? User { get; set; }
+        public virtual User User { get; set; } = null!;
         public virtual Wallet? Wallet { get; set; }
         public virtual ICollection<CustomerMoneyTransfer> CustomerMoneyTransfers { get; set; }
         public virtual ICollection<StoreMoneyTransfer> StoreMoneyTransfers { get; set; }
