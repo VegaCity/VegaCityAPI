@@ -1046,5 +1046,69 @@ namespace VegaCityApp.API.Services.Implement
                    MessageResponse = EtagMessage.FailedToPay
                };
         }
+
+        public async Task SolveWalletPackageItem(Guid apiKey)
+        {
+            var packageItems = await _unitOfWork.GetRepository<PackageItem>().GetListAsync
+                (predicate: x => x.Status == PackageItemStatusEnum.Expired.GetDescriptionFromEnum(),
+                 include: w => w.Include(z => z.Wallet));
+            var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
+                (predicate: x => x.Id == apiKey, include: z => z.Include(a => a.MarketZoneConfig));
+            var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
+                (predicate: x => x.Email == marketZone.Email && x.Status == (int)UserStatusEnum.Active && x.MarketZoneId == apiKey, 
+                include: a => a.Include(z => z.Wallets));
+            Wallet adminWallet = admin.Wallets.SingleOrDefault();
+            if (packageItems.Count == 0)
+            {
+                return;
+            }
+            else
+            {
+                foreach(var item in packageItems)
+                {
+                    if(item.Wallet.Balance > 0)
+                    {
+                        var transaction = new Transaction
+                        {
+                            Id = Guid.NewGuid(),
+                            WalletId = item.WalletId,
+                            IsIncrease = false,
+                            Amount = item.Wallet.Balance,
+                            CrDate = TimeUtils.GetCurrentSEATime(),
+                            UpsDate = TimeUtils.GetCurrentSEATime(),
+                            Description = "Refund for: " + item.Name,
+                            Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                            Status = TransactionStatus.Success,
+                            Type = TransactionType.RefundMoney,
+                            UserId = admin.Id
+                        };
+                        await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
+                        
+                        var transactionTransfer = new CustomerMoneyTransfer
+                        {
+                            Id = Guid.NewGuid(),
+                            CrDate = TimeUtils.GetCurrentSEATime(),
+                            UpsDate = TimeUtils.GetCurrentSEATime(),
+                            Amount = item.Wallet.Balance,
+                            MarketZoneId = marketZone.Id,
+                            IsIncrease = true,
+                            Status = TransactionStatus.Success,
+                            PackageItemId = item.Id,
+                            TransactionId = transaction.Id
+                        };
+                        await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(transactionTransfer);
+
+                        item.Wallet.Balance = 0;
+                        item.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Wallet>().UpdateAsync(item.Wallet);
+
+                        adminWallet.BalanceHistory += item.Wallet.Balance;
+                        adminWallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Wallet>().UpdateAsync(adminWallet);
+                    }
+                }
+            }
+            await _unitOfWork.CommitAsync();
+        }
     }
 }
