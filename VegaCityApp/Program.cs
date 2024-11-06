@@ -52,7 +52,7 @@ try
     app.UseHangfireDashboard();
     app.MapHangfireDashboard();
     
-    BackgroundJobs.RecurringJobs();
+    //BackgroundJobs.RecurringJobs();
     app.MapControllers();
 
     app.Run();
