@@ -23,15 +23,15 @@ namespace VegaCityApp.Domain.Models
         public string? Status { get; set; }
         public string? Gender { get; set; }
         public bool? IsAdult { get; set; }
-        public Guid? WalletId { get; set; }
-        public bool? IsChanged { get; set; }
+        public Guid WalletId { get; set; }
+        public bool IsChanged { get; set; }
         public string? PhoneNumber { get; set; }
         public string? Rfid { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
 
         public virtual Package Package { get; set; } = null!;
-        public virtual Wallet? Wallet { get; set; }
+        public virtual Wallet Wallet { get; set; } = null!;
         public virtual ICollection<CustomerMoneyTransfer> CustomerMoneyTransfers { get; set; }
         public virtual ICollection<Deposit> Deposits { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
