@@ -571,22 +571,6 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> ActivePackageItem(Guid packageItem, ActivatePackageItemRequest req)
         {
-            if (req.StartDate < TimeUtils.GetCurrentSEATime().AddDays(-1) || req.EndDate <= TimeUtils.GetCurrentSEATime())
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.InvalidDuration,
-                    StatusCode = HttpStatusCodes.BadRequest,
-                };
-            }
-            if (req.StartDate >= req.EndDate)
-            {
-                return new ResponseAPI()
-                {
-                    MessageResponse = PackageMessage.SameStrAndEndDate,
-                    StatusCode = HttpStatusCodes.BadRequest,
-                };
-            }
             //check if cccd or passport 
             if (!ValidationUtils.IsCCCD(req.Cccdpassport))
                 throw new BadHttpRequestException(PackageItemMessage.CCCDInvalid, HttpStatusCodes.BadRequest);
@@ -619,8 +603,8 @@ namespace VegaCityApp.API.Services.Implement
             packageItemExist.Cccdpassport = req.Cccdpassport.Trim();
             packageItemExist.Email = req.Email.Trim();
             packageItemExist.Gender = req.Gender.Trim();
-            packageItemExist.StartDate = TimeUtils.GetCurrentSEATime() ;
-            packageItemExist.EndDate = req.EndDate ?? packageItemExist.EndDate;
+            packageItemExist.StartDate = TimeUtils.GetCurrentSEATime();
+            packageItemExist.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
             packageItemExist.IsAdult = req.IsAdult;
             packageItemExist.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItemExist);
