@@ -16,7 +16,11 @@ namespace VegaCityApp.API.Utils
 
         public static bool IsCCCD(string cccd)
         {
+            if(cccd.Length == 12)
             return Regex.IsMatch(cccd, @"^\d{12}$");
+            else if(cccd.Length >= 6 && cccd.Length <= 9)
+            return Regex.IsMatch(cccd, @"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,9}$");
+            return false;
         }
         public static bool CheckNumber(int number)
         {

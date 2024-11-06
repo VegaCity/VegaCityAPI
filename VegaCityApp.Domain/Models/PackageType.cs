@@ -3,24 +3,21 @@ using System.Collections.Generic;
 
 namespace VegaCityApp.Domain.Models
 {
-    public partial class House
+    public partial class PackageType
     {
-        public House()
+        public PackageType()
         {
-            Stores = new HashSet<Store>();
+            Packages = new HashSet<Package>();
         }
 
         public Guid Id { get; set; }
-        public string HouseName { get; set; } = null!;
-        public string Location { get; set; } = null!;
-        public string Address { get; set; } = null!;
         public Guid ZoneId { get; set; }
+        public string Name { get; set; } = null!;
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
-        public bool IsRent { get; set; }
 
         public virtual Zone Zone { get; set; } = null!;
-        public virtual ICollection<Store> Stores { get; set; }
+        public virtual ICollection<Package> Packages { get; set; }
     }
 }

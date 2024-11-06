@@ -40,8 +40,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             //check service store
             var serviceStore = await _unitOfWork.GetRepository<Domain.Models.StoreService>().SingleOrDefaultAsync(
-                predicate: x => x.Id == serviceStoreId && !x.Deflag,
-                include: z => z.Include(a => a.WalletTypeStoreServiceMappings));
+                predicate: x => x.Id == serviceStoreId && !x.Deflag);
             if (serviceStore == null)
             {
                 return new ResponseAPI
@@ -56,8 +55,7 @@ namespace VegaCityApp.API.Services.Implement
                 Id = Guid.NewGuid(),
                 WalletTypeId = id,
                 StoreServiceId = serviceStoreId,
-                CrDate = TimeUtils.GetCurrentSEATime(),
-                UpsDate = TimeUtils.GetCurrentSEATime(),
+                CrDate = TimeUtils.GetCurrentSEATime()
             };
             await _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().InsertAsync(newMapping);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
@@ -142,8 +140,8 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> DeleteWalletType(Guid id)
         {
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync
-                (predicate: x => x.Id == id && !x.Deflag,
-                 include: mapping => mapping.Include(a => a.WalletTypeStoreServiceMappings));
+                (predicate: x => x.Id == id && !x.Deflag, include: z => z.Include(a => a.WalletTypeStoreServiceMappings)
+                );
             if (walletType == null)
             {
                 return new ResponseAPI
@@ -220,8 +218,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> GetWalletTypeById(Guid id)
         {
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
-                predicate: x => x.Id == id && !x.Deflag,
-                include: z => z.Include(y => y.WalletTypeStoreServiceMappings));
+                predicate: x => x.Id == id && !x.Deflag);
             if (walletType == null)
             {
                 return new ResponseAPI
@@ -267,7 +264,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             var currentTime = TimeUtils.GetCurrentSEATime();
             var wallet = (List<Wallet>)await _unitOfWork.GetRepository<Wallet>().GetListAsync
-                (predicate: x => x.ExpireDate < currentTime && !x.Deflag);
+                (predicate: x => x.EndDate < currentTime && !x.Deflag);
             if (wallet.Count > 0)
             {
                 foreach (var item in wallet)
@@ -282,9 +279,9 @@ namespace VegaCityApp.API.Services.Implement
         public async Task EndDayCheckWalletCashier(Guid apiKey)
         {
             var data = (List<User>)await _unitOfWork.GetRepository<User>().GetListAsync
-                (predicate: x => (x.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierAppId)
-                                || x.RoleId == Guid.Parse(EnvironmentVariableConstant.CashierWebId))
-                                && x.Status == (int)UserStatusEnum.Active);
+                (predicate: x => (x.Role.Name == RoleEnum.CashierApp.GetDescriptionFromEnum()
+                                || x.Role.Name == RoleEnum.CashierWeb.GetDescriptionFromEnum())
+                                && x.Status == (int)UserStatusEnum.Active, include: z => z.Include(a => a.Role));
             var maketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
                         (predicate: x => x.Id == apiKey);
             var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
@@ -376,7 +373,7 @@ namespace VegaCityApp.API.Services.Implement
             //wallet user
             var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync
                 (predicate: x => x.Id == id && !x.Deflag,
-                 include: userStore => userStore.Include(z => z.User).Include(x => x.Etags));
+                 include: userStore => userStore.Include(z => z.User).Include(z => z.PackageItems));
             if (wallet == null)
             {
                 return new ResponseAPI
@@ -417,13 +414,15 @@ namespace VegaCityApp.API.Services.Implement
                         Status = TransactionStatus.Pending,
                         Description = "Withdraw money for owner store: " + wallet.User.FullName,
                         StoreId = wallet.User.StoreId,
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        UserId = cashierWebId
                     };
                     await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
                 }
             }
-            else if (wallet.Etags.Count > 0)
+            else if (wallet.PackageItems.Count > 0)
             {
-                foreach (var item in wallet.Etags)
+                foreach (var item in wallet.PackageItems)
                 {
                     if (item.WalletId == wallet.Id)
                     {
@@ -437,7 +436,9 @@ namespace VegaCityApp.API.Services.Implement
                             Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                             CrDate = TimeUtils.GetCurrentSEATime(),
                             Status = TransactionStatus.Pending,
-                            Description = "Withdraw money for etag",
+                            Description = "Withdraw money for package item",
+                            UpsDate = TimeUtils.GetCurrentSEATime(),
+                            UserId = cashierWebId
                         };
                         await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
                     }
@@ -464,7 +465,8 @@ namespace VegaCityApp.API.Services.Implement
         {
             Guid cashierWebId = GetUserIdFromJwt();
             string role = GetRoleFromJwt();
-            var transactionAvailable = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync(predicate: x => x.Id == transactionId && x.Status == TransactionStatus.Pending);
+            var transactionAvailable = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
+                (predicate: x => x.Id == transactionId && x.Status == TransactionStatus.Pending);
             if(transactionAvailable == null)
             {
                 return new ResponseAPI
@@ -495,7 +497,7 @@ namespace VegaCityApp.API.Services.Implement
             //wallet user
             var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync
                 (predicate: x => x.Id == id && !x.Deflag,
-                 include: userStore => userStore.Include(z => z.User).Include(x => x.Etags));
+                 include: userStore => userStore.Include(z => z.User).Include(z => z.PackageItems));
             if (wallet == null)
             {
                 return new ResponseAPI
@@ -534,9 +536,10 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
                 }
             }
-            else  if (wallet.Etags.Count > 0)
+            else if (wallet.PackageItems.Count > 0)
             {
-                foreach (var item in wallet.Etags) {
+                foreach (var item in wallet.PackageItems)
+                {
 
                     if (item.WalletId == wallet.Id)
                     {
@@ -556,43 +559,51 @@ namespace VegaCityApp.API.Services.Implement
                         };
                     }
                 }
-                
+
             }
             var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
                 (predicate: x => x.Id == cashierWeb.MarketZoneId);
             var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
                 (predicate: x => x.Email == marketZone.Email && x.Status == (int)UserStatusEnum.Active,
                     include: wallet => wallet.Include(z => z.Wallets));
+            Wallet adminWallet = admin.Wallets.SingleOrDefault();
+            string name = wallet.User != null ? wallet.User.FullName : wallet.PackageItems.SingleOrDefault().Name;
             var transactionBalanceAdmin = new Transaction
             {
                 Id = Guid.NewGuid(),
+                WalletId = adminWallet.Id,
                 Type = TransactionType.WithdrawMoney,
-                WalletId = admin.Wallets.SingleOrDefault().Id,
-                Amount =  transactionAvailable.Amount, //return money from etag admin.Wallets.SingleOrDefault().Balance -
+                Amount = transactionAvailable.Amount,
                 IsIncrease = false,
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                UserId = admin.Id,
                 CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = TransactionStatus.Success,
-                Description = "Withdraw balance from admin: " + admin.FullName,
+                Description = "Withdraw money for: " + name
             };
+            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceAdmin);
             //admin wallet
-            admin.Wallets.SingleOrDefault().Balance -= transactionAvailable.Amount;
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(admin.Wallets.SingleOrDefault());
+            adminWallet.Balance -= transactionAvailable.Amount;
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(adminWallet);
+            Wallet cashierWallet = cashierWeb.Wallets.SingleOrDefault();
             var transactionBalanceHistory = new Transaction
             {
                 Id = Guid.NewGuid(),
                 Type = TransactionType.WithdrawMoney,
-                WalletId = cashierWeb.Wallets.SingleOrDefault().Id,
-                Amount =  transactionAvailable.Amount, //cashierWeb.Wallets.SingleOrDefault().BalanceHistory +
+                WalletId = cashierWallet.Id,
+                Amount = transactionAvailable.Amount, //cashierWeb.Wallets.SingleOrDefault().BalanceHistory +
                 IsIncrease = true,
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 Status = TransactionStatus.Success,
                 Description = "Add balance history to cashier web: " + cashierWeb.FullName,
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                UserId = cashierWebId
             };
-            cashierWeb.Wallets.SingleOrDefault().BalanceHistory += transactionAvailable.Amount;
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(cashierWeb.Wallets.SingleOrDefault());
-            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceAdmin);
+            cashierWallet.BalanceHistory += transactionAvailable.Amount;
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(cashierWallet);
+
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceHistory);
             return await _unitOfWork.CommitAsync() > 0? new ResponseAPI
             {

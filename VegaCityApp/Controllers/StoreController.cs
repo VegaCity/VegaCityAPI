@@ -59,9 +59,9 @@ namespace VegaCityApp.API.Controllers
         [HttpGet(StoreEndpoint.GetMenu)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         //[CustomAuthorize(RoleEnum.Store)]
-        public async Task<IActionResult> GetMenu(Guid id)
+        public async Task<IActionResult> GetMenu(string phone)
         {
-            var result = await _storeService.GetMenuFromPos(id);
+            var result = await _storeService.GetMenuFromPos(phone);
             return StatusCode(result.StatusCode, result);
         }
     }

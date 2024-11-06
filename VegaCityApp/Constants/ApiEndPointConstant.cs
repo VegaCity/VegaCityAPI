@@ -19,15 +19,13 @@ public static class ApiEndPointConstant
         public const string RefreshToken = Authentication + "/refresh-token";
         public const string GetRefreshTokenByEmail = Authentication + "/refresh-token/{email}";
     }
-    public static class EtagTypeEndpoint
+    public static class MarketZoneEndpoint
     {
-        public const string CreateEtagType = ApiEndpoint + "/etag-type";
-        public const string DeleteEtagType = ApiEndpoint + "/etag-type/{id}";
-        public const string UpdateEtagType = ApiEndpoint + "/etag-type/{id}";
-        public const string SearchEtagType = ApiEndpoint + "/etag-type/{id}";
-        public const string SearchAllEtagType = ApiEndpoint + "/etag-types";
-        public const string AddEtagTypeToPackage = ApiEndpoint + "/etag-type/{etagTypeId}/package/{packageId}";
-        public const string RemoveEtagTypeFromPackage = ApiEndpoint + "/etag-type/{etagTypeId}/package/{packageId}";
+        public const string CreateMarketZone = ApiEndpoint + "/market-zone";
+        public const string UpdateMarketZone = ApiEndpoint + "/market-zone";
+        public const string GetListMarketZone = ApiEndpoint + "/market-zones";
+        public const string GetMarketZone = ApiEndpoint + "/market-zone/{id}";
+        public const string DeleteMarketZone = ApiEndpoint + "/market-zone/{id}";
     }
     public static class EtagEndpoint
     {
@@ -43,7 +41,8 @@ public static class ApiEndPointConstant
     }
     public static class UserEndpoint
     {
-        public const string ApproveUser = ApiEndpoint + "/approve-user/{userId}";
+        public const string CreateSession = ApiEndpoint + "/user/{id}/session";
+        public const string ApproveUser = ApiEndpoint + "/user/{userId}/approve-user";
         public const string GetListUser = ApiEndpoint + "/users";
         public const string GetListUserByRoleId = ApiEndpoint + "/users";
         public const string UpdateUserRoleById = ApiEndpoint + "/user";
@@ -59,11 +58,25 @@ public static class ApiEndPointConstant
 
     public static class PackageEndpoint
     {
+        public const string ConfirmOrder = ApiEndpoint + "/order/confirm";
+        public const string PackageItemPayment = ApiEndpoint + "/package-item/payment";
+        public const string PrepareChargeMoney = ApiEndpoint + "/package-item/charge-money";
+        public const string ActivePackageItem = ApiEndpoint + "/package-item/{id}/activate";
         public const string CreatePackage = ApiEndpoint + "/package";
         public const string UpdatePackage = ApiEndpoint + "/package/{id}";
         public const string GetListPackage = ApiEndpoint + "/packages";
         public const string GetPackageById = ApiEndpoint + "/package/{id}";
         public const string DeletePackage = ApiEndpoint + "/package/{id}";
+        public const string GetListPackageType = ApiEndpoint + "/package-types";
+        public const string GetPackageTypeById = ApiEndpoint + "/package-type/{id}";
+        public const string CreatePackageType = ApiEndpoint + "/package-type";
+        public const string UpdatePackageType = ApiEndpoint + "/package-type/{id}";
+        public const string DeletePackageType = ApiEndpoint + "/package-type/{id}";
+        public const string GetListPackageItem = ApiEndpoint + "/package-items";
+        public const string GetPackageItemById = ApiEndpoint + "/package-item/{id}";
+        public const string CreatePackageItem = ApiEndpoint + "/package-item";
+        public const string UpdatePackageItem = ApiEndpoint + "/package-item/{id}";
+
     }
 
     public static class ZoneEndPoint
@@ -80,7 +93,7 @@ public static class ApiEndPointConstant
         public const string GetListStore = ApiEndpoint + "/stores";
         public const string GetStore = ApiEndpoint + "/store/{id}";
         public const string DeleteStore = ApiEndpoint + "/store/{id}";
-        public const string GetMenu = ApiEndpoint + "/store/{id}/menu";
+        public const string GetMenu = ApiEndpoint + "/store/{phone}/menu";
     }
     public static class HouseEndpoint
     {
@@ -100,6 +113,7 @@ public static class ApiEndPointConstant
         public const string CreateOrder = ApiEndpoint + "/order";
         public const string CreateOrderForCashier = ApiEndpoint + "/order/cashier";
         public const string UpdateOrder = ApiEndpoint + "/order";
+        public const string ConfirmOrder = ApiEndpoint + "/order/confirm";
     }
     public static class PaymentEndpoint
     {
@@ -152,5 +166,13 @@ public static class ApiEndPointConstant
         public const string UpdateReport = ApiEndpoint + "/report/{id}";
         public const string GetListIssueType = ApiEndpoint + "/report/issue-types";
         public const string GetListReports = ApiEndpoint + "/reports";
+    }
+    public static class PromotionEndPoint
+    {
+        public const string CreatePromotion = ApiEndpoint + "/promotion";
+        public const string UpdatePromotion = ApiEndpoint + "/promotion/{id}";
+        public const string SearchAllPromotions = ApiEndpoint + "/promotions";
+        public const string SearchPromotion = ApiEndpoint + "/promotion/{id}";
+        public const string DeletePromotion = ApiEndpoint + "/promotion/{id}";
     }
 }

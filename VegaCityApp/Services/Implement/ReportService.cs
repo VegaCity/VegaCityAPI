@@ -38,19 +38,19 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> CreateReport(string creator, ReportRequest req)
         {
-            var report = _mapper.Map<DisputeReport>(req);
-            report.Id = Guid.NewGuid();
-            report.Creator = creator;
-            report.CrDate = TimeUtils.GetCurrentSEATime();
-            report.Status = (int) ReportStatus.Pending;
-            report.StoreId = req.StoreId;
-            await _unitOfWork.GetRepository<DisputeReport>().InsertAsync(report);
+            //var report = _mapper.Map<DisputeReport>(req);
+            //report.Id = Guid.NewGuid();
+            //report.Creator = creator;
+            //report.CrDate = TimeUtils.GetCurrentSEATime();
+            //report.Status = (int) ReportStatus.Pending;
+            //report.StoreId = req.StoreId;
+            //await _unitOfWork.GetRepository<DisputeReport>().InsertAsync(report);
            
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = "Create Report Success",
-                Data = report
+                //Data = report
             }: new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.BadRequest,
@@ -61,29 +61,28 @@ namespace VegaCityApp.API.Services.Implement
         {
             Guid userSolve = GetUserIdFromJwt();
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == userSolve);
-            var report = await _unitOfWork.GetRepository<DisputeReport>().SingleOrDefaultAsync
-                (predicate: x => x.Id == id
-                        && x.Status != (int)ReportStatus.Done
-                       );
-            if (report == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = "Report Not Found"
-                };
-            }
-            report.Status = req.Status;
-            report.SolveDate = TimeUtils.GetCurrentSEATime();
-            report.Solution = req.Solution != null? req.Solution.Trim() : report.Solution;
-            report.SolveBy = user.Email;
-            _unitOfWork.GetRepository<DisputeReport>().UpdateAsync(report);
+            //var report = await _unitOfWork.GetRepository<DisputeReport>().SingleOrDefaultAsync
+            //    (predicate: x => x.Id == id
+            //            && x.Status != (int)ReportStatus.Done
+            //           );
+            //if (report == null)
+            //{
+            //    return new ResponseAPI
+            //    {
+            //        StatusCode = HttpStatusCodes.NotFound,
+            //        MessageResponse = "Report Not Found"
+            //    };
+            //}
+            //report.Status = req.Status;
+            //report.SolveDate = TimeUtils.GetCurrentSEATime();
+            //report.Solution = req.Solution != null? req.Solution.Trim() : report.Solution;
+            //report.SolveBy = user.Email;
             await _unitOfWork.CommitAsync();
             return new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = "Update Report Success",
-                Data = report
+                //Data = report
             };
         }
 
@@ -155,30 +154,30 @@ namespace VegaCityApp.API.Services.Implement
         {
             try
             {
-                IPaginate<ReportResponse> data = await _unitOfWork.GetRepository<DisputeReport>().GetPagingListAsync(
-                               selector: x => new ReportResponse()
-                               {
-                                 Id = x.Id,
-                                 Description = x.Description,
-                                 IssueTypeId = x.IssueTypeId,
-                                 StoreId = x.StoreId,
-                                 Status = x.Status
-                               },
-                                page: page,
-                                size: size,
-                                orderBy: x => x.OrderByDescending(z => z.CrDate));
+                //IPaginate<ReportResponse> data = await _unitOfWork.GetRepository<DisputeReport>().GetPagingListAsync(
+                //               selector: x => new ReportResponse()
+                //               {
+                //                 Id = x.Id,
+                //                 Description = x.Description,
+                //                 IssueTypeId = x.IssueTypeId,
+                //                 StoreId = x.StoreId,
+                //                 Status = x.Status
+                //               },
+                //                page: page,
+                //                size: size,
+                //                orderBy: x => x.OrderByDescending(z => z.CrDate));
                 return new ResponseAPI<IEnumerable<ReportResponse>>
                 {
                     MessageResponse = "Get All Reports Successfully!",
                     StatusCode = HttpStatusCodes.OK,
                     MetaData = new MetaData
                     {
-                        Size = data.Size,
-                        Page = data.Page,
-                        Total = data.Total,
-                        TotalPage = data.TotalPages
+                        //Size = data.Size,
+                        //Page = data.Page,
+                        //Total = data.Total,
+                        //TotalPage = data.TotalPages
                     },
-                    Data = data.Items
+                    //Data = data.Items
                 };
             }
             catch (Exception ex)

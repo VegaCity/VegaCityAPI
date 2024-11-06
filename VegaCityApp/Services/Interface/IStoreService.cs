@@ -13,6 +13,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI<IEnumerable<GetStoreResponse>>> SearchAllStore(Guid apiKey, int size, int page);
         Task<ResponseAPI> DeleteStore(Guid StoreId);
         Task<ResponseAPI> SearchStore(Guid StoreId);
-        Task<ResponseAPI> GetMenuFromPos(Guid id);
+        Task<ResponseAPI> GetMenuFromPos(string phone);
     }
 }

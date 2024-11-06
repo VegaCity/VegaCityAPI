@@ -18,13 +18,21 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace VegaCityApp.API.Controllers.Admin
 {
     [ApiController]
-    public class AdminController : BaseController<AdminController>
+    public class UserController : BaseController<UserController>
     {
         private readonly IAccountService _service;
 
-        public AdminController(ILogger<AdminController> logger, IAccountService service) : base(logger)
+        public UserController(ILogger<UserController> logger, IAccountService service) : base(logger)
         {
             _service = service;
+        }
+        [HttpPost(UserEndpoint.CreateSession)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [SwaggerOperation(Summary = "Create new session for user")]
+        public async Task<IActionResult> CreateSession(Guid id,[FromBody] SessionRequest request)
+        {
+            var result = await _service.CreateUserSession(id, request);
+            return StatusCode(result.StatusCode, result);
         }
         [HttpPost(UserEndpoint.CreateUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
@@ -38,6 +46,7 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpPost(UserEndpoint.ApproveUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         [CustomAuthorize(RoleEnum.Admin)]
+        [SwaggerOperation(Summary = "Approve user !! Get Ready !!")]
         public async Task<IActionResult> ApproveUser(Guid userId, [FromBody] ApproveRequest request)
         {
             var result = await _service.ApproveUser(userId, request);
@@ -55,6 +64,7 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpGet(UserEndpoint.GetUserInfo)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb, RoleEnum.Store)]
+        [SwaggerOperation(Summary = "Search user by id !! Get Ready !!")]
         public async Task<IActionResult> SearchUser(Guid id)
         {
             var result = await _service.SearchUser(id);

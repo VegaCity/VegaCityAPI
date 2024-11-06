@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using VegaCityApp.API.Enums;
+using VegaCityApp.API.Payload.Request.Order;
 using VegaCityApp.API.Payload.Request.Package;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.PackageResponse;
@@ -62,5 +63,114 @@ namespace VegaCityApp.API.Controllers
             var result = await _packageService.DeletePackage(id);
             return StatusCode(result.StatusCode, result);
         }
+        //PackageType
+        [HttpPost(PackageEndpoint.CreatePackageType)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        public async Task<IActionResult> CreatePackageType([FromBody] CreatePackageTypeRequest request)
+        {
+            var result = await _packageService.CreatePackageType(request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch(PackageEndpoint.UpdatePackageType)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> UpdatePackageType(Guid id, [FromBody] UpdatePackageTypeRequest request)
+        {
+            var result = await _packageService.UpdatePackageType(id, request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(PackageEndpoint.GetListPackageType)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchAllPackageType([FromQuery] int size = 10, [FromQuery] int page = 1)
+        {
+            var result = await _packageService.SearchAllPackageType(size, page);
+            return Ok(result);
+        }
+        [HttpGet(PackageEndpoint.GetPackageTypeById)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchPackageType(Guid id)
+        {
+            var result = await _packageService.SearchPackageType(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpDelete(PackageEndpoint.DeletePackageType)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [SwaggerOperation(Summary = "If delete PackageType, Everything in package type will be deleted")]
+        public async Task<IActionResult> DeletePackageType(Guid id)
+        {
+            var result = await _packageService.DeletePackageType(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        //PackageItem
+        [HttpPost(PackageEndpoint.CreatePackageItem)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [SwaggerOperation(Summary = "Generate package item as v-card")]
+        public async Task<IActionResult> CreatePackageItem([FromQuery] int quantity, [FromBody] CreatePackageItemRequest request)
+        {
+            var result = await _packageService.CreatePackageItem(quantity, request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch(PackageEndpoint.UpdatePackageItem)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> UpdatePackageItem(Guid id, [FromBody] UpdatePackageItemRequest request)
+        {
+            var result = await _packageService.UpdatePackageItem(id, request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(PackageEndpoint.GetListPackageItem)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchAllPackageItem([FromQuery] int size = 10, [FromQuery] int page = 1)
+        {
+            var result = await _packageService.SearchAllPackageItem(size, page);
+            return Ok(result);
+        }
+        [HttpGet(PackageEndpoint.GetPackageItemById)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchPackageItem(Guid id)
+        {
+            var result = await _packageService.SearchPackageItem(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch(PackageEndpoint.ActivePackageItem)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [SwaggerOperation(Summary = "Get ready to active")]
+        public async Task<IActionResult> ActivePackageItem(Guid id, [FromBody] ActivatePackageItemRequest request)
+        {
+            var result = await _packageService.ActivePackageItem(id, request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPost(PackageEndpoint.PrepareChargeMoney)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [SwaggerOperation(Summary = "Get ready to prepare charging")]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        public async Task<IActionResult> PrepareChargeMoneyEtag([FromBody] ChargeMoneyRequest request)
+        {
+            var result = await _packageService.PrepareChargeMoneyEtag(request);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPost(PackageEndpoint.PackageItemPayment)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        public async Task<IActionResult> PackageItemPayment([FromQuery] Guid packageItemId,
+            [FromQuery] int price, [FromQuery] Guid storeId, [FromBody] List<OrderProduct> products)
+        {
+            var result = await _packageService.PackageItemPayment(packageItemId, price, storeId, products);
+            return StatusCode(result.StatusCode, result);
+        }
+        //[HttpPost(PackageEndpoint.ConfirmOrder)]
+        //[CustomAuthorize(RoleEnum.CashierWeb)]
+        //[ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        //public async Task<IActionResult> ConfirmOrder([FromBody] ConfirmOrderRequest request)
+        //{
+        //    var result = await _packageService.c(request);
+        //    return StatusCode(result.StatusCode, result);
+        //}
     }
 }

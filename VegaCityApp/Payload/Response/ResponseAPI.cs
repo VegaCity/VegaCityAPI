@@ -13,8 +13,8 @@ namespace VegaCityApp.API.Payload.Response
     {
         public int StatusCode { get; set; }
         public string MessageResponse { get; set; }
-        public T Data { get; set; }
         public MetaData MetaData { get; set; }
+        public T Data { get; set; }
     }
     public class MetaData
     {

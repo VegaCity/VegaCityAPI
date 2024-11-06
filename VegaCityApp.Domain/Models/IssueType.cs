@@ -7,13 +7,13 @@ namespace VegaCityApp.Domain.Models
     {
         public IssueType()
         {
-            DisputeReports = new HashSet<DisputeReport>();
+            Reports = new HashSet<Report>();
         }
 
         public Guid Id { get; set; }
-        public string? Name { get; set; }
-        public DateTime? CrDate { get; set; }
+        public string Name { get; set; } = null!;
+        public DateTime CrDate { get; set; }
 
-        public virtual ICollection<DisputeReport> DisputeReports { get; set; }
+        public virtual ICollection<Report> Reports { get; set; }
     }
 }

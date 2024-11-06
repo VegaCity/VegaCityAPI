@@ -79,5 +79,14 @@ namespace VegaCityApp.API.Controllers
             var result = await _orderService.ConfirmOrderForCashier(req);
             return StatusCode(result.StatusCode, result);
         }
+        [HttpPost(OrderEndpoint.ConfirmOrder)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [CustomAuthorize(RoleEnum.Store)]
+        public async Task<IActionResult> ConfirmOrder(ConfirmOrderRequest req)
+        {
+            var result = await _orderService.ConfirmOrder(req);
+            return StatusCode(result.StatusCode, result);
+        }
+
     }
 }
