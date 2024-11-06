@@ -222,9 +222,9 @@ public static class MessageConstant
         public const string NotFoundETagType = "ETagType Was Not Found !!";
         public const string UpdatePackageFailed = "Update Package Failed !!";
         public const string EndateInThePast = "End date cannot be in the past.";
-        public const string SameStrAndEndDate = "StartDate and EndDate must Not be Same";
+        public const string SameStrAndEndDate = "StartDate Must Be Before the EndDate And Both must Not be Same";
         public const string durationLimit = "The duration between start and end date must be at least 48 hours.";
-        public const string InvalidDuration = "Invalid DateTime Duration";
+        public const string InvalidDuration = "Invalid DateTime Duration: Start date must be before the end date, and both should be after the current time.";
         public const string DeleteSuccess = "Delete Package Successfully!";
         public const string DeleteFail = "Delete Package Failed!";
     }
