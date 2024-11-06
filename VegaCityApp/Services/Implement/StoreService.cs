@@ -16,12 +16,12 @@ using static VegaCityApp.API.Constants.MessageConstant;
 
 namespace VegaCityApp.API.Services.Implement
 {
-    public class StoreService: BaseService<StoreService>, IStoreService
+    public class StoreService : BaseService<StoreService>, IStoreService
     {
         public StoreService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<StoreService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
         }
-        public async Task<ResponseAPI> UpdateStore(Guid storeId,UpdateStoreRequest req)
+        public async Task<ResponseAPI> UpdateStore(Guid storeId, UpdateStoreRequest req)
         {
             Guid apiKey = GetMarketZoneIdFromJwt();
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
@@ -35,7 +35,7 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = StoreMessage.NotFoundStore
                 };
             }
-            store.Name = req.Name != null? req.Name.Trim() : store.Name;
+            store.Name = req.Name != null ? req.Name.Trim() : store.Name;
             if (!Enum.IsDefined(typeof(StoreStatusEnum), req.StoreStatus))
             {
                 return new ResponseAPI()
@@ -67,7 +67,7 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     MessageResponse = StoreMessage.UpdateStoreSuccesss,
                     StatusCode = HttpStatusCodes.OK,
-                    
+
                 };
             }
             else
@@ -136,7 +136,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> SearchStore(Guid StoreId)
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
-                predicate: x => x.Id == StoreId && !x.Deflag, 
+                predicate: x => x.Id == StoreId && !x.Deflag,
                 include: z => z.Include(a => a.StoreServices)
                                .Include(a => a.Menus).ThenInclude(a => a.Products)
             );
@@ -174,7 +174,7 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             //delete every thing related to store
-            if(store.Menus.Count > 0)
+            if (store.Menus.Count > 0)
             {
                 foreach (var menu in store.Menus)
                 {
@@ -226,73 +226,89 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> GetMenuFromPos(string phone)
         {
-             //call api pos - take n parse into Object Menu
-             var data = await CallApiUtils.CallApiGetEndpoint(
-              // "https://6504066dc8869921ae2466d4.mockapi.io/api/Product"
-              $"https://localhost:7131/api/v1/menus/{phone}/menus"
-                 );
+            //call api pos - take n parse into Object Menu
+            var data = await CallApiUtils.CallApiGetEndpoint(
+             // "https://6504066dc8869921ae2466d4.mockapi.io/api/Product"
+             $"https://localhost:7131/api/v1/menus/{phone}/menus"
+                );
             var productsPosResponse = await CallApiUtils.GenerateObjectFromResponse<List<ProductsPosResponse>>(data);
-             //lưu chuỗi json này
-             //parse object list sang json
-             string json = JsonConvert.SerializeObject(productsPosResponse);
-             //check menu
-             var checkMenu = await _unitOfWork.GetRepository<Menu>()
-                 .SingleOrDefaultAsync(predicate: x => x.Store.PhoneNumber == phone && !x.Deflag);
-             var store = await _unitOfWork.GetRepository<Store>()
-                 .SingleOrDefaultAsync(predicate: x => x.PhoneNumber == phone && !x.Deflag);
-            if(store.StoreType.GetDescriptionFromEnum() == StoreTypeEnum.Service.GetDescriptionFromEnum())
-                throw new BadHttpRequestException("This store is service store, not support menu");
-            if (checkMenu == null)
+            //lưu chuỗi json này
+            //parse object list sang json
+            string json = JsonConvert.SerializeObject(productsPosResponse);
+            //check menu
+            var checkMenu = await _unitOfWork.GetRepository<Menu>()
+                .SingleOrDefaultAsync(predicate: x => x.Store.PhoneNumber == phone && !x.Deflag);
+            var store = await _unitOfWork.GetRepository<Store>()
+                .SingleOrDefaultAsync(predicate: x => x.PhoneNumber == phone && !x.Deflag, include: z => z.Include(a => a.Wallets))
+                   ?? throw new BadHttpRequestException("Store not found", HttpStatusCodes.NotFound);
+            Wallet walletStore = null;
+            if (store.Wallets.Count > 0)
             {
-                var newMenu = new Menu()
+                foreach (var item in store.Wallets)
                 {
-                    Id = Guid.NewGuid(),
-                    StoreId = store.Id,
-                    Deflag = false,
-                    Address = store.Address,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    ImageUrl = "string",
-                    MenuJson = json,
-                    Name = store.ShortName + "Menu",
-                    PhoneNumber = store.PhoneNumber,
-                    UpsDate = TimeUtils.GetCurrentSEATime()
-                };
-                await _unitOfWork.GetRepository<Menu>().InsertAsync(newMenu);
-                await _unitOfWork.CommitAsync();
-                // tim productcategory, insert vao
-                bool check = await InsertProductCategory(productsPosResponse, newMenu.Id);
-                return check?new ResponseAPI()
+                    if (item.StoreId == store.Id)
+                    {
+                        walletStore = item;
+                    }
+                }
+                if (store.StoreType.GetDescriptionFromEnum() == StoreTypeEnum.Service.GetDescriptionFromEnum())
+                    throw new BadHttpRequestException("This store is service store, not support menu");
+                if (checkMenu == null)
                 {
-                    MessageResponse = "Get Successfully!!",
-                    StatusCode = HttpStatusCodes.OK,
-                    Data = productsPosResponse
-                }: new ResponseAPI()
+                    var newMenu = new Menu()
+                    {
+                        Id = Guid.NewGuid(),
+                        StoreId = store.Id,
+                        Deflag = false,
+                        Address = store.Address,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        ImageUrl = "string",
+                        MenuJson = json,
+                        Name = store.ShortName + "Menu",
+                        PhoneNumber = store.PhoneNumber,
+                        UpsDate = TimeUtils.GetCurrentSEATime()
+                    };
+                    await _unitOfWork.GetRepository<Menu>().InsertAsync(newMenu);
+                    await _unitOfWork.CommitAsync();
+                    // tim productcategory, insert vao
+                    bool check = await InsertProductCategory(productsPosResponse, newMenu.Id, walletStore);
+                    return check ? new ResponseAPI()
+                    {
+                        MessageResponse = "Get Successfully!!",
+                        StatusCode = HttpStatusCodes.OK,
+                        Data = productsPosResponse
+                    } : new ResponseAPI()
+                    {
+                        MessageResponse = "Fail add product category",
+                        StatusCode = HttpStatusCodes.BadRequest,
+                    };
+                }
+                else
                 {
-                    MessageResponse = "Fail add product category",
-                    StatusCode = HttpStatusCodes.BadRequest,
-                };
+                    checkMenu.MenuJson = json;
+                    checkMenu.CrDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Menu>().UpdateAsync(checkMenu);
+                    await _unitOfWork.CommitAsync();
+                    bool check = await InsertProductCategory(productsPosResponse, checkMenu.Id, walletStore);
+                    return check ? new ResponseAPI()
+                    {
+                        MessageResponse = "Get Successfully!!",
+                        StatusCode = HttpStatusCodes.OK,
+                        Data = productsPosResponse
+                    } : new ResponseAPI()
+                    {
+                        MessageResponse = "Fail add product category",
+                        StatusCode = HttpStatusCodes.BadRequest,
+                    };
+                }
             }
             else
             {
-                checkMenu.MenuJson = json;
-                checkMenu.CrDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Menu>().UpdateAsync(checkMenu);
-                await _unitOfWork.CommitAsync();
-                bool check = await InsertProductCategory(productsPosResponse, checkMenu.Id);
-                return check ? new ResponseAPI()
-                {
-                    MessageResponse = "Get Successfully!!",
-                    StatusCode = HttpStatusCodes.OK,
-                    Data = productsPosResponse
-                } : new ResponseAPI()
-                {
-                    MessageResponse = "Fail add product category",
-                    StatusCode = HttpStatusCodes.BadRequest,
-                };
+                throw new BadHttpRequestException("Wallet not found", HttpStatusCodes.NotFound);
             }
         }
 
-        private async Task<bool> InsertProductCategory(List<ProductsPosResponse> listProduct, Guid MenuId)
+        private async Task<bool> InsertProductCategory(List<ProductsPosResponse> listProduct, Guid MenuId, Wallet walletStore)
         {
             List<ProductFromPos> products = new List<ProductFromPos>();
             //chay ham for cho productCate name
@@ -303,7 +319,7 @@ namespace VegaCityApp.API.Services.Implement
             foreach (var Category in selectField)
             {
                 var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
-                    predicate: x=> x.Name == Category.ProductCategory );
+                    predicate: x => x.Name == Category.ProductCategory);
                 if (productCategory == null)
                 {
                     var newProductCateGory = new ProductCategory()
@@ -316,9 +332,16 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime()
                     };
                     await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCateGory);
-                    foreach(var product in listProduct)
+                    var mappingWallet = new WalletTypeMapping
                     {
-                        if(product.ProductCategory == Category.ProductCategory)
+                        Id = Guid.NewGuid(),
+                        ProductCategoryId = newProductCateGory.Id,
+                        WalletTypeId = walletStore.WalletTypeId
+                    };
+                    await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(mappingWallet);
+                    foreach (var product in listProduct)
+                    {
+                        if (product.ProductCategory == Category.ProductCategory)
                         {
                             var newProduct = new Product()
                             {
@@ -341,6 +364,19 @@ namespace VegaCityApp.API.Services.Implement
                 }
                 else
                 {
+                    //check mapping
+                    var mapping = await _unitOfWork.GetRepository<WalletTypeMapping>().SingleOrDefaultAsync(
+                        predicate: x => x.ProductCategoryId == productCategory.Id && x.WalletTypeId == walletStore.WalletTypeId);
+                    if (mapping == null)
+                    {
+                        var mappingWallet = new WalletTypeMapping
+                        {
+                            Id = Guid.NewGuid(),
+                            ProductCategoryId = productCategory.Id,
+                            WalletTypeId = walletStore.WalletTypeId
+                        };
+                        await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(mappingWallet);
+                    }
                     foreach (var product in listProduct)
                     {
                         if (product.ProductCategory == Category.ProductCategory)

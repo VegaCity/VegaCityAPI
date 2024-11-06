@@ -1062,6 +1062,5 @@ namespace VegaCityApp.API.Services.Implement
                    MessageResponse = EtagMessage.FailedToPay
                };
         }
-
     }
 }

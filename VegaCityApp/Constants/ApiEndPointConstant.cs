@@ -58,6 +58,7 @@ public static class ApiEndPointConstant
 
     public static class PackageEndpoint
     {
+        public const string ConfirmOrder = ApiEndpoint + "/order/confirm";
         public const string PackageItemPayment = ApiEndpoint + "/package-item/payment";
         public const string PrepareChargeMoney = ApiEndpoint + "/package-item/charge-money";
         public const string ActivePackageItem = ApiEndpoint + "/package-item/{id}/activate";
@@ -112,6 +113,7 @@ public static class ApiEndPointConstant
         public const string CreateOrder = ApiEndpoint + "/order";
         public const string CreateOrderForCashier = ApiEndpoint + "/order/cashier";
         public const string UpdateOrder = ApiEndpoint + "/order";
+        public const string ConfirmOrder = ApiEndpoint + "/order/confirm";
     }
     public static class PaymentEndpoint
     {

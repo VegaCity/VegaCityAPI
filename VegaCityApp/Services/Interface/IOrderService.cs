@@ -15,5 +15,6 @@ namespace VegaCityApp.API.Services.Interface
         //Task<ResponseAPI> RemoveEtagTypeFromPackage(Guid etagId, Guid packageId);
         Task<ResponseAPI> CreateOrderForCashier(CreateOrderForCashierRequest req);
         Task<ResponseAPI> ConfirmOrderForCashier(ConfirmOrderForCashierRequest req);
+        Task<ResponseAPI> ConfirmOrder(ConfirmOrderRequest req);
     }
 }
