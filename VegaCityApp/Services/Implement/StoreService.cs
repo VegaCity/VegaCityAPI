@@ -313,6 +313,9 @@ namespace VegaCityApp.API.Services.Implement
             {
                 var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
                     predicate: x => x.Name == Category.ProductCategory);
+                //var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync(predicate: x => x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId),
+                //        include: m => m.Include(n => n.WalletTypeMappings));
+
                 if (productCategory == null)
                 {
                     var newProductCateGory = new ProductCategory()
@@ -325,17 +328,62 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime()
                     };
                     await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCateGory);
-                    var walletTypes =(List<WalletType>) await _unitOfWork.GetRepository<WalletType>().GetListAsync
-                        (predicate: x => x.Name == "SpecificWallet" || x.Name == "ServiceWallet");
-                    foreach (var item in walletTypes)
+                    //mapping wallet Type
+                    //get all WalletType
+                    //Take Specific and Service type's Ids
+                    //foreach (var walletType in walletTypes)
+                    //{
+                    //    if (walletType.Name == "SpecificWallet" || walletType.Name == "ServiceWallet")
+                    //    {
+                    //        foreach (var item in selectField)
+                    //        {
+                    //            // Retrieve the ProductCategory based on the current item's category name
+                    //            var productCategory2 = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
+                    //                predicate: x => x.Name == item.ProductCategory);
+
+                    //            if (productCategory2 != null) // Ensure productCategory2 is found
+                    //            {
+                    //                // Check if this mapping already exists
+                    //                var existingMapping = await _unitOfWork.GetRepository<WalletTypeMapping>().SingleOrDefaultAsync(
+                    //                    predicate: x => x.WalletTypeId == walletType.Id && x.ProductCategoryId == productCategory2.Id);
+
+                    //                if (existingMapping == null)
+                    //                {
+                    //                    var newProductCategoryMappingWallet = new WalletTypeMapping
+                    //                    {
+                    //                        Id = Guid.NewGuid(),
+                    //                        WalletTypeId = walletType.Id,
+                    //                        ProductCategoryId = productCategory2.Id,
+                    //                    };
+                    //                    await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(newProductCategoryMappingWallet);
+                    //                }
+                    //            }
+                    //        }
+                    //    }
+                    //}
+                    var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync(predicate: x => x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId),
+           include: m => m.Include(n => n.WalletTypeMappings));
+
+                    foreach (var walletType in walletTypes)
                     {
-                        var mapping = new WalletTypeMapping()
+                        if (walletType.Name == "SpecificWallet" || walletType.Name == "ServiceWallet")
                         {
-                            Id = Guid.NewGuid(),
-                            ProductCategoryId = newProductCateGory.Id,
-                            WalletTypeId = item.Id
-                        };
-                        await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(mapping);
+
+                            // Check if the mapping already exists between wallet type and product category
+                            var existingMapping = await _unitOfWork.GetRepository<WalletTypeMapping>().SingleOrDefaultAsync(
+                                predicate: x => x.WalletTypeId == walletType.Id && x.ProductCategoryId == newProductCateGory.Id);
+
+                            if (existingMapping == null)
+                            {
+                                var newProductCategoryMappingWallet = new WalletTypeMapping
+                                {
+                                    Id = Guid.NewGuid(),
+                                    WalletTypeId = walletType.Id,
+                                    ProductCategoryId = newProductCateGory.Id,
+                                };
+                                await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(newProductCategoryMappingWallet);
+                            }
+                        }
                     }
                     foreach (var product in listProduct)
                     {
@@ -354,6 +402,7 @@ namespace VegaCityApp.API.Services.Implement
                                 UpsDate = TimeUtils.GetCurrentSEATime()
                             };
                             await _unitOfWork.GetRepository<Product>().InsertAsync(newProduct);
+
                         }
                     }
                     await _unitOfWork.CommitAsync();
@@ -362,25 +411,40 @@ namespace VegaCityApp.API.Services.Implement
                 }
                 else
                 {
-                    //check mapping
-                    var walletTypes = (List<WalletType>)await _unitOfWork.GetRepository<WalletType>().GetListAsync
-                        (predicate: x => x.Name == "SpecificWallet" || x.Name == "ServiceWallet");
-                    
-                    foreach (var item in walletTypes)
+                    var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync(predicate: x => x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId),
+                       include: m => m.Include(n => n.WalletTypeMappings));
+                    foreach (var walletType in walletTypes)
                     {
-                        var mapping = await _unitOfWork.GetRepository<WalletTypeMapping>().SingleOrDefaultAsync
-                            (predicate: x => x.ProductCategoryId == productCategory.Id && x.WalletTypeId == item.Id);
-                        if(mapping == null)
+                        if (walletType.Name == "SpecificWallet" || walletType.Name == "ServiceWallet")
                         {
-                            var newMapping = new WalletTypeMapping()
+                            foreach (var item in selectField)
                             {
-                                Id = Guid.NewGuid(),
-                                ProductCategoryId = productCategory.Id,
-                                WalletTypeId = item.Id
-                            };
-                            await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(newMapping);
+                                // Retrieve the ProductCategory based on the current item's category name
+                                var productCategory2 = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
+                                    predicate: x => x.Name == item.ProductCategory);
+
+                                if (productCategory2 != null) // Ensure productCategory2 is found
+                                {
+                                    // Check if this mapping already exists
+                                    var existingMapping = await _unitOfWork.GetRepository<WalletTypeMapping>().SingleOrDefaultAsync(
+                                        predicate: x => x.WalletTypeId == walletType.Id && x.ProductCategoryId == productCategory2.Id);
+
+                                    if (existingMapping == null)
+                                    {
+                                        var newProductCategoryMappingWallet = new WalletTypeMapping
+                                        {
+                                            Id = Guid.NewGuid(),
+                                            WalletTypeId = walletType.Id,
+                                            ProductCategoryId = productCategory2.Id,
+                                        };
+                                        await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(newProductCategoryMappingWallet);
+                                    }
+                                }
+                            }
                         }
                     }
+
+
                     foreach (var product in listProduct)
                     {
                         if (product.ProductCategory == Category.ProductCategory)
@@ -406,5 +470,9 @@ namespace VegaCityApp.API.Services.Implement
             }
             return true;
         }
+
+        //above defected, only work with case that have enough category, else if null in category, wrong logic
+
+
     }
 }

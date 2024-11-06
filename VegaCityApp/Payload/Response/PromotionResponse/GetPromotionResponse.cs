@@ -11,6 +11,7 @@ namespace VegaCityApp.API.Payload.Response.PromotionResponse
         public string PromotionCode { get; set; }
         public String? Description { get; set; }    
         public int? MaxDiscount { get; set; }
+        public int? RequireAmount { get; set; }
         public int? Quantity { get; set; }
         public float? DiscountPercent { get; set; }
         public int Status { get; set; }
@@ -28,6 +29,7 @@ namespace VegaCityApp.API.Payload.Response.PromotionResponse
         public string PromotionCode { get; set; }
         public String? Description { get; set; }
         public int? MaxDiscount { get; set; }
+        public int? RequireAmount { get; set; }
         public int? Quantity { get; set; }
         public double? DiscountPercent { get; set; }
         public int Status { get; set; }

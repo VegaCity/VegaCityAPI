@@ -425,7 +425,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 Id = Guid.NewGuid(),
                 PaymentType = req.PaymentType,
-                Name = "Order Selling Package at Vega: " + TimeUtils.GetCurrentSEATime(),
+                Name = "Order Selling Package Vega: " + TimeUtils.GetCurrentSEATime(),
                 TotalAmount = req.TotalAmount,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),

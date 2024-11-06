@@ -744,19 +744,11 @@ namespace VegaCityApp.API.Services.Implement
                 }
                 else
                 {
-                    amountPromo = req.ChargeAmount * (int)checkPromo.DiscountPercent;
+                    //amountPromo = req.ChargeAmount * (int)checkPromo.DiscountPercent;
+                    amountPromo = (int)(req.ChargeAmount * checkPromo.DiscountPercent + 0.5f);
+
                 }
-                var newPromotionOrder = new PromotionOrder()
-                {
-                    Id = Guid.NewGuid(),
-                    PromotionId = checkPromo.Id,
-                    OrderId = Guid.NewGuid(),
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    Deflag = false,
-                    DiscountAmount = amountPromo
-                };
-                await _unitOfWork.GetRepository<PromotionOrder>().InsertAsync(newPromotionOrder);
+                
                 var newOrder = new Order()
                 {
                     Id = Guid.NewGuid(),
@@ -786,6 +778,17 @@ namespace VegaCityApp.API.Services.Implement
                     PhoneNumber = packageItemExsit.PhoneNumber
                 };
                 await _unitOfWork.GetRepository<PackageOrder>().InsertAsync(packageOrder);
+                var newPromotionOrder = new PromotionOrder()
+                {
+                    Id = Guid.NewGuid(),
+                    PromotionId = checkPromo.Id,
+                    OrderId = newOrder.Id,
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    Deflag = false,
+                    DiscountAmount = amountPromo
+                };
+                await _unitOfWork.GetRepository<PromotionOrder>().InsertAsync(newPromotionOrder);
                 var transactionCharge = new Transaction()
                 {
                     Id = Guid.NewGuid(),
