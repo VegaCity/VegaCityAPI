@@ -35,7 +35,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpDelete(TransactionEndpoint.DeleteTransaction)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> DeleteTransaction(Guid id)
         {
             var response = await _transactionService.DeleteTransaction(id);

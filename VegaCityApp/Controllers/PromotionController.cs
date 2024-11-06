@@ -25,7 +25,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(PromotionEndPoint.CreatePromotion)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
-       // [CustomAuthorize(RoleEnum.Admin)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> CreatePromotion([FromBody] PromotionRequest request)
         {
             var result = await _promotionService.CreatePromotion(request);
@@ -33,7 +33,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPatch(PromotionEndPoint.UpdatePromotion)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        //[CustomAuthorize(RoleEnum.Admin)]
+        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> UpdatePromotion(Guid id, [FromBody] UpdatePromotionRequest request)
         {
             var result = await _promotionService.UpdatePromotion(id, request);
@@ -41,7 +41,6 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(PromotionEndPoint.SearchAllPromotions)]
         [ProducesResponseType(typeof(ResponseAPI<IEnumerable<GetZoneResponse>>), HttpStatusCodes.OK)]
-       // [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> SearchPromotions([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _promotionService.SearchPromotions(size, page);
@@ -49,7 +48,6 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(PromotionEndPoint.SearchPromotion)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-       // [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> SearchPromotion(Guid id)
         {
             var result = await _promotionService.SearchPromotion(id);
@@ -57,7 +55,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpDelete(PromotionEndPoint.DeletePromotion)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        //[CustomAuthorize(RoleEnum.Admin)]
+        [CustomAuthorize(RoleEnum.Admin)]
         [SwaggerOperation(Summary = "If delete Promotion, Everything in zone will be deleted")]
         public async Task<IActionResult> DeletePromotion(Guid id)
         {

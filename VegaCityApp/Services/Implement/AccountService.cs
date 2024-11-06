@@ -13,6 +13,7 @@ using VegaCityApp.Domain.Paginate;
 using VegaCityApp.Repository.Interfaces;
 using VegaCityApp.Service.Interface;
 using static VegaCityApp.API.Constants.MessageConstant;
+using VegaCityApp.API.Payload.Response.UserResponse;
 
 namespace VegaCityApp.Service.Implement
 {
@@ -218,8 +219,8 @@ namespace VegaCityApp.Service.Implement
                 MessageResponse = UserMessage.LoginFail
             };
 
-        }
-        public async Task<ResponseAPI<UserSession>> CreateUserSession(Guid userId, SessionRequest req)
+        } //get ready !!
+        public async Task<ResponseAPI<UserSession>> CreateUserSession(Guid userId, SessionRequest req) //get ready !!
         {
             if (req.EndDate < req.StartDate)
             {
@@ -253,6 +254,76 @@ namespace VegaCityApp.Service.Implement
                 StatusCode = HttpStatusCodes.Created,
                 MessageResponse = UserMessage.CreateSessionSuccessfully,
                 Data = session
+            };
+        }
+        public async Task<ResponseAPI<UserSession>> GetUserSessionById(Guid sessionId)
+        {
+            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
+                predicate: x => x.Id == sessionId,
+                include: session => session.Include(x => x.User).Include(x => x.Zone))
+                ?? throw new BadHttpRequestException("Session not found", HttpStatusCodes.NotFound);
+            return new ResponseAPI<UserSession>
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = UserMessage.GetSessionSuccessfully,
+                Data = session
+            };
+        }
+        public async Task<ResponseAPI<IEnumerable<GetUserSessions>>> GetAllUserSessions(int page, int size)
+        {
+            try {
+                var sessions = await _unitOfWork.GetRepository<UserSession>().GetPagingListAsync(
+                    selector: x => new GetUserSessions
+                    {
+                        Id = x.Id,
+                        UserId = x.UserId,
+                        StartDate = x.StartDate,
+                        EndDate = x.EndDate,
+                        TotalCashReceive = x.TotalCashReceive,
+                        TotalFinalAmountOrder = x.TotalFinalAmountOrder,
+                        TotalQuantityOrder = x.TotalQuantityOrder,
+                        TotalWithrawCash = x.TotalWithrawCash,
+                        ZoneId = x.ZoneId,
+                        Status = x.Status
+                    },
+                    page: page,
+                    size: size,
+                    orderBy: x => x.OrderByDescending(z => z.StartDate),
+                    predicate: x => x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum());
+                return new ResponseAPI<IEnumerable<GetUserSessions>>
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = UserMessage.GetAllSessionSuccessfully,
+                    MetaData = new MetaData
+                    {
+                        Page = page,
+                        Size = size,
+                        Total = sessions.Total,
+                        TotalPage = sessions.TotalPages
+                    },
+                    Data = sessions.Items
+                };
+            } 
+            catch (Exception ex)
+            {
+                return new ResponseAPI<IEnumerable<GetUserSessions>>
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    MessageResponse = UserMessage.GetAllSessionFail + ex.Message,
+                    Data = null
+                };
+            }
+        }
+        public async Task<ResponseAPI> DeleteSession(Guid sessionId)
+        {
+            var sessionExsit = await GetUserSessionById(sessionId);
+            sessionExsit.Data.Status = SessionStatusEnum.Canceled.GetDescriptionFromEnum();
+            _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionExsit.Data);
+            await _unitOfWork.CommitAsync();
+            return new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = UserMessage.DeleteSessionSuccessfully
             };
         }
         public async Task<ResponseAPI> GetRefreshTokenByEmail(string email, GetApiKey req)

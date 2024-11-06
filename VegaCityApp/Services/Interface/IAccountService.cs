@@ -4,6 +4,7 @@ using VegaCityApp.Domain.Paginate;
 using VegaCityApp.API.Payload.Request.Admin;
 using VegaCityApp.API.Payload.Request.Auth;
 using VegaCityApp.Domain.Models;
+using VegaCityApp.API.Payload.Response.UserResponse;
 
 namespace VegaCityApp.Service.Interface
 {
@@ -12,23 +13,18 @@ namespace VegaCityApp.Service.Interface
         Task AddRole();
         Task<LoginResponse> Login(LoginRequest req);
         Task<ResponseAPI<UserSession>> CreateUserSession(Guid userId, SessionRequest req);
+        Task<ResponseAPI<UserSession>> GetUserSessionById(Guid sessionId);
+        Task<ResponseAPI<IEnumerable<GetUserSessions>>> GetAllUserSessions(int page, int size);
+        Task<ResponseAPI> DeleteSession(Guid sessionId);
         Task<ResponseAPI> RefreshToken(ReFreshTokenRequest req);
-
         Task<ResponseAPI> GetRefreshTokenByEmail(string email, GetApiKey req);
         Task<ResponseAPI> Register (RegisterRequest req);
-
         Task<ResponseAPI> AdminCreateUser(RegisterRequest req);
-
         Task<ResponseAPI> ApproveUser (Guid userId, ApproveRequest req);
-
         Task<ResponseAPI> ChangePassword (ChangePasswordRequest req);
-
         Task<ResponseAPI<IEnumerable<GetUserResponse>>> SearchAllUser(int size, int page);
-
         Task<ResponseAPI<User>> SearchUser(Guid UserId);
-
         Task<ResponseAPI> UpdateUser(Guid userId, UpdateUserAccountRequest req);
-
         Task<ResponseAPI> DeleteUser(Guid UserId);
         Task<ResponseAPI> GetAdminWallet();
         Task<ResponseAPI> GetChartByDuration(AdminChartDurationRequest req);

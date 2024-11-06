@@ -40,7 +40,6 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(ZoneEndPoint.SearchAllZone)]
         [ProducesResponseType(typeof(ResponseAPI<IEnumerable<GetZoneResponse>>), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> SearchZones([FromQuery]int size = 10,[FromQuery] int page = 1)
         {
             var result = await _zoneService.SearchZones(size, page);
@@ -48,7 +47,6 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(ZoneEndPoint.SearchZone)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> SearchZone(Guid id)
         {
             var result = await _zoneService.SearchZone(id);
