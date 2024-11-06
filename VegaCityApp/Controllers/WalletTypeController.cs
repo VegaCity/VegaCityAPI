@@ -87,7 +87,7 @@ namespace VegaCityApp.API.Controllers
         [HttpPost(WalletTypeEndpoint.RequestWithdrawMoneyWallet)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.CashierWeb)]
-        [SwaggerOperation(Summary = "Fixing")]
+        [SwaggerOperation(Summary = "Get Ready !")]
         public async Task<IActionResult> RequestWithdrawMoneyWallet(Guid walletid, [FromBody] WithdrawMoneyRequest request)
         {
             var result = await _walletTypeService.RequestWithdrawMoneyWallet(walletid, request);
