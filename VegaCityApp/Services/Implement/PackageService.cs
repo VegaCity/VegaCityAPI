@@ -853,7 +853,7 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.CommitAsync();
         }
 
-        public async Task<ResponseAPI> PackageItemPayment(Guid packageItemId, int price, Guid storeId, List<OrderProduct> products)
+        public async Task<ResponseAPI> PackageItemPayment(Guid packageItemId, int totalPrice, Guid storeId, List<OrderProduct> products)
         {
            
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
@@ -882,7 +882,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            if (packageItem.Wallet.Balance < price)
+            if (packageItem.Wallet.Balance < totalPrice)
             {
                 return new ResponseAPI
                 {
@@ -900,7 +900,7 @@ namespace VegaCityApp.API.Services.Implement
                 PaymentType = PaymentTypeHelper.allowedPaymentTypes[5],
                 SaleType = SaleType.PackageItemPayment,
                 Status = OrderStatus.Completed,
-                TotalAmount = price,
+                TotalAmount = totalPrice,
                 UserId = (Guid)store.UserStoreMappings.SingleOrDefault().UserId,
                 PackageItemId = packageItem.Id,
                 InvoiceId = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
@@ -930,7 +930,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 Id = Guid.NewGuid(),
                 Name = "Payment From Store of: " + packageItem.Name,
-                Amount = price,
+                Amount = totalPrice,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 PackageItemId = packageItem.Id,
@@ -941,13 +941,13 @@ namespace VegaCityApp.API.Services.Implement
             };
             await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDeposit);
 
-            packageItem.Wallet.Balance -= price;
+            packageItem.Wallet.Balance -= totalPrice;
             packageItem.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageItem.Wallet);
             var transaction = new Transaction
             {
                 Id = Guid.NewGuid(),
-                Amount = price,
+                Amount = totalPrice,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 WalletId = packageItem.WalletId,
@@ -969,7 +969,7 @@ namespace VegaCityApp.API.Services.Implement
             var newTransactionMarket = new Transaction
             {
                 Id = Guid.NewGuid(),
-                Amount = (int)(price * marketZone.MarketZoneConfig.StoreStranferRate),
+                Amount = (int)(totalPrice * marketZone.MarketZoneConfig.StoreStranferRate),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 Description = "Store Transfer: " + store.Name,
@@ -983,14 +983,14 @@ namespace VegaCityApp.API.Services.Implement
             };
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(newTransactionMarket);
 
-            admin.Wallets.SingleOrDefault().Balance += (int)(price * marketZone.MarketZoneConfig.StoreStranferRate);
+            admin.Wallets.SingleOrDefault().Balance += (int)(totalPrice * marketZone.MarketZoneConfig.StoreStranferRate);
             admin.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(admin.Wallets.SingleOrDefault());
 
             var newStoreTransfer = new StoreMoneyTransfer
             {
                 Id = Guid.NewGuid(),
-                Amount = (int)(price * marketZone.MarketZoneConfig.StoreStranferRate),
+                Amount = (int)(totalPrice * marketZone.MarketZoneConfig.StoreStranferRate),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 StoreId = storeId,
                 UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -1005,7 +1005,7 @@ namespace VegaCityApp.API.Services.Implement
             var newTransactionStore = new Transaction
             {
                 Id = Guid.NewGuid(),
-                Amount = (int)(price * (1 - marketZone.MarketZoneConfig.StoreStranferRate)),
+                Amount = (int)(totalPrice * (1 - marketZone.MarketZoneConfig.StoreStranferRate)),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 Description = "Payment From Store of: " + packageItem.Name,
@@ -1019,14 +1019,14 @@ namespace VegaCityApp.API.Services.Implement
             };
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(newTransactionStore);
 
-            store.Wallets.SingleOrDefault().Balance += (int)(price * (1 - marketZone.MarketZoneConfig.StoreStranferRate));
+            store.Wallets.SingleOrDefault().Balance += (int)(totalPrice * (1 - marketZone.MarketZoneConfig.StoreStranferRate));
             store.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(store.Wallets.SingleOrDefault());
 
             var newStoreTransaction = new StoreMoneyTransfer
             {
                 Id = Guid.NewGuid(),
-                Amount = (int)(price * (1 - marketZone.MarketZoneConfig.StoreStranferRate)),
+                Amount = (int)(totalPrice * (1 - marketZone.MarketZoneConfig.StoreStranferRate)),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 StoreId = storeId,
                 UpsDate = TimeUtils.GetCurrentSEATime(),

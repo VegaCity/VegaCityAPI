@@ -159,9 +159,9 @@ namespace VegaCityApp.API.Controllers
         [HttpPost(PackageEndpoint.PackageItemPayment)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         public async Task<IActionResult> PackageItemPayment([FromQuery] Guid packageItemId,
-            [FromQuery] int price, [FromQuery] Guid storeId, [FromBody] List<OrderProduct> products)
+            [FromQuery] int totalPrice, [FromQuery] Guid storeId, [FromBody] List<OrderProduct> products)
         {
-            var result = await _packageService.PackageItemPayment(packageItemId, price, storeId, products);
+            var result = await _packageService.PackageItemPayment(packageItemId, totalPrice, storeId, products);
             return StatusCode(result.StatusCode, result);
         }
     }
