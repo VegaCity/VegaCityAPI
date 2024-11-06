@@ -49,8 +49,8 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
     
-    app.UseHangfireDashboard();
-    app.MapHangfireDashboard();
+    //app.UseHangfireDashboard();
+    //app.MapHangfireDashboard();
     
     //BackgroundJobs.RecurringJobs();
     app.MapControllers();
