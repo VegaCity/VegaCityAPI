@@ -86,7 +86,6 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = PromotionMessage.CreatePromotionFail,
                 StatusCode = HttpStatusCodes.BadRequest
             };
-
         }
         public async Task <ResponseAPI> UpdatePromotion(Guid PromotionId ,UpdatePromotionRequest req)
         {
@@ -163,12 +162,10 @@ namespace VegaCityApp.API.Services.Implement
                     StartDate = x.StartDate,
                     EndDate = x.EndDate,
                 },
+                predicate: z => z.Quantity > 0,
                 page: page,
                 size: size,
-                orderBy: x => x.OrderByDescending(z => z.Name),
-                    predicate: x => 
-                     // x.Status == (int)PromotionStatusEnum.Active &&
-                     x.EndDate >= TimeUtils.GetCurrentSEATime()
+                orderBy: x => x.OrderByDescending(z => z.Name)
                 );
                 return new ResponseAPI<IEnumerable<GetListPromotionResponse>>
                 {
@@ -220,10 +217,10 @@ namespace VegaCityApp.API.Services.Implement
                 }
             };
         }
-
         public async Task<ResponseAPI> DeletePromotion(Guid promotionId)
         {
-            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(predicate: x => x.Id == promotionId && x.Status == (int)PromotionStatusEnum.Active);
+            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
+                (predicate: x => x.Id == promotionId && x.Status == (int)PromotionStatusEnum.Active);
             if (promotion == null)
                {
                 return new ResponseAPI()
@@ -243,6 +240,17 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = PromotionMessage.DeletePromotionFail,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
+        }
+        public async Task CheckExpiredPromotion()
+        {
+            var promotions = await _unitOfWork.GetRepository<Promotion>().GetListAsync
+                (predicate: x => x.EndDate < TimeUtils.GetCurrentSEATime());
+            foreach (var promotion in promotions)
+            {
+                promotion.Status = (int)PromotionStatusEnum.Inactive;
+                _unitOfWork.GetRepository<Promotion>().UpdateAsync(promotion);
+            }
+            await _unitOfWork.CommitAsync();
         }
     }
 }

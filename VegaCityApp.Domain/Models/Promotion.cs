@@ -17,7 +17,7 @@ namespace VegaCityApp.Domain.Models
         public string? Description { get; set; }
         public int? MaxDiscount { get; set; }
         public int? RequireAmount { get; set; }
-        public int? Quantity { get; set; }
+        public int Quantity { get; set; }
         public double? DiscountPercent { get; set; }
         public int Status { get; set; }
         public DateTime StartDate { get; set; }

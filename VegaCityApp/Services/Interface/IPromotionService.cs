@@ -13,5 +13,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI<IEnumerable<GetListPromotionResponse>>> SearchPromotions(int size, int page);
         Task<ResponseAPI> SearchPromotion(Guid promotionId);
         Task<ResponseAPI> DeletePromotion(Guid promotionId);
+        Task CheckExpiredPromotion();
     }
 }
