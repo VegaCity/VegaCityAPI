@@ -133,7 +133,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(PackageEndpoint.GetPackageItemById)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchPackageItem(Guid? id, [FromQuery] string? rfId)
+        public async Task<IActionResult> SearchPackageItem([FromQuery] Guid? id, [FromQuery] string? rfId)
         {
             var result = await _packageService.SearchPackageItem(id, rfId);
             return StatusCode(result.StatusCode, result);

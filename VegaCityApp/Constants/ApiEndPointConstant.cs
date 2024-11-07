@@ -77,7 +77,7 @@ public static class ApiEndPointConstant
         public const string UpdatePackageType = ApiEndpoint + "/package-type/{id}";
         public const string DeletePackageType = ApiEndpoint + "/package-type/{id}";
         public const string GetListPackageItem = ApiEndpoint + "/package-items";
-        public const string GetPackageItemById = ApiEndpoint + "/package-item/{id}";
+        public const string GetPackageItemById = ApiEndpoint + "/package-item";
         public const string CreatePackageItem = ApiEndpoint + "/package-item";
         public const string UpdatePackageItem = ApiEndpoint + "/package-item/{id}";
 
