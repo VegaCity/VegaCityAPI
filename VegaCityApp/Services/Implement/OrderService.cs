@@ -951,15 +951,5 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = OrderMessage.ConfirmOrderSuccessfully,
             };
         }
-        public async Task CheckOrderIsPending()
-        {
-            var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(predicate: x => x.Status == OrderStatus.Pending);
-            foreach (var order in orders)
-            {
-                order.Status = OrderStatus.Canceled;
-                order.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-            }
-        }
     }
 }

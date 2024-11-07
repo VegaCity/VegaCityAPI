@@ -16,6 +16,5 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> CreateOrderForCashier(CreateOrderForCashierRequest req);
         Task<ResponseAPI> ConfirmOrderForCashier(ConfirmOrderForCashierRequest req);
         Task<ResponseAPI> ConfirmOrder(ConfirmOrderRequest req);
-        Task CheckOrderIsPending();
     }
 }
