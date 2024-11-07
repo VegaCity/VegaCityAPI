@@ -199,7 +199,8 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> DeleteOrder(Guid OrderId)
         {
             var orderExisted = await _unitOfWork.GetRepository<Order>()
-                .SingleOrDefaultAsync(predicate: x => x.Id == OrderId && x.Status == OrderStatus.Pending);
+                .SingleOrDefaultAsync(predicate: x => x.Id == OrderId && x.Status == OrderStatus.Pending, 
+                include: z => z.Include(u => u.PackageOrders));
             if (orderExisted == null)
             {
                 return new ResponseAPI()
@@ -207,6 +208,15 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = OrderMessage.NotFoundOrder,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
+            }
+            if(orderExisted.PackageOrders.Count != 0)
+            {
+                foreach (var packageOrder in orderExisted.PackageOrders)
+                {
+                    packageOrder.Status = OrderStatus.Canceled;
+                    packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
+                }
             }
             orderExisted.Status = OrderStatus.Canceled;
             orderExisted.UpsDate = TimeUtils.GetCurrentSEATime();
