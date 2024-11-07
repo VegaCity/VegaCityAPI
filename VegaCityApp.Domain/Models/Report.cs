@@ -12,8 +12,8 @@ namespace VegaCityApp.Domain.Models
         public string Description { get; set; } = null!;
         public string? Solution { get; set; }
         public string? SolveBy { get; set; }
-        public Guid CrDate { get; set; }
-        public Guid UpsDate { get; set; }
+        public DateTime CrDate { get; set; }
+        public DateTime UpsDate { get; set; }
         public int Status { get; set; }
 
         public virtual IssueType IssueType { get; set; } = null!;

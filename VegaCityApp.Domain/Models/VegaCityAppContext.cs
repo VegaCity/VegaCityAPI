@@ -683,6 +683,8 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
+                entity.Property(e => e.CrDate).HasColumnType("datetime");
+
                 entity.Property(e => e.Description).HasMaxLength(500);
 
                 entity.Property(e => e.Solution).HasMaxLength(500);
@@ -690,6 +692,8 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.SolveBy)
                     .HasMaxLength(50)
                     .IsUnicode(false);
+
+                entity.Property(e => e.UpsDate).HasColumnType("datetime");
 
                 entity.HasOne(d => d.IssueType)
                     .WithMany(p => p.Reports)
