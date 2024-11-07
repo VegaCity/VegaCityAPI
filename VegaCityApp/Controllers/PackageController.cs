@@ -148,7 +148,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpPost(PackageEndpoint.PrepareChargeMoney)]
-        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [CustomAuthorize(RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         [SwaggerOperation(Summary = "Get ready to prepare charging")]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         public async Task<IActionResult> PrepareChargeMoneyEtag([FromBody] ChargeMoneyRequest request)
