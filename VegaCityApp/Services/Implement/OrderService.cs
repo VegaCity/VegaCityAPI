@@ -183,7 +183,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.Created,
                     Data = new
                     {
-                        OrderId = newOrder.Id,
+                        orderId = newOrder.Id,
                         invoiceId = newOrder.InvoiceId,
                         transactionId = newTransaction.Id
                     }
@@ -485,6 +485,7 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.Created,
                 Data = new
                 {
+                    orderId = newOrder.Id,
                     invoiceId = newOrder.InvoiceId,
                     packageOrderId = newPackageOrder.Id,
                     transactionId = transaction.Id,
@@ -939,6 +940,16 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = OrderMessage.ConfirmOrderSuccessfully,
             };
+        }
+        public async Task CheckOrderIsPending()
+        {
+            var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(predicate: x => x.Status == OrderStatus.Pending);
+            foreach (var order in orders)
+            {
+                order.Status = OrderStatus.Canceled;
+                order.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+            }
         }
     }
 }
