@@ -138,7 +138,7 @@ namespace VegaCityApp.API.Services.Implement
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
                 predicate: x => x.Id == StoreId && !x.Deflag,
                 include: z => z.Include(a => a.StoreServices)
-                               .Include(a => a.Menus).ThenInclude(a => a.Products)
+                               .Include(a => a.Menus).ThenInclude(a => a.Products).ThenInclude(o => o.ProductCategory)
             );
 
             if (store == null)
