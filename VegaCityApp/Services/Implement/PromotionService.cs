@@ -130,6 +130,7 @@ namespace VegaCityApp.API.Services.Implement
             promotion.StartDate = req.StartDate;
             promotion.EndDate = req.EndDate;    
             promotion.Quantity = req.Quantity;
+            promotion.Status = (int)PromotionStatusEnum.Active;
             _unitOfWork.GetRepository<Promotion>().UpdateAsync(promotion);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
@@ -196,7 +197,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> SearchPromotion(Guid promotionId)
         {
             var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(
-                predicate: x => x.Id == promotionId && x.Status == (int)PromotionStatusEnum.Active && x.EndDate >= TimeUtils.GetCurrentSEATime(),
+                predicate: x => x.Id == promotionId  && x.EndDate >= TimeUtils.GetCurrentSEATime(),
                 include: zone => zone.Include(y => y.PromotionOrders));
             if (promotion == null)
             {
@@ -229,6 +230,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
+                promotion.Status= (int)PromotionStatusEnum.Inactive;
                 _unitOfWork.GetRepository<Promotion>().UpdateAsync(promotion);
                 return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
                 {
