@@ -257,7 +257,7 @@ namespace VegaCityApp.API.Services.Implement
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         ImageUrl = "string",
                         MenuJson = json,
-                        Name = store.ShortName + "Menu",
+                        Name = store.ShortName + " Menu",
                         PhoneNumber = store.PhoneNumber,
                         UpsDate = TimeUtils.GetCurrentSEATime()
                     };
@@ -267,7 +267,7 @@ namespace VegaCityApp.API.Services.Implement
                     bool check = await InsertProductCategory(productsPosResponse, newMenu.Id);
                     return check ? new ResponseAPI()
                     {
-                        MessageResponse = "Get Successfully!!",
+                        MessageResponse = "Synchronization successful",
                         StatusCode = HttpStatusCodes.OK,
                         Data = productsPosResponse
                     } : new ResponseAPI()
@@ -285,7 +285,7 @@ namespace VegaCityApp.API.Services.Implement
                     bool check = await InsertProductCategory(productsPosResponse, checkMenu.Id);
                     return check ? new ResponseAPI()
                     {
-                        MessageResponse = "Get Successfully!!",
+                        MessageResponse = "Synchronization successful",
                         StatusCode = HttpStatusCodes.OK,
                         Data = productsPosResponse
                     } : new ResponseAPI()
@@ -312,7 +312,7 @@ namespace VegaCityApp.API.Services.Implement
             foreach (var Category in selectField)
             {
                 var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
-                    predicate: x => x.Name == Category.ProductCategory);
+                    predicate: x => x.Name == Category.ProductCategory && !x.Deflag);
                 if (productCategory == null)
                 {
                     var newProductCateGory = new ProductCategory()
@@ -386,7 +386,7 @@ namespace VegaCityApp.API.Services.Implement
                             {
                                 // Retrieve the ProductCategory based on the current item's category name
                                 var productCategory2 = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
-                                    predicate: x => x.Name == item.ProductCategory);
+                                    predicate: x => x.Name == item.ProductCategory && !x.Deflag);
 
                                 if (productCategory2 != null) // Ensure productCategory2 is found
                                 {
@@ -415,7 +415,7 @@ namespace VegaCityApp.API.Services.Implement
                         if(product.ProductCategory == Category.ProductCategory)
                         {
                             var productExist = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(
-                                predicate: x => x.Id == Guid.Parse(product.Id) && x.ProductCategoryId == productCategory.Id);
+                                predicate: x => x.Id == Guid.Parse(product.Id) && x.ProductCategoryId == productCategory.Id && x.Status == "Active");
                             if (productExist == null)
                             {
                                 var newProduct = new Product()
@@ -431,6 +431,14 @@ namespace VegaCityApp.API.Services.Implement
                                     UpsDate = TimeUtils.GetCurrentSEATime()
                                 };
                                 await _unitOfWork.GetRepository<Product>().InsertAsync(newProduct);
+                            }
+                            else
+                            {
+                                productExist.Name = product.Name;
+                                productExist.ImageUrl = product.ImgUrl;
+                                productExist.Price = product.Price;
+                                productExist.UpsDate = TimeUtils.GetCurrentSEATime();
+                                _unitOfWork.GetRepository<Product>().UpdateAsync(productExist);
                             }
                             products.Add(new ProductFromPos()
                             {
@@ -450,9 +458,5 @@ namespace VegaCityApp.API.Services.Implement
             }
             return true;
         }
-
-        //above defected, only work with case that have enough category, else if null in category, wrong logic
-
-
     }
 }
