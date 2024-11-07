@@ -25,7 +25,9 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> CreatePromotion(PromotionRequest req)
         {
-            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(predicate: x => x.PromotionCode == req.PromotionCode);
+            Guid apiKey = GetMarketZoneIdFromJwt();
+            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
+                (predicate: x => x.PromotionCode == req.PromotionCode && x.Status == (int) PromotionStatusEnum.Active);
             if(promotion != null)
             {
                 return new ResponseAPI
@@ -61,7 +63,7 @@ namespace VegaCityApp.API.Services.Implement
             var newPromotion = new Promotion()
             {
                 Id = Guid.NewGuid(),
-                MarketZoneId = req.MarketZoneId,
+                MarketZoneId = apiKey,
                 StartDate = req.StartDate,
                 EndDate = req.EndDate,
                 PromotionCode = req.PromotionCode,

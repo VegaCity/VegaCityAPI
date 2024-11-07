@@ -633,6 +633,9 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Promotion");
 
+                entity.HasIndex(e => e.PromotionCode, "IX_Promotion")
+                    .IsUnique();
+
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.Description).HasMaxLength(200);
