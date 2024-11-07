@@ -61,6 +61,7 @@ public static class ApiEndPointConstant
 
     public static class PackageEndpoint
     {
+        public const string UpdateRfId = ApiEndpoint + "/package-item/{id}/rfid";
         public const string ConfirmOrder = ApiEndpoint + "/order/confirm";
         public const string PackageItemPayment = ApiEndpoint + "/package-item/payment";
         public const string PrepareChargeMoney = ApiEndpoint + "/package-item/charge-money";

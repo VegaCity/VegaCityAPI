@@ -503,10 +503,10 @@ namespace VegaCityApp.API.Services.Implement
             }
 
         }
-        public async Task<ResponseAPI<PackageItem>> SearchPackageItem(Guid PackageItemId)
+        public async Task<ResponseAPI<PackageItem>> SearchPackageItem(Guid? PackageItemId, string? rfid)
         {
             var packageItem = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(
-                predicate: x => x.Id == PackageItemId
+                predicate: x => x.Id == PackageItemId || x.Rfid == rfid
                 //&& x.Status == PackageItemStatus.Active.ToString() && x.Status == PackageItemStatus.Inactive.ToString()
                 ,
                 include: packageItem => packageItem.Include(b => b.Reports)
@@ -552,9 +552,9 @@ namespace VegaCityApp.API.Services.Implement
             if(packageItem.IsChanged == true)
                 throw new BadHttpRequestException("You only change info one time !!", HttpStatusCodes.BadRequest);
 
-            //update 
-            packageItem.Name = req.Name;
-            packageItem.Gender = req.Gender;
+            //update
+            packageItem.Name = req.Name ?? packageItem.Name;
+            packageItem.Gender = req.Gender ?? packageItem.Gender;
             packageItem.IsChanged = true;
 
             _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItem);
@@ -569,6 +569,42 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.BadRequest
             };
         }
+        public async Task<ResponseAPI> UpdateRfIdPackageItem(Guid Id, string rfId)
+        {
+            var packageItem = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync
+                (predicate: x => x.Id == Id && x.Status == PackageItemStatus.Active.ToString(),
+                 include: packageItem => packageItem.Include(b => b.Package).ThenInclude(c => c.PackageType)
+            );
+            #region check 
+            // after done main flow, make utils service to shorten this code
+            var userId = GetUserIdFromJwt();
+            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
+                predicate: x => x.UserId == userId && x.ZoneId == packageItem.Package.PackageType.ZoneId
+                               && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
+                               && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
+            )
+                ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
+                                                            HttpStatusCodes.BadRequest);
+            #endregion
+            if (packageItem == null)
+                throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
+            if(packageItem.Rfid == rfId)
+                throw new BadHttpRequestException(PackageItemMessage.RfIdExist, HttpStatusCodes.BadRequest);
+            //update
+            packageItem.Rfid = rfId;
+
+            _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItem);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            {
+                MessageResponse = PackageItemMessage.UpdatePackageItemSuccessfully,
+                StatusCode = HttpStatusCodes.OK,
+                Data = new { PackageItemId = packageItem.Id }
+            } : new ResponseAPI()
+            {
+                MessageResponse = PackageItemMessage.UpdatePackageItemFail,
+                StatusCode = HttpStatusCodes.BadRequest
+            };
+        } 
         public async Task<ResponseAPI> ActivePackageItem(Guid packageItem, ActivatePackageItemRequest req)
         {
             //check if cccd or passport 

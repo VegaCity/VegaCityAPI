@@ -250,6 +250,7 @@ public static class MessageConstant
     }
     public static class PackageItemMessage
     {
+        public const string RfIdExist = "RfId already exist !!";
         public const string EmailExist = "Email already exist !!";
         public const string EmailInvalid = "Email Invalid";
         public const string CreatePackageItemSuccessfully = "Create Package Item Successfully!";

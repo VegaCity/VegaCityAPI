@@ -494,7 +494,7 @@ namespace VegaCityApp.Domain.Models
                     .IsFixedLength();
 
                 entity.Property(e => e.Rfid)
-                    .HasMaxLength(50)
+                    .HasMaxLength(200)
                     .IsUnicode(false)
                     .HasColumnName("RFID");
 

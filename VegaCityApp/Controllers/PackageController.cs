@@ -133,9 +133,9 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(PackageEndpoint.GetPackageItemById)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchPackageItem(Guid id)
+        public async Task<IActionResult> SearchPackageItem(Guid? id, [FromQuery] string? rfId)
         {
-            var result = await _packageService.SearchPackageItem(id);
+            var result = await _packageService.SearchPackageItem(id, rfId);
             return StatusCode(result.StatusCode, result);
         }
         [HttpPatch(PackageEndpoint.ActivePackageItem)]
@@ -162,6 +162,14 @@ namespace VegaCityApp.API.Controllers
             [FromQuery] int totalPrice, [FromQuery] Guid storeId, [FromBody] List<OrderProduct> products)
         {
             var result = await _packageService.PackageItemPayment(packageItemId, totalPrice, storeId, products);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch(PackageEndpoint.UpdateRfId)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> UpdateRfIdPackageItem(Guid id, [FromQuery] string rfId)
+        {
+            var result = await _packageService.UpdateRfIdPackageItem(id, rfId);
             return StatusCode(result.StatusCode, result);
         }
     }
