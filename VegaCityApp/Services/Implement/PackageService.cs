@@ -23,7 +23,7 @@ namespace VegaCityApp.API.Services.Implement
         #region admin
         public async Task<ResponseAPI> CreatePackage(CreatePackageRequest req)
         {
-            var result = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Name == req.Name);
+            var result = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Name == req.Name && !x.Deflag);
             if (result != null)
             throw new BadHttpRequestException(PackageMessage.ExistedPackageName, HttpStatusCodes.BadRequest);
             if(req.Price <= 0) throw new BadHttpRequestException("The number must be more than 0", HttpStatusCodes.BadRequest);
