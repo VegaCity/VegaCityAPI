@@ -486,6 +486,8 @@ namespace VegaCityApp.Domain.Models
                     .HasMaxLength(5)
                     .IsUnicode(false);
 
+                entity.Property(e => e.ImageUrl).IsUnicode(false);
+
                 entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.Property(e => e.PhoneNumber)

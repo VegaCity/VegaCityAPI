@@ -555,6 +555,7 @@ namespace VegaCityApp.API.Services.Implement
             //update
             packageItem.Name = req.Name ?? packageItem.Name;
             packageItem.Gender = req.Gender ?? packageItem.Gender;
+            packageItem.ImageUrl = req.ImageUrl ?? packageItem.ImageUrl;
             packageItem.IsChanged = true;
 
             _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItem);
