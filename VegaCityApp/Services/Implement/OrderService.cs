@@ -249,6 +249,7 @@ namespace VegaCityApp.API.Services.Implement
                     InvoiceId = x.InvoiceId,
                     StoreId = x.StoreId,
                 },
+                predicate: z => z.UserId == GetUserIdFromJwt(),
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name));

@@ -34,6 +34,7 @@ namespace VegaCityApp.API.Controllers
 
         [HttpGet(OrderEndpoint.GetListOrder)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Store, RoleEnum.CashierWeb, RoleEnum.CashierApp, RoleEnum.Admin)]
         public async Task<IActionResult> SearchAllOrder([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _orderService.SearchAllOrders(size, page);
