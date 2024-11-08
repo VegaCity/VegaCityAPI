@@ -422,21 +422,65 @@ namespace VegaCityApp.API.Services.Implement
                     WalletTypeId = (Guid)package.Data.PackageDetails.SingleOrDefault().WalletTypeId
                 };
                 await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
-                var newPackageItem = new PackageItem()
+                //check if parent 
+                if(req.PackageItemId != null)
                 {
-                    Id = Guid.NewGuid(),
-                    PackageId = req.PackageId,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    Status = PackageItemStatus.Inactive.GetDescriptionFromEnum(),
-                    Gender = GenderEnum.Other.GetDescriptionFromEnum(),
-                    IsChanged = false,
-                    WalletId = newWallet.Id,
-                    StartDate = TimeUtils.GetCurrentSEATime(),
-                    EndDate = req.EndDate,
-                };
-                packageItems.Add(_mapper.Map<GetListPackageItemResponse>(newPackageItem));
-                await _unitOfWork.GetRepository<PackageItem>().InsertAsync(newPackageItem);
+                    var packageItemExist = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageItemId,
+                        include: y => y.Include( z => z.CustomerMoneyTransfers));
+                    if(packageItemExist.EndDate <= TimeUtils.GetCurrentSEATime())
+                    {
+                        throw new BadHttpRequestException(PackageItemMessage.PackageItemExpired, HttpStatusCodes.NotFound);
+                    }
+                    if (packageItemExist.Status == PackageItemStatusEnum.Blocked.GetDescriptionFromEnum() && packageItemExist.CustomerMoneyTransfers != null)
+                    {
+                        //case lost vcard
+                    }
+                    //case generate vcard child
+                    else
+                    {
+                        var newPackageItemChild = new PackageItem()
+                        {
+                            Id = Guid.NewGuid(),
+                            PackageId = req.PackageId,
+                            CrDate = TimeUtils.GetCurrentSEATime(),
+                            UpsDate = TimeUtils.GetCurrentSEATime(),
+                            Status = PackageItemStatus.Inactive.GetDescriptionFromEnum(),
+                            Gender = GenderEnum.Other.GetDescriptionFromEnum(),
+                            IsChanged = false,
+                            WalletId = newWallet.Id,
+                            StartDate = TimeUtils.GetCurrentSEATime(),
+                            EndDate = req.EndDate,
+                            IsAdult = false,
+                            Name = "Vcard for Child Created at: " + TimeUtils.GetCurrentSEATime(),
+                            PhoneNumber = packageItemExist.PhoneNumber,
+                            Cccdpassport = packageItemExist.Cccdpassport,
+                            Email = packageItemExist.Email,
+                            Rfid = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime())
+                        };
+                        packageItems.Add(_mapper.Map<GetListPackageItemResponse>(newPackageItemChild));
+                        await _unitOfWork.GetRepository<PackageItem>().InsertAsync(newPackageItemChild);
+                    }
+                }
+                else
+                {
+                    var newPackageItem = new PackageItem()
+                    {
+                        Id = Guid.NewGuid(),
+                        PackageId = req.PackageId,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        Status = PackageItemStatus.Inactive.GetDescriptionFromEnum(),
+                        Gender = GenderEnum.Other.GetDescriptionFromEnum(),
+                        IsChanged = false,
+                        WalletId = newWallet.Id,
+                        StartDate = TimeUtils.GetCurrentSEATime(),
+                        EndDate = req.EndDate,
+                        IsAdult = true,
+                        Rfid = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime())
+                    };
+                    packageItems.Add(_mapper.Map<GetListPackageItemResponse>(newPackageItem));
+                    await _unitOfWork.GetRepository<PackageItem>().InsertAsync(newPackageItem);
+                }
             }
             await _unitOfWork.CommitAsync();
             return new ResponseAPI()
@@ -608,13 +652,6 @@ namespace VegaCityApp.API.Services.Implement
         } 
         public async Task<ResponseAPI> ActivePackageItem(Guid packageItem, ActivatePackageItemRequest req)
         {
-            //check if cccd or passport 
-            if (!ValidationUtils.IsCCCD(req.Cccdpassport))
-                throw new BadHttpRequestException(PackageItemMessage.CCCDInvalid, HttpStatusCodes.BadRequest);
-            if (!ValidationUtils.IsEmail(req.Email))
-                throw new BadHttpRequestException(PackageItemMessage.EmailInvalid, HttpStatusCodes.BadRequest);
-            if(!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
-                throw new BadHttpRequestException(PackageItemMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
             var packageItemExist = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(
                 predicate: x => x.Id == packageItem && x.Status == PackageItemStatusEnum.Inactive.GetDescriptionFromEnum(), 
                 include: z => z.Include(a => a.Package).ThenInclude(z => z.PackageType))
@@ -630,37 +667,80 @@ namespace VegaCityApp.API.Services.Implement
                 ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
                                                             HttpStatusCodes.BadRequest);
             #endregion
-            if (req.Cccdpassport == packageItemExist.Cccdpassport)
-                throw new BadHttpRequestException(PackageItemMessage.CCCDExist, HttpStatusCodes.BadRequest);
-            if(req.Email == packageItemExist.Email)
-                throw new BadHttpRequestException(PackageItemMessage.EmailExist, HttpStatusCodes.BadRequest);
-            packageItemExist.Status = PackageItemStatusEnum.Active.GetDescriptionFromEnum();
-            packageItemExist.Name = req.Name.Trim();
-            packageItemExist.PhoneNumber = req.PhoneNumber.Trim();
-            packageItemExist.Cccdpassport = req.Cccdpassport.Trim();
-            packageItemExist.Email = req.Email.Trim();
-            packageItemExist.Gender = req.Gender.Trim();
-            packageItemExist.StartDate = TimeUtils.GetCurrentSEATime();
-            packageItemExist.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
-            packageItemExist.IsAdult = req.IsAdult;
-            packageItemExist.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItemExist);
-            //update wallet
-            var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.Id == packageItemExist.WalletId);
-            wallet.StartDate = TimeUtils.GetCurrentSEATime();
-            wallet.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
-            wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
-            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+                //vcard child 
+
+            if(packageItemExist.IsAdult == false)
             {
-                MessageResponse = EtagMessage.ActivateEtagSuccess,
-                StatusCode = HttpStatusCodes.OK,
-                Data = new { packageItemId = packageItemExist.Id }
-            } : new ResponseAPI()
-            {
-                MessageResponse = EtagMessage.ActivateEtagFail,
-                StatusCode = HttpStatusCodes.BadRequest
-            };
+                packageItemExist.Status = PackageItemStatusEnum.Active.GetDescriptionFromEnum();
+                packageItemExist.Name = req.Name.Trim();
+                packageItemExist.PhoneNumber =packageItemExist.PhoneNumber.Trim(); //from parent
+                packageItemExist.Cccdpassport = packageItemExist.Cccdpassport.Trim(); //from parent
+                packageItemExist.Email = packageItemExist.Email.Trim();
+                packageItemExist.Gender = req.Gender.Trim();
+                packageItemExist.StartDate = TimeUtils.GetCurrentSEATime();
+                packageItemExist.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
+                packageItemExist.IsAdult = false;
+                packageItemExist.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItemExist);
+                //update wallet
+                var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.Id == packageItemExist.WalletId);
+                wallet.StartDate = TimeUtils.GetCurrentSEATime();
+                wallet.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
+                wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+                //end child vcard
+                return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.ActivateEtagSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = new { packageItemId = packageItemExist.Id }
+                } : new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.ActivateEtagFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            else {
+                if (!ValidationUtils.IsCCCD(req.Cccdpassport))
+                    throw new BadHttpRequestException(PackageItemMessage.CCCDInvalid, HttpStatusCodes.BadRequest);
+                if (!ValidationUtils.IsEmail(req.Email))
+                    throw new BadHttpRequestException(PackageItemMessage.EmailInvalid, HttpStatusCodes.BadRequest);
+                if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
+                    throw new BadHttpRequestException(PackageItemMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
+                if (req.Cccdpassport == packageItemExist.Cccdpassport)
+                    throw new BadHttpRequestException(PackageItemMessage.CCCDExist, HttpStatusCodes.BadRequest);
+                if (req.Email == packageItemExist.Email)
+                    throw new BadHttpRequestException(PackageItemMessage.EmailExist, HttpStatusCodes.BadRequest);
+                packageItemExist.Status = PackageItemStatusEnum.Active.GetDescriptionFromEnum();
+                packageItemExist.Name = req.Name.Trim();
+                packageItemExist.PhoneNumber = req.PhoneNumber.Trim();
+                packageItemExist.Cccdpassport = req.Cccdpassport.Trim();
+                packageItemExist.Email = req.Email.Trim();
+                packageItemExist.Gender = req.Gender.Trim();
+                packageItemExist.StartDate = TimeUtils.GetCurrentSEATime();
+                packageItemExist.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
+                packageItemExist.IsAdult = req.IsAdult;
+                packageItemExist.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItemExist);
+                //update wallet
+                var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.Id == packageItemExist.WalletId);
+                wallet.StartDate = TimeUtils.GetCurrentSEATime();
+                wallet.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
+                wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+
+                return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.ActivateEtagSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = new { packageItemId = packageItemExist.Id }
+                } : new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.ActivateEtagFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            
         }
         public async Task<ResponseAPI> PrepareChargeMoneyEtag(ChargeMoneyRequest req)
         {
@@ -1150,5 +1230,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             await _unitOfWork.CommitAsync();
         }
+
+        //assign new 
     }
 }
