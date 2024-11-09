@@ -66,7 +66,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(OrderEndpoint.CreateOrderForCashier)]
         [ProducesResponseType(typeof(ResponseAPI<CreateOrderForCashierRequest>), HttpStatusCodes.Created)]
-        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [CustomAuthorize(RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         public async Task<IActionResult> CreateOrderForCashier(CreateOrderForCashierRequest req)
         {
             var result = await _orderService.CreateOrderForCashier(req);
@@ -74,7 +74,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(OrderEndpoint.ConfirmOrderForCashier)]
         [ProducesResponseType(typeof(ResponseAPI<ConfirmOrderForCashierRequest>), HttpStatusCodes.Created)]
-        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [CustomAuthorize(RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         public async Task<IActionResult> ConfirmOrderForCashier(ConfirmOrderForCashierRequest req)
         {
             var result = await _orderService.ConfirmOrderForCashier(req);
