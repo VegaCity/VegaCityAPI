@@ -958,7 +958,7 @@ namespace VegaCityApp.API.Services.Implement
             var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(predicate: x => x.Status == OrderStatus.Pending);
             foreach (var order in orders)
             {
-                if (TimeUtils.GetCurrentSEATime().Subtract(order.CrDate).TotalMinutes > 15)
+                if (TimeUtils.GetCurrentSEATime().Subtract(order.CrDate).TotalMinutes > 5)
                 {
                     order.Status = OrderStatus.Canceled;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
