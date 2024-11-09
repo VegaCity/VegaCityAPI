@@ -289,6 +289,15 @@ public static class MessageConstant
         public const string NotParentPackageItem = "PackageItem Must Be Parent To Generate Child's PackageItem";
         public const string PaymentQrCodeSuccess = "Payment With PackageItem Successfully!!";
         public const string FailedToPay = "Failed To Payment With PackageItem!!";
+        public const string SuccessfullyReadyToCreate = "Successfully Ready To Create New PackageItem With Id Below!!";
+        public const string FailedToMark = "Failed To Mark PackageItem As Lost!!";
+        public const string SuccessGenerateNewPAID = "Successfully Create New PackageItem";
+        public const string SuccessGenerateNewUNPAID = "Successfully Create New PackageItem , proceed Pay to Active!!";
+        public const string FailedToGenerateNew = "Failed To Generate New PackageItem!";
+        public const string RequestPAID = "The Request For Lost Card Had Been Solved!";
+        public const string AlreadyActivated = "This PackageItem had already Activated!";
+
+
     }
 
     public static class PromotionMessage
