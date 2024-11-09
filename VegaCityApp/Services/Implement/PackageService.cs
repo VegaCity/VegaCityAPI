@@ -604,7 +604,7 @@ namespace VegaCityApp.API.Services.Implement
                                 Data = new
                                 {
                                     PackageItemIIId = newPackageItemII.Id,
-                                    InvoiceId = newChargeFeeOder.InvoiceId,
+                                    NewInvoiceId = newChargeFeeOder.InvoiceId,
                                     TransactionId = transactionId
                                 }
                             } : new ResponseAPI()
@@ -623,7 +623,7 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     if (packageItemExist.IsAdult == false)
                     {
-                        throw new BadHttpRequestException(PackageItemMessage.NotAdult, HttpStatusCodes.NotFound);
+                        throw new BadHttpRequestException(PackageItemMessage.NotAdult, HttpStatusCodes.BadRequest);
                     }
                     for (var i = 0; i < quantity; i++)
                     {
@@ -807,11 +807,12 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
-
+            var qrCodeString = EnCodeBase64.EncodeBase64Etag("http://localhost:3000/etagEdit/" + packageItem.Id);
             return new ResponseAPI<PackageItem>()
             {
                 MessageResponse = PackageItemMessage.GetPackageItemSuccessfully,
                 StatusCode = HttpStatusCodes.OK,
+                QRCode = qrCodeString,
                 Data = packageItem
             };
         }

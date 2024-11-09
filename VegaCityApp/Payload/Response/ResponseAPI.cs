@@ -16,6 +16,8 @@ namespace VegaCityApp.API.Payload.Response
         public string MessageResponse { get; set; }
         public MetaData MetaData { get; set; }
         public T Data { get; set; }
+        public string? QRCode { get; set; }
+
     }
     public class MetaData
     {
