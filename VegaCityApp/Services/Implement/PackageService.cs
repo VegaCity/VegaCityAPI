@@ -302,7 +302,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
                 predicate: x => x.Id == PackageId && x.Deflag==false,
-                include: package => package.Include(a => a.PackageDetails)
+                include: package => package.Include(a => a.PackageDetails).ThenInclude(w => w.WalletType)
                                            .Include(b => b.PackageOrders)
                                            .Include(c => c.PackageItems)
                                            .Include(x => x.PackageType)
@@ -553,9 +553,12 @@ namespace VegaCityApp.API.Services.Implement
                 predicate: x => x.Id == PackageItemId || x.Rfid == rfid
                 //&& x.Status == PackageItemStatus.Active.ToString() && x.Status == PackageItemStatus.Inactive.ToString()
                 ,
-                include: packageItem => packageItem.Include(b => b.Reports)
-                .Include(c => c.Orders).Include(d => d.Deposits).Include(z => z.CustomerMoneyTransfers)
-                .Include(e => e.Wallet).ThenInclude(y => y.Transactions)
+                include: packageItem => packageItem
+                .Include(b => b.Reports)
+                .Include(c => c.Orders).ThenInclude(y => y.Transactions)
+                .Include(d => d.Deposits)
+                .Include(z => z.CustomerMoneyTransfers)
+                .Include(e => e.Wallet).ThenInclude(t => t.WalletType)
             );
 
             if (packageItem == null)
@@ -753,13 +756,18 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
+           
             var packageItemExsit = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageItemId
-            && x.Cccdpassport == req.CccdPassport, include: w => w.Include(wallet => wallet.Wallet).Include(z => z.Package).ThenInclude(i => i.PackageType)) 
+            && x.Cccdpassport == req.CccdPassport, include: w => w.Include(wallet => wallet.Wallet).ThenInclude(w => w.WalletType).Include(z => z.Package).ThenInclude(i => i.PackageType)) 
                 ?? throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
             if(packageItemExsit.EndDate <= TimeUtils.GetCurrentSEATime())
             {
                 throw new BadHttpRequestException(PackageItemMessage.PackageItemExpired, HttpStatusCodes.NotFound);
-            }    
+            }
+            if (packageItemExsit.Wallet.WalletType.Name == "SpecificWallet")
+            {
+                throw new BadHttpRequestException(PackageItemMessage.InvalidType, HttpStatusCodes.BadRequest);
+            }
             #region check session
             // after done main flow, make utils service to shorten this code
             var userId = GetUserIdFromJwt();

@@ -362,7 +362,8 @@ namespace VegaCityApp.API.Services.Implement
                 include: order => order
                     .Include(o => o.Store)
                     .Include(o => o.Deposits)
-                    .Include(z => z.OrderDetails));
+                    .Include(z => z.OrderDetails)
+                    .Include(p => p.PackageOrders));
             string json = "";
             string? customerInfo = "";
 

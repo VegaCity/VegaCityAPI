@@ -250,6 +250,7 @@ public static class MessageConstant
     }
     public static class PackageItemMessage
     {
+        public const string InvalidType = "Cannot Proceed Charge Money With Type Specific!!";
         public const string RfIdExist = "RfId already exist !!";
         public const string EmailExist = "Email already exist !!";
         public const string EmailInvalid = "Email Invalid";
