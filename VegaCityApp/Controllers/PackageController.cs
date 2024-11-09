@@ -172,5 +172,13 @@ namespace VegaCityApp.API.Controllers
             var result = await _packageService.UpdateRfIdPackageItem(id, rfId);
             return StatusCode(result.StatusCode, result);
         }
+        [HttpPost(PackageEndpoint.MarkPackageItemLost)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> GetLostPackageItem([FromBody] GetLostPackageItemRequest req)
+        {
+            var result = await _packageService.GetLostPackageItem(req);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }

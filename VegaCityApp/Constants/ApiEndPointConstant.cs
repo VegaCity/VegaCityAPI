@@ -80,6 +80,7 @@ public static class ApiEndPointConstant
         public const string GetPackageItemById = ApiEndpoint + "/package-item";
         public const string CreatePackageItem = ApiEndpoint + "/package-item";
         public const string UpdatePackageItem = ApiEndpoint + "/package-item/{id}";
+        public const string MarkPackageItemLost = ApiEndpoint + "/package-item/mark-lost";
 
     }
 

@@ -30,5 +30,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> PackageItemPayment(Guid packageItemId, int price, Guid storeId, List<OrderProduct> products);
         Task CheckPackageItemExpire();
         Task SolveWalletPackageItem(Guid apiKey);
+        Task<ResponseAPI> GetLostPackageItem(GetLostPackageItemRequest req);
     }
 }
