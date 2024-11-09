@@ -439,11 +439,11 @@ namespace VegaCityApp.API.Services.Implement
                     //check cus transfer to create new card
                     //co deposit
                     //phai dc active luon
-                    if (packageItemExist.Wallet.Transactions != null && packageItemExist.Wallet.Transactions.SingleOrDefault().Status == TransactionStatus.Success.GetDescriptionFromEnum())
-                    {
-                        throw new BadHttpRequestException(PackageItemMessage.RequestPAID, HttpStatusCodes.BadRequest);
+                    //if (packageItemExist.Wallet.Transactions != null && packageItemExist.Wallet.Transactions.SingleOrDefault().Status == TransactionStatus.Success.GetDescriptionFromEnum())
+                    //{
+                    //    throw new BadHttpRequestException(PackageItemMessage.RequestPAID, HttpStatusCodes.BadRequest);
 
-                    }
+                    //}
                     for (var i = 0; i < quantity; i++)
                     {
                         //var newWalletII = new Wallet()
@@ -594,7 +594,7 @@ namespace VegaCityApp.API.Services.Implement
                                 OrderId = newChargeFeeOder.Id
                             };
                             await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDepositII);
-                            var transactionId = packageItemExist.CustomerMoneyTransfers.SingleOrDefault().Transaction.Id;
+                            var transactionId = packageItemExist.Wallet.Transactions.SingleOrDefault().Id;
                             packageItemExist.Wallet.Transactions.SingleOrDefault().Status = TransactionStatus.Success.GetDescriptionFromEnum();
                             _unitOfWork.GetRepository<Transaction>().UpdateAsync(packageItemExist.Wallet.Transactions.SingleOrDefault());
                             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
@@ -604,7 +604,7 @@ namespace VegaCityApp.API.Services.Implement
                                 Data = new
                                 {
                                     PackageItemIIId = newPackageItemII.Id,
-                                    InvoiceId = newChargeFeeOder.Id,
+                                    InvoiceId = newChargeFeeOder.InvoiceId,
                                     TransactionId = transactionId
                                 }
                             } : new ResponseAPI()
@@ -621,6 +621,10 @@ namespace VegaCityApp.API.Services.Implement
                 //case generate vcard child
                 else// for in here
                 {
+                    if (packageItemExist.IsAdult == false)
+                    {
+                        throw new BadHttpRequestException(PackageItemMessage.NotAdult, HttpStatusCodes.NotFound);
+                    }
                     for (var i = 0; i < quantity; i++)
                     {
                         var newWallet = new Wallet()
@@ -663,7 +667,8 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     MessageResponse = PackageItemMessage.CreatePackageItemSuccessfully,
                     StatusCode = HttpStatusCodes.Created,
-                    Data = packageItems
+                    ParentName = packageItemExist.Name,
+                    Data = packageItems,
                 };
             }
             else

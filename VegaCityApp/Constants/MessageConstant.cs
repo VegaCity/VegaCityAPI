@@ -296,6 +296,8 @@ public static class MessageConstant
         public const string FailedToGenerateNew = "Failed To Generate New PackageItem!";
         public const string RequestPAID = "The Request For Lost Card Had Been Solved!";
         public const string AlreadyActivated = "This PackageItem had already Activated!";
+        public const string NotAdult = "Only Adult Can Generate PackageItem for Child!!";
+
 
 
     }
