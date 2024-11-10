@@ -183,6 +183,7 @@ public static class MessageConstant
 
     public static class OrderMessage
     {
+        public const string Canceled = "Order Was Canceled";
         public const string SaleTypeInvalid = "Sale Type Invalid";
         public const string PaymentTypeInvalid = "Payment Type Invalid";
         public const string NotFoundPackage = "Package Not Found";
@@ -298,8 +299,9 @@ public static class MessageConstant
         public const string RequestPAID = "The Request For Lost Card Had Been Solved!";
         public const string AlreadyActivated = "This PackageItem had already Activated!";
         public const string NotAdult = "Only Adult Can Generate PackageItem for Child!!";
-
-
+        public const string MustActivated = "This Package Needs to be Activated First!";
+        public const string orderUNPAID = "Please Continue To Proceed UNPAID Order before Create New One!";
+        public const string OneAsATime = "You Only Can Re-Generate One Lost Package Item As A Time!";
 
     }
 
@@ -367,6 +369,7 @@ public static class MessageConstant
         public const string StoreServiceExisted = "Store Service Existed";
         public const string GetListStoreServicesSuccess = "Get List Store's Services Successfully!";
         public const string GetListStoreServicesFail = "Failed To Get List Store's Services!";
+        public const string MustGreaterThan50K = "Balance Must Greater Than 50,000 In Order To Withdraw!";
     }
     public static class HouseMessage
     {

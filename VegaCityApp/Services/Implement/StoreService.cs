@@ -1,4 +1,7 @@
-﻿using System.Text.Json.Nodes;
+﻿using System.Globalization;
+using System.Text;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -137,7 +140,8 @@ namespace VegaCityApp.API.Services.Implement
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
                 predicate: x => x.Id == StoreId && !x.Deflag,
-                include: z => z.Include(a => a.StoreServices)
+                include: z => z.Include(s => s.Wallets)
+                               .Include(a => a.StoreServices)
                                .Include(a => a.Menus).ThenInclude(a => a.Products).ThenInclude(o => o.ProductCategory)
             );
 
@@ -161,6 +165,34 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
 
+        public async Task<ResponseAPI> SearchWalletStore(GetWalletStoreRequest req)
+        {
+            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
+                throw new BadHttpRequestException(PackageItemMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
+            if (req.StoreName == null)
+            {
+                throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
+            }
+            var searchName = NormalizeString(req.StoreName);
+            var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && x.Status == (int)StoreStatusEnum.Opened
+                                                                               ,include: w => w.Include(u => u.Wallets));
+            var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name )== searchName ||  NormalizeString(x.ShortName) == searchName);
+            if(storeTrack == null)
+            {
+                throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
+            }
+            if(storeTrack.Wallets.SingleOrDefault().Balance <= 50000)
+            {
+                throw new BadHttpRequestException(StoreMessage.MustGreaterThan50K, HttpStatusCodes.BadRequest);
+            }
+            return new ResponseAPI
+            {
+                MessageResponse = StoreMessage.GetStoreSuccess,
+                StatusCode = HttpStatusCodes.OK,
+                Data = storeTrack,
+            };
+
+        }
         public async Task<ResponseAPI> DeleteStore(Guid StoreId)
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
@@ -458,5 +490,30 @@ namespace VegaCityApp.API.Services.Implement
             }
             return true;
         }
+        private static string NormalizeString(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return text;
+
+            // Chuẩn hóa chuỗi để loại bỏ dấu
+            var normalizedString = text.Normalize(NormalizationForm.FormD);
+            var stringBuilder = new StringBuilder();
+
+            foreach (var c in normalizedString)
+            {
+                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+                if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(c);
+                }
+            }
+
+            // Chuẩn hóa chuỗi, chuyển thành chữ thường và loại bỏ khoảng trắng
+            var result = stringBuilder.ToString().Normalize(NormalizationForm.FormC).ToLower();
+            result = Regex.Replace(result, @"\s+", ""); // Loại bỏ tất cả khoảng trắng
+
+            return result;
+        }
+
     }
 }

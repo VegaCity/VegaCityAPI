@@ -513,7 +513,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             Guid marketZoneId = GetMarketZoneIdFromJwt();
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
-                predicate: x => x.InvoiceId == req.InvoiceId && x.Status == OrderStatus.Pending,
+                predicate: x => x.InvoiceId == req.InvoiceId ,
                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(x => x.PackageOrders)
                                        .Include(c => c.PackageItem).ThenInclude(r => r.Wallet).Include(p => p.PromotionOrders));
@@ -521,7 +521,62 @@ namespace VegaCityApp.API.Services.Implement
                     (predicate: x => x.UserId == order.UserId)
                     ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
             //session check
+            //begin confirm order cash from Lost Package
+            //not allow Staus Canceled
+            //, Active package, -return packageitemID, update status transaction where order Id of this one 
+            if (order.Status == OrderStatus.Canceled.GetDescriptionFromEnum())
+            {
+                throw new BadHttpRequestException(OrderMessage.Canceled, HttpStatusCodes.BadRequest);
+            }
+            if ( order.SaleType == SaleType.FeeChargeCreate.ToString())
+                {
+                    
+                    var transactionFee = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
+                        (predicate: x => x.Id == Guid.Parse(req.TransactionId))
+                        ?? throw new BadHttpRequestException("Transaction charge not found", HttpStatusCodes.NotFound);
 
+                    transactionFee.Status = TransactionStatus.Success.GetDescriptionFromEnum();
+                    transactionFee.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionFee);
+
+                    order.Status = OrderStatus.Completed.GetDescriptionFromEnum();
+                    order.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+
+                    order.PackageItem.Status = PackageItemStatus.Active.GetDescriptionFromEnum();
+                    order.PackageItem.UpsDate = TimeUtils.GetCurrentSEATime();
+
+                    _unitOfWork.GetRepository<PackageItem>().UpdateAsync(order.PackageItem);
+                   
+                     ////UPDATE CASHIER WALLET
+                     order.User.Wallets.SingleOrDefault().Balance += 50000;
+                     order.User.Wallets.SingleOrDefault().BalanceHistory += 50000;
+                     order.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.User.Wallets.SingleOrDefault());
+
+                    //session update
+                    sessionUser.TotalQuantityOrder += 1;
+                    sessionUser.TotalCashReceive += 50000;
+                    sessionUser.TotalFinalAmountOrder += 50000;
+                    _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
+                    return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+                    {
+                        MessageResponse = PackageItemMessage.SuccessGenerateNewPAID,
+                        StatusCode = HttpStatusCodes.OK,
+                        Data = new
+                        {
+                            PackageItemIIId = order.PackageItem .Id,
+                        }
+                    } : new ResponseAPI()
+                    {
+                        MessageResponse = PackageItemMessage.FailedToGenerateNew,
+                        StatusCode = HttpStatusCodes.BadRequest
+                    };
+
+                }
+            
+            //end Lost Package case
             //
             if (order.SaleType == SaleType.PackageItemCharge)
             {

@@ -14,5 +14,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> DeleteStore(Guid StoreId);
         Task<ResponseAPI> SearchStore(Guid StoreId);
         Task<ResponseAPI> GetMenuFromPos(string phone);
+        Task<ResponseAPI> SearchWalletStore(GetWalletStoreRequest req);
     }
 }

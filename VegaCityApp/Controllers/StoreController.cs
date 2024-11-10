@@ -61,5 +61,13 @@ namespace VegaCityApp.API.Controllers
             var result = await _storeService.GetMenuFromPos(phone);
             return StatusCode(result.StatusCode, result);
         }
+        [HttpPost(StoreEndpoint.GetWalletStore)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchWalletStore(GetWalletStoreRequest req)
+        {
+            var result = await _storeService.SearchWalletStore(req);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }

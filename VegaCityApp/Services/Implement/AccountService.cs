@@ -736,7 +736,7 @@ namespace VegaCityApp.Service.Implement
                             try
                             {
                                 var subject = UserMessage.ApproveSuccessfully;
-                                var body = "Your account has been approved. Your password is: " + user.Data.Password;
+                                var body = "Your account has been approved. Your password is: " + user.Data.Password + "\nPlease access this website to change password: http://localhost:3000/change-password";
                                 await MailUtil.SendMailAsync(user.Data.Email, subject, body);
                             }
                             catch (Exception ex)

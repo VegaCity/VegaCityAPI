@@ -408,6 +408,10 @@ namespace VegaCityApp.API.Services.Implement
                     .Include(d => d.Deposits)
                     .Include(w => w.Wallet).ThenInclude(t => t.WalletType)
                     .Include(tr => tr.Wallet.Transactions));
+                if(packageItemExist.Status == PackageItemStatusEnum.Inactive.GetDescriptionFromEnum())
+                {
+                    throw new BadHttpRequestException(PackageItemMessage.MustActivated, HttpStatusCodes.NotFound);
+                }
                 var package = await SearchPackage(packageItemExist.Package.Id);
                 #region check 
                 // after done main flow, make utils service to shorten this code
@@ -432,31 +436,32 @@ namespace VegaCityApp.API.Services.Implement
                     {
                         throw new BadHttpRequestException(PackageItemMessage.PackageItemExpired, HttpStatusCodes.NotFound);
                     }
-                if (packageItemExist.Status == PackageItemStatusEnum.Blocked.GetDescriptionFromEnum() && packageItemExist.Wallet.Transactions.SingleOrDefault().Status == TransactionStatus.Pending.GetDescriptionFromEnum())
+                var hasSuccessTransaction = packageItemExist.Wallet.Transactions
+                    .Any(t => t.Status == TransactionStatus.Success.GetDescriptionFromEnum() && t.OrderId != null);
+
+                var hasPendingTransaction = packageItemExist.Wallet.Transactions
+                    .Any(t => t.Status == TransactionStatus.Pending.GetDescriptionFromEnum());
+
+                var hasPendingOrderCharge = packageItemExist.Orders
+                    .Any(t => t.Status == OrderStatus.Pending.GetDescriptionFromEnum() && packageItemExist.Orders.SingleOrDefault().SaleType == SaleType.FeeChargeCreate);
+                if (packageItemExist.Status == PackageItemStatusEnum.Blocked.GetDescriptionFromEnum() && hasPendingTransaction)
                 {
                     //after run api to get by cccd and mark as Blocked, transfer money, check log transaction
                     //case lost vcard
                     //check cus transfer to create new card
                     //co deposit
                     //phai dc active luon
-                    //if (packageItemExist.Wallet.Transactions != null && packageItemExist.Wallet.Transactions.SingleOrDefault().Status == TransactionStatus.Success.GetDescriptionFromEnum())
+                    if (quantity > 1)
+                    {
+                        throw new BadHttpRequestException(PackageItemMessage.OneAsATime, HttpStatusCodes.NotFound);
+                    }
+                    
+                    //if (hasSuccessTransaction)
                     //{
                     //    throw new BadHttpRequestException(PackageItemMessage.RequestPAID, HttpStatusCodes.BadRequest);
-
                     //}
-                    for (var i = 0; i < quantity; i++)
+                    if (hasPendingTransaction)
                     {
-                        //var newWalletII = new Wallet()
-                        //{
-                        //    Id = Guid.NewGuid(),
-                        //    Balance = (int)packageItemExist.CustomerMoneyTransfers.SingleOrDefault().Amount,
-                        //    BalanceHistory = (int)packageItemExist.Wallet.BalanceHistory,
-                        //    CrDate = TimeUtils.GetCurrentSEATime(),
-                        //    UpsDate = TimeUtils.GetCurrentSEATime(),
-                        //    Deflag = false,
-                        //    WalletTypeId = packageItemExist.Wallet.WalletTypeId,
-                        //};
-                        //await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWalletII);
 
                         var newPackageItemII = new PackageItem()
                         {
@@ -493,8 +498,8 @@ namespace VegaCityApp.API.Services.Implement
                                 Status = OrderStatus.Completed,
                                 InvoiceId = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
                                 StoreId = null,
-                                PackageItemId = packageItemExist.Id,
-                                PackageId = packageItemExist.PackageId,
+                                PackageItemId = newPackageItemII.Id,
+                                PackageId = newPackageItemII.PackageId,
                                 UserId = userId,
                                 SaleType = SaleType.FeeChargeCreate,
                             };
@@ -503,7 +508,7 @@ namespace VegaCityApp.API.Services.Implement
                             packageItemExist.Wallet.Balance -= 50000;
                             packageItemExist.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                             _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageItemExist.Wallet);
-                           
+
 
                             ////UPDATE CASHIER WALLET
                             wallet.Balance += 50000;
@@ -511,11 +516,16 @@ namespace VegaCityApp.API.Services.Implement
                             wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                             _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
 
+                            //session update
+                            session.TotalQuantityOrder += 1;
+                            session.TotalCashReceive += 50000;
+                            session.TotalFinalAmountOrder += 50000;
+                            _unitOfWork.GetRepository<UserSession>().UpdateAsync(session);
                             //deposit
                             var newDepositII = new Deposit()
                             {
                                 Id = Guid.NewGuid(),
-                                Amount = (int)packageItemExist.Wallet.Balance - 50000,
+                                Amount = (int)packageItemExist.Wallet.Balance,
                                 IsIncrease = true,
                                 Name = "Customer Money Transfer From" + packageItemExist.Name,
                                 PaymentType = PaymentTypeHelper.allowedPaymentTypes[6],
@@ -529,15 +539,16 @@ namespace VegaCityApp.API.Services.Implement
 
                             var transactionId = packageItemExist.Wallet.Transactions.SingleOrDefault().Id;
                             packageItemExist.Wallet.Transactions.SingleOrDefault().Status = TransactionStatus.Success.GetDescriptionFromEnum();
+                            packageItemExist.Wallet.Transactions.SingleOrDefault().OrderId = newChargeFeeOderPAID.Id;
+                            packageItemExist.Wallet.Transactions.SingleOrDefault().DespositId = newDepositII.Id;
                             _unitOfWork.GetRepository<Transaction>().UpdateAsync(packageItemExist.Wallet.Transactions.SingleOrDefault());
                             if (await _unitOfWork.CommitAsync() > 0)
                             {
-                                // Cập nhật trạng thái của newPackageItemII nếu Commit thành công
                                 if (newPackageItemII != null && newPackageItemII.WalletId == packageItemExist.Wallet.Id)
                                 {
-                                    newPackageItemII.Status = PackageItemStatus.Active.GetDescriptionFromEnum(); // Cập nhật trạng thái
-                                     _unitOfWork.GetRepository<PackageItem>().UpdateAsync(newPackageItemII); // Thêm await
-                                    await _unitOfWork.CommitAsync(); // Commit lần nữa để lưu thay đổi
+                                    newPackageItemII.Status = PackageItemStatus.Active.GetDescriptionFromEnum(); 
+                                    _unitOfWork.GetRepository<PackageItem>().UpdateAsync(newPackageItemII); 
+                                    await _unitOfWork.CommitAsync(); 
                                 }
 
                                 return new ResponseAPI()
@@ -560,7 +571,12 @@ namespace VegaCityApp.API.Services.Implement
                             }
                         }
                         else
-                        {
+                        { //CASE NOT ENOUGH
+                            if (hasPendingTransaction && hasPendingOrderCharge)
+                            {
+                                throw new BadHttpRequestException(PackageItemMessage.orderUNPAID, HttpStatusCodes.BadRequest);
+
+                            }
                             var newChargeFeeOder = new Order
                             {
                                 Id = Guid.NewGuid(),
@@ -583,7 +599,7 @@ namespace VegaCityApp.API.Services.Implement
                             var newDepositII = new Deposit()
                             {
                                 Id = Guid.NewGuid(),
-                                Amount = (int)packageItemExist.Wallet.Balance - 50000,
+                                Amount = (int)packageItemExist.Wallet.Balance,
                                 IsIncrease = true,
                                 Name = "Customer Money Transfer From" + packageItemExist.Name,
                                 PaymentType = PaymentTypeHelper.allowedPaymentTypes[6],
@@ -594,28 +610,38 @@ namespace VegaCityApp.API.Services.Implement
                                 OrderId = newChargeFeeOder.Id
                             };
                             await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDepositII);
-                            var transactionId = packageItemExist.Wallet.Transactions.SingleOrDefault().Id;
-                            packageItemExist.Wallet.Transactions.SingleOrDefault().Status = TransactionStatus.Success.GetDescriptionFromEnum();
-                            _unitOfWork.GetRepository<Transaction>().UpdateAsync(packageItemExist.Wallet.Transactions.SingleOrDefault());
-                            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+                            var pendingTransaction = packageItemExist.Wallet.Transactions
+                                 .FirstOrDefault(t => t.Status == TransactionStatus.Pending.GetDescriptionFromEnum());
+                   
+                            if (hasPendingTransaction)
                             {
-                                MessageResponse = PackageItemMessage.SuccessGenerateNewUNPAID,
-                                StatusCode = HttpStatusCodes.OK,
-                                Data = new
+                                var pendingTransactionId = pendingTransaction.Id;
+                                pendingTransaction.OrderId = newChargeFeeOder.Id;
+                                pendingTransaction.DespositId = newDepositII.Id;
+                                _unitOfWork.GetRepository<Transaction>().UpdateAsync(pendingTransaction);
+                                return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
                                 {
-                                    PackageItemIIId = newPackageItemII.Id,
-                                    NewInvoiceId = newChargeFeeOder.InvoiceId,
-                                    TransactionId = transactionId
-                                }
-                            } : new ResponseAPI()
-                            {
-                                MessageResponse = PackageItemMessage.FailedToGenerateNew,
-                                StatusCode = HttpStatusCodes.BadRequest
-                            };
+                                    MessageResponse = PackageItemMessage.SuccessGenerateNewUNPAID,
+                                    StatusCode = HttpStatusCodes.OK,
+                                    Data = new
+                                    {
+                                        PackageItemIIId = newPackageItemII.Id,
+                                        InvoiceId = newChargeFeeOder.InvoiceId,
+                                        TransactionId = pendingTransactionId
+                                    }
+                                } : new ResponseAPI()
+                                {
+                                    MessageResponse = PackageItemMessage.FailedToGenerateNew,
+                                    StatusCode = HttpStatusCodes.BadRequest
+                                };
+                            }
+                           
                         }
-
-
-
+                    }
+                    else if (packageItemExist.Wallet.Transactions.Any(t => t.Status == TransactionStatus.Success.GetDescriptionFromEnum()
+                    && t.OrderId != null))
+                    {
+                        throw new BadHttpRequestException(PackageItemMessage.RequestPAID, HttpStatusCodes.BadRequest);
                     }
                 }
                 //case generate vcard child
@@ -1570,25 +1596,6 @@ namespace VegaCityApp.API.Services.Implement
                 //need to update with status is success & add deposit id above
             };
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(newTransaction);
-
-            //transfer
-            //var newTransfer = new CustomerMoneyTransfer
-            //{
-            //    Id = Guid.NewGuid(),
-            //    MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-            //    PackageItemId = packageItemLost.Id,
-            //    IsIncrease = true,
-            //    Amount = packageItemLost.Wallet.Balance,
-            //    Status = CustomerMoneyTransferStatus.Pending.GetDescriptionFromEnum(),
-            //    CrDate = TimeUtils.GetCurrentSEATime(),
-            //    UpsDate = TimeUtils.GetCurrentSEATime(),
-            //    TransactionId = newTransaction.Id
-            //    //update status above 
-            //};
-            //await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newTransfer);
-
-            
-
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
                 MessageResponse = PackageItemMessage.SuccessfullyReadyToCreate,

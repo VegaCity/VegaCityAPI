@@ -99,6 +99,7 @@ public static class ApiEndPointConstant
         public const string GetStore = ApiEndpoint + "/store/{id}";
         public const string DeleteStore = ApiEndpoint + "/store/{id}";
         public const string GetMenu = ApiEndpoint + "/store/{phone}/menu";
+        public const string GetWalletStore = ApiEndpoint + "/store/wallet";
     }
     public static class HouseEndpoint
     {
