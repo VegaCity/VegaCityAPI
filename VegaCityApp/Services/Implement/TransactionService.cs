@@ -55,7 +55,7 @@ namespace VegaCityApp.API.Services.Implement
                                },
                                 page: page,
                                 size: size,
-                                orderBy: x => x.OrderByDescending(z => z.Type));
+                                orderBy: x => x.OrderByDescending(z => z.CrDate));
                 return new ResponseAPI<IEnumerable<TransactionResponse>>
                 {
                     MessageResponse = "Get Transactions success !!",

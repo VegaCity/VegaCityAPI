@@ -197,8 +197,19 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> CreatePackageType(CreatePackageTypeRequest req)
         {
-            var result = await _unitOfWork.GetRepository<PackageType>().SingleOrDefaultAsync(predicate: x => x.Name == req.Name);
-            if (result != null)
+            if(req.ZoneId == null)
+            {
+                throw new BadHttpRequestException(ZoneMessage.SearchZoneFail, HttpStatusCodes.NotFound);
+            }
+            var zoneExist = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == req.ZoneId);
+            if (zoneExist == null)
+            {
+                throw new BadHttpRequestException(ZoneMessage.SearchZoneFail, HttpStatusCodes.NotFound);
+            }
+            var resultName = NormalizeString(req.Name);
+            var results = await _unitOfWork.GetRepository<PackageType>().GetListAsync(predicate: x => x.ZoneId == req.ZoneId);
+            var resultTrace = results.SingleOrDefault(y => NormalizeString(y.Name) == resultName); 
+            if (resultTrace != null)
             {
                 return new ResponseAPI()
                 {
@@ -901,7 +912,7 @@ namespace VegaCityApp.API.Services.Implement
             #endregion
             if (packageItem == null)
                 throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
-            if(packageItem.Rfid == rfId)
+            if(packageItem.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum() && packageItem.Rfid == rfId)
                 throw new BadHttpRequestException(PackageItemMessage.RfIdExist, HttpStatusCodes.BadRequest);
             //update
             packageItem.Rfid = rfId;
@@ -1413,6 +1424,7 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(newTransactionStore);
 
             store.Wallets.SingleOrDefault().Balance += (int)(totalPrice * (1 - marketZone.MarketZoneConfig.StoreStranferRate));
+            store.Wallets.SingleOrDefault().BalanceHistory += (int)(totalPrice * (1 - marketZone.MarketZoneConfig.StoreStranferRate));
             store.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(store.Wallets.SingleOrDefault());
 

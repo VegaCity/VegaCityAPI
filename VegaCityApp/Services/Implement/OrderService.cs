@@ -950,6 +950,7 @@ namespace VegaCityApp.API.Services.Implement
             };
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionStoreTransfer);
             walletStore.Balance += (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate);
+            walletStore.BalanceHistory += (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate);
             walletStore.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletStore);
             var transfer = new StoreMoneyTransfer()
