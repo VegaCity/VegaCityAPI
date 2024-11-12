@@ -116,7 +116,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpPatch(PackageEndpoint.UpdatePackageItem)]
-        [CustomAuthorize(RoleEnum.CashierWeb)]
+        //[CustomAuthorize(RoleEnum.CashierWeb)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> UpdatePackageItem(Guid id, [FromBody] UpdatePackageItemRequest request)
         {

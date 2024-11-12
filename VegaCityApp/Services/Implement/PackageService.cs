@@ -1035,7 +1035,18 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-           
+            var promotionAutos = await _unitOfWork.GetRepository<Promotion>().GetListAsync(
+                predicate: x => x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
+                               && x.Status == (int) PromotionStatusEnum.Automation
+            );
+            foreach (var prAuto in promotionAutos)
+            {
+                if (req.ChargeAmount >= prAuto.RequireAmount)
+                {
+                    req.PromoCode = prAuto.PromotionCode;
+                    break;
+                }
+            }
             var packageItemExsit = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageItemId
             && x.Cccdpassport == req.CccdPassport, include: w => w.Include(wallet => wallet.Wallet).ThenInclude(w => w.WalletType).Include(z => z.Package).ThenInclude(i => i.PackageType)) 
                 ?? throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
@@ -1142,16 +1153,27 @@ namespace VegaCityApp.API.Services.Implement
                 Promotion checkPromo = await CheckPromo(req.PromoCode, req.ChargeAmount)
                     ?? throw new BadHttpRequestException(PromotionMessage.AddPromotionFail, HttpStatusCodes.BadRequest);
                 int amountPromo = 0;
-                if(checkPromo.MaxDiscount < req.ChargeAmount * (int)checkPromo.DiscountPercent)
+                if(checkPromo.Status != (int)PromotionStatusEnum.Automation)
                 {
-                    amountPromo = (int)checkPromo.MaxDiscount;
+                    if (checkPromo.MaxDiscount <= req.ChargeAmount * (int)checkPromo.DiscountPercent)
+                    {
+                        amountPromo = (int)checkPromo.MaxDiscount;
+                    }
+                    else
+                    {
+                        //amountPromo = req.ChargeAmount * (int)checkPromo.DiscountPercent;
+                        amountPromo = (int)(req.ChargeAmount * checkPromo.DiscountPercent + 0.5f);
+
+                    }
                 }
                 else
                 {
-                    //amountPromo = req.ChargeAmount * (int)checkPromo.DiscountPercent;
-                    amountPromo = (int)(req.ChargeAmount * checkPromo.DiscountPercent + 0.5f);
-
+                    if(req.ChargeAmount >= checkPromo.RequireAmount)
+                    {
+                        amountPromo = (int) checkPromo.MaxDiscount;
+                    }
                 }
+                
                 
                 var newOrder = new Order()
                 {
@@ -1232,7 +1254,7 @@ namespace VegaCityApp.API.Services.Implement
         private async Task<Promotion> CheckPromo(string promoCode, int amount)
         {
             var checkPromo = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
-                    (predicate: x => x.PromotionCode == promoCode && x.Status == (int)PromotionStatusEnum.Active)
+                    (predicate: x => x.PromotionCode == promoCode && x.Status == (int)PromotionStatusEnum.Active || x.Status == (int) PromotionStatusEnum.Automation)
                     ?? throw new BadHttpRequestException(PromotionMessage.NotFoundPromotion, HttpStatusCodes.NotFound);
             if (checkPromo.EndDate < TimeUtils.GetCurrentSEATime())
                 throw new BadHttpRequestException(PromotionMessage.PromotionExpired, HttpStatusCodes.BadRequest);

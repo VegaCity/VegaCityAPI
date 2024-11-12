@@ -26,17 +26,30 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> CreatePromotion(PromotionRequest req)
         {
             Guid apiKey = GetMarketZoneIdFromJwt();
+            if(req.Status != null)
+            {
+                //checkstatus
+                if(PromotionStatusEnum.Automation != EnumUtil.ParseEnum<PromotionStatusEnum>(req.Status))
+                {
+                    return new ResponseAPI
+                    {
+                        MessageResponse = "Invalid Status Promotion",
+                        StatusCode = HttpStatusCodes.BadRequest
+                    };
+                }
+            }
             var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
-                (predicate: x => x.PromotionCode == req.PromotionCode && x.Status == (int) PromotionStatusEnum.Active);
-            if(promotion != null)
+                (predicate: x => x.PromotionCode == req.PromotionCode)
+                ?? throw new BadHttpRequestException(PromotionMessage.NotFoundPromotion, HttpStatusCodes.NotFound);
+            if (promotion.Status != (int)PromotionStatusEnum.Active || promotion.Status != (int)PromotionStatusEnum.Automation)
             {
                 return new ResponseAPI
                 {
-                    MessageResponse = PromotionMessage.PromotionExists,
-                    StatusCode = HttpStatusCodes.BadRequest
+                    MessageResponse = "Not found Promotion",
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
-            if(req.EndDate <= TimeUtils.GetCurrentSEATime())
+            if (req.EndDate <= TimeUtils.GetCurrentSEATime())
             {
                 return new ResponseAPI
                 {

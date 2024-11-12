@@ -48,19 +48,10 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             store.Status = req.StoreStatus;
-            if (!Enum.IsDefined(typeof(StoreTypeEnum), req.StoreType))
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = StoreMessage.InvalidStoreType
-                };
-            }
-            store.StoreType = req.StoreType;
             store.Address = req.Address != null ? req.Address.Trim() : store.Address;
-            store.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : store.PhoneNumber;
+            //store.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : store.PhoneNumber;
             store.ShortName = req.ShortName != null ? req.ShortName.Trim() : store.ShortName;
-            store.Email = req.Email != null ? req.Email.Trim() : store.Email;
+            //store.Email = req.Email != null ? req.Email.Trim() : store.Email;
             store.Description = req.Description != null ? req.Description.Trim() : store.Description;
             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
             var result = await _unitOfWork.CommitAsync();
@@ -144,7 +135,6 @@ namespace VegaCityApp.API.Services.Implement
                                .Include(a => a.StoreServices)
                                .Include(a => a.Menus).ThenInclude(a => a.Products).ThenInclude(o => o.ProductCategory)
             );
-
             if (store == null)
             {
                 return new ResponseAPI()
@@ -153,13 +143,36 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
-
+            string storeType = null;
+            //check storetype enum and parse to string
+            if(!StoreTypeHelper.allowedStoreTypes.Contains((int) store.StoreType))
+            {
+                throw new BadHttpRequestException(StoreMessage.InvalidStoreType, HttpStatusCodes.BadRequest);
+            }
+            else
+            {
+                if(store.StoreType == (int)StoreTypeEnum.Service)
+                {
+                    storeType = StoreTypeEnum.Service.GetDescriptionFromEnum();
+                }
+                else if (store.StoreType == (int)StoreTypeEnum.Food)
+                {
+                    storeType = StoreTypeEnum.Food.GetDescriptionFromEnum();
+                }else if(store.StoreType == (int)StoreTypeEnum.Other)
+                {
+                    storeType = StoreTypeEnum.Other.GetDescriptionFromEnum();
+                }else if(store.StoreType == (int)StoreTypeEnum.Clothing)
+                {
+                    storeType = StoreTypeEnum.Clothing.GetDescriptionFromEnum();
+                }
+            }
             return new ResponseAPI()
             {
                 MessageResponse = StoreMessage.GetStoreSuccess,
                 StatusCode = HttpStatusCodes.OK,
                 Data = new
                 {
+                    storeType,
                     store,
                 }
             };

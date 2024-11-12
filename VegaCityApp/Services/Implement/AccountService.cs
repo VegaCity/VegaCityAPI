@@ -695,6 +695,7 @@ namespace VegaCityApp.Service.Implement
                     var newStore = new Store
                     {
                         Id = Guid.NewGuid(),
+                        StoreType = req.StoreType,
                         Name = req.StoreName.Trim(),
                         Address = req.StoreAddress.Trim(),
                         PhoneNumber = req.PhoneNumber.Trim(),
