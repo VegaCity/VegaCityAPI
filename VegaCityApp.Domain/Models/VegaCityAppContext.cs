@@ -286,7 +286,7 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Location).HasMaxLength(50);
 
-                entity.Property(e => e.Name).HasMaxLength(50);
+                entity.Property(e => e.Name).HasMaxLength(200);
 
                 entity.Property(e => e.PhoneNumber)
                     .HasMaxLength(10)
@@ -483,7 +483,7 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.EndDate).HasColumnType("datetime");
 
                 entity.Property(e => e.Gender)
-                    .HasMaxLength(5)
+                    .HasMaxLength(6)
                     .IsUnicode(false);
 
                 entity.Property(e => e.ImageUrl).IsUnicode(false);

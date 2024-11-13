@@ -23,7 +23,7 @@ namespace VegaCityApp.API.Extensions
             RecurringJob.AddOrUpdate<IPackageService>(x => x.SolveWalletPackageItem(Guid.Parse(EnvironmentVariableConstant.marketZoneId)), 
                 cornDaily, timeZone: timeZone);
 
-            RecurringJob.AddOrUpdate<IPromotionService>(x => x.CheckExpiredPromotion(), cornDaily, timeZone: timeZone);
+            RecurringJob.AddOrUpdate<IPromotionService>(x => x.CheckExpiredPromotion(), cornMinute, timeZone: timeZone);
 
             RecurringJob.AddOrUpdate<IOrderService>(x => x.CheckOrderPending(), cornMinute, timeZone: timeZone);
         }

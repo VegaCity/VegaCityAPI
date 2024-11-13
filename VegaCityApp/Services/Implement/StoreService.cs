@@ -94,12 +94,13 @@ namespace VegaCityApp.API.Services.Implement
                     ShortName = x.ShortName,
                     Email = x.Email,
                     Status = x.Status,
-
+                    ZoneName = x.Zone.Name
                 },
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => !x.Deflag && x.MarketZoneId == apiKey 
+                predicate: x => !x.Deflag && x.MarketZoneId == apiKey,
+                include: h => h.Include(z => z.Zone)
                 );
                 return new ResponseAPI<IEnumerable<GetStoreResponse>>
                 {

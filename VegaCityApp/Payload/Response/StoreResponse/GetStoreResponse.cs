@@ -19,12 +19,5 @@ namespace VegaCityApp.API.Payload.Response.StoreResponse
         public string? Description { get; set; }
         public int? Status { get; set; }
         public string ZoneName { get; set; }
-        //public virtual House? House { get; set; }
-        //public virtual MarketZone? MarketZone { get; set; }
-        //public virtual ICollection<DisputeReport> DisputeReports { get; set; }
-        //public virtual ICollection<Menu> Menus { get; set; }
-        //public virtual ICollection<Order> Orders { get; set; }
-        //public virtual ICollection<ProductCategory> ProductCategories { get; set; }
-        //public virtual ICollection<User> Users { get; set; }
     }
 }
