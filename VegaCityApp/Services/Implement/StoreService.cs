@@ -99,7 +99,7 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => !x.Deflag && x.MarketZoneId == apiKey
+                predicate: x => !x.Deflag && x.MarketZoneId == apiKey 
                 );
                 return new ResponseAPI<IEnumerable<GetStoreResponse>>
                 {
@@ -173,7 +173,7 @@ namespace VegaCityApp.API.Services.Implement
                 Data = new
                 {
                     storeType,
-                    store,
+                    store
                 }
             };
         }
@@ -187,14 +187,18 @@ namespace VegaCityApp.API.Services.Implement
                 throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
             }
             var searchName = NormalizeString(req.StoreName);
-            var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && x.Status == (int)StoreStatusEnum.Opened
+            var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && x.Status == (int)StoreStatusEnum.Opened && x.Status == (int)StoreStatusEnum.Closed
                                                                                ,include: w => w.Include(u => u.Wallets));
             var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name )== searchName ||  NormalizeString(x.ShortName) == searchName);
             if(storeTrack == null)
             {
                 throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
             }
-            if(storeTrack.Wallets.SingleOrDefault().Balance <= 50000)
+            if (storeTrack.Wallets.SingleOrDefault().Deflag = true)
+            {
+                throw new BadHttpRequestException(StoreMessage.StoreWalletIsPendingClose, HttpStatusCodes.BadRequest);
+            }
+            if (storeTrack.Wallets.SingleOrDefault().Balance <= 50000)
             {
                 throw new BadHttpRequestException(StoreMessage.MustGreaterThan50K, HttpStatusCodes.BadRequest);
             }
@@ -204,6 +208,120 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.OK,
                 Data = storeTrack,
             };
+
+        }
+
+        public async Task<ResponseAPI> RequestCloseStore(Guid StoreId)
+        {
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
+                predicate: x => x.Id == StoreId && !x.Deflag,
+                include: z => z.Include(s => s.Wallets)
+                               .Include(a => a.StoreServices)
+                               .Include(a => a.Menus).ThenInclude(a => a.Products)
+            );
+            if (store == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.NotFoundStore,
+                    StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+            if (store.Status == (int)StoreStatusEnum.Blocked)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.StorePendingVerifyClose,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            if (store.StoreType == StoreTypeHelper.allowedStoreTypes[2])
+            {
+               foreach(var service in store.StoreServices)
+                {
+                    service.Deflag = true;
+                    service.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<VegaCityApp.Domain.Models.StoreService>().UpdateAsync(service);
+                }
+            }
+            else
+            {
+                var processedCategories = new HashSet<Guid>();
+                foreach (var menu in store.Menus)
+                {
+                    menu.Deflag = true;
+                    menu.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
+
+                    foreach (var product in menu.Products)
+                    {
+                        product.Status = "InActive";
+                        product.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+
+                        if (!processedCategories.Contains(product.ProductCategoryId))
+                        {
+                            var productCategory = await _unitOfWork.GetRepository<ProductCategory>()
+                                                  .SingleOrDefaultAsync(predicate: c => c.Id == product.ProductCategoryId);
+
+                            if (productCategory != null && !productCategory.Deflag)
+                            {
+                                productCategory.Deflag = true;
+                                productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
+                                _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
+
+                                // Add to processedCategories to avoid re-processing
+                                processedCategories.Add(product.ProductCategoryId);
+                            }
+                        }
+                    }
+                }
+            }
+            store.Wallets.SingleOrDefault().Deflag = true;
+            store.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(store.Wallets.SingleOrDefault());
+
+            store.Status = (int)StoreStatusEnum.Blocked; //implement count 7 days from blocked status (UPSDATE) here
+            store.UpsDate = TimeUtils.GetCurrentSEATime();
+             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
+
+
+            var result = await _unitOfWork.CommitAsync();      
+            if (result > 0)
+            {
+                #region send mail
+                try
+                {
+                    var admin = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == Guid.Parse(EnvironmentVariableConstant.marketZoneId));
+                    var subject = UserMessage.PendingApproveCloseStore;
+                    var body = "You have new Closing Store requset is pending: " + store.Name;
+                    await MailUtil.SendMailAsync(admin.Email, subject, body);
+                }
+                catch (Exception ex)
+                {
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = UserMessage.SendMailFail
+                    };
+                }
+                #endregion
+                return new ResponseAPI()
+                {
+
+                    MessageResponse = UserMessage.PendingApproveCloseStore,
+                    StatusCode = HttpStatusCodes.OK,
+
+                };
+            }
+            else
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.UpdateStoreSuccesss,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
 
         }
         public async Task<ResponseAPI> DeleteStore(Guid StoreId)
@@ -267,8 +385,6 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
-
-
         public async Task<ResponseAPI> GetMenuFromPos(string phone)
         {
             //call api pos - take n parse into Object Menu

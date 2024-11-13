@@ -119,7 +119,8 @@ public static class MessageConstant
     }
 
     public static class UserMessage
-    {   
+    {
+        public const string InvalidTypeOfStatus = "Status should be APPROVED or REJECTED!";
         public const string DeleteSessionSuccessfully = "Delete Session Successfully !!";
         public const string GetAllSessionSuccessfully = "Get All Session Successfully !!";
         public const string GetAllSessionFail = "Get All Session Fail !!";
@@ -179,6 +180,10 @@ public static class MessageConstant
         public const string GetAllUserFail = "Failed To Get All Users!";
         public const string NotFoundUserWallet = "Failed To Get Admin's Wallet!!";
         public const string GetWalletSuccess = "Successfully Get Wallet!!";
+        public const string PendingApproveCloseStore = "Your Closing Request Is Successfully submitted to the System";
+        public const string ApproveSubmitted = "Your have successfully resolve the closing request";
+        public const string ApproveFailedSubmitted = "Failed to submit resolve for the closing request";
+        public const string ResolvedMessage = "Your Closing Request was resolved!";
     }
 
     public static class OrderMessage
@@ -370,6 +375,9 @@ public static class MessageConstant
         public const string GetListStoreServicesSuccess = "Get List Store's Services Successfully!";
         public const string GetListStoreServicesFail = "Failed To Get List Store's Services!";
         public const string MustGreaterThan50K = "Balance Must Greater Than 50,000 In Order To Withdraw!";
+        public const string StorePendingVerifyClose = "This Store is Waiting for Closing resolve!";
+        public const string StoreWalletIsPendingClose = "This Store Wallet is waiting for admin approval";
+
     }
     public static class HouseMessage
     {

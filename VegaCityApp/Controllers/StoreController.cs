@@ -69,5 +69,13 @@ namespace VegaCityApp.API.Controllers
             var result = await _storeService.SearchWalletStore(req);
             return StatusCode(result.StatusCode, result);
         }
+        [HttpPost(StoreEndpoint.RequestCloseForStore)]
+        //[CustomAuthorize(RoleEnum.Store)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> RequestCloseStore(Guid id)
+        {
+            var result = await _storeService.RequestCloseStore(id);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }
