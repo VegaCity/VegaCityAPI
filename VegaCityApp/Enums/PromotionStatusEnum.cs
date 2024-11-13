@@ -5,7 +5,6 @@
         Active = 0,
         Inactive = 1,
         Expired = 2,
-        Blocked = -1,
         Automation = 3
     }
     // public enum PackageItemParentStatusEnum

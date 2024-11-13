@@ -265,7 +265,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             foreach (var promotion in promotions)
             {
-                promotion.Status = (int)PromotionStatusEnum.Inactive;
+                promotion.Status = (int)PromotionStatusEnum.Expired;
                 _unitOfWork.GetRepository<Promotion>().UpdateAsync(promotion);
             }
             await _unitOfWork.CommitAsync();
