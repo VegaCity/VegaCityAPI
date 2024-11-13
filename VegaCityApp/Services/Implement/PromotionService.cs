@@ -39,14 +39,13 @@ namespace VegaCityApp.API.Services.Implement
                 }
             }
             var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
-                (predicate: x => x.PromotionCode == req.PromotionCode)
-                ?? throw new BadHttpRequestException(PromotionMessage.NotFoundPromotion, HttpStatusCodes.NotFound);
-            if (promotion.Status != (int)PromotionStatusEnum.Active || promotion.Status != (int)PromotionStatusEnum.Automation)
+                (predicate: x => x.PromotionCode == req.PromotionCode);
+            if(promotion != null)
             {
                 return new ResponseAPI
                 {
-                    MessageResponse = "Not found Promotion",
-                    StatusCode = HttpStatusCodes.NotFound
+                    MessageResponse = PromotionMessage.PromotionCodeExist,
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
             if (req.EndDate <= TimeUtils.GetCurrentSEATime())

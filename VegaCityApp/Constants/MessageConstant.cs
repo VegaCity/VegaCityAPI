@@ -312,6 +312,7 @@ public static class MessageConstant
 
     public static class PromotionMessage
     {
+        public const string PromotionCodeExist = "Promotion Code already exist !!";
         public const string AddPromotionFail = "Add Promotion Failed!";
         public const string PromotionRequireAmount = "Amount required is not enough!";
         public const string PromotionOutOfStock = "Promotion Out Of Stock!";
