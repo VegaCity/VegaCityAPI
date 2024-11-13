@@ -236,30 +236,34 @@ namespace VegaCityApp.API.Services.Implement
             var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
                 (predicate: x => x.Id == promotionId && x.Status == (int)PromotionStatusEnum.Active);
             if (promotion == null)
-               {
+            {
                 return new ResponseAPI()
                 {
                     MessageResponse = PromotionMessage.GetPromotionFail,
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
-                promotion.Status= (int)PromotionStatusEnum.Inactive;
-                _unitOfWork.GetRepository<Promotion>().UpdateAsync(promotion);
-                return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
-                {
-                    MessageResponse = PromotionMessage.DeletePromotionSuccessfully,
-                    StatusCode = HttpStatusCodes.OK
-                }
-                : new ResponseAPI()
-                {
-                    MessageResponse = PromotionMessage.DeletePromotionFail,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
+            promotion.Status= (int)PromotionStatusEnum.Inactive;
+            _unitOfWork.GetRepository<Promotion>().UpdateAsync(promotion);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            {
+                MessageResponse = PromotionMessage.DeletePromotionSuccessfully,
+                StatusCode = HttpStatusCodes.OK
+            }
+            : new ResponseAPI()
+            {
+                MessageResponse = PromotionMessage.DeletePromotionFail,
+                StatusCode = HttpStatusCodes.BadRequest
+            };
         }
         public async Task CheckExpiredPromotion()
         {
             var promotions = await _unitOfWork.GetRepository<Promotion>().GetListAsync
                 (predicate: x => x.EndDate < TimeUtils.GetCurrentSEATime());
+            if(promotions.Count == 0)
+            {
+                return;
+            }
             foreach (var promotion in promotions)
             {
                 promotion.Status = (int)PromotionStatusEnum.Inactive;
