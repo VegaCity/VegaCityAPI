@@ -1,4 +1,7 @@
-﻿using System.Text.Json.Nodes;
+﻿using System.Globalization;
+using System.Text;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -45,19 +48,10 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             store.Status = req.StoreStatus;
-            if (!Enum.IsDefined(typeof(StoreTypeEnum), req.StoreType))
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = StoreMessage.InvalidStoreType
-                };
-            }
-            store.StoreType = req.StoreType;
             store.Address = req.Address != null ? req.Address.Trim() : store.Address;
-            store.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : store.PhoneNumber;
+            //store.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : store.PhoneNumber;
             store.ShortName = req.ShortName != null ? req.ShortName.Trim() : store.ShortName;
-            store.Email = req.Email != null ? req.Email.Trim() : store.Email;
+            //store.Email = req.Email != null ? req.Email.Trim() : store.Email;
             store.Description = req.Description != null ? req.Description.Trim() : store.Description;
             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
             var result = await _unitOfWork.CommitAsync();
@@ -100,12 +94,13 @@ namespace VegaCityApp.API.Services.Implement
                     ShortName = x.ShortName,
                     Email = x.Email,
                     Status = x.Status,
-
+                    ZoneName = x.Zone.Name
                 },
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => !x.Deflag && x.MarketZoneId == apiKey
+                predicate: x => !x.Deflag && x.MarketZoneId == apiKey,
+                include: h => h.Include(z => z.Zone)
                 );
                 return new ResponseAPI<IEnumerable<GetStoreResponse>>
                 {
@@ -137,10 +132,10 @@ namespace VegaCityApp.API.Services.Implement
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
                 predicate: x => x.Id == StoreId && !x.Deflag,
-                include: z => z.Include(a => a.StoreServices)
-                               .Include(a => a.Menus).ThenInclude(a => a.Products)
+                include: z => z.Include(s => s.Wallets)
+                               .Include(a => a.StoreServices)
+                               .Include(a => a.Menus).ThenInclude(a => a.Products).ThenInclude(o => o.ProductCategory)
             );
-
             if (store == null)
             {
                 return new ResponseAPI()
@@ -149,18 +144,187 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
-
+            string storeType = null;
+            //check storetype enum and parse to string
+            if(!StoreTypeHelper.allowedStoreTypes.Contains((int) store.StoreType))
+            {
+                throw new BadHttpRequestException(StoreMessage.InvalidStoreType, HttpStatusCodes.BadRequest);
+            }
+            else
+            {
+                if(store.StoreType == (int)StoreTypeEnum.Service)
+                {
+                    storeType = StoreTypeEnum.Service.GetDescriptionFromEnum();
+                }
+                else if (store.StoreType == (int)StoreTypeEnum.Food)
+                {
+                    storeType = StoreTypeEnum.Food.GetDescriptionFromEnum();
+                }else if(store.StoreType == (int)StoreTypeEnum.Other)
+                {
+                    storeType = StoreTypeEnum.Other.GetDescriptionFromEnum();
+                }else if(store.StoreType == (int)StoreTypeEnum.Clothing)
+                {
+                    storeType = StoreTypeEnum.Clothing.GetDescriptionFromEnum();
+                }
+            }
             return new ResponseAPI()
             {
                 MessageResponse = StoreMessage.GetStoreSuccess,
                 StatusCode = HttpStatusCodes.OK,
                 Data = new
                 {
-                    store,
+                    storeType,
+                    store
                 }
             };
         }
 
+        public async Task<ResponseAPI> SearchWalletStore(GetWalletStoreRequest req)
+        {
+            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
+                throw new BadHttpRequestException(PackageItemMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
+            if (req.StoreName == null)
+            {
+                throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
+            }
+            var searchName = NormalizeString(req.StoreName);
+            var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && x.Status == (int)StoreStatusEnum.Opened && x.Status == (int)StoreStatusEnum.Closed
+                                                                               ,include: w => w.Include(u => u.Wallets));
+            var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name )== searchName ||  NormalizeString(x.ShortName) == searchName);
+            if(storeTrack == null)
+            {
+                throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
+            }
+            if (storeTrack.Wallets.SingleOrDefault().Deflag = true)
+            {
+                throw new BadHttpRequestException(StoreMessage.StoreWalletIsPendingClose, HttpStatusCodes.BadRequest);
+            }
+            if (storeTrack.Wallets.SingleOrDefault().Balance <= 50000)
+            {
+                throw new BadHttpRequestException(StoreMessage.MustGreaterThan50K, HttpStatusCodes.BadRequest);
+            }
+            return new ResponseAPI
+            {
+                MessageResponse = StoreMessage.GetStoreSuccess,
+                StatusCode = HttpStatusCodes.OK,
+                Data = storeTrack,
+            };
+
+        }
+
+        public async Task<ResponseAPI> RequestCloseStore(Guid StoreId)
+        {
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
+                predicate: x => x.Id == StoreId && !x.Deflag,
+                include: z => z.Include(s => s.Wallets)
+                               .Include(a => a.StoreServices)
+                               .Include(a => a.Menus).ThenInclude(a => a.Products)
+            );
+            if (store == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.NotFoundStore,
+                    StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+            if (store.Status == (int)StoreStatusEnum.Blocked)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.StorePendingVerifyClose,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            if (store.StoreType == StoreTypeHelper.allowedStoreTypes[2])
+            {
+               foreach(var service in store.StoreServices)
+                {
+                    service.Deflag = true;
+                    service.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<VegaCityApp.Domain.Models.StoreService>().UpdateAsync(service);
+                }
+            }
+            else
+            {
+                var processedCategories = new HashSet<Guid>();
+                foreach (var menu in store.Menus)
+                {
+                    menu.Deflag = true;
+                    menu.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
+
+                    foreach (var product in menu.Products)
+                    {
+                        product.Status = "InActive";
+                        product.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+
+                        if (!processedCategories.Contains(product.ProductCategoryId))
+                        {
+                            var productCategory = await _unitOfWork.GetRepository<ProductCategory>()
+                                                  .SingleOrDefaultAsync(predicate: c => c.Id == product.ProductCategoryId);
+
+                            if (productCategory != null && !productCategory.Deflag)
+                            {
+                                productCategory.Deflag = true;
+                                productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
+                                _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
+
+                                // Add to processedCategories to avoid re-processing
+                                processedCategories.Add(product.ProductCategoryId);
+                            }
+                        }
+                    }
+                }
+            }
+            store.Wallets.SingleOrDefault().Deflag = true;
+            store.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(store.Wallets.SingleOrDefault());
+
+            store.Status = (int)StoreStatusEnum.Blocked; //implement count 7 days from blocked status (UPSDATE) here
+            store.UpsDate = TimeUtils.GetCurrentSEATime();
+             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
+
+
+            var result = await _unitOfWork.CommitAsync();      
+            if (result > 0)
+            {
+                #region send mail
+                try
+                {
+                    var admin = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == Guid.Parse(EnvironmentVariableConstant.marketZoneId));
+                    var subject = UserMessage.PendingApproveCloseStore;
+                    var body = "You have new Closing Store requset is pending: " + store.Name;
+                    await MailUtil.SendMailAsync(admin.Email, subject, body);
+                }
+                catch (Exception ex)
+                {
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = UserMessage.SendMailFail
+                    };
+                }
+                #endregion
+                return new ResponseAPI()
+                {
+
+                    MessageResponse = UserMessage.PendingApproveCloseStore,
+                    StatusCode = HttpStatusCodes.OK,
+
+                };
+            }
+            else
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.UpdateStoreSuccesss,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+
+        }
         public async Task<ResponseAPI> DeleteStore(Guid StoreId)
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
@@ -222,8 +386,6 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
-
-
         public async Task<ResponseAPI> GetMenuFromPos(string phone)
         {
             //call api pos - take n parse into Object Menu
@@ -257,7 +419,7 @@ namespace VegaCityApp.API.Services.Implement
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         ImageUrl = "string",
                         MenuJson = json,
-                        Name = store.ShortName + "Menu",
+                        Name = store.ShortName + " Menu",
                         PhoneNumber = store.PhoneNumber,
                         UpsDate = TimeUtils.GetCurrentSEATime()
                     };
@@ -267,7 +429,7 @@ namespace VegaCityApp.API.Services.Implement
                     bool check = await InsertProductCategory(productsPosResponse, newMenu.Id);
                     return check ? new ResponseAPI()
                     {
-                        MessageResponse = "Get Successfully!!",
+                        MessageResponse = "Synchronization successful",
                         StatusCode = HttpStatusCodes.OK,
                         Data = productsPosResponse
                     } : new ResponseAPI()
@@ -285,7 +447,7 @@ namespace VegaCityApp.API.Services.Implement
                     bool check = await InsertProductCategory(productsPosResponse, checkMenu.Id);
                     return check ? new ResponseAPI()
                     {
-                        MessageResponse = "Get Successfully!!",
+                        MessageResponse = "Synchronization successful",
                         StatusCode = HttpStatusCodes.OK,
                         Data = productsPosResponse
                     } : new ResponseAPI()
@@ -312,10 +474,7 @@ namespace VegaCityApp.API.Services.Implement
             foreach (var Category in selectField)
             {
                 var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
-                    predicate: x => x.Name == Category.ProductCategory);
-                //var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync(predicate: x => x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-                //        include: m => m.Include(n => n.WalletTypeMappings));
-
+                    predicate: x => x.Name == Category.ProductCategory && !x.Deflag);
                 if (productCategory == null)
                 {
                     var newProductCateGory = new ProductCategory()
@@ -328,41 +487,8 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime()
                     };
                     await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCateGory);
-                    //mapping wallet Type
-                    //get all WalletType
-                    //Take Specific and Service type's Ids
-                    //foreach (var walletType in walletTypes)
-                    //{
-                    //    if (walletType.Name == "SpecificWallet" || walletType.Name == "ServiceWallet")
-                    //    {
-                    //        foreach (var item in selectField)
-                    //        {
-                    //            // Retrieve the ProductCategory based on the current item's category name
-                    //            var productCategory2 = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
-                    //                predicate: x => x.Name == item.ProductCategory);
-
-                    //            if (productCategory2 != null) // Ensure productCategory2 is found
-                    //            {
-                    //                // Check if this mapping already exists
-                    //                var existingMapping = await _unitOfWork.GetRepository<WalletTypeMapping>().SingleOrDefaultAsync(
-                    //                    predicate: x => x.WalletTypeId == walletType.Id && x.ProductCategoryId == productCategory2.Id);
-
-                    //                if (existingMapping == null)
-                    //                {
-                    //                    var newProductCategoryMappingWallet = new WalletTypeMapping
-                    //                    {
-                    //                        Id = Guid.NewGuid(),
-                    //                        WalletTypeId = walletType.Id,
-                    //                        ProductCategoryId = productCategory2.Id,
-                    //                    };
-                    //                    await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(newProductCategoryMappingWallet);
-                    //                }
-                    //            }
-                    //        }
-                    //    }
-                    //}
                     var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync(predicate: x => x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-           include: m => m.Include(n => n.WalletTypeMappings));
+                    include: m => m.Include(n => n.WalletTypeMappings));
 
                     foreach (var walletType in walletTypes)
                     {
@@ -391,7 +517,7 @@ namespace VegaCityApp.API.Services.Implement
                         {
                             var newProduct = new Product()
                             {
-                                Id = Guid.NewGuid(),
+                                Id = Guid.Parse(product.Id),
                                 CrDate = TimeUtils.GetCurrentSEATime(),
                                 ImageUrl = product.ImgUrl,
                                 ProductCategoryId = newProductCateGory.Id,
@@ -411,7 +537,8 @@ namespace VegaCityApp.API.Services.Implement
                 }
                 else
                 {
-                    var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync(predicate: x => x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId),
+                    var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync
+                        (predicate: x => x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId),
                        include: m => m.Include(n => n.WalletTypeMappings));
                     foreach (var walletType in walletTypes)
                     {
@@ -421,7 +548,7 @@ namespace VegaCityApp.API.Services.Implement
                             {
                                 // Retrieve the ProductCategory based on the current item's category name
                                 var productCategory2 = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
-                                    predicate: x => x.Name == item.ProductCategory);
+                                    predicate: x => x.Name == item.ProductCategory && !x.Deflag);
 
                                 if (productCategory2 != null) // Ensure productCategory2 is found
                                 {
@@ -447,8 +574,34 @@ namespace VegaCityApp.API.Services.Implement
 
                     foreach (var product in listProduct)
                     {
-                        if (product.ProductCategory == Category.ProductCategory)
+                        if(product.ProductCategory == Category.ProductCategory)
                         {
+                            var productExist = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(
+                                predicate: x => x.Id == Guid.Parse(product.Id) && x.ProductCategoryId == productCategory.Id && x.Status == "Active");
+                            if (productExist == null)
+                            {
+                                var newProduct = new Product()
+                                {
+                                    Id = Guid.Parse(product.Id),
+                                    CrDate = TimeUtils.GetCurrentSEATime(),
+                                    ImageUrl = product.ImgUrl,
+                                    ProductCategoryId = productCategory.Id,
+                                    Status = "Active",
+                                    MenuId = MenuId,
+                                    Name = product.Name,
+                                    Price = product.Price,
+                                    UpsDate = TimeUtils.GetCurrentSEATime()
+                                };
+                                await _unitOfWork.GetRepository<Product>().InsertAsync(newProduct);
+                            }
+                            else
+                            {
+                                productExist.Name = product.Name;
+                                productExist.ImageUrl = product.ImgUrl;
+                                productExist.Price = product.Price;
+                                productExist.UpsDate = TimeUtils.GetCurrentSEATime();
+                                _unitOfWork.GetRepository<Product>().UpdateAsync(productExist);
+                            }
                             products.Add(new ProductFromPos()
                             {
                                 Name = product.Name,
@@ -458,10 +611,7 @@ namespace VegaCityApp.API.Services.Implement
                             });
                         }
                     }
-
-                    var json = JsonConvert.SerializeObject(products);
                     productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
-                    //productCategory.ProductJson = json;
                     _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
                     await _unitOfWork.CommitAsync();
                     //xoa product
@@ -470,9 +620,30 @@ namespace VegaCityApp.API.Services.Implement
             }
             return true;
         }
+        private static string NormalizeString(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return text;
 
-        //above defected, only work with case that have enough category, else if null in category, wrong logic
+            // Chuẩn hóa chuỗi để loại bỏ dấu
+            var normalizedString = text.Normalize(NormalizationForm.FormD);
+            var stringBuilder = new StringBuilder();
 
+            foreach (var c in normalizedString)
+            {
+                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+                if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(c);
+                }
+            }
+
+            // Chuẩn hóa chuỗi, chuyển thành chữ thường và loại bỏ khoảng trắng
+            var result = stringBuilder.ToString().Normalize(NormalizationForm.FormC).ToLower();
+            result = Regex.Replace(result, @"\s+", ""); // Loại bỏ tất cả khoảng trắng
+
+            return result;
+        }
 
     }
 }

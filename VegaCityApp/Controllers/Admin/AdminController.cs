@@ -14,6 +14,7 @@ using VegaCityApp.API.Payload.Request.Admin;
 using VegaCityApp.API.Payload.Request.Auth;
 using VegaCityApp.Service.Implement;
 using Swashbuckle.AspNetCore.Annotations;
+using VegaCityApp.API.Payload.Request.Store;
 
 namespace VegaCityApp.API.Controllers.Admin
 {
@@ -138,6 +139,29 @@ namespace VegaCityApp.API.Controllers.Admin
         {
             var result = await _service.ReAssignEmail(userId, email);
             return Ok(result);
+        }
+        [HttpGet(UserEndpoint.GetAllClosingRequest)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> GetAllClosingRequest([FromQuery] Guid apiKey, [FromQuery] int size = 10, [FromQuery] int page = 1)
+        {
+            var result = await _service.GetAllClosingRequest(apiKey, size, page);
+            return Ok(result);
+        }
+
+        [HttpGet(UserEndpoint.GetClosingRequest)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchStoreClosing(Guid id)
+        {
+            var result = await _service.SearchStoreClosing(id);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPost(UserEndpoint.ResolveClosingRequest)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> ResolveClosingStore(GetWalletStoreRequest req)
+        {
+            var result = await _service.ResolveClosingStore(req);
+            return StatusCode(result.StatusCode, result);
         }
     }
 }

@@ -415,7 +415,7 @@ namespace VegaCityApp.API.Services.Implement
                         IsIncrease = true,
                         Name = "Deposit from order " + order.InvoiceId,
                         PackageItemId = (Guid)order.PackageItemId,
-                        PaymentType = PaymentTypeEnum.ZaloPay.GetDescriptionFromEnum()
+                        PaymentType = PaymentTypeEnum.Momo.GetDescriptionFromEnum()
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
                     //update wallet package item
@@ -874,7 +874,7 @@ namespace VegaCityApp.API.Services.Implement
                         IsIncrease = true,
                         Name = "Deposit from order " + order.InvoiceId,
                         PackageItemId = (Guid)order.PackageItemId,
-                        PaymentType = PaymentTypeEnum.ZaloPay.GetDescriptionFromEnum()
+                        PaymentType = PaymentTypeEnum.VnPay.GetDescriptionFromEnum()
                     };
                     await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
                     //update wallet package item

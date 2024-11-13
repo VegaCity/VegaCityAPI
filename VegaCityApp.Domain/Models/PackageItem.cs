@@ -29,6 +29,7 @@ namespace VegaCityApp.Domain.Models
         public string? Rfid { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public string? ImageUrl { get; set; }
 
         public virtual Package Package { get; set; } = null!;
         public virtual Wallet Wallet { get; set; } = null!;

@@ -7,6 +7,7 @@ namespace VegaCityApp.API.Payload.Response
         public int StatusCode { get; set; }
         public string MessageResponse { get; set; }
         public Object Data { get; set; }
+        public string? ParentName { get; set; }
     }
     //responseAPI for get list paginate 
     public class ResponseAPI<T>
@@ -15,6 +16,8 @@ namespace VegaCityApp.API.Payload.Response
         public string MessageResponse { get; set; }
         public MetaData MetaData { get; set; }
         public T Data { get; set; }
+        public string? QRCode { get; set; }
+
     }
     public class MetaData
     {

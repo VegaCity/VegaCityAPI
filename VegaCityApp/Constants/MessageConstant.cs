@@ -119,7 +119,8 @@ public static class MessageConstant
     }
 
     public static class UserMessage
-    {   
+    {
+        public const string InvalidTypeOfStatus = "Status should be APPROVED or REJECTED!";
         public const string DeleteSessionSuccessfully = "Delete Session Successfully !!";
         public const string GetAllSessionSuccessfully = "Get All Session Successfully !!";
         public const string GetAllSessionFail = "Get All Session Fail !!";
@@ -179,10 +180,15 @@ public static class MessageConstant
         public const string GetAllUserFail = "Failed To Get All Users!";
         public const string NotFoundUserWallet = "Failed To Get Admin's Wallet!!";
         public const string GetWalletSuccess = "Successfully Get Wallet!!";
+        public const string PendingApproveCloseStore = "Your Closing Request Is Successfully submitted to the System";
+        public const string ApproveSubmitted = "Your have successfully resolve the closing request";
+        public const string ApproveFailedSubmitted = "Failed to submit resolve for the closing request";
+        public const string ResolvedMessage = "Your Closing Request was resolved!";
     }
 
     public static class OrderMessage
     {
+        public const string Canceled = "Order Was Canceled";
         public const string SaleTypeInvalid = "Sale Type Invalid";
         public const string PaymentTypeInvalid = "Payment Type Invalid";
         public const string NotFoundPackage = "Package Not Found";
@@ -250,6 +256,8 @@ public static class MessageConstant
     }
     public static class PackageItemMessage
     {
+        public const string InvalidType = "Cannot Proceed Charge Money With Type Specific!!";
+        public const string RfIdExist = "RfId already exist !!";
         public const string EmailExist = "Email already exist !!";
         public const string EmailInvalid = "Email Invalid";
         public const string CreatePackageItemSuccessfully = "Create Package Item Successfully!";
@@ -288,6 +296,18 @@ public static class MessageConstant
         public const string NotParentPackageItem = "PackageItem Must Be Parent To Generate Child's PackageItem";
         public const string PaymentQrCodeSuccess = "Payment With PackageItem Successfully!!";
         public const string FailedToPay = "Failed To Payment With PackageItem!!";
+        public const string SuccessfullyReadyToCreate = "Successfully Ready To Create New PackageItem With Id Below!!";
+        public const string FailedToMark = "Failed To Mark PackageItem As Lost!!";
+        public const string SuccessGenerateNewPAID = "Successfully Create New PackageItem";
+        public const string SuccessGenerateNewUNPAID = "Successfully Create New PackageItem , proceed Pay to Active!!";
+        public const string FailedToGenerateNew = "Failed To Generate New PackageItem!";
+        public const string RequestPAID = "The Request For Lost Card Had Been Solved!";
+        public const string AlreadyActivated = "This PackageItem had already Activated!";
+        public const string NotAdult = "Only Adult Can Generate PackageItem for Child!!";
+        public const string MustActivated = "This Package Needs to be Activated First!";
+        public const string orderUNPAID = "Please Continue To Proceed UNPAID Order before Create New One!";
+        public const string OneAsATime = "You Only Can Re-Generate One Lost Package Item As A Time!";
+
     }
 
     public static class PromotionMessage
@@ -354,6 +374,10 @@ public static class MessageConstant
         public const string StoreServiceExisted = "Store Service Existed";
         public const string GetListStoreServicesSuccess = "Get List Store's Services Successfully!";
         public const string GetListStoreServicesFail = "Failed To Get List Store's Services!";
+        public const string MustGreaterThan50K = "Balance Must Greater Than 50,000 In Order To Withdraw!";
+        public const string StorePendingVerifyClose = "This Store is Waiting for Closing resolve!";
+        public const string StoreWalletIsPendingClose = "This Store Wallet is waiting for admin approval";
+
     }
     public static class HouseMessage
     {

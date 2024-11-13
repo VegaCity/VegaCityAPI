@@ -19,7 +19,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(TransactionEndpoint.GetListTransaction)]
         [ProducesResponseType(typeof(ResponseAPI<IEnumerable<TransactionResponse>>), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp, RoleEnum.Store)]
         public async Task<IActionResult> GetAllTransaction(int size, int page)
         {
             var response = await _transactionService.GetAllTransaction(size, page);
@@ -27,7 +27,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(TransactionEndpoint.GetTransaction)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp, RoleEnum.CashierApp)]
         public async Task<IActionResult> GetTransactionById(Guid id)
         {
             var response = await _transactionService.GetTransactionById(id);

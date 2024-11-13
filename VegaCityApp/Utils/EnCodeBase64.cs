@@ -8,7 +8,7 @@ namespace VegaCityApp.API.Utils
         {
             // mã hoá QRCode bằng userId và ngày hiện tại
             var currentTime = TimeUtils.GetCurrentSEATime();
-            //var currentTimeStamp = TimeUtils.GetTimestamp(currentTime);
+            var currentTimeStamp = TimeUtils.GetTimestamp(currentTime);
             var qrCode = brandCode + "_" + phone + "_" + currentTime;
             //Encode to Base64
             var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(qrCode);
@@ -18,7 +18,7 @@ namespace VegaCityApp.API.Utils
         public static string EncodeBase64Etag(string etagTypeCode)
         {
             var currentTime = TimeUtils.GetCurrentSEATime();
-            var qrCode = etagTypeCode + "_" + currentTime + "_" + currentTime.Millisecond;
+            var qrCode = etagTypeCode; //+ "_" + currentTime + "_" + currentTime.Millisecond
             //Encode to Base64
             var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(qrCode);
             var base64 = Convert.ToBase64String(plainTextBytes);

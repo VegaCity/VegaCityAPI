@@ -183,7 +183,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.Created,
                     Data = new
                     {
-                        OrderId = newOrder.Id,
+                        orderId = newOrder.Id,
                         invoiceId = newOrder.InvoiceId,
                         transactionId = newTransaction.Id
                     }
@@ -199,7 +199,8 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> DeleteOrder(Guid OrderId)
         {
             var orderExisted = await _unitOfWork.GetRepository<Order>()
-                .SingleOrDefaultAsync(predicate: x => x.Id == OrderId && x.Status == OrderStatus.Pending);
+                .SingleOrDefaultAsync(predicate: x => x.Id == OrderId && x.Status == OrderStatus.Pending, 
+                include: z => z.Include(u => u.PackageOrders));
             if (orderExisted == null)
             {
                 return new ResponseAPI()
@@ -207,6 +208,15 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = OrderMessage.NotFoundOrder,
                     StatusCode = HttpStatusCodes.BadRequest
                 };
+            }
+            if(orderExisted.PackageOrders.Count != 0)
+            {
+                foreach (var packageOrder in orderExisted.PackageOrders)
+                {
+                    packageOrder.Status = OrderStatus.Canceled;
+                    packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
+                }
             }
             orderExisted.Status = OrderStatus.Canceled;
             orderExisted.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -239,6 +249,7 @@ namespace VegaCityApp.API.Services.Implement
                     InvoiceId = x.InvoiceId,
                     StoreId = x.StoreId,
                 },
+                predicate: z => z.UserId == GetUserIdFromJwt(),
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name));
@@ -351,7 +362,8 @@ namespace VegaCityApp.API.Services.Implement
                 include: order => order
                     .Include(o => o.Store)
                     .Include(o => o.Deposits)
-                    .Include(z => z.OrderDetails));
+                    .Include(z => z.OrderDetails)
+                    .Include(p => p.PackageOrders));
             string json = "";
             string? customerInfo = "";
 
@@ -485,6 +497,7 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.Created,
                 Data = new
                 {
+                    orderId = newOrder.Id,
                     invoiceId = newOrder.InvoiceId,
                     packageOrderId = newPackageOrder.Id,
                     transactionId = transaction.Id,
@@ -500,7 +513,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             Guid marketZoneId = GetMarketZoneIdFromJwt();
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
-                predicate: x => x.InvoiceId == req.InvoiceId && x.Status == OrderStatus.Pending,
+                predicate: x => x.InvoiceId == req.InvoiceId ,
                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(x => x.PackageOrders)
                                        .Include(c => c.PackageItem).ThenInclude(r => r.Wallet).Include(p => p.PromotionOrders));
@@ -508,7 +521,62 @@ namespace VegaCityApp.API.Services.Implement
                     (predicate: x => x.UserId == order.UserId)
                     ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
             //session check
+            //begin confirm order cash from Lost Package
+            //not allow Staus Canceled
+            //, Active package, -return packageitemID, update status transaction where order Id of this one 
+            if (order.Status == OrderStatus.Canceled.GetDescriptionFromEnum())
+            {
+                throw new BadHttpRequestException(OrderMessage.Canceled, HttpStatusCodes.BadRequest);
+            }
+            if ( order.SaleType == SaleType.FeeChargeCreate.ToString())
+                {
+                    
+                    var transactionFee = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
+                        (predicate: x => x.Id == Guid.Parse(req.TransactionId))
+                        ?? throw new BadHttpRequestException("Transaction charge not found", HttpStatusCodes.NotFound);
 
+                    transactionFee.Status = TransactionStatus.Success.GetDescriptionFromEnum();
+                    transactionFee.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionFee);
+
+                    order.Status = OrderStatus.Completed.GetDescriptionFromEnum();
+                    order.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+
+                    order.PackageItem.Status = PackageItemStatus.Active.GetDescriptionFromEnum();
+                    order.PackageItem.UpsDate = TimeUtils.GetCurrentSEATime();
+
+                    _unitOfWork.GetRepository<PackageItem>().UpdateAsync(order.PackageItem);
+                   
+                     ////UPDATE CASHIER WALLET
+                     order.User.Wallets.SingleOrDefault().Balance += 50000;
+                     order.User.Wallets.SingleOrDefault().BalanceHistory += 50000;
+                     order.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.User.Wallets.SingleOrDefault());
+
+                    //session update
+                    sessionUser.TotalQuantityOrder += 1;
+                    sessionUser.TotalCashReceive += 50000;
+                    sessionUser.TotalFinalAmountOrder += 50000;
+                    _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
+                    return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+                    {
+                        MessageResponse = PackageItemMessage.SuccessGenerateNewPAID,
+                        StatusCode = HttpStatusCodes.OK,
+                        Data = new
+                        {
+                            PackageItemIIId = order.PackageItem .Id,
+                        }
+                    } : new ResponseAPI()
+                    {
+                        MessageResponse = PackageItemMessage.FailedToGenerateNew,
+                        StatusCode = HttpStatusCodes.BadRequest
+                    };
+
+                }
+            
+            //end Lost Package case
             //
             if (order.SaleType == SaleType.PackageItemCharge)
             {
@@ -882,6 +950,7 @@ namespace VegaCityApp.API.Services.Implement
             };
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionStoreTransfer);
             walletStore.Balance += (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate);
+            walletStore.BalanceHistory += (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate);
             walletStore.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletStore);
             var transfer = new StoreMoneyTransfer()
@@ -939,6 +1008,31 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = OrderMessage.ConfirmOrderSuccessfully,
             };
+        }
+        public async Task CheckOrderPending()
+        {
+            var orders = await _unitOfWork.GetRepository<Order>().
+                GetListAsync(predicate: x => x.Status == OrderStatus.Pending,
+                include: z => z.Include(a => a.PackageOrders));
+            foreach (var order in orders)
+            {
+                if (TimeUtils.GetCurrentSEATime().Subtract(order.CrDate).TotalMinutes > 5)
+                {
+                    order.Status = OrderStatus.Canceled;
+                    order.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                }
+                foreach(var packageOrder in order.PackageOrders)
+                {
+                    if (TimeUtils.GetCurrentSEATime().Subtract(packageOrder.CrDate).TotalMinutes > 5)
+                    {
+                        packageOrder.Status = OrderStatus.Canceled;
+                        packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
+                    }
+                }
+            }
+            await _unitOfWork.CommitAsync();
         }
     }
 }

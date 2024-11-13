@@ -5,6 +5,9 @@ using VegaCityApp.API.Payload.Request.Admin;
 using VegaCityApp.API.Payload.Request.Auth;
 using VegaCityApp.Domain.Models;
 using VegaCityApp.API.Payload.Response.UserResponse;
+using Microsoft.AspNetCore.Mvc;
+using VegaCityApp.API.Payload.Response.StoreResponse;
+using VegaCityApp.API.Payload.Request.Store;
 
 namespace VegaCityApp.Service.Interface
 {
@@ -29,6 +32,9 @@ namespace VegaCityApp.Service.Interface
         Task<ResponseAPI> GetAdminWallet();
         Task<ResponseAPI> GetChartByDuration(AdminChartDurationRequest req);
         Task<string> ReAssignEmail(Guid userId, ReAssignEmail email);
+        Task<ResponseAPI<IEnumerable<GetStoreResponse>>> GetAllClosingRequest([FromQuery] Guid apiKey,[FromQuery] int size = 10, [FromQuery] int page = 1);
+        Task<ResponseAPI> SearchStoreClosing(Guid StoreId);
+        Task<ResponseAPI> ResolveClosingStore(GetWalletStoreRequest req);
 
     }
 }

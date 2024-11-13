@@ -1,5 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+using VegaCityApp.API.Constants;
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Order;
 using VegaCityApp.API.Payload.Request.Package;
@@ -23,7 +27,7 @@ namespace VegaCityApp.API.Services.Implement
         #region admin
         public async Task<ResponseAPI> CreatePackage(CreatePackageRequest req)
         {
-            var result = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Name == req.Name);
+            var result = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Name == req.Name && !x.Deflag);
             if (result != null)
             throw new BadHttpRequestException(PackageMessage.ExistedPackageName, HttpStatusCodes.BadRequest);
             if(req.Price <= 0) throw new BadHttpRequestException("The number must be more than 0", HttpStatusCodes.BadRequest);
@@ -193,8 +197,19 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> CreatePackageType(CreatePackageTypeRequest req)
         {
-            var result = await _unitOfWork.GetRepository<PackageType>().SingleOrDefaultAsync(predicate: x => x.Name == req.Name);
-            if (result != null)
+            if(req.ZoneId == null)
+            {
+                throw new BadHttpRequestException(ZoneMessage.SearchZoneFail, HttpStatusCodes.NotFound);
+            }
+            var zoneExist = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == req.ZoneId);
+            if (zoneExist == null)
+            {
+                throw new BadHttpRequestException(ZoneMessage.SearchZoneFail, HttpStatusCodes.NotFound);
+            }
+            var resultName = NormalizeString(req.Name);
+            var results = await _unitOfWork.GetRepository<PackageType>().GetListAsync(predicate: x => x.ZoneId == req.ZoneId);
+            var resultTrace = results.SingleOrDefault(y => NormalizeString(y.Name) == resultName); 
+            if (resultTrace != null)
             {
                 return new ResponseAPI()
                 {
@@ -302,7 +317,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(
                 predicate: x => x.Id == PackageId && x.Deflag==false,
-                include: package => package.Include(a => a.PackageDetails)
+                include: package => package.Include(a => a.PackageDetails).ThenInclude(w => w.WalletType)
                                            .Include(b => b.PackageOrders)
                                            .Include(c => c.PackageItems)
                                            .Include(x => x.PackageType)
@@ -396,55 +411,359 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest,
                 };
             }
-            var package = await SearchPackage(req.PackageId);
-            #region check 
-            // after done main flow, make utils service to shorten this code
-            var userId = GetUserIdFromJwt();
-            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
-                predicate: x => x.UserId == userId && x.ZoneId == package.Data.PackageType.ZoneId
-                               && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
-                               && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
-            ) 
-                ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session", 
-                                                            HttpStatusCodes.BadRequest);
-            #endregion
-            List<GetListPackageItemResponse> packageItems = new List<GetListPackageItemResponse>();
-            for (var i = 0; i < quantity; i++)
+            if (req.PackageItemId != null)
             {
-                var newWallet = new Wallet()
+                //case parent + lost
+                var packageItemExist = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageItemId,
+                    include: y => y.Include(t => t.Package).ThenInclude(p => p.PackageType)
+                    .Include(d => d.Deposits)
+                    .Include(w => w.Wallet).ThenInclude(t => t.WalletType)
+                    .Include(tr => tr.Wallet.Transactions));
+                if(packageItemExist.Status == PackageItemStatusEnum.Inactive.GetDescriptionFromEnum())
                 {
-                    Id = Guid.NewGuid(),
-                    Balance = (int)package.Data.PackageDetails.SingleOrDefault().StartMoney,
-                    BalanceHistory = (int)package.Data.PackageDetails.SingleOrDefault().StartMoney,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    Deflag = false,
-                    WalletTypeId = (Guid)package.Data.PackageDetails.SingleOrDefault().WalletTypeId
-                };
-                await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
-                var newPackageItem = new PackageItem()
+                    throw new BadHttpRequestException(PackageItemMessage.MustActivated, HttpStatusCodes.NotFound);
+                }
+                var package = await SearchPackage(packageItemExist.Package.Id);
+                #region check 
+                // after done main flow, make utils service to shorten this code
+                var userId = GetUserIdFromJwt();
+                //walet
+                var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.UserId == userId);
+                if (wallet == null)
                 {
-                    Id = Guid.NewGuid(),
-                    PackageId = req.PackageId,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    Status = PackageItemStatus.Inactive.GetDescriptionFromEnum(),
-                    Gender = GenderEnum.Other.GetDescriptionFromEnum(),
-                    IsChanged = false,
-                    WalletId = newWallet.Id,
-                    StartDate = TimeUtils.GetCurrentSEATime(),
-                    EndDate = req.EndDate,
+                    throw new BadHttpRequestException(WalletTypeMessage.NotFoundWallet, HttpStatusCodes.NotFound);
+                }
+                var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
+                    predicate: x => x.UserId == userId && x.ZoneId == package.Data.PackageType.ZoneId
+                                   && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
+                                   && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
+                )
+                    ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
+                                                                HttpStatusCodes.BadRequest);
+                #endregion
+                List<GetListPackageItemResponse> packageItems = new List<GetListPackageItemResponse>();
+                
+                    if (packageItemExist.EndDate <= TimeUtils.GetCurrentSEATime())
+                    {
+                        throw new BadHttpRequestException(PackageItemMessage.PackageItemExpired, HttpStatusCodes.NotFound);
+                    }
+                var hasSuccessTransaction = packageItemExist.Wallet.Transactions
+                    .Any(t => t.Status == TransactionStatus.Success.GetDescriptionFromEnum() && t.OrderId != null);
+
+                var hasPendingTransaction = packageItemExist.Wallet.Transactions
+                    .Any(t => t.Status == TransactionStatus.Pending.GetDescriptionFromEnum());
+
+                var hasPendingOrderCharge = packageItemExist.Orders
+                    .Any(t => t.Status == OrderStatus.Pending.GetDescriptionFromEnum() && packageItemExist.Orders.SingleOrDefault().SaleType == SaleType.FeeChargeCreate);
+                if (packageItemExist.Status == PackageItemStatusEnum.Blocked.GetDescriptionFromEnum() && hasPendingTransaction)
+                {
+                    //after run api to get by cccd and mark as Blocked, transfer money, check log transaction
+                    //case lost vcard
+                    //check cus transfer to create new card
+                    //co deposit
+                    //phai dc active luon
+                    if (quantity > 1)
+                    {
+                        throw new BadHttpRequestException(PackageItemMessage.OneAsATime, HttpStatusCodes.NotFound);
+                    }
+                    
+                    //if (hasSuccessTransaction)
+                    //{
+                    //    throw new BadHttpRequestException(PackageItemMessage.RequestPAID, HttpStatusCodes.BadRequest);
+                    //}
+                    if (hasPendingTransaction)
+                    {
+
+                        var newPackageItemII = new PackageItem()
+                        {
+                            Id = Guid.NewGuid(),
+                            PackageId = packageItemExist.PackageId,
+                            CrDate = TimeUtils.GetCurrentSEATime(),
+                            UpsDate = TimeUtils.GetCurrentSEATime(),
+                            Status = PackageItemStatus.Inactive.GetDescriptionFromEnum(),
+                            Gender = packageItemExist.Gender,
+                            IsChanged = true,
+                            WalletId = packageItemExist.Wallet.Id,
+                            StartDate = packageItemExist.StartDate,
+                            EndDate = packageItemExist.EndDate,
+                            IsAdult = packageItemExist.IsAdult,
+                            Name = packageItemExist.Name,
+                            PhoneNumber = packageItemExist.PhoneNumber,
+                            Cccdpassport = packageItemExist.Cccdpassport,
+                            Email = packageItemExist.Email,
+                            Rfid = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime())
+                        };
+                        packageItems.Add(_mapper.Map<GetListPackageItemResponse>(newPackageItemII));
+                        await _unitOfWork.GetRepository<PackageItem>().InsertAsync(newPackageItemII);
+                        //New CHARGE ORDER OPEN CARD FEE if balance <50
+                        if (packageItemExist.Wallet.Balance > 50000)
+                        {
+                            var newChargeFeeOderPAID = new Order
+                            {
+                                Id = Guid.NewGuid(),
+                                PaymentType = PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
+                                Name = "Order Charge Fee Create Card Of " + packageItemExist.Name,
+                                TotalAmount = 50000,
+                                CrDate = TimeUtils.GetCurrentSEATime(),
+                                UpsDate = TimeUtils.GetCurrentSEATime(),
+                                Status = OrderStatus.Completed,
+                                InvoiceId = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
+                                StoreId = null,
+                                PackageItemId = newPackageItemII.Id,
+                                PackageId = newPackageItemII.PackageId,
+                                UserId = userId,
+                                SaleType = SaleType.FeeChargeCreate,
+                            };
+                            await _unitOfWork.GetRepository<Order>().InsertAsync(newChargeFeeOderPAID);
+                            //update balance
+                            packageItemExist.Wallet.Balance -= 50000;
+                            packageItemExist.Wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                            _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageItemExist.Wallet);
+
+
+                            ////UPDATE CASHIER WALLET
+                            wallet.Balance += 50000;
+                            wallet.BalanceHistory += 50000;
+                            wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                            _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+
+                            //session update
+                            session.TotalQuantityOrder += 1;
+                            session.TotalCashReceive += 50000;
+                            session.TotalFinalAmountOrder += 50000;
+                            _unitOfWork.GetRepository<UserSession>().UpdateAsync(session);
+                            //deposit
+                            var newDepositII = new Deposit()
+                            {
+                                Id = Guid.NewGuid(),
+                                Amount = (int)packageItemExist.Wallet.Balance,
+                                IsIncrease = true,
+                                Name = "Customer Money Transfer From" + packageItemExist.Name,
+                                PaymentType = PaymentTypeHelper.allowedPaymentTypes[6],
+                                CrDate = TimeUtils.GetCurrentSEATime(),
+                                UpsDate = TimeUtils.GetCurrentSEATime(),
+                                PackageItemId = newPackageItemII.Id,
+                                WalletId = newPackageItemII.WalletId,
+                                OrderId = newChargeFeeOderPAID.Id
+                            };
+                            await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDepositII);
+
+                            var transactionId = packageItemExist.Wallet.Transactions.SingleOrDefault().Id;
+                            packageItemExist.Wallet.Transactions.SingleOrDefault().Status = TransactionStatus.Success.GetDescriptionFromEnum();
+                            packageItemExist.Wallet.Transactions.SingleOrDefault().OrderId = newChargeFeeOderPAID.Id;
+                            packageItemExist.Wallet.Transactions.SingleOrDefault().DespositId = newDepositII.Id;
+                            _unitOfWork.GetRepository<Transaction>().UpdateAsync(packageItemExist.Wallet.Transactions.SingleOrDefault());
+                            if (await _unitOfWork.CommitAsync() > 0)
+                            {
+                                if (newPackageItemII != null && newPackageItemII.WalletId == packageItemExist.Wallet.Id)
+                                {
+                                    newPackageItemII.Status = PackageItemStatus.Active.GetDescriptionFromEnum(); 
+                                    _unitOfWork.GetRepository<PackageItem>().UpdateAsync(newPackageItemII); 
+                                    await _unitOfWork.CommitAsync(); 
+                                }
+
+                                return new ResponseAPI()
+                                {
+                                    MessageResponse = PackageItemMessage.SuccessGenerateNewPAID,
+                                    StatusCode = HttpStatusCodes.OK,
+                                    Data = new
+                                    {
+                                        PackageItemIIId = newPackageItemII.Id,
+                                    }
+                                };
+                            }
+                            else
+                            {
+                                return new ResponseAPI()
+                                {
+                                    MessageResponse = PackageItemMessage.FailedToGenerateNew,
+                                    StatusCode = HttpStatusCodes.BadRequest
+                                };
+                            }
+                        }
+                        else
+                        { //CASE NOT ENOUGH
+                            if (hasPendingTransaction && hasPendingOrderCharge)
+                            {
+                                throw new BadHttpRequestException(PackageItemMessage.orderUNPAID, HttpStatusCodes.BadRequest);
+
+                            }
+                            var newChargeFeeOder = new Order
+                            {
+                                Id = Guid.NewGuid(),
+                                PaymentType = PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
+                                Name = "Order Charge Fee Create Card Of " + packageItemExist.Name,
+                                TotalAmount = 50000,
+                                CrDate = TimeUtils.GetCurrentSEATime(),
+                                UpsDate = TimeUtils.GetCurrentSEATime(),
+                                Status = OrderStatus.Pending,
+                                InvoiceId = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
+                                StoreId = null,
+                                PackageItemId = newPackageItemII.Id,
+                                PackageId = newPackageItemII.PackageId,
+                                UserId = userId,
+                                SaleType = SaleType.FeeChargeCreate,
+                            };
+                            await _unitOfWork.GetRepository<Order>().InsertAsync(newChargeFeeOder);
+
+                            //deposit
+                            var newDepositII = new Deposit()
+                            {
+                                Id = Guid.NewGuid(),
+                                Amount = (int)packageItemExist.Wallet.Balance,
+                                IsIncrease = true,
+                                Name = "Customer Money Transfer From" + packageItemExist.Name,
+                                PaymentType = PaymentTypeHelper.allowedPaymentTypes[6],
+                                CrDate = TimeUtils.GetCurrentSEATime(),
+                                UpsDate = TimeUtils.GetCurrentSEATime(),
+                                PackageItemId = packageItemExist.Id,
+                                WalletId = packageItemExist.WalletId,
+                                OrderId = newChargeFeeOder.Id
+                            };
+                            await _unitOfWork.GetRepository<Deposit>().InsertAsync(newDepositII);
+                            var pendingTransaction = packageItemExist.Wallet.Transactions
+                                 .FirstOrDefault(t => t.Status == TransactionStatus.Pending.GetDescriptionFromEnum());
+                   
+                            if (hasPendingTransaction)
+                            {
+                                var pendingTransactionId = pendingTransaction.Id;
+                                pendingTransaction.OrderId = newChargeFeeOder.Id;
+                                pendingTransaction.DespositId = newDepositII.Id;
+                                _unitOfWork.GetRepository<Transaction>().UpdateAsync(pendingTransaction);
+                                return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+                                {
+                                    MessageResponse = PackageItemMessage.SuccessGenerateNewUNPAID,
+                                    StatusCode = HttpStatusCodes.OK,
+                                    Data = new
+                                    {
+                                        PackageItemIIId = newPackageItemII.Id,
+                                        InvoiceId = newChargeFeeOder.InvoiceId,
+                                        TransactionId = pendingTransactionId
+                                    }
+                                } : new ResponseAPI()
+                                {
+                                    MessageResponse = PackageItemMessage.FailedToGenerateNew,
+                                    StatusCode = HttpStatusCodes.BadRequest
+                                };
+                            }
+                           
+                        }
+                    }
+                    else if (packageItemExist.Wallet.Transactions.Any(t => t.Status == TransactionStatus.Success.GetDescriptionFromEnum()
+                    && t.OrderId != null))
+                    {
+                        throw new BadHttpRequestException(PackageItemMessage.RequestPAID, HttpStatusCodes.BadRequest);
+                    }
+                }
+                //case generate vcard child
+                else// for in here
+                {
+                    if (packageItemExist.IsAdult == false)
+                    {
+                        throw new BadHttpRequestException(PackageItemMessage.NotAdult, HttpStatusCodes.BadRequest);
+                    }
+                    for (var i = 0; i < quantity; i++)
+                    {
+                        var newWallet = new Wallet()
+                        {
+                            Id = Guid.NewGuid(),
+                            Balance = (int)package.Data.PackageDetails.SingleOrDefault().StartMoney,
+                            BalanceHistory = (int)package.Data.PackageDetails.SingleOrDefault().StartMoney,
+                            CrDate = TimeUtils.GetCurrentSEATime(),
+                            UpsDate = TimeUtils.GetCurrentSEATime(),
+                            Deflag = false,
+                            WalletTypeId = (Guid)package.Data.PackageDetails.SingleOrDefault().WalletTypeId
+                        };
+                        await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
+                        var newPackageItemChild = new PackageItem()
+                        {
+                            Id = Guid.NewGuid(),
+                            PackageId = packageItemExist.Package.Id,
+                            CrDate = TimeUtils.GetCurrentSEATime(),
+                            UpsDate = TimeUtils.GetCurrentSEATime(),
+                            Status = PackageItemStatus.Inactive.GetDescriptionFromEnum(),
+                            Gender = GenderEnum.Other.GetDescriptionFromEnum(),
+                            IsChanged = false,
+                            WalletId = newWallet.Id,
+                            StartDate = TimeUtils.GetCurrentSEATime(),
+                            EndDate = packageItemExist.EndDate,
+                            IsAdult = false,
+                            Name = "Vcard for Child Created at: " + TimeUtils.GetCurrentSEATime(),
+                            PhoneNumber = packageItemExist.PhoneNumber,
+                            Cccdpassport = packageItemExist.Cccdpassport,
+                            Email = packageItemExist.Email,
+                            Rfid = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime())
+                        };
+                        packageItems.Add(_mapper.Map<GetListPackageItemResponse>(newPackageItemChild));
+                        await _unitOfWork.GetRepository<PackageItem>().InsertAsync(newPackageItemChild);
+                    }
+                }
+               // }
+                await _unitOfWork.CommitAsync();
+                return new ResponseAPI()
+                {
+                    MessageResponse = PackageItemMessage.CreatePackageItemSuccessfully,
+                    StatusCode = HttpStatusCodes.Created,
+                    ParentName = packageItemExist.Name,
+                    Data = packageItems,
                 };
-                packageItems.Add(_mapper.Map<GetListPackageItemResponse>(newPackageItem));
-                await _unitOfWork.GetRepository<PackageItem>().InsertAsync(newPackageItem);
             }
-            await _unitOfWork.CommitAsync();
-            return new ResponseAPI()
+            else
             {
-                MessageResponse = PackageItemMessage.CreatePackageItemSuccessfully,
-                StatusCode = HttpStatusCodes.Created,
-                Data = packageItems
-            };
+                var package = await SearchPackage(req.PackageId);
+                #region check 
+                // after done main flow, make utils service to shorten this code
+                var userId = GetUserIdFromJwt();
+                var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
+                    predicate: x => x.UserId == userId && x.ZoneId == package.Data.PackageType.ZoneId
+                                   && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
+                                   && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
+                )
+                    ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
+                                                                HttpStatusCodes.BadRequest);
+                #endregion
+                List<GetListPackageItemResponse> packageItems = new List<GetListPackageItemResponse>();
+                for (var i = 0; i < quantity; i++)
+                {
+                    var newWallet = new Wallet()
+                    {
+                        Id = Guid.NewGuid(),
+                        Balance = (int)package.Data.PackageDetails.SingleOrDefault().StartMoney,
+                        BalanceHistory = (int)package.Data.PackageDetails.SingleOrDefault().StartMoney,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        Deflag = false,
+                        WalletTypeId = (Guid)package.Data.PackageDetails.SingleOrDefault().WalletTypeId
+                    };
+                    await _unitOfWork.GetRepository<Wallet>().InsertAsync(newWallet);
+                    var newPackageItem = new PackageItem()
+                    {
+                        Id = Guid.NewGuid(),
+                        PackageId = req.PackageId,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        Status = PackageItemStatus.Inactive.GetDescriptionFromEnum(),
+                        Gender = GenderEnum.Other.GetDescriptionFromEnum(),
+                        IsChanged = false,
+                        WalletId = newWallet.Id,
+                        StartDate = TimeUtils.GetCurrentSEATime(),
+                        EndDate = req.EndDate,
+                        IsAdult = true,
+                        Rfid = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
+                        Name = "User VegaCity",
+                    };
+                    packageItems.Add(_mapper.Map<GetListPackageItemResponse>(newPackageItem));
+                    await _unitOfWork.GetRepository<PackageItem>().InsertAsync(newPackageItem);
+                }
+
+                await _unitOfWork.CommitAsync();
+                return new ResponseAPI()
+                {
+                    MessageResponse = PackageItemMessage.CreatePackageItemSuccessfully,
+                    StatusCode = HttpStatusCodes.Created,
+                    Data = packageItems
+                };
+            }
         }
         public async Task<ResponseAPI<IEnumerable<GetListPackageItemResponse>>> SearchAllPackageItem(int size, int page)
         {
@@ -503,15 +822,18 @@ namespace VegaCityApp.API.Services.Implement
             }
 
         }
-        public async Task<ResponseAPI<PackageItem>> SearchPackageItem(Guid PackageItemId)
+        public async Task<ResponseAPI<PackageItem>> SearchPackageItem(Guid? PackageItemId, string? rfid)
         {
             var packageItem = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(
-                predicate: x => x.Id == PackageItemId
+                predicate: x => x.Id == PackageItemId || x.Rfid == rfid
                 //&& x.Status == PackageItemStatus.Active.ToString() && x.Status == PackageItemStatus.Inactive.ToString()
                 ,
-                include: packageItem => packageItem.Include(b => b.Reports)
-                .Include(c => c.Orders).Include(d => d.Deposits).Include(z => z.CustomerMoneyTransfers)
-                .Include(e => e.Wallet).ThenInclude(y => y.Transactions)
+                include: packageItem => packageItem
+                .Include(b => b.Reports)
+                .Include(c => c.Orders).ThenInclude(y => y.Transactions)
+                .Include(d => d.Deposits)
+                .Include(z => z.CustomerMoneyTransfers)
+                .Include(e => e.Wallet).ThenInclude(t => t.WalletType)
             );
 
             if (packageItem == null)
@@ -522,11 +844,12 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
-
+            var qrCodeString = EnCodeBase64.EncodeBase64Etag("http://localhost:3000/etagEdit/" + packageItem.Id);
             return new ResponseAPI<PackageItem>()
             {
                 MessageResponse = PackageItemMessage.GetPackageItemSuccessfully,
                 StatusCode = HttpStatusCodes.OK,
+                QRCode = qrCodeString,
                 Data = packageItem
             };
         }
@@ -552,9 +875,10 @@ namespace VegaCityApp.API.Services.Implement
             if(packageItem.IsChanged == true)
                 throw new BadHttpRequestException("You only change info one time !!", HttpStatusCodes.BadRequest);
 
-            //update 
-            packageItem.Name = req.Name;
-            packageItem.Gender = req.Gender;
+            //update
+            packageItem.Name = req.Name ?? packageItem.Name;
+            packageItem.Gender = req.Gender ?? packageItem.Gender;
+            packageItem.ImageUrl = req.ImageUrl ?? packageItem.ImageUrl;
             packageItem.IsChanged = true;
 
             _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItem);
@@ -569,17 +893,46 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.BadRequest
             };
         }
+        public async Task<ResponseAPI> UpdateRfIdPackageItem(Guid Id, string rfId)
+        {
+            var packageItem = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync
+                (predicate: x => x.Id == Id && x.Status == PackageItemStatus.Active.ToString(),
+                 include: packageItem => packageItem.Include(b => b.Package).ThenInclude(c => c.PackageType)
+            );
+            #region check 
+            // after done main flow, make utils service to shorten this code
+            var userId = GetUserIdFromJwt();
+            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
+                predicate: x => x.UserId == userId && x.ZoneId == packageItem.Package.PackageType.ZoneId
+                               && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
+                               && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
+            )
+                ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
+                                                            HttpStatusCodes.BadRequest);
+            #endregion
+            if (packageItem == null)
+                throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
+            if(packageItem.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum() && packageItem.Rfid == rfId)
+                throw new BadHttpRequestException(PackageItemMessage.RfIdExist, HttpStatusCodes.BadRequest);
+            //update
+            packageItem.Rfid = rfId;
+
+            _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItem);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            {
+                MessageResponse = PackageItemMessage.UpdatePackageItemSuccessfully,
+                StatusCode = HttpStatusCodes.OK,
+                Data = new { PackageItemId = packageItem.Id }
+            } : new ResponseAPI()
+            {
+                MessageResponse = PackageItemMessage.UpdatePackageItemFail,
+                StatusCode = HttpStatusCodes.BadRequest
+            };
+        } 
         public async Task<ResponseAPI> ActivePackageItem(Guid packageItem, ActivatePackageItemRequest req)
         {
-            //check if cccd or passport 
-            if (!ValidationUtils.IsCCCD(req.Cccdpassport))
-                throw new BadHttpRequestException(PackageItemMessage.CCCDInvalid, HttpStatusCodes.BadRequest);
-            if (!ValidationUtils.IsEmail(req.Email))
-                throw new BadHttpRequestException(PackageItemMessage.EmailInvalid, HttpStatusCodes.BadRequest);
-            if(!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
-                throw new BadHttpRequestException(PackageItemMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
             var packageItemExist = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(
-                predicate: x => x.Id == packageItem && x.Status == PackageItemStatusEnum.Inactive.GetDescriptionFromEnum(), 
+                predicate: x => x.Id == packageItem , 
                 include: z => z.Include(a => a.Package).ThenInclude(z => z.PackageType))
                     ?? throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
             #region check 
@@ -593,37 +946,83 @@ namespace VegaCityApp.API.Services.Implement
                 ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
                                                             HttpStatusCodes.BadRequest);
             #endregion
-            if (req.Cccdpassport == packageItemExist.Cccdpassport)
-                throw new BadHttpRequestException(PackageItemMessage.CCCDExist, HttpStatusCodes.BadRequest);
-            if(req.Email == packageItemExist.Email)
-                throw new BadHttpRequestException(PackageItemMessage.EmailExist, HttpStatusCodes.BadRequest);
-            packageItemExist.Status = PackageItemStatusEnum.Active.GetDescriptionFromEnum();
-            packageItemExist.Name = req.Name.Trim();
-            packageItemExist.PhoneNumber = req.PhoneNumber.Trim();
-            packageItemExist.Cccdpassport = req.Cccdpassport.Trim();
-            packageItemExist.Email = req.Email.Trim();
-            packageItemExist.Gender = req.Gender.Trim();
-            packageItemExist.StartDate = TimeUtils.GetCurrentSEATime();
-            packageItemExist.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
-            packageItemExist.IsAdult = req.IsAdult;
-            packageItemExist.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItemExist);
-            //update wallet
-            var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.Id == packageItemExist.WalletId);
-            wallet.StartDate = TimeUtils.GetCurrentSEATime();
-            wallet.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
-            wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
-            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            //vcard child 
+            if (packageItemExist.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum())
             {
-                MessageResponse = EtagMessage.ActivateEtagSuccess,
-                StatusCode = HttpStatusCodes.OK,
-                Data = new { packageItemId = packageItemExist.Id }
-            } : new ResponseAPI()
+                throw new BadHttpRequestException(PackageItemMessage.AlreadyActivated, HttpStatusCodes.BadRequest);
+            }
+            if (packageItemExist.IsAdult == false)
             {
-                MessageResponse = EtagMessage.ActivateEtagFail,
-                StatusCode = HttpStatusCodes.BadRequest
-            };
+                packageItemExist.Status = PackageItemStatusEnum.Active.GetDescriptionFromEnum();
+                packageItemExist.Name = req.Name.Trim();
+                packageItemExist.PhoneNumber =packageItemExist.PhoneNumber.Trim(); //from parent
+                packageItemExist.Cccdpassport = packageItemExist.Cccdpassport.Trim(); //from parent
+                packageItemExist.Email = packageItemExist.Email.Trim();
+                packageItemExist.Gender = req.Gender.Trim();
+                packageItemExist.StartDate = TimeUtils.GetCurrentSEATime();
+                packageItemExist.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
+                packageItemExist.IsAdult = false;
+                packageItemExist.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItemExist);
+                //update wallet
+                var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.Id == packageItemExist.WalletId);
+                wallet.StartDate = TimeUtils.GetCurrentSEATime();
+                wallet.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
+                wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+                //end child vcard
+                return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.ActivateEtagSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = new { packageItemId = packageItemExist.Id }
+                } : new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.ActivateEtagFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            else {
+                if (!ValidationUtils.IsCCCD(req.Cccdpassport))
+                    throw new BadHttpRequestException(PackageItemMessage.CCCDInvalid, HttpStatusCodes.BadRequest);
+                if (!ValidationUtils.IsEmail(req.Email))
+                    throw new BadHttpRequestException(PackageItemMessage.EmailInvalid, HttpStatusCodes.BadRequest);
+                if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
+                    throw new BadHttpRequestException(PackageItemMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
+                if (req.Cccdpassport == packageItemExist.Cccdpassport)
+                    throw new BadHttpRequestException(PackageItemMessage.CCCDExist, HttpStatusCodes.BadRequest);
+                if (req.Email == packageItemExist.Email)
+                    throw new BadHttpRequestException(PackageItemMessage.EmailExist, HttpStatusCodes.BadRequest);
+                packageItemExist.Status = PackageItemStatusEnum.Active.GetDescriptionFromEnum();
+                packageItemExist.Name = req.Name.Trim();
+                packageItemExist.PhoneNumber = req.PhoneNumber.Trim();
+                packageItemExist.Cccdpassport = req.Cccdpassport.Trim();
+                packageItemExist.Email = req.Email.Trim();
+                packageItemExist.Gender = req.Gender.Trim();
+                packageItemExist.StartDate = TimeUtils.GetCurrentSEATime();
+                packageItemExist.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
+                packageItemExist.IsAdult = req.IsAdult;
+                packageItemExist.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItemExist);
+                //update wallet
+                var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.Id == packageItemExist.WalletId);
+                wallet.StartDate = TimeUtils.GetCurrentSEATime();
+                wallet.EndDate = TimeUtils.GetCurrentSEATime().AddDays((double)packageItemExist.Package.Duration);
+                wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+
+                return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.ActivateEtagSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = new { packageItemId = packageItemExist.Id }
+                } : new ResponseAPI()
+                {
+                    MessageResponse = EtagMessage.ActivateEtagFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            
         }
         public async Task<ResponseAPI> PrepareChargeMoneyEtag(ChargeMoneyRequest req)
         {
@@ -636,13 +1035,29 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
+            var promotionAutos = await _unitOfWork.GetRepository<Promotion>().GetListAsync(
+                predicate: x => x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
+                               && x.Status == (int) PromotionStatusEnum.Automation
+            );
+            foreach (var prAuto in promotionAutos)
+            {
+                if (req.ChargeAmount >= prAuto.RequireAmount)
+                {
+                    req.PromoCode = prAuto.PromotionCode;
+                    break;
+                }
+            }
             var packageItemExsit = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageItemId
-            && x.Cccdpassport == req.CccdPassport, include: w => w.Include(wallet => wallet.Wallet).Include(z => z.Package).ThenInclude(i => i.PackageType)) 
+            && x.Cccdpassport == req.CccdPassport, include: w => w.Include(wallet => wallet.Wallet).ThenInclude(w => w.WalletType).Include(z => z.Package).ThenInclude(i => i.PackageType)) 
                 ?? throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
             if(packageItemExsit.EndDate <= TimeUtils.GetCurrentSEATime())
             {
                 throw new BadHttpRequestException(PackageItemMessage.PackageItemExpired, HttpStatusCodes.NotFound);
-            }    
+            }
+            if (packageItemExsit.Wallet.WalletType.Name == "SpecificWallet")
+            {
+                throw new BadHttpRequestException(PackageItemMessage.InvalidType, HttpStatusCodes.BadRequest);
+            }
             #region check session
             // after done main flow, make utils service to shorten this code
             var userId = GetUserIdFromJwt();
@@ -738,16 +1153,27 @@ namespace VegaCityApp.API.Services.Implement
                 Promotion checkPromo = await CheckPromo(req.PromoCode, req.ChargeAmount)
                     ?? throw new BadHttpRequestException(PromotionMessage.AddPromotionFail, HttpStatusCodes.BadRequest);
                 int amountPromo = 0;
-                if(checkPromo.MaxDiscount < req.ChargeAmount * (int)checkPromo.DiscountPercent)
+                if(checkPromo.Status != (int)PromotionStatusEnum.Automation)
                 {
-                    amountPromo = (int)checkPromo.MaxDiscount;
+                    if (checkPromo.MaxDiscount <= req.ChargeAmount * (int)checkPromo.DiscountPercent)
+                    {
+                        amountPromo = (int)checkPromo.MaxDiscount;
+                    }
+                    else
+                    {
+                        //amountPromo = req.ChargeAmount * (int)checkPromo.DiscountPercent;
+                        amountPromo = (int)(req.ChargeAmount * checkPromo.DiscountPercent + 0.5f);
+
+                    }
                 }
                 else
                 {
-                    //amountPromo = req.ChargeAmount * (int)checkPromo.DiscountPercent;
-                    amountPromo = (int)(req.ChargeAmount * checkPromo.DiscountPercent + 0.5f);
-
+                    if(req.ChargeAmount >= checkPromo.RequireAmount)
+                    {
+                        amountPromo = (int) checkPromo.MaxDiscount;
+                    }
                 }
+                
                 
                 var newOrder = new Order()
                 {
@@ -828,7 +1254,7 @@ namespace VegaCityApp.API.Services.Implement
         private async Task<Promotion> CheckPromo(string promoCode, int amount)
         {
             var checkPromo = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
-                    (predicate: x => x.PromotionCode == promoCode && x.Status == (int)PromotionStatusEnum.Active)
+                    (predicate: x => x.PromotionCode == promoCode && x.Status == (int)PromotionStatusEnum.Active || x.Status == (int) PromotionStatusEnum.Automation)
                     ?? throw new BadHttpRequestException(PromotionMessage.NotFoundPromotion, HttpStatusCodes.NotFound);
             if (checkPromo.EndDate < TimeUtils.GetCurrentSEATime())
                 throw new BadHttpRequestException(PromotionMessage.PromotionExpired, HttpStatusCodes.BadRequest);
@@ -1020,6 +1446,7 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(newTransactionStore);
 
             store.Wallets.SingleOrDefault().Balance += (int)(totalPrice * (1 - marketZone.MarketZoneConfig.StoreStranferRate));
+            store.Wallets.SingleOrDefault().BalanceHistory += (int)(totalPrice * (1 - marketZone.MarketZoneConfig.StoreStranferRate));
             store.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(store.Wallets.SingleOrDefault());
 
@@ -1113,5 +1540,107 @@ namespace VegaCityApp.API.Services.Implement
             }
             await _unitOfWork.CommitAsync();
         }
+
+        private static string NormalizeString(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return text;
+
+            // Chuẩn hóa chuỗi để loại bỏ dấu
+            var normalizedString = text.Normalize(NormalizationForm.FormD);
+            var stringBuilder = new StringBuilder();
+
+            foreach (var c in normalizedString)
+            {
+                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+                if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(c);
+                }
+            }
+
+            // Chuẩn hóa chuỗi, chuyển thành chữ thường và loại bỏ khoảng trắng
+            var result = stringBuilder.ToString().Normalize(NormalizationForm.FormC).ToLower();
+            result = Regex.Replace(result, @"\s+", ""); // Loại bỏ tất cả khoảng trắng
+
+            return result;
+        }
+
+        public async Task <ResponseAPI> GetLostPackageItem(GetLostPackageItemRequest req)
+        {
+            //need authorize cashierWeb
+            var searchName = NormalizeString(req.FullName);
+
+            var packageItems = await _unitOfWork.GetRepository<PackageItem>().GetListAsync(
+               predicate: x => x.Cccdpassport == req.Cccdpassport && x.Email == req.Email 
+               && x.Status == PackageItemStatus.Active.GetDescriptionFromEnum(),
+               include: p => p.Include(w => w.Wallet).Include(a => a.Package).ThenInclude(t => t.PackageType)
+               );
+
+            var packageItemLost = packageItems.SingleOrDefault(
+                x => NormalizeString(x.Name) == searchName
+               );
+            if (packageItemLost == null)
+            {
+                throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
+            }
+            #region check 
+            // after done main flow, make utils service to shorten this code
+            var userId = GetUserIdFromJwt();
+            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
+                predicate: x => x.UserId == userId && x.ZoneId == packageItemLost.Package.PackageType.ZoneId
+                               && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
+                               && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
+            )
+                ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
+                                                            HttpStatusCodes.BadRequest);
+            #endregion
+            if (!ValidationUtils.IsCCCD(req.Cccdpassport))
+                throw new BadHttpRequestException(PackageItemMessage.CCCDInvalid, HttpStatusCodes.BadRequest);
+            if (!ValidationUtils.IsEmail(req.Email))
+                throw new BadHttpRequestException(PackageItemMessage.EmailInvalid, HttpStatusCodes.BadRequest);
+            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
+                throw new BadHttpRequestException(PackageItemMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
+            if(packageItemLost.EndDate <= TimeUtils.GetCurrentSEATime())
+            {
+                throw new BadHttpRequestException(PackageItemMessage.PackageItemExpired, HttpStatusCodes.BadRequest);
+            }
+            //var ID = packageItemLost.Id;
+            //after run api to get by cccd and mark as Blocked, transfer money, check log transaction
+            //case lost vcard
+            //check cus transfer to create new card
+            packageItemLost.Status = PackageItemStatus.Blocked.GetDescriptionFromEnum();
+            packageItemLost.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItemLost);
+          
+            //Transaction
+            var newTransaction = new Transaction
+            {
+                Id = Guid.NewGuid(),
+                WalletId = packageItemLost.WalletId,
+                IsIncrease = false,
+                Amount = 50000,
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                Description = "Charge Fee From Lost PackageItem: " + packageItemLost.Name,
+                Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                Status = TransactionStatus.Pending,
+                Type = TransactionType.TransferMoney,
+                UserId = userId,
+                //need to update with status is success & add deposit id above
+            };
+            await _unitOfWork.GetRepository<Transaction>().InsertAsync(newTransaction);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            {
+                MessageResponse = PackageItemMessage.SuccessfullyReadyToCreate,
+                StatusCode = HttpStatusCodes.OK,
+                Data = new { packageItemId = packageItemLost.Id }
+            } : new ResponseAPI()
+            {
+                MessageResponse = PackageItemMessage.FailedToMark,
+                StatusCode = HttpStatusCodes.BadRequest
+            };
+        }
+        //assign new 
     }
 }

@@ -286,7 +286,7 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Location).HasMaxLength(50);
 
-                entity.Property(e => e.Name).HasMaxLength(50);
+                entity.Property(e => e.Name).HasMaxLength(200);
 
                 entity.Property(e => e.PhoneNumber)
                     .HasMaxLength(10)
@@ -483,8 +483,10 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.EndDate).HasColumnType("datetime");
 
                 entity.Property(e => e.Gender)
-                    .HasMaxLength(5)
+                    .HasMaxLength(6)
                     .IsUnicode(false);
+
+                entity.Property(e => e.ImageUrl).IsUnicode(false);
 
                 entity.Property(e => e.Name).HasMaxLength(50);
 
@@ -494,7 +496,7 @@ namespace VegaCityApp.Domain.Models
                     .IsFixedLength();
 
                 entity.Property(e => e.Rfid)
-                    .HasMaxLength(50)
+                    .HasMaxLength(200)
                     .IsUnicode(false)
                     .HasColumnName("RFID");
 
@@ -631,6 +633,9 @@ namespace VegaCityApp.Domain.Models
             {
                 entity.ToTable("Promotion");
 
+                entity.HasIndex(e => e.PromotionCode, "IX_Promotion")
+                    .IsUnique();
+
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.Description).HasMaxLength(200);
@@ -681,6 +686,8 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
+                entity.Property(e => e.CrDate).HasColumnType("datetime");
+
                 entity.Property(e => e.Description).HasMaxLength(500);
 
                 entity.Property(e => e.Solution).HasMaxLength(500);
@@ -688,6 +695,8 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.SolveBy)
                     .HasMaxLength(50)
                     .IsUnicode(false);
+
+                entity.Property(e => e.UpsDate).HasColumnType("datetime");
 
                 entity.HasOne(d => d.IssueType)
                     .WithMany(p => p.Reports)

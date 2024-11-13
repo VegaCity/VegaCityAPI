@@ -41,6 +41,8 @@ public static class ApiEndPointConstant
     }
     public static class UserEndpoint
     {
+        public const string GetAllClosingRequest = ApiEndpoint + "/user/closing-requests";
+        public const string GetClosingRequest = ApiEndpoint + "/user/closing-request";
         public const string GetSession = ApiEndpoint + "/user/session/{id}";
         public const string DeleteSession = ApiEndpoint + "/user/session/{id}";
         public const string GetAllSessions = ApiEndpoint + "/user/sessions";
@@ -56,11 +58,12 @@ public static class ApiEndPointConstant
         public const string GetAdminWallet = ApiEndpoint + "/wallet";
         public const string GetChartDashboard = ApiEndpoint + "/transaction/dashboard";
         public const string ReAssignEmail = ApiEndpoint + "/user/{userId}/re-assign-email";
-
+        public const string ResolveClosingRequest = ApiEndpoint + "/user/resolve-closing-request";
     }
 
     public static class PackageEndpoint
     {
+        public const string UpdateRfId = ApiEndpoint + "/package-item/{id}/rfid";
         public const string ConfirmOrder = ApiEndpoint + "/order/confirm";
         public const string PackageItemPayment = ApiEndpoint + "/package-item/payment";
         public const string PrepareChargeMoney = ApiEndpoint + "/package-item/charge-money";
@@ -76,9 +79,10 @@ public static class ApiEndPointConstant
         public const string UpdatePackageType = ApiEndpoint + "/package-type/{id}";
         public const string DeletePackageType = ApiEndpoint + "/package-type/{id}";
         public const string GetListPackageItem = ApiEndpoint + "/package-items";
-        public const string GetPackageItemById = ApiEndpoint + "/package-item/{id}";
+        public const string GetPackageItemById = ApiEndpoint + "/package-item";
         public const string CreatePackageItem = ApiEndpoint + "/package-item";
         public const string UpdatePackageItem = ApiEndpoint + "/package-item/{id}";
+        public const string MarkPackageItemLost = ApiEndpoint + "/package-item/mark-lost";
 
     }
 
@@ -97,6 +101,8 @@ public static class ApiEndPointConstant
         public const string GetStore = ApiEndpoint + "/store/{id}";
         public const string DeleteStore = ApiEndpoint + "/store/{id}";
         public const string GetMenu = ApiEndpoint + "/store/{phone}/menu";
+        public const string GetWalletStore = ApiEndpoint + "/store/wallet";
+        public const string RequestCloseForStore = ApiEndpoint + "/store/{id}/request-close";
     }
     public static class HouseEndpoint
     {

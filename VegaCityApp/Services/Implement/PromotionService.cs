@@ -25,16 +25,31 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> CreatePromotion(PromotionRequest req)
         {
-            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(predicate: x => x.PromotionCode == req.PromotionCode);
-            if(promotion != null)
+            Guid apiKey = GetMarketZoneIdFromJwt();
+            if(req.Status != null)
+            {
+                //checkstatus
+                if(PromotionStatusEnum.Automation != EnumUtil.ParseEnum<PromotionStatusEnum>(req.Status))
+                {
+                    return new ResponseAPI
+                    {
+                        MessageResponse = "Invalid Status Promotion",
+                        StatusCode = HttpStatusCodes.BadRequest
+                    };
+                }
+            }
+            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
+                (predicate: x => x.PromotionCode == req.PromotionCode)
+                ?? throw new BadHttpRequestException(PromotionMessage.NotFoundPromotion, HttpStatusCodes.NotFound);
+            if (promotion.Status != (int)PromotionStatusEnum.Active || promotion.Status != (int)PromotionStatusEnum.Automation)
             {
                 return new ResponseAPI
                 {
-                    MessageResponse = PromotionMessage.PromotionExists,
-                    StatusCode = HttpStatusCodes.BadRequest
+                    MessageResponse = "Not found Promotion",
+                    StatusCode = HttpStatusCodes.NotFound
                 };
             }
-            if(req.EndDate <= TimeUtils.GetCurrentSEATime())
+            if (req.EndDate <= TimeUtils.GetCurrentSEATime())
             {
                 return new ResponseAPI
                 {
@@ -61,7 +76,7 @@ namespace VegaCityApp.API.Services.Implement
             var newPromotion = new Promotion()
             {
                 Id = Guid.NewGuid(),
-                MarketZoneId = req.MarketZoneId,
+                MarketZoneId = apiKey,
                 StartDate = req.StartDate,
                 EndDate = req.EndDate,
                 PromotionCode = req.PromotionCode,
@@ -84,7 +99,6 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = PromotionMessage.CreatePromotionFail,
                 StatusCode = HttpStatusCodes.BadRequest
             };
-
         }
         public async Task <ResponseAPI> UpdatePromotion(Guid PromotionId ,UpdatePromotionRequest req)
         {
@@ -129,6 +143,7 @@ namespace VegaCityApp.API.Services.Implement
             promotion.StartDate = req.StartDate;
             promotion.EndDate = req.EndDate;    
             promotion.Quantity = req.Quantity;
+            promotion.Status = (int)PromotionStatusEnum.Active;
             _unitOfWork.GetRepository<Promotion>().UpdateAsync(promotion);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
@@ -161,12 +176,10 @@ namespace VegaCityApp.API.Services.Implement
                     StartDate = x.StartDate,
                     EndDate = x.EndDate,
                 },
+                predicate: z => z.Quantity > 0,
                 page: page,
                 size: size,
-                orderBy: x => x.OrderByDescending(z => z.Name),
-                    predicate: x => 
-                     // x.Status == (int)PromotionStatusEnum.Active &&
-                     x.EndDate >= TimeUtils.GetCurrentSEATime()
+                orderBy: x => x.OrderByDescending(z => z.Name)
                 );
                 return new ResponseAPI<IEnumerable<GetListPromotionResponse>>
                 {
@@ -197,7 +210,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> SearchPromotion(Guid promotionId)
         {
             var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(
-                predicate: x => x.Id == promotionId && x.Status == (int)PromotionStatusEnum.Active && x.EndDate >= TimeUtils.GetCurrentSEATime(),
+                predicate: x => x.Id == promotionId  && x.EndDate >= TimeUtils.GetCurrentSEATime(),
                 include: zone => zone.Include(y => y.PromotionOrders));
             if (promotion == null)
             {
@@ -218,29 +231,45 @@ namespace VegaCityApp.API.Services.Implement
                 }
             };
         }
-
         public async Task<ResponseAPI> DeletePromotion(Guid promotionId)
         {
-            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(predicate: x => x.Id == promotionId && x.Status == (int)PromotionStatusEnum.Active);
+            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
+                (predicate: x => x.Id == promotionId && x.Status == (int)PromotionStatusEnum.Active);
             if (promotion == null)
-               {
+            {
                 return new ResponseAPI()
                 {
                     MessageResponse = PromotionMessage.GetPromotionFail,
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
+            promotion.Status= (int)PromotionStatusEnum.Inactive;
+            _unitOfWork.GetRepository<Promotion>().UpdateAsync(promotion);
+            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            {
+                MessageResponse = PromotionMessage.DeletePromotionSuccessfully,
+                StatusCode = HttpStatusCodes.OK
+            }
+            : new ResponseAPI()
+            {
+                MessageResponse = PromotionMessage.DeletePromotionFail,
+                StatusCode = HttpStatusCodes.BadRequest
+            };
+        }
+        public async Task CheckExpiredPromotion()
+        {
+            var promotions = await _unitOfWork.GetRepository<Promotion>().GetListAsync
+                (predicate: x => x.EndDate < TimeUtils.GetCurrentSEATime());
+            if(promotions.Count == 0)
+            {
+                return;
+            }
+            foreach (var promotion in promotions)
+            {
+                promotion.Status = (int)PromotionStatusEnum.Inactive;
                 _unitOfWork.GetRepository<Promotion>().UpdateAsync(promotion);
-                return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
-                {
-                    MessageResponse = PromotionMessage.DeletePromotionSuccessfully,
-                    StatusCode = HttpStatusCodes.OK
-                }
-                : new ResponseAPI()
-                {
-                    MessageResponse = PromotionMessage.DeletePromotionFail,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
+            }
+            await _unitOfWork.CommitAsync();
         }
     }
 }

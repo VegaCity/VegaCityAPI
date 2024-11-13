@@ -11,7 +11,8 @@ namespace VegaCityApp.API.Enums
             "VnPay",
             "PayOS",
             "Cash",
-            "QRCode"
+            "QRCode",
+            "Other"
         };
     }
     public enum PaymentTypeEnum

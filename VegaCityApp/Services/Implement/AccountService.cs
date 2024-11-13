@@ -14,6 +14,11 @@ using VegaCityApp.Repository.Interfaces;
 using VegaCityApp.Service.Interface;
 using static VegaCityApp.API.Constants.MessageConstant;
 using VegaCityApp.API.Payload.Response.UserResponse;
+using VegaCityApp.API.Payload.Response.StoreResponse;
+using VegaCityApp.API.Payload.Request.Store;
+using System.Globalization;
+using System.Text.RegularExpressions;
+using System.Text;
 
 namespace VegaCityApp.Service.Implement
 {
@@ -695,6 +700,7 @@ namespace VegaCityApp.Service.Implement
                     var newStore = new Store
                     {
                         Id = Guid.NewGuid(),
+                        StoreType = req.StoreType,
                         Name = req.StoreName.Trim(),
                         Address = req.StoreAddress.Trim(),
                         PhoneNumber = req.PhoneNumber.Trim(),
@@ -736,7 +742,7 @@ namespace VegaCityApp.Service.Implement
                             try
                             {
                                 var subject = UserMessage.ApproveSuccessfully;
-                                var body = "Your account has been approved. Your password is: " + user.Data.Password;
+                                var body = "Your account has been approved. Your password is: " + user.Data.Password + "\nPlease access this website to change password: http://localhost:3000/change-password";
                                 await MailUtil.SendMailAsync(user.Data.Email, subject, body);
                             }
                             catch (Exception ex)
@@ -1226,5 +1232,282 @@ namespace VegaCityApp.Service.Implement
                 return;
             }
         }
+
+
+        public async Task<ResponseAPI<IEnumerable<GetStoreResponse>>> GetAllClosingRequest(Guid apiKey, int size, int page)
+        {
+            try
+            {
+                IPaginate<GetStoreResponse> data = await _unitOfWork.GetRepository<Store>().GetPagingListAsync(
+
+                selector: x => new GetStoreResponse()
+                {
+                    Id = x.Id,
+                    StoreType = x.StoreType,
+                    Name = x.Name,
+                    Address = x.Address,
+                    Description = x.Description,
+                    CrDate = x.CrDate,
+                    UpsDate = x.UpsDate,
+                    Deflag = x.Deflag,
+                    PhoneNumber = x.PhoneNumber,
+                    MarketZoneId = x.MarketZoneId,
+                    ShortName = x.ShortName,
+                    Email = x.Email,
+                    Status = x.Status,
+
+                },
+                page: page,
+                size: size,
+                orderBy: x => x.OrderByDescending(z => z.Name),
+                predicate: x => !x.Deflag && x.MarketZoneId == apiKey && x.Status == (int)StoreStatusEnum.Blocked
+                );
+                return new ResponseAPI<IEnumerable<GetStoreResponse>>
+                {
+                    MessageResponse = StoreMessage.GetListStoreSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI<IEnumerable<GetStoreResponse>>
+                {
+                    MessageResponse = StoreMessage.GetListStoreFailed + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null,
+                    MetaData = null
+                };
+            }
+        }
+
+        public async Task<ResponseAPI> SearchStoreClosing(Guid StoreId)
+        {
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
+                predicate: x => x.Id == StoreId && !x.Deflag && x.Status == (int)StoreStatusEnum.Blocked,
+                include: z => z.Include(s => s.Wallets)
+                               .Include(a => a.StoreServices)
+                               .Include(a => a.Menus).ThenInclude(a => a.Products).ThenInclude(o => o.ProductCategory)
+            );
+            if (store == null)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.NotFoundStore,
+                    StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+            string storeType = null;
+            string storeStatus = null;
+            if (store.Status == (int)StoreStatusEnum.Blocked)
+            {
+                storeStatus = StoreStatusEnum.Blocked.GetDescriptionFromEnum();
+            }
+            //check storetype enum and parse to string
+            if (!StoreTypeHelper.allowedStoreTypes.Contains((int)store.StoreType))
+            {
+                throw new BadHttpRequestException(StoreMessage.InvalidStoreType, HttpStatusCodes.BadRequest);
+            }
+            else
+            {
+                if (store.StoreType == (int)StoreTypeEnum.Service)
+                {
+                    storeType = StoreTypeEnum.Service.GetDescriptionFromEnum();
+                }
+                else if (store.StoreType == (int)StoreTypeEnum.Food)
+                {
+                    storeType = StoreTypeEnum.Food.GetDescriptionFromEnum();
+                }
+                else if (store.StoreType == (int)StoreTypeEnum.Other)
+                {
+                    storeType = StoreTypeEnum.Other.GetDescriptionFromEnum();
+                }
+                else if (store.StoreType == (int)StoreTypeEnum.Clothing)
+                {
+                    storeType = StoreTypeEnum.Clothing.GetDescriptionFromEnum();
+                }
+            }
+            return new ResponseAPI()
+            {
+                MessageResponse = StoreMessage.GetStoreSuccess,
+                StatusCode = HttpStatusCodes.OK,
+                Data = new
+                {
+                    storeType,
+                    storeStatus,
+                    store
+                }
+            };
+        }
+
+
+        public async Task<ResponseAPI> ResolveClosingStore(GetWalletStoreRequest req)
+        {
+            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
+                throw new BadHttpRequestException(PackageItemMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
+            if (req.StoreName == null)
+            {
+                throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
+            }
+            var searchName = NormalizeString(req.StoreName);
+            var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && x.Status == (int)StoreStatusEnum.Blocked
+                                                                               , include: z => z.Include(s => s.Wallets)
+                                                                                                .Include(a => a.StoreServices)
+                                                                                                .Include(a => a.Menus).ThenInclude(a => a.Products));
+            var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name) == searchName || NormalizeString(x.ShortName) == searchName);
+            if (storeTrack == null)
+            {
+                throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
+            }
+            //if (storeTrack.Wallets.SingleOrDefault().Balance <= 50000)
+            //{
+            //    throw new BadHttpRequestException(StoreMessage.MustGreaterThan50K, HttpStatusCodes.BadRequest);
+            //}
+            
+            if (req.Status == "APPROVED")
+            {
+                storeTrack.Wallets.SingleOrDefault().Deflag = false;
+                storeTrack.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(storeTrack.Wallets.SingleOrDefault());
+
+                storeTrack.Status = (int)StoreStatusEnum.Closed;
+                storeTrack.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Store>().UpdateAsync(storeTrack);
+            }
+            else if(req.Status != null)
+            {
+                if (req.Status != "REJECTED")
+                {
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = UserMessage.InvalidTypeOfStatus
+                    };
+                }
+                if (req.Status == "REJECTED")
+                {
+                    if (storeTrack.StoreType == StoreTypeHelper.allowedStoreTypes[2])
+                    {
+                        foreach (var service in storeTrack.StoreServices)
+                        {
+                            service.Deflag = false;
+                            service.UpsDate = TimeUtils.GetCurrentSEATime();
+                            _unitOfWork.GetRepository<VegaCityApp.Domain.Models.StoreService>().UpdateAsync(service);
+                        }
+                    }
+                    else
+                    {
+                        var processedCategories = new HashSet<Guid>();
+                        foreach (var menu in storeTrack.Menus)
+                        {
+                            menu.Deflag = false;
+                            menu.UpsDate = TimeUtils.GetCurrentSEATime();
+                            _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
+
+                            foreach (var product in menu.Products)
+                            {
+                                product.Status = "Active";
+                                product.UpsDate = TimeUtils.GetCurrentSEATime();
+                                _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+
+                                if (!processedCategories.Contains(product.ProductCategoryId))
+                                {
+                                    var productCategory = await _unitOfWork.GetRepository<ProductCategory>()
+                                                          .SingleOrDefaultAsync(predicate: c => c.Id == product.ProductCategoryId);
+
+                                    if (productCategory != null && productCategory.Deflag)
+                                    {
+                                        productCategory.Deflag = false;
+                                        productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
+                                        _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
+
+                                        // Add to processedCategories to avoid re-processing
+                                        processedCategories.Add(product.ProductCategoryId);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    storeTrack.Wallets.SingleOrDefault().Deflag = false;
+                    storeTrack.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(storeTrack.Wallets.SingleOrDefault());
+
+                    storeTrack.Status = (int)StoreStatusEnum.Opened;
+                    storeTrack.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Store>().UpdateAsync(storeTrack);
+
+                }
+               
+            }
+            var result = await _unitOfWork.CommitAsync();
+            if (result > 0)
+            {
+                #region send mail
+                try
+                {
+                    //var admin = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == Guid.Parse(EnvironmentVariableConstant.marketZoneId));
+                    var subject = UserMessage.ResolvedMessage;
+                    var body = "We have process your closing request and decide the Status will be: " + req.Status;
+                    await MailUtil.SendMailAsync(storeTrack.Email, subject, body);
+                }
+                catch (Exception ex)
+                {
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = UserMessage.SendMailFail
+                    };
+                }
+                #endregion
+                return new ResponseAPI()
+                {
+
+                    MessageResponse = UserMessage.ApproveSubmitted + " " + req.Status,
+                    StatusCode = HttpStatusCodes.OK,
+
+                };
+            }
+            else
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = UserMessage.ApproveFailedSubmitted,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+        }
+
+        private static string NormalizeString(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return text;
+
+            // Chuẩn hóa chuỗi để loại bỏ dấu
+            var normalizedString = text.Normalize(NormalizationForm.FormD);
+            var stringBuilder = new StringBuilder();
+
+            foreach (var c in normalizedString)
+            {
+                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+                if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(c);
+                }
+            }
+
+            // Chuẩn hóa chuỗi, chuyển thành chữ thường và loại bỏ khoảng trắng
+            var result = stringBuilder.ToString().Normalize(NormalizationForm.FormC).ToLower();
+            result = Regex.Replace(result, @"\s+", ""); // Loại bỏ tất cả khoảng trắng
+
+            return result;
+        }
+
     }
 }
