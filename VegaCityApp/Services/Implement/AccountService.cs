@@ -1373,9 +1373,9 @@ namespace VegaCityApp.Service.Implement
             
             if (req.Status == "APPROVED")
             {
-                storeTrack.Wallets.SingleOrDefault().Deflag = false;
-                storeTrack.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(storeTrack.Wallets.SingleOrDefault());
+                //storeTrack.Wallets.SingleOrDefault().Deflag = false;
+                //storeTrack.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                //_unitOfWork.GetRepository<Wallet>().UpdateAsync(storeTrack.Wallets.SingleOrDefault());
 
                 storeTrack.Status = (int)StoreStatusEnum.Closed;
                 storeTrack.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -1435,9 +1435,9 @@ namespace VegaCityApp.Service.Implement
                             }
                         }
                     }
-                    storeTrack.Wallets.SingleOrDefault().Deflag = false;
-                    storeTrack.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(storeTrack.Wallets.SingleOrDefault());
+                    //storeTrack.Wallets.SingleOrDefault().Deflag = false;
+                    //storeTrack.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    //_unitOfWork.GetRepository<Wallet>().UpdateAsync(storeTrack.Wallets.SingleOrDefault());
 
                     storeTrack.Status = (int)StoreStatusEnum.Opened;
                     storeTrack.UpsDate = TimeUtils.GetCurrentSEATime();

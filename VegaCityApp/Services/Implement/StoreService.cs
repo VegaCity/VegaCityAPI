@@ -278,9 +278,9 @@ namespace VegaCityApp.API.Services.Implement
                     }
                 }
             }
-            store.Wallets.SingleOrDefault().Deflag = true;
-            store.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(store.Wallets.SingleOrDefault());
+            //store.Wallets.SingleOrDefault().Deflag = true;
+            //store.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+            //_unitOfWork.GetRepository<Wallet>().UpdateAsync(store.Wallets.SingleOrDefault());
 
             store.Status = (int)StoreStatusEnum.Blocked; //implement count 7 days from blocked status (UPSDATE) here
             store.UpsDate = TimeUtils.GetCurrentSEATime();
