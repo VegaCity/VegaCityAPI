@@ -844,11 +844,15 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
+            var packageItemParent = await _unitOfWork.GetRepository<PackageItem>().SingleOrDefaultAsync(
+                predicate: x => x.Cccdpassport == packageItem.Cccdpassport && x.IsAdult == true
+            );
             var qrCodeString = EnCodeBase64.EncodeBase64Etag("http://localhost:3000/etagEdit/" + packageItem.Id);
             return new ResponseAPI<PackageItem>()
             {
                 MessageResponse = PackageItemMessage.GetPackageItemSuccessfully,
                 StatusCode = HttpStatusCodes.OK,
+                ParentName = packageItemParent.Name,
                 QRCode = qrCodeString,
                 Data = packageItem
             };
