@@ -1011,7 +1011,9 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task CheckOrderPending()
         {
-            var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(predicate: x => x.Status == OrderStatus.Pending);
+            var orders = await _unitOfWork.GetRepository<Order>().
+                GetListAsync(predicate: x => x.Status == OrderStatus.Pending,
+                include: z => z.Include(a => a.PackageOrders));
             foreach (var order in orders)
             {
                 if (TimeUtils.GetCurrentSEATime().Subtract(order.CrDate).TotalMinutes > 5)
@@ -1019,6 +1021,15 @@ namespace VegaCityApp.API.Services.Implement
                     order.Status = OrderStatus.Canceled;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                }
+                foreach(var packageOrder in order.PackageOrders)
+                {
+                    if (TimeUtils.GetCurrentSEATime().Subtract(packageOrder.CrDate).TotalMinutes > 5)
+                    {
+                        packageOrder.Status = OrderStatus.Canceled;
+                        packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
+                    }
                 }
             }
             await _unitOfWork.CommitAsync();
