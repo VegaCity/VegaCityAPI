@@ -84,7 +84,7 @@ namespace VegaCityApp.API.Services.Implement
                 MaxDiscount = req.MaxDiscount,
                 RequireAmount = req.RequireAmount,
                 Quantity = req.Quantity,
-                Status = (int)PromotionStatusEnum.Active,
+                Status = (int)(req.Status != null ? PromotionStatusEnum.Automation : PromotionStatusEnum.Active),
                 Name = req.Name,
             };
             await _unitOfWork.GetRepository<Promotion>().InsertAsync(newPromotion);
