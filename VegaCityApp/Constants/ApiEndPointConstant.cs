@@ -58,7 +58,7 @@ public static class ApiEndPointConstant
         public const string GetAdminWallet = ApiEndpoint + "/wallet";
         public const string GetChartDashboard = ApiEndpoint + "/transaction/dashboard";
         public const string ReAssignEmail = ApiEndpoint + "/user/{userId}/re-assign-email";
-        public const string ResolveClosingRequest = ApiEndpoint + "/user/resolve-closing-requset";
+        public const string ResolveClosingRequest = ApiEndpoint + "/user/resolve-closing-request";
     }
 
     public static class PackageEndpoint
@@ -102,7 +102,7 @@ public static class ApiEndPointConstant
         public const string DeleteStore = ApiEndpoint + "/store/{id}";
         public const string GetMenu = ApiEndpoint + "/store/{phone}/menu";
         public const string GetWalletStore = ApiEndpoint + "/store/wallet";
-        public const string RequestCloseForStore = ApiEndpoint + "/store/request-close/{id}";
+        public const string RequestCloseForStore = ApiEndpoint + "/store/{id}/request-close";
     }
     public static class HouseEndpoint
     {
