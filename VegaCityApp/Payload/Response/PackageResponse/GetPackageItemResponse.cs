@@ -39,5 +39,6 @@ namespace VegaCityApp.API.Payload.Response.PackageResponse
         public string? Rfid { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public string? WalletTypeName { get; set; }
     }
 }
