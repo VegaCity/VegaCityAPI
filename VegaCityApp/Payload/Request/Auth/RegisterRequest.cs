@@ -10,5 +10,6 @@
         public string Email { get; set; }
         public string? Description { get; set; }
         public string RoleName { get; set; }
+        public int? StoreType { get; set; }
     }
 }

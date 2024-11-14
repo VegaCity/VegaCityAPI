@@ -35,6 +35,13 @@ namespace VegaCityApp.Service.Implement
         {
             var role = await _unitOfWork.GetRepository<Role>()
                 .SingleOrDefaultAsync(predicate: r => r.Name == req.RoleName.Trim().Replace(" ", string.Empty));
+            if(req.StoreType != null)
+            {
+                if (!StoreTypeHelper.allowedStoreTypes.Contains((int)req.StoreType))
+                {
+                    throw new BadHttpRequestException("Invalid Store Type",HttpStatusCodes.BadRequest);
+                }
+            }
             var newUser = new User
             {
                 Id = Guid.NewGuid(),
@@ -52,6 +59,7 @@ namespace VegaCityApp.Service.Implement
                 Status = role != null && role.Name == RoleEnum.Store.GetDescriptionFromEnum()? (int)UserStatusEnum.PendingVerify: (int) UserStatusEnum.Active,
                 Password = role != null && role.Name == RoleEnum.Store.GetDescriptionFromEnum()? null : PasswordUtil.GenerateCharacter(10),
                 IsChange = false,
+                RegisterStoreType = req.StoreType != null ? req.StoreType : null
             };
             await _unitOfWork.GetRepository<User>().InsertAsync(newUser);
             await _unitOfWork.CommitAsync();
