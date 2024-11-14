@@ -874,6 +874,8 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.CrDate).HasColumnType("datetime");
 
+                entity.Property(e => e.ImageUrl).IsUnicode(false);
+
                 entity.Property(e => e.Name).HasMaxLength(200);
 
                 entity.Property(e => e.UpsDate).HasColumnType("datetime");

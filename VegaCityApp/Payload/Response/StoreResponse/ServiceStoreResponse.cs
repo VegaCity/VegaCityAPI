@@ -8,5 +8,7 @@
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
+        public int Price { get; set; }
+        public string? ImageUrl { get; set; }
     }
 }

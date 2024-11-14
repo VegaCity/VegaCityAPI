@@ -18,6 +18,7 @@ namespace VegaCityApp.Domain.Models
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
         public int Price { get; set; }
+        public string? ImageUrl { get; set; }
 
         public virtual Store Store { get; set; } = null!;
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }

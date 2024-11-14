@@ -44,6 +44,8 @@ namespace VegaCityApp.API.Services.Implement
             newServiceStore.UpsDate = TimeUtils.GetCurrentSEATime();
             newServiceStore.Deflag = false;
             newServiceStore.StoreId = store.Id;
+            newServiceStore.Price = serviceStoreRequest.Price;
+            newServiceStore.ImageUrl = serviceStoreRequest.ImageUrl;
             await _unitOfWork.GetRepository<Domain.Models.StoreService>().InsertAsync(newServiceStore);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
             {
@@ -106,7 +108,9 @@ namespace VegaCityApp.API.Services.Implement
                     StoreId = z.StoreId,
                     CrDate = z.CrDate,
                     UpsDate = z.UpsDate,
-                    Deflag = z.Deflag
+                    Deflag = z.Deflag,
+                    Price = z.Price,
+                    ImageUrl = z.ImageUrl
                 },
                 size: size,
                 page: page,
@@ -171,6 +175,8 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             ServiceStore.Name = serviceStoreRequest.Name.Trim();
+            ServiceStore.Price = serviceStoreRequest.Price != null ? serviceStoreRequest.Price : ServiceStore.Price;
+            ServiceStore.ImageUrl = serviceStoreRequest.ImageUrl != null ? serviceStoreRequest.ImageUrl : ServiceStore.ImageUrl;
             ServiceStore.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Domain.Models.StoreService>().UpdateAsync(ServiceStore);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
