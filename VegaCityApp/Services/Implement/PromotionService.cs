@@ -233,7 +233,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> DeletePromotion(Guid promotionId)
         {
             var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
-                (predicate: x => x.Id == promotionId && x.Status == (int)PromotionStatusEnum.Active);
+                (predicate: x => x.Id == promotionId && x.Status == (int)PromotionStatusEnum.Active || x.Status == (int) PromotionStatusEnum.Automation);
             if (promotion == null)
             {
                 return new ResponseAPI()
