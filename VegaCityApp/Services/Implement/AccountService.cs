@@ -883,14 +883,15 @@ namespace VegaCityApp.Service.Implement
                     CrDate = x.CrDate,
                     UpsDate = x.UpsDate,
                     RoleId = x.RoleId,
-                    Status = x.Status
+                    Status = x.Status,
+                    RegisterStoreType = x.RegisterStoreType == (int) StoreTypeEnum.Food ? "Store Product" : "Store Service"
                 },
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.FullName),
                 predicate: x => //x.Status == (int)UserStatusEnum.Active || x.Status == (int)UserStatusEnum.PendingVerify &&
                                 x.MarketZoneId == apiKey);
-
+                
                 return new ResponseAPI<IEnumerable<GetUserResponse>>
                 {
                     MessageResponse = UserMessage.GetListSuccess,

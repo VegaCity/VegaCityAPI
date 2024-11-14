@@ -27,6 +27,14 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> CreateServiceStore(ServiceStoreRequest serviceStoreRequest)
         {
             serviceStoreRequest.Name = serviceStoreRequest.Name.Trim();
+            if(serviceStoreRequest.Price <= 0)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = StoreMessage.PriceMustBeGreaterThanZero
+                };
+            }
             //check store exist
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
                 predicate: x => x.Id == serviceStoreRequest.StoreId && !x.Deflag);

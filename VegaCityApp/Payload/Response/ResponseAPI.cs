@@ -37,23 +37,6 @@ namespace VegaCityApp.API.Payload.Response
         public bool Deflag { get; set; }
         public int Amount { get; set; }
     }
-    public class EtagResponse
-    {
-        public Guid Id { get; set; }
-        public string EtagCode { get; set; }
-        public string FullName { get; set; }
-        public string? PhoneNumber { get; set; }
-        public string? CccdPassport { get; set; }
-        public string? ImageUrl { get; set; }
-        public int? Gender { get; set; }
-        public DateTime? Birthday { get; set; }
-        public string QRCode { get; set; }
-        public bool Deflag { get; set; }
-        public DateTime? StartDate { get; set; }
-        public DateTime? EndDate { get; set; }
-        public int? Status { get; set; }
-        public Boolean? IsAdult { get; set; }
-    }
     public class GetUserResponse
     {
         public Guid Id { get; set; }
@@ -71,6 +54,7 @@ namespace VegaCityApp.API.Payload.Response
         public string? Description { get; set; }
         public string? Address { get; set; }
         public int? Status { get; set; }
+        public string? RegisterStoreType { get; set; }
     }
 }
 

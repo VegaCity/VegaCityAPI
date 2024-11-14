@@ -353,6 +353,7 @@ public static class MessageConstant
     }
     public static class StoreMessage
     {
+        public const string PriceMustBeGreaterThanZero = "Price Must Be Greater Than Zero!";
         public const string InvalidStoreStatus = "Invalid Store Status";
         public const string UpdateStoreSuccesss = "Update Store Successfully!";
         public const string UpdateStoreFailed = "Update Store Failed";
