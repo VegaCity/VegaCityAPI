@@ -175,7 +175,7 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             ServiceStore.Name = serviceStoreRequest.Name.Trim();
-            ServiceStore.Price = serviceStoreRequest.Price != null ? serviceStoreRequest.Price : ServiceStore.Price;
+            ServiceStore.Price = serviceStoreRequest.Price;
             ServiceStore.ImageUrl = serviceStoreRequest.ImageUrl != null ? serviceStoreRequest.ImageUrl : ServiceStore.ImageUrl;
             ServiceStore.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Domain.Models.StoreService>().UpdateAsync(ServiceStore);

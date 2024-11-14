@@ -360,13 +360,15 @@ namespace VegaCityApp.API.Services.Implement
             var orderExist = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
                 predicate: x => (x.Id == OrderId || x.InvoiceId == InvoiceId)&& x.Status != OrderStatus.Canceled,
                 include: order => order
+                    .Include(u => u.User)
                     .Include(o => o.Store)
                     .Include(o => o.Deposits)
                     .Include(z => z.OrderDetails)
-                    .Include(p => p.PackageOrders));
+                    .Include(p => p.PackageOrders)
+                    .Include(h => h.PromotionOrders));
             string json = "";
             string? customerInfo = "";
-
+            var seller = orderExist.User.FullName;
             List<OrderProductFromPosRequest>? productJson = JsonConvert.DeserializeObject<List<OrderProductFromPosRequest>>(json);
             if(customerInfo == null) customerInfo = "";
             CustomerInfo? customer = JsonConvert.DeserializeObject<CustomerInfo>(customerInfo);
@@ -382,7 +384,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 MessageResponse = OrderMessage.GetOrdersSuccessfully,
                 StatusCode = HttpStatusCodes.OK,
-                Data = new { orderExist, productJson, customer }
+                Data = new { orderExist, productJson, customer ,seller}
             };
         }
         public async Task<ResponseAPI> CreateOrderForCashier(CreateOrderForCashierRequest req)
