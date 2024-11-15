@@ -87,7 +87,6 @@ public static class DependencyServices
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IWalletTypeService, WalletTypeService>();
-        services.AddScoped<IServiceStore, ServiceStore>();
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IPromotionService, PromotionService>();

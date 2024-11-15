@@ -24,12 +24,39 @@ namespace VegaCityApp.API.Services.Implement
         public StoreService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<StoreService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
         }
+        #region CRUD Store
+        public async Task<ResponseAPI<Store>> CreateStore(CreateStoreRequest req)
+        {
+            req.Name = req.Name.Trim();
+            req.Address = req.Address.Trim();
+            req.ShortName = req.ShortName?.Trim();
+            req.Description = req.Description?.Trim();
+            req.PhoneNumber = req.PhoneNumber.Trim();
+            req.Email = req.Email.Trim();
+            if (!Enum.IsDefined(typeof(StoreTypeEnum), req.StoreType))
+                throw new BadHttpRequestException(StoreMessage.InvalidStoreType, HttpStatusCodes.BadRequest);
+            if (!Enum.IsDefined(typeof(StoreStatusEnum), req.Status))
+                throw new BadHttpRequestException(StoreMessage.InvalidStoreStatus, HttpStatusCodes.BadRequest);
+            var apiKey = GetMarketZoneIdFromJwt();
+            var newStore = _mapper.Map<Store>(req);
+            newStore.Id = Guid.NewGuid();
+            newStore.MarketZoneId = apiKey;
+            newStore.CrDate = TimeUtils.GetCurrentSEATime();
+            newStore.UpsDate = TimeUtils.GetCurrentSEATime();
+            newStore.Deflag = false;
+            await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
+            await _unitOfWork.CommitAsync();
+            return new ResponseAPI<Store>
+            {
+                MessageResponse = StoreMessage.CreateStoreSuccess,
+                StatusCode = HttpStatusCodes.Created,
+                Data = newStore
+            };
+        }
         public async Task<ResponseAPI> UpdateStore(Guid storeId, UpdateStoreRequest req)
         {
-            Guid apiKey = GetMarketZoneIdFromJwt();
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
-                (predicate: x => x.Id == storeId && !x.Deflag &&
-                                 x.MarketZoneId == apiKey);
+                (predicate: x => x.Id == storeId && !x.Deflag);
             if (store == null)
             {
                 return new ResponseAPI()
@@ -39,19 +66,23 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
             store.Name = req.Name != null ? req.Name.Trim() : store.Name;
-            if (!Enum.IsDefined(typeof(StoreStatusEnum), req.StoreStatus))
+            if(req.Status != null)
             {
-                return new ResponseAPI()
+                if (!Enum.IsDefined(typeof(StoreStatusEnum), req.Status))
                 {
-                    StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = StoreMessage.InvalidStoreStatus
-                };
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = StoreMessage.InvalidStoreStatus
+                    };
+                }
+                store.Status = (int) req.Status;
             }
-            store.Status = req.StoreStatus;
+            
             store.Address = req.Address != null ? req.Address.Trim() : store.Address;
-            //store.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : store.PhoneNumber;
+            store.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : store.PhoneNumber;
             store.ShortName = req.ShortName != null ? req.ShortName.Trim() : store.ShortName;
-            //store.Email = req.Email != null ? req.Email.Trim() : store.Email;
+            store.Email = req.Email != null ? req.Email.Trim() : store.Email;
             store.Description = req.Description != null ? req.Description.Trim() : store.Description;
             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
             var result = await _unitOfWork.CommitAsync();
@@ -94,7 +125,8 @@ namespace VegaCityApp.API.Services.Implement
                     ShortName = x.ShortName,
                     Email = x.Email,
                     Status = x.Status,
-                    ZoneName = x.Zone.Name
+                    ZoneName = x.Zone.Name,
+                    ZoneId = x.ZoneId
                 },
                 page: page,
                 size: size,
@@ -127,14 +159,12 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
-
         public async Task<ResponseAPI> SearchStore(Guid StoreId)
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
                 predicate: x => x.Id == StoreId && !x.Deflag,
                 include: z => z.Include(s => s.Wallets)
-                               .Include(a => a.StoreServices)
-                               .Include(a => a.Menus).ThenInclude(a => a.Products).ThenInclude(o => o.ProductCategory)
+                               .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings).ThenInclude(o => o.Product).ThenInclude(p => p.ProductCategory)
             );
             if (store == null)
             {
@@ -178,7 +208,232 @@ namespace VegaCityApp.API.Services.Implement
                 }
             };
         }
-
+        public async Task<ResponseAPI> DeleteStore(Guid StoreId)
+        {
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
+                (predicate: x => x.Id == StoreId && !x.Deflag,
+                 include: z => z.Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings).ThenInclude(a => a.Product));
+            if (store == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = StoreMessage.NotFoundStore
+                };
+            }
+            //delete every thing related to store
+            if (store.Menus.Count > 0)
+            {
+                foreach (var menu in store.Menus)
+                {
+                    menu.Deflag = true;
+                    _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
+                    foreach (var item in menu.MenuProductMappings)
+                    {
+                        var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == item.ProductId);
+                        product.Status = "InActive";
+                        product.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+                    }
+                }
+            }
+            store.Deflag = true;
+            _unitOfWork.GetRepository<Store>().UpdateAsync(store);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.DeletedSuccess,
+                    StatusCode = HttpStatusCodes.OK
+                }
+                : new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.DeleteFailed,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+        }
+        #endregion
+        #region CRUD Menu
+        public async Task<ResponseAPI> CreateMenu(Guid StoreId, CreateMenuRequest req)
+        {
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
+                predicate: x => x.Id == StoreId && !x.Deflag);
+            if (store == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = StoreMessage.NotFoundStore
+                };
+            }
+            if (!Enum.IsDefined(typeof(DateFilterEnum), req.DateFilter))
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = StoreMessage.InvalidDateFilter
+                };
+            }
+            req.ImageUrl = req.ImageUrl?.Trim();
+            req.Name = req.Name.Trim();
+            var newMenu = _mapper.Map<Menu>(req);
+            newMenu.Id = Guid.NewGuid();
+            newMenu.CrDate = TimeUtils.GetCurrentSEATime();
+            newMenu.UpsDate = TimeUtils.GetCurrentSEATime();
+            newMenu.Deflag = false;
+            newMenu.StoreId = store.Id;
+            await _unitOfWork.GetRepository<Menu>().InsertAsync(newMenu);
+            await _unitOfWork.CommitAsync();
+            return new ResponseAPI()
+            {
+                MessageResponse = StoreMessage.CreateMenuSuccess,
+                StatusCode = HttpStatusCodes.Created
+            };
+        }
+        public async Task<ResponseAPI> UpdateMenu(Guid MenuId, UpdateMenuRequest req)
+        {
+            var menu = await _unitOfWork.GetRepository<Menu>().SingleOrDefaultAsync
+                (predicate: x => x.Id == MenuId && !x.Deflag);
+            if (menu == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = StoreMessage.NotFoundMenu
+                };
+            }
+            if(req.DateFilter != null)
+            {
+                if (!Enum.IsDefined(typeof(DateFilterEnum), req.DateFilter))
+                {
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = StoreMessage.InvalidDateFilter
+                    };
+                }
+                req.DateFilter = req.DateFilter;
+            }
+            menu.Name = req.Name.Trim();
+            menu.ImageUrl = req.ImageUrl?.Trim();
+            menu.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
+            var result = await _unitOfWork.CommitAsync();
+            if (result > 0)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.UpdateMenuSuccess,
+                    StatusCode = HttpStatusCodes.OK
+                };
+            }
+            else
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.UpdateMenuFailed,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+        }
+        public async Task<ResponseAPI> DeleteMenu(Guid MenuId)
+        {
+            var menu = await _unitOfWork.GetRepository<Menu>().SingleOrDefaultAsync
+                (predicate: x => x.Id == MenuId && !x.Deflag,
+                 include: z => z.Include(a => a.MenuProductMappings).ThenInclude(a => a.Product));
+            if (menu == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = StoreMessage.NotFoundMenu
+                };
+            }
+            foreach (var item in menu.MenuProductMappings)
+            {
+                var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == item.ProductId);
+                product.Status = "InActive";
+                product.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+            }
+            menu.Deflag = true;
+            _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.DeletedMenuSuccess,
+                    StatusCode = HttpStatusCodes.OK
+                }
+                : new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.DeletedMenuFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+        }
+        public async Task<ResponseAPI<IEnumerable<GetMenuResponse>>> SearchAllMenu(Guid StoreId, int page, int size)
+        {
+            try
+            {
+                IPaginate<GetMenuResponse> data = await _unitOfWork.GetRepository<Menu>().GetPagingListAsync(
+                    selector: x => new GetMenuResponse()
+                    {
+                        Id = x.Id,
+                        StoreId = x.StoreId,
+                        ImageUrl = x.ImageUrl,
+                        Name = x.Name,
+                        CrDate = x.CrDate,
+                        UpsDate = x.UpsDate,
+                        Deflag = x.Deflag,
+                        DateFilter = x.DateFilter
+                    },
+                    page: page,
+                    size: size,
+                    orderBy: x => x.OrderByDescending(z => z.Name),
+                    predicate: x => x.StoreId == StoreId && !x.Deflag);
+                return new ResponseAPI<IEnumerable<GetMenuResponse>>
+                {
+                    MessageResponse = StoreMessage.GetListMenuSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI<IEnumerable<GetMenuResponse>>
+                {
+                    MessageResponse = StoreMessage.GetListMenuFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null,
+                    MetaData = null
+                };
+            }
+        }
+        public async Task<ResponseAPI<Menu>> SearchMenu(Guid MenuId)
+        {
+            var menu = await _unitOfWork.GetRepository<Menu>().SingleOrDefaultAsync(
+                predicate: x => x.Id == MenuId && !x.Deflag, include: z => z.Include(a => a.MenuProductMappings).ThenInclude(a => a.Product).ThenInclude(a => a.ProductCategory));
+            if (menu == null)
+            {
+                return new ResponseAPI<Menu>()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = StoreMessage.NotFoundMenu
+                };
+            }
+            return new ResponseAPI<Menu>()
+            {
+                MessageResponse = StoreMessage.GetMenuSuccess,
+                StatusCode = HttpStatusCodes.OK,
+                Data = menu
+            };
+        }
+        #endregion
         public async Task<ResponseAPI> SearchWalletStore(GetWalletStoreRequest req)
         {
             if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
@@ -211,14 +466,12 @@ namespace VegaCityApp.API.Services.Implement
             };
 
         }
-
         public async Task<ResponseAPI> RequestCloseStore(Guid StoreId)
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
                 predicate: x => x.Id == StoreId && !x.Deflag,
                 include: z => z.Include(s => s.Wallets)
-                               .Include(a => a.StoreServices)
-                               .Include(a => a.Menus).ThenInclude(a => a.Products)
+                               .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings).ThenInclude(o => o.Product).ThenInclude(p => p.ProductCategory)
             );
             if (store == null)
             {
@@ -236,47 +489,38 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            if (store.StoreType == StoreTypeHelper.allowedStoreTypes[2])
-            {
-               foreach(var service in store.StoreServices)
-                {
-                    service.Deflag = true;
-                    service.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<VegaCityApp.Domain.Models.StoreService>().UpdateAsync(service);
-                }
-            }
-            else
-            {
-                var processedCategories = new HashSet<Guid>();
-                foreach (var menu in store.Menus)
-                {
-                    menu.Deflag = true;
-                    menu.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
 
-                    foreach (var product in menu.Products)
+            var processedCategories = new HashSet<Guid>();
+            foreach (var menu in store.Menus)
+            {
+                menu.Deflag = true;
+                menu.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
+
+                foreach (var item in menu.MenuProductMappings)
+                {
+                    var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == item.ProductId);
+                    product.Status = "InActive";
+                    product.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+
+                    if (!processedCategories.Contains(product.ProductCategoryId))
                     {
-                        product.Status = "InActive";
-                        product.UpsDate = TimeUtils.GetCurrentSEATime();
-                        _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+                        var productCategory = await _unitOfWork.GetRepository<ProductCategory>()
+                                                .SingleOrDefaultAsync(predicate: c => c.Id == product.ProductCategoryId);
 
-                        if (!processedCategories.Contains(product.ProductCategoryId))
+                        if (productCategory != null && !productCategory.Deflag)
                         {
-                            var productCategory = await _unitOfWork.GetRepository<ProductCategory>()
-                                                  .SingleOrDefaultAsync(predicate: c => c.Id == product.ProductCategoryId);
+                            productCategory.Deflag = true;
+                            productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
+                            _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
 
-                            if (productCategory != null && !productCategory.Deflag)
-                            {
-                                productCategory.Deflag = true;
-                                productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
-                                _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
-
-                                // Add to processedCategories to avoid re-processing
-                                processedCategories.Add(product.ProductCategoryId);
-                            }
+                            // Add to processedCategories to avoid re-processing
+                            processedCategories.Add(product.ProductCategoryId);
                         }
                     }
                 }
+                
             }
             //store.Wallets.SingleOrDefault().Deflag = true;
             //store.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
@@ -325,301 +569,241 @@ namespace VegaCityApp.API.Services.Implement
             }
 
         }
-        public async Task<ResponseAPI> DeleteStore(Guid StoreId)
-        {
-            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
-                (predicate: x => x.Id == StoreId && !x.Deflag);
-            if (store == null)
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = StoreMessage.NotFoundStore
-                };
-            }
-            //delete every thing related to store
-            if (store.Menus.Count > 0)
-            {
-                foreach (var menu in store.Menus)
-                {
-                    menu.Deflag = true;
-                    _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
-                }
-            }
-            //if(store.DisputeReports.Count > 0)
-            //{
-            //    foreach (var dispute in store.DisputeReports)
-            //    {
-            //        //_unitOfWork.GetRepository<DisputeReport>().DeleteAsync(dispute);
-            //    }
-            //}
-            //if (store.StoreServices.Count > 0)
-            //{
-            //    if(store.StoreServices.Where(x => x.WalletTypeStoreServiceMappings.Count > 0).Count() > 0)
-            //    {
-            //        foreach (var storeService in store.StoreServices)
-            //        {
-            //            if (storeService.WalletTypeStoreServiceMappings.Count > 0)
-            //            {
-            //                foreach (var walletTypeStoreServiceMapping in storeService.WalletTypeStoreServiceMappings)
-            //                {
-            //                    _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().DeleteAsync(walletTypeStoreServiceMapping);
-            //                }
-            //            }
-            //            storeService.Deflag = true;
-            //            storeService.UpsDate = TimeUtils.GetCurrentSEATime();
-            //            _unitOfWork.GetRepository<Domain.Models.StoreService>().UpdateAsync(storeService);
-            //        }
-            //    }
-            //}
-            store.Deflag = true;
-            _unitOfWork.GetRepository<Store>().UpdateAsync(store);
-            return await _unitOfWork.CommitAsync() > 0
-                ? new ResponseAPI()
-                {
-                    MessageResponse = StoreMessage.DeletedSuccess,
-                    StatusCode = HttpStatusCodes.OK
-                }
-                : new ResponseAPI()
-                {
-                    MessageResponse = StoreMessage.DeleteFailed,
-                    StatusCode = HttpStatusCodes.BadRequest
-                };
-        }
-        public async Task<ResponseAPI> GetMenuFromPos(string phone)
-        {
-            //call api pos - take n parse into Object Menu
-            var data = await CallApiUtils.CallApiGetEndpoint(
-             // "https://6504066dc8869921ae2466d4.mockapi.io/api/Product"
-             $"https://localhost:7131/api/v1/menus/{phone}/menus"
-                );
-            var productsPosResponse = await CallApiUtils.GenerateObjectFromResponse<List<ProductsPosResponse>>(data);
-            //lưu chuỗi json này
-            //parse object list sang json
-            string json = JsonConvert.SerializeObject(productsPosResponse);
-            //check menu
-            var checkMenu = await _unitOfWork.GetRepository<Menu>()
-                .SingleOrDefaultAsync(predicate: x => x.Store.PhoneNumber == phone && !x.Deflag);
-            var store = await _unitOfWork.GetRepository<Store>()
-                .SingleOrDefaultAsync(predicate: x => x.PhoneNumber == phone && !x.Deflag, include: z => z.Include(a => a.Wallets))
-                   ?? throw new BadHttpRequestException("Store not found", HttpStatusCodes.NotFound);
-            if (store.Wallets.Count > 0)
-            {
+
+        //public async Task<ResponseAPI> GetMenuFromPos(string phone)
+        //{
+        //    //call api pos - take n parse into Object Menu
+        //    var data = await CallApiUtils.CallApiGetEndpoint(
+        //     // "https://6504066dc8869921ae2466d4.mockapi.io/api/Product"
+        //     $"https://localhost:7131/api/v1/menus/{phone}/menus"
+        //        );
+        //    var productsPosResponse = await CallApiUtils.GenerateObjectFromResponse<List<ProductsPosResponse>>(data);
+        //    //lưu chuỗi json này
+        //    //parse object list sang json
+        //    string json = JsonConvert.SerializeObject(productsPosResponse);
+        //    //check menu
+        //    var checkMenu = await _unitOfWork.GetRepository<Menu>()
+        //        .SingleOrDefaultAsync(predicate: x => x.Store.PhoneNumber == phone && !x.Deflag);
+        //    var store = await _unitOfWork.GetRepository<Store>()
+        //        .SingleOrDefaultAsync(predicate: x => x.PhoneNumber == phone && !x.Deflag, include: z => z.Include(a => a.Wallets))
+        //           ?? throw new BadHttpRequestException("Store not found", HttpStatusCodes.NotFound);
+        //    if (store.Wallets.Count > 0)
+        //    {
                 
-                if (store.StoreType.GetDescriptionFromEnum() == StoreTypeEnum.Service.GetDescriptionFromEnum())
-                    throw new BadHttpRequestException("This store is service store, not support menu");
-                if (checkMenu == null)
-                {
-                    var newMenu = new Menu()
-                    {
-                        Id = Guid.NewGuid(),
-                        StoreId = store.Id,
-                        Deflag = false,
-                        Address = store.Address,
-                        CrDate = TimeUtils.GetCurrentSEATime(),
-                        ImageUrl = "string",
-                        MenuJson = json,
-                        Name = store.ShortName + " Menu",
-                        PhoneNumber = store.PhoneNumber,
-                        UpsDate = TimeUtils.GetCurrentSEATime()
-                    };
-                    await _unitOfWork.GetRepository<Menu>().InsertAsync(newMenu);
-                    await _unitOfWork.CommitAsync();
-                    // tim productcategory, insert vao
-                    bool check = await InsertProductCategory(productsPosResponse, newMenu.Id);
-                    return check ? new ResponseAPI()
-                    {
-                        MessageResponse = "Synchronization successful",
-                        StatusCode = HttpStatusCodes.OK,
-                        Data = productsPosResponse
-                    } : new ResponseAPI()
-                    {
-                        MessageResponse = "Fail add product category",
-                        StatusCode = HttpStatusCodes.BadRequest,
-                    };
-                }
-                else
-                {
-                    checkMenu.MenuJson = json;
-                    checkMenu.CrDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<Menu>().UpdateAsync(checkMenu);
-                    await _unitOfWork.CommitAsync();
-                    bool check = await InsertProductCategory(productsPosResponse, checkMenu.Id);
-                    return check ? new ResponseAPI()
-                    {
-                        MessageResponse = "Synchronization successful",
-                        StatusCode = HttpStatusCodes.OK,
-                        Data = productsPosResponse
-                    } : new ResponseAPI()
-                    {
-                        MessageResponse = "Fail add product category",
-                        StatusCode = HttpStatusCodes.BadRequest,
-                    };
-                }
-            }
-            else
-            {
-                throw new BadHttpRequestException("Wallet not found", HttpStatusCodes.NotFound);
-            }
-        }
+        //        if (store.StoreType.GetDescriptionFromEnum() == StoreTypeEnum.Service.GetDescriptionFromEnum())
+        //            throw new BadHttpRequestException("This store is service store, not support menu");
+        //        if (checkMenu == null)
+        //        {
+        //            var newMenu = new Menu()
+        //            {
+        //                Id = Guid.NewGuid(),
+        //                StoreId = store.Id,
+        //                Deflag = false,
+        //                Address = store.Address,
+        //                CrDate = TimeUtils.GetCurrentSEATime(),
+        //                ImageUrl = "string",
+        //                MenuJson = json,
+        //                Name = store.ShortName + " Menu",
+        //                PhoneNumber = store.PhoneNumber,
+        //                UpsDate = TimeUtils.GetCurrentSEATime()
+        //            };
+        //            await _unitOfWork.GetRepository<Menu>().InsertAsync(newMenu);
+        //            await _unitOfWork.CommitAsync();
+        //            // tim productcategory, insert vao
+        //            bool check = await InsertProductCategory(productsPosResponse, newMenu.Id);
+        //            return check ? new ResponseAPI()
+        //            {
+        //                MessageResponse = "Synchronization successful",
+        //                StatusCode = HttpStatusCodes.OK,
+        //                Data = productsPosResponse
+        //            } : new ResponseAPI()
+        //            {
+        //                MessageResponse = "Fail add product category",
+        //                StatusCode = HttpStatusCodes.BadRequest,
+        //            };
+        //        }
+        //        else
+        //        {
+        //            checkMenu.MenuJson = json;
+        //            checkMenu.CrDate = TimeUtils.GetCurrentSEATime();
+        //            _unitOfWork.GetRepository<Menu>().UpdateAsync(checkMenu);
+        //            await _unitOfWork.CommitAsync();
+        //            bool check = await InsertProductCategory(productsPosResponse, checkMenu.Id);
+        //            return check ? new ResponseAPI()
+        //            {
+        //                MessageResponse = "Synchronization successful",
+        //                StatusCode = HttpStatusCodes.OK,
+        //                Data = productsPosResponse
+        //            } : new ResponseAPI()
+        //            {
+        //                MessageResponse = "Fail add product category",
+        //                StatusCode = HttpStatusCodes.BadRequest,
+        //            };
+        //        }
+        //    }
+        //    else
+        //    {
+        //        throw new BadHttpRequestException("Wallet not found", HttpStatusCodes.NotFound);
+        //    }
+        //}
 
-        private async Task<bool> InsertProductCategory(List<ProductsPosResponse> listProduct, Guid MenuId)
-        {
-            List<ProductFromPos> products = new List<ProductFromPos>();
-            //chay ham for cho productCate name
-            var selectField = listProduct.Select(p => new
-            {
-                p.ProductCategory
-            }).Distinct().ToList();
-            foreach (var Category in selectField)
-            {
-                var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
-                    predicate: x => x.Name == Category.ProductCategory && !x.Deflag);
-                if (productCategory == null)
-                {
-                    var newProductCateGory = new ProductCategory()
-                    {
-                        Id = Guid.NewGuid(),
-                        CrDate = TimeUtils.GetCurrentSEATime(),
-                        Name = Category.ProductCategory,
-                        Deflag = false,
-                        Description = "string",
-                        UpsDate = TimeUtils.GetCurrentSEATime()
-                    };
-                    await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCateGory);
-                    var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync(predicate: x => x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-                    include: m => m.Include(n => n.WalletTypeMappings));
+        //private async Task<bool> InsertProductCategory(List<ProductsPosResponse> listProduct, Guid MenuId)
+        //{
+        //    List<ProductFromPos> products = new List<ProductFromPos>();
+        //    //chay ham for cho productCate name
+        //    var selectField = listProduct.Select(p => new
+        //    {
+        //        p.ProductCategory
+        //    }).Distinct().ToList();
+        //    foreach (var Category in selectField)
+        //    {
+        //        var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
+        //            predicate: x => x.Name == Category.ProductCategory && !x.Deflag);
+        //        if (productCategory == null)
+        //        {
+        //            var newProductCateGory = new ProductCategory()
+        //            {
+        //                Id = Guid.NewGuid(),
+        //                CrDate = TimeUtils.GetCurrentSEATime(),
+        //                Name = Category.ProductCategory,
+        //                Deflag = false,
+        //                Description = "string",
+        //                UpsDate = TimeUtils.GetCurrentSEATime()
+        //            };
+        //            await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCateGory);
+        //            var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync(predicate: x => x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId),
+        //            include: m => m.Include(n => n.WalletTypeMappings));
 
-                    foreach (var walletType in walletTypes)
-                    {
-                        if (walletType.Name == "SpecificWallet" || walletType.Name == "ServiceWallet")
-                        {
+        //            foreach (var walletType in walletTypes)
+        //            {
+        //                if (walletType.Name == "SpecificWallet" || walletType.Name == "ServiceWallet")
+        //                {
 
-                            // Check if the mapping already exists between wallet type and product category
-                            var existingMapping = await _unitOfWork.GetRepository<WalletTypeMapping>().SingleOrDefaultAsync(
-                                predicate: x => x.WalletTypeId == walletType.Id && x.ProductCategoryId == newProductCateGory.Id);
+        //                    // Check if the mapping already exists between wallet type and product category
+        //                    var existingMapping = await _unitOfWork.GetRepository<WalletTypeMapping>().SingleOrDefaultAsync(
+        //                        predicate: x => x.WalletTypeId == walletType.Id && x.ProductCategoryId == newProductCateGory.Id);
 
-                            if (existingMapping == null)
-                            {
-                                var newProductCategoryMappingWallet = new WalletTypeMapping
-                                {
-                                    Id = Guid.NewGuid(),
-                                    WalletTypeId = walletType.Id,
-                                    ProductCategoryId = newProductCateGory.Id,
-                                };
-                                await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(newProductCategoryMappingWallet);
-                            }
-                        }
-                    }
-                    foreach (var product in listProduct)
-                    {
-                        if (product.ProductCategory == Category.ProductCategory)
-                        {
-                            var newProduct = new Product()
-                            {
-                                Id = Guid.Parse(product.Id),
-                                CrDate = TimeUtils.GetCurrentSEATime(),
-                                ImageUrl = product.ImgUrl,
-                                ProductCategoryId = newProductCateGory.Id,
-                                Status = "Active",
-                                MenuId = MenuId,
-                                Name = product.Name,
-                                Price = product.Price,
-                                UpsDate = TimeUtils.GetCurrentSEATime()
-                            };
-                            await _unitOfWork.GetRepository<Product>().InsertAsync(newProduct);
+        //                    if (existingMapping == null)
+        //                    {
+        //                        var newProductCategoryMappingWallet = new WalletTypeMapping
+        //                        {
+        //                            Id = Guid.NewGuid(),
+        //                            WalletTypeId = walletType.Id,
+        //                            ProductCategoryId = newProductCateGory.Id,
+        //                        };
+        //                        await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(newProductCategoryMappingWallet);
+        //                    }
+        //                }
+        //            }
+        //            foreach (var product in listProduct)
+        //            {
+        //                if (product.ProductCategory == Category.ProductCategory)
+        //                {
+        //                    var newProduct = new Product()
+        //                    {
+        //                        Id = Guid.Parse(product.Id),
+        //                        CrDate = TimeUtils.GetCurrentSEATime(),
+        //                        ImageUrl = product.ImgUrl,
+        //                        ProductCategoryId = newProductCateGory.Id,
+        //                        Status = "Active",
+        //                        MenuId = MenuId,
+        //                        Name = product.Name,
+        //                        Price = product.Price,
+        //                        UpsDate = TimeUtils.GetCurrentSEATime()
+        //                    };
+        //                    await _unitOfWork.GetRepository<Product>().InsertAsync(newProduct);
 
-                        }
-                    }
-                    await _unitOfWork.CommitAsync();
-                    //xoa product
-                    products.Clear();
-                }
-                else
-                {
-                    var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync
-                        (predicate: x => x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-                       include: m => m.Include(n => n.WalletTypeMappings));
-                    foreach (var walletType in walletTypes)
-                    {
-                        if (walletType.Name == "SpecificWallet" || walletType.Name == "ServiceWallet")
-                        {
-                            foreach (var item in selectField)
-                            {
-                                // Retrieve the ProductCategory based on the current item's category name
-                                var productCategory2 = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
-                                    predicate: x => x.Name == item.ProductCategory && !x.Deflag);
+        //                }
+        //            }
+        //            await _unitOfWork.CommitAsync();
+        //            //xoa product
+        //            products.Clear();
+        //        }
+        //        else
+        //        {
+        //            var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync
+        //                (predicate: x => x.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId),
+        //               include: m => m.Include(n => n.WalletTypeMappings));
+        //            foreach (var walletType in walletTypes)
+        //            {
+        //                if (walletType.Name == "SpecificWallet" || walletType.Name == "ServiceWallet")
+        //                {
+        //                    foreach (var item in selectField)
+        //                    {
+        //                        // Retrieve the ProductCategory based on the current item's category name
+        //                        var productCategory2 = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
+        //                            predicate: x => x.Name == item.ProductCategory && !x.Deflag);
 
-                                if (productCategory2 != null) // Ensure productCategory2 is found
-                                {
-                                    // Check if this mapping already exists
-                                    var existingMapping = await _unitOfWork.GetRepository<WalletTypeMapping>().SingleOrDefaultAsync(
-                                        predicate: x => x.WalletTypeId == walletType.Id && x.ProductCategoryId == productCategory2.Id);
+        //                        if (productCategory2 != null) // Ensure productCategory2 is found
+        //                        {
+        //                            // Check if this mapping already exists
+        //                            var existingMapping = await _unitOfWork.GetRepository<WalletTypeMapping>().SingleOrDefaultAsync(
+        //                                predicate: x => x.WalletTypeId == walletType.Id && x.ProductCategoryId == productCategory2.Id);
 
-                                    if (existingMapping == null)
-                                    {
-                                        var newProductCategoryMappingWallet = new WalletTypeMapping
-                                        {
-                                            Id = Guid.NewGuid(),
-                                            WalletTypeId = walletType.Id,
-                                            ProductCategoryId = productCategory2.Id,
-                                        };
-                                        await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(newProductCategoryMappingWallet);
-                                    }
-                                }
-                            }
-                        }
-                    }
+        //                            if (existingMapping == null)
+        //                            {
+        //                                var newProductCategoryMappingWallet = new WalletTypeMapping
+        //                                {
+        //                                    Id = Guid.NewGuid(),
+        //                                    WalletTypeId = walletType.Id,
+        //                                    ProductCategoryId = productCategory2.Id,
+        //                                };
+        //                                await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(newProductCategoryMappingWallet);
+        //                            }
+        //                        }
+        //                    }
+        //                }
+        //            }
 
 
-                    foreach (var product in listProduct)
-                    {
-                        if(product.ProductCategory == Category.ProductCategory)
-                        {
-                            var productExist = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(
-                                predicate: x => x.Id == Guid.Parse(product.Id) && x.ProductCategoryId == productCategory.Id && x.Status == "Active");
-                            if (productExist == null)
-                            {
-                                var newProduct = new Product()
-                                {
-                                    Id = Guid.Parse(product.Id),
-                                    CrDate = TimeUtils.GetCurrentSEATime(),
-                                    ImageUrl = product.ImgUrl,
-                                    ProductCategoryId = productCategory.Id,
-                                    Status = "Active",
-                                    MenuId = MenuId,
-                                    Name = product.Name,
-                                    Price = product.Price,
-                                    UpsDate = TimeUtils.GetCurrentSEATime()
-                                };
-                                await _unitOfWork.GetRepository<Product>().InsertAsync(newProduct);
-                            }
-                            else
-                            {
-                                productExist.Name = product.Name;
-                                productExist.ImageUrl = product.ImgUrl;
-                                productExist.Price = product.Price;
-                                productExist.UpsDate = TimeUtils.GetCurrentSEATime();
-                                _unitOfWork.GetRepository<Product>().UpdateAsync(productExist);
-                            }
-                            products.Add(new ProductFromPos()
-                            {
-                                Name = product.Name,
-                                Id = product.Id,
-                                ImgUrl = product.ImgUrl,
-                                Price = product.Price
-                            });
-                        }
-                    }
-                    productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
-                    await _unitOfWork.CommitAsync();
-                    //xoa product
-                    products.Clear();
-                }
-            }
-            return true;
-        }
+        //            foreach (var product in listProduct)
+        //            {
+        //                if(product.ProductCategory == Category.ProductCategory)
+        //                {
+        //                    var productExist = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(
+        //                        predicate: x => x.Id == Guid.Parse(product.Id) && x.ProductCategoryId == productCategory.Id && x.Status == "Active");
+        //                    if (productExist == null)
+        //                    {
+        //                        var newProduct = new Product()
+        //                        {
+        //                            Id = Guid.Parse(product.Id),
+        //                            CrDate = TimeUtils.GetCurrentSEATime(),
+        //                            ImageUrl = product.ImgUrl,
+        //                            ProductCategoryId = productCategory.Id,
+        //                            Status = "Active",
+        //                            MenuId = MenuId,
+        //                            Name = product.Name,
+        //                            Price = product.Price,
+        //                            UpsDate = TimeUtils.GetCurrentSEATime()
+        //                        };
+        //                        await _unitOfWork.GetRepository<Product>().InsertAsync(newProduct);
+        //                    }
+        //                    else
+        //                    {
+        //                        productExist.Name = product.Name;
+        //                        productExist.ImageUrl = product.ImgUrl;
+        //                        productExist.Price = product.Price;
+        //                        productExist.UpsDate = TimeUtils.GetCurrentSEATime();
+        //                        _unitOfWork.GetRepository<Product>().UpdateAsync(productExist);
+        //                    }
+        //                    products.Add(new ProductFromPos()
+        //                    {
+        //                        Name = product.Name,
+        //                        Id = product.Id,
+        //                        ImgUrl = product.ImgUrl,
+        //                        Price = product.Price
+        //                    });
+        //                }
+        //            }
+        //            productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
+        //            _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
+        //            await _unitOfWork.CommitAsync();
+        //            //xoa product
+        //            products.Clear();
+        //        }
+        //    }
+        //    return true;
+        //}
         private static string NormalizeString(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -644,6 +828,345 @@ namespace VegaCityApp.API.Services.Implement
 
             return result;
         }
-
+        #region CRUD Product
+        public async Task<ResponseAPI> CreateProduct(Guid MenuId, CreateProductRequest req)
+        {
+            if(req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
+            var menu = await _unitOfWork.GetRepository<Menu>().SingleOrDefaultAsync(
+                predicate: x => x.Id == MenuId && !x.Deflag);
+            if (menu == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = StoreMessage.NotFoundMenu
+                };
+            }
+            req.ImageUrl = req.ImageUrl?.Trim();
+            req.Name = req.Name.Trim();
+            var newProduct = _mapper.Map<Product>(req);
+            newProduct.Id = Guid.NewGuid();
+            newProduct.CrDate = TimeUtils.GetCurrentSEATime();
+            newProduct.UpsDate = TimeUtils.GetCurrentSEATime();
+            newProduct.Status = "Active";
+            newProduct.MenuId = menu.Id;
+            await _unitOfWork.GetRepository<Product>().InsertAsync(newProduct);
+            //insert mapping
+            var newMenuProductMapping = new MenuProductMapping()
+            {
+                Id = Guid.NewGuid(),
+                MenuId = menu.Id,
+                ProductId = newProduct.Id,
+                CrDate = TimeUtils.GetCurrentSEATime()
+            };
+            await _unitOfWork.GetRepository<MenuProductMapping>().InsertAsync(newMenuProductMapping);
+            await _unitOfWork.CommitAsync();
+            return new ResponseAPI()
+            {
+                MessageResponse = StoreMessage.CreateProductSuccess,
+                StatusCode = HttpStatusCodes.Created
+            };
+        }
+        public async Task<ResponseAPI> UpdateProduct(Guid ProductId, UpdateProductRequest req)
+        {
+            if(req.Price!= null)
+            {
+                if(req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
+            }
+            if(req.Status != "InActive") throw new BadHttpRequestException(StoreMessage.InvalidProductStatus, HttpStatusCodes.BadRequest);
+            var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync
+                (predicate: x => x.Id == ProductId && x.Status == "Active");
+            if (product == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = StoreMessage.NotFoundProduct
+                };
+            }
+            product.Name = req.Name != null ? req.Name.Trim() : product.Name;
+            product.ImageUrl = req.ImageUrl != null ? req.ImageUrl.Trim() : product.ImageUrl;
+            product.Price = (int)(req.Price != null ? req.Price : product.Price);
+            product.Status = req.Status != null ? req.Status : product.Status;
+            product.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+            var result = await _unitOfWork.CommitAsync();
+            if (result > 0)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.UpdateProductSuccess,
+                    StatusCode = HttpStatusCodes.OK
+                };
+            }
+            else
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.UpdateProductFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+        }
+        public async Task<ResponseAPI> DeleteProduct(Guid ProductId)
+        {
+            var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync
+                (predicate: x => x.Id == ProductId && x.Status == "Active");
+            if (product == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = StoreMessage.NotFoundProduct
+                };
+            }
+            product.Status = "InActive";
+            product.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.DeleteProductSuccess,
+                    StatusCode = HttpStatusCodes.OK
+                }
+                : new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.DeleteProductFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+        }
+        public async Task<ResponseAPI<IEnumerable<GetProductResponse>>> SearchAllProduct(Guid MenuId, int page, int size)
+        {
+            try
+            {
+                IPaginate<GetProductResponse> data = await _unitOfWork.GetRepository<Product>().GetPagingListAsync(
+                    selector: x => new GetProductResponse()
+                    {
+                        Id = x.Id,
+                        MenuId = x.MenuId,
+                        ImageUrl = x.ImageUrl,
+                        Name = x.Name,
+                        CrDate = x.CrDate,
+                        UpsDate = x.UpsDate,
+                        Status = x.Status,
+                        Price = x.Price,
+                        ProductCategoryId = x.ProductCategoryId,
+                        ProductCategoryName = x.ProductCategory.Name
+                    },
+                    page: page,
+                    size: size,
+                    orderBy: x => x.OrderByDescending(z => z.Name),
+                    predicate: x => x.MenuId == MenuId && x.Status == "Active",
+                    include: z => z.Include(a => a.ProductCategory));
+                return new ResponseAPI<IEnumerable<GetProductResponse>>
+                {
+                    MessageResponse = StoreMessage.GetListProductSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI<IEnumerable<GetProductResponse>>
+                {
+                    MessageResponse = StoreMessage.GetListProductFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null,
+                    MetaData = null
+                };
+            }
+        }
+        public async Task<ResponseAPI<Product>> SearchProduct(Guid ProductId)
+        {
+            var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(
+                predicate: x => x.Id == ProductId && x.Status == "Active",
+                include: z => z.Include(a => a.ProductCategory));
+            if (product == null)
+            {
+                return new ResponseAPI<Product>()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = StoreMessage.NotFoundProduct
+                };
+            }
+            return new ResponseAPI<Product>()
+            {
+                MessageResponse = StoreMessage.GetProductSuccess,
+                StatusCode = HttpStatusCodes.OK,
+                Data = product
+            };
+        }
+        #endregion
+        #region CRUD ProductCategory
+        public async Task<ResponseAPI> CreateProductCategory(Guid WalletTypeId, CreateProductCategoryRequest req)
+        {
+            var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
+                predicate: x => x.Id == WalletTypeId && !x.Deflag);
+            if (walletType == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = WalletTypeMessage.NotFoundWalletType
+                };
+            }
+            req.Name = req.Name.Trim();
+            if(req.Description != null)
+            {
+                req.Description = req.Description.Trim();
+            }
+            var newProductCategory = _mapper.Map<ProductCategory>(req);
+            newProductCategory.Id = Guid.NewGuid();
+            newProductCategory.CrDate = TimeUtils.GetCurrentSEATime();
+            newProductCategory.UpsDate = TimeUtils.GetCurrentSEATime();
+            newProductCategory.Deflag = false;
+            await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCategory);
+            //insert mapping
+            var waletTypeMapping = new WalletTypeMapping()
+            {
+                Id = Guid.NewGuid(),
+                ProductCategoryId = newProductCategory.Id,
+                WalletTypeId = walletType.Id,
+            };
+            await _unitOfWork.GetRepository<WalletTypeMapping>().InsertAsync(waletTypeMapping);
+            await _unitOfWork.CommitAsync();
+            return new ResponseAPI()
+            {
+                MessageResponse = StoreMessage.CreateProductCategorySuccess,
+                StatusCode = HttpStatusCodes.Created
+            };
+        }
+        public async Task<ResponseAPI> UpdateProductCategory(Guid ProductCategoryId, UpdateProductCategoryRequest req)
+        {
+            var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync
+                (predicate: x => x.Id == ProductCategoryId && !x.Deflag);
+            if (productCategory == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = StoreMessage.NotFoundProductCategory
+                };
+            }
+            productCategory.Name = req.Name != null ? req.Name.Trim(): productCategory.Name;
+            productCategory.Description = req.Description != null ? req.Description.Trim() : productCategory.Description;
+            productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
+            var result = await _unitOfWork.CommitAsync();
+            if (result > 0)
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.UpdateProductCategorySuccess,
+                    StatusCode = HttpStatusCodes.OK
+                };
+            }
+            else
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.UpdateProductCategoryFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+        }
+        public async Task<ResponseAPI> DeleteProductCategory(Guid ProductCategoryId)
+        {
+            var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync
+                (predicate: x => x.Id == ProductCategoryId && !x.Deflag);
+            if (productCategory == null)
+            {
+                return new ResponseAPI()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = StoreMessage.NotFoundProductCategory
+                };
+            }
+            productCategory.Deflag = true;
+            productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.DeleteProductCategorySuccess,
+                    StatusCode = HttpStatusCodes.OK
+                }
+                : new ResponseAPI()
+                {
+                    MessageResponse = StoreMessage.DeleteProductCategoryFail,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+        }
+        public async Task<ResponseAPI<IEnumerable<GetProductCategoryResponse>>> SearchAllProductCategory(Guid WalletTypeId, int page, int size)
+        {
+            try
+            {
+                IPaginate<GetProductCategoryResponse> data = await _unitOfWork.GetRepository<ProductCategory>().GetPagingListAsync(
+                    selector: x => new GetProductCategoryResponse()
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        CrDate = x.CrDate,
+                        UpsDate = x.UpsDate,
+                        Deflag = x.Deflag,
+                        Description = x.Description
+                    },
+                    page: page,
+                    size: size,
+                    orderBy: x => x.OrderByDescending(z => z.Name),
+                    predicate: x => x.WalletTypeMappings.Any(z => z.WalletTypeId == WalletTypeId) && !x.Deflag,
+                    include: z => z.Include(a => a.WalletTypeMappings));
+                return new ResponseAPI<IEnumerable<GetProductCategoryResponse>>
+                {
+                    MessageResponse = StoreMessage.GetListProductCategorySuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI<IEnumerable<GetProductCategoryResponse>>
+                {
+                    MessageResponse = StoreMessage.GetListProductCategoryFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null,
+                    MetaData = null
+                };
+            }
+        }
+        public async Task<ResponseAPI<ProductCategory>> SearchProductCategory(Guid ProductCategoryId)
+        {
+            var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync(
+                predicate: x => x.Id == ProductCategoryId && !x.Deflag);
+            if (productCategory == null)
+            {
+                return new ResponseAPI<ProductCategory>()
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = StoreMessage.NotFoundProductCategory
+                };
+            }
+            return new ResponseAPI<ProductCategory>()
+            {
+                MessageResponse = StoreMessage.GetProductCategorySuccess,
+                StatusCode = HttpStatusCodes.OK,
+                Data = productCategory
+            };
+        }
+        #endregion
     }
 }

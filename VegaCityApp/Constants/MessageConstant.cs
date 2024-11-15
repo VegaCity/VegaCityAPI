@@ -354,6 +354,37 @@ public static class MessageConstant
     }
     public static class StoreMessage
     {
+        public const string GetProductCategorySuccess = "Get Product Category Successfully!";
+        public const string GetListProductCategorySuccess = "Get List Product Category Successfully!";
+        public const string GetListProductCategoryFail = "Get List Product Category Failed!";
+        public const string DeleteProductCategorySuccess = "Delete Product Category Successfully!";
+        public const string DeleteProductCategoryFail = "Delete Product Category Failed!";
+        public const string CreateProductCategorySuccess = "Create Product Category Successfully!";
+        public const string NotFoundProductCategory = "Product Category Not Found!";
+        public const string UpdateProductCategorySuccess = "Update Product Category Successfully!";
+        public const string UpdateProductCategoryFail = "Update Product Category Failed!";
+        public const string GetProductSuccess = "Get Product Successfully!";
+        public const string GetListProductSuccess = "Get List Product Successfully!";
+        public const string GetListProductFail = "Get List Product Failed!";
+        public const string InvalidProductPrice = "Product Price Must Be Greater Than Zero!";
+        public const string UpdateProductSuccess = "Update Product Successfully!";
+        public const string UpdateProductFail = "Update Product Failed!";
+        public const string DeleteProductSuccess = "Delete Product Successfully!";
+        public const string DeleteProductFail = "Delete Product Failed!";
+        public const string InvalidProductStatus = "Product Status Invalid";
+        public const string NotFoundProduct = "Product Not Found";
+        public const string CreateProductSuccess = "Create Product Successfully!";
+        public const string GetMenuSuccess = "Get Menu Successfully!";
+        public const string GetListMenuSuccess = "Get List Menu Successfully!";
+        public const string GetListMenuFail = "Get List Menu Failed!";
+        public const string DeletedMenuSuccess = "Delete Menu Successfully!";
+        public const string DeletedMenuFail = "Delete Menu Failed!";
+        public const string UpdateMenuFailed = "Update Menu Failed!";
+        public const string UpdateMenuSuccess = "Update Menu Successfully!";
+        public const string NotFoundMenu = "Menu Not Found";
+        public const string CreateMenuSuccess = "Create Menu Successfully!";
+        public const string InvalidDateFilter = "Invalid Date Filter";
+        public const string CreateStoreSuccess = "Create Store Successfully!";
         public const string PriceMustBeGreaterThanZero = "Price Must Be Greater Than Zero!";
         public const string InvalidStoreStatus = "Invalid Store Status";
         public const string UpdateStoreSuccesss = "Update Store Successfully!";

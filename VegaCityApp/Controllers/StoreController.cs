@@ -21,6 +21,15 @@ namespace VegaCityApp.API.Controllers
         {
             _storeService = storeService;
         }
+        #region CRUD Store
+        [HttpPost(StoreEndpoint.CreateStore)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
+        public async Task<IActionResult> CreateStore([FromBody] CreateStoreRequest req)
+        {
+            var result = await _storeService.CreateStore(req);
+            return StatusCode(result.StatusCode, result);
+        }
         [HttpGet(StoreEndpoint.GetListStore)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> SearchAllStore([FromQuery] Guid apiKey, [FromQuery] int size = 10, [FromQuery] int page = 1)
@@ -54,13 +63,14 @@ namespace VegaCityApp.API.Controllers
             var result = await _storeService.DeleteStore(id);
             return StatusCode(result.StatusCode, result);
         }
-        [HttpGet(StoreEndpoint.GetMenu)]
-        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> GetMenu(string phone)
-        {
-            var result = await _storeService.GetMenuFromPos(phone);
-            return StatusCode(result.StatusCode, result);
-        }
+        #endregion
+        //[HttpGet(StoreEndpoint.GetMenu)]
+        //[ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        //public async Task<IActionResult> GetMenu(string phone)
+        //{
+        //    var result = await _storeService.GetMenuFromPos(phone);
+        //    return StatusCode(result.StatusCode, result);
+        //}
         [HttpPost(StoreEndpoint.GetWalletStore)]
         [CustomAuthorize(RoleEnum.CashierWeb)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
@@ -77,5 +87,125 @@ namespace VegaCityApp.API.Controllers
             var result = await _storeService.RequestCloseStore(id);
             return StatusCode(result.StatusCode, result);
         }
+        #region CRUD Menu
+        [HttpPost(StoreEndpoint.CreateMenu)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Store)]
+        public async Task<IActionResult> CreateMenu(Guid storeId, CreateMenuRequest req)
+        {
+            var result = await _storeService.CreateMenu(storeId, req);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch(StoreEndpoint.UpdateMenu)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Store)]
+        public async Task<IActionResult> UpdateMenu(Guid menuId, UpdateMenuRequest req)
+        {
+            var result = await _storeService.UpdateMenu(menuId, req);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpDelete(StoreEndpoint.DeleteMenu)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        public async Task<IActionResult> DeleteMenu(Guid menuId)
+        {
+            var result = await _storeService.DeleteMenu(menuId);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(StoreEndpoint.GetMenu)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchMenu(Guid menuId)
+        {
+            var result = await _storeService.SearchMenu(menuId);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(StoreEndpoint.GetListMenu)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchAllMenu([FromQuery]Guid storeId, [FromQuery] int page, [FromQuery] int size)
+        {
+            var result = await _storeService.SearchAllMenu(storeId, page, size);
+            return StatusCode(result.StatusCode, result);
+        }
+        #endregion
+        #region CRUD Product
+        [HttpPost(StoreEndpoint.CreateProduct)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Store)]
+        public async Task<IActionResult> CreateProduct(Guid menuId, CreateProductRequest req)
+        {
+            var result = await _storeService.CreateProduct(menuId, req);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch(StoreEndpoint.UpdateProduct)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Store)]
+        public async Task<IActionResult> UpdateProduct(Guid productId, UpdateProductRequest req)
+        {
+            var result = await _storeService.UpdateProduct(productId, req);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpDelete(StoreEndpoint.DeleteProduct)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
+        public async Task<IActionResult> DeleteProduct(Guid productId)
+        {
+            var result = await _storeService.DeleteProduct(productId);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(StoreEndpoint.GetProduct)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchProduct(Guid productId)
+        {
+            var result = await _storeService.SearchProduct(productId);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(StoreEndpoint.GetListProduct)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchAllProduct([FromQuery] Guid menuId, [FromQuery] int page, [FromQuery] int size)
+        {
+            var result = await _storeService.SearchAllProduct(menuId, page, size);
+            return StatusCode(result.StatusCode, result);
+        }
+        #endregion
+        #region CRUD ProductCategory
+        [HttpPost(StoreEndpoint.CreateProductCategory)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Store)]
+        public async Task<IActionResult> CreateProductCategory(Guid storeId, CreateProductCategoryRequest req)
+        {
+            var result = await _storeService.CreateProductCategory(storeId, req);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch(StoreEndpoint.UpdateProductCategory)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Store)]
+        public async Task<IActionResult> UpdateProductCategory(Guid productCategoryId, UpdateProductCategoryRequest req)
+        {
+            var result = await _storeService.UpdateProductCategory(productCategoryId, req);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpDelete(StoreEndpoint.DeleteProductCategory)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
+        public async Task<IActionResult> DeleteProductCategory(Guid productCategoryId)
+        {
+            var result = await _storeService.DeleteProductCategory(productCategoryId);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(StoreEndpoint.GetProductCategory)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchProductCategory(Guid productCategoryId)
+        {
+            var result = await _storeService.SearchProductCategory(productCategoryId);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(StoreEndpoint.GetListProductCategory)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchAllProductCategory([FromQuery] Guid storeId, [FromQuery] int page, [FromQuery] int size)
+        {
+            var result = await _storeService.SearchAllProductCategory(storeId, page, size);
+            return StatusCode(result.StatusCode, result);
+        }
+        #endregion
     }
 }
