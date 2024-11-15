@@ -9,11 +9,12 @@ namespace VegaCityApp.Domain.Models
         {
             Orders = new HashSet<Order>();
             PackageDetails = new HashSet<PackageDetail>();
-            PackageItems = new HashSet<PackageItem>();
             PackageOrders = new HashSet<PackageOrder>();
         }
 
         public Guid Id { get; set; }
+        public string Type { get; set; } = null!;
+        public Guid ZoneId { get; set; }
         public string? ImageUrl { get; set; }
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
@@ -22,12 +23,10 @@ namespace VegaCityApp.Domain.Models
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
         public int Duration { get; set; }
-        public Guid PackageTypeId { get; set; }
 
-        public virtual PackageType PackageType { get; set; } = null!;
+        public virtual Zone Zone { get; set; } = null!;
         public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<PackageDetail> PackageDetails { get; set; }
-        public virtual ICollection<PackageItem> PackageItems { get; set; }
         public virtual ICollection<PackageOrder> PackageOrders { get; set; }
     }
 }

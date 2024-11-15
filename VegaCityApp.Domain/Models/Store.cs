@@ -10,7 +10,6 @@ namespace VegaCityApp.Domain.Models
             Menus = new HashSet<Menu>();
             Orders = new HashSet<Order>();
             StoreMoneyTransfers = new HashSet<StoreMoneyTransfer>();
-            StoreServices = new HashSet<StoreService>();
             Transactions = new HashSet<Transaction>();
             UserStoreMappings = new HashSet<UserStoreMapping>();
             Wallets = new HashSet<Wallet>();
@@ -35,7 +34,6 @@ namespace VegaCityApp.Domain.Models
         public virtual ICollection<Menu> Menus { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<StoreMoneyTransfer> StoreMoneyTransfers { get; set; }
-        public virtual ICollection<StoreService> StoreServices { get; set; }
         public virtual ICollection<Transaction> Transactions { get; set; }
         public virtual ICollection<UserStoreMapping> UserStoreMappings { get; set; }
         public virtual ICollection<Wallet> Wallets { get; set; }
