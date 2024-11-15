@@ -8,6 +8,12 @@ namespace VegaCityApp.API.Enums
         public const string Completed = "COMPLETED";
         public const string Canceled = "CANCELED";
     }
+    public class PaymentStatus
+    {
+        public const string Pending = "PENDING";
+        public const string Completed = "COMPLETED";
+        public const string Canceled = "CANCELED";
+    }
     public class SaleType
     {
         public const string PackageItemCharge = "PackageItem Charge";
