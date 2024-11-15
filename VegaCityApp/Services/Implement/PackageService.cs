@@ -905,6 +905,12 @@ namespace VegaCityApp.API.Services.Implement
                 (predicate: x => x.Id == Id && x.Status == PackageItemStatus.Active.ToString(),
                  include: packageItem => packageItem.Include(b => b.Package).ThenInclude(c => c.PackageType)
             );
+            if (packageItem == null)
+                throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
+            //if (packageItem.EndDate <= TimeUtils.GetCurrentSEATime())
+            //{
+            //    throw new BadHttpRequestException(PackageItemMessage.PackageItemExpired, HttpStatusCodes.NotFound);
+            //}
             #region check 
             // after done main flow, make utils service to shorten this code
             var userId = GetUserIdFromJwt();
@@ -916,13 +922,28 @@ namespace VegaCityApp.API.Services.Implement
                 ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
                                                             HttpStatusCodes.BadRequest);
             #endregion
-            if (packageItem == null)
-                throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
+            
             if(packageItem.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum() && packageItem.Rfid == rfId)
                 throw new BadHttpRequestException(PackageItemMessage.RfIdExist, HttpStatusCodes.BadRequest);
-            //update
+            var packageItemsRfId = await _unitOfWork.GetRepository<PackageItem>().GetListAsync(predicate: x => x.Rfid == rfId);
+            var packageItemRfIdExisted = packageItemsRfId.SingleOrDefault(
+                x => x.Rfid == rfId
+               );
+            if (packageItemRfIdExisted != null)
+            {
+                if (packageItemRfIdExisted.Status == PackageItemStatusEnum.Blocked.GetDescriptionFromEnum())
+                {
+                    packageItemRfIdExisted.Rfid = "Format at " + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime());
+                    packageItemRfIdExisted.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItemRfIdExisted);
+                }
+                else
+                {
+                    throw new BadHttpRequestException(PackageItemMessage.ActiveRfIdExist, HttpStatusCodes.BadRequest);
+                }
+            }
             packageItem.Rfid = rfId;
-
+            packageItem.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<PackageItem>().UpdateAsync(packageItem);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
@@ -1232,7 +1253,7 @@ namespace VegaCityApp.API.Services.Implement
                     Type = TransactionType.ChargeMoney,
                     WalletId = packageItemExsit.WalletId,
                     Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                    Description = "Charge Money for: " + packageItemExsit.Name + "with balance: " + req.ChargeAmount,
+                    Description = "Charge Money for: " + packageItemExsit.Name + " with balance: " + req.ChargeAmount,
                     IsIncrease = true,
                     UserId = newOrder.UserId
                 };

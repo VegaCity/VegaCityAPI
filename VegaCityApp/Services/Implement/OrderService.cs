@@ -200,7 +200,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             var orderExisted = await _unitOfWork.GetRepository<Order>()
                 .SingleOrDefaultAsync(predicate: x => x.Id == OrderId && x.Status == OrderStatus.Pending, 
-                include: z => z.Include(u => u.PackageOrders));
+                include: z => z.Include(u => u.PackageOrders).Include(p => p.PromotionOrders));
             if (orderExisted == null)
             {
                 return new ResponseAPI()
@@ -217,6 +217,16 @@ namespace VegaCityApp.API.Services.Implement
                     packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
                 }
+                if(orderExisted.PromotionOrders.Count() != 0)
+                {
+                    foreach (var promotionOrder in orderExisted.PromotionOrders)
+                    {
+                        promotionOrder.Deflag = true;
+                        promotionOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<PromotionOrder>().UpdateAsync(promotionOrder);
+                    }
+                }
+
             }
             orderExisted.Status = OrderStatus.Canceled;
             orderExisted.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -358,20 +368,23 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> SearchOrder(Guid? OrderId, string? InvoiceId)
         {
             var orderExist = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
-                predicate: x => (x.Id == OrderId || x.InvoiceId == InvoiceId)&& x.Status != OrderStatus.Canceled,
+                predicate: x => (x.Id == OrderId || x.InvoiceId == InvoiceId),
                 include: order => order
                     .Include(u => u.User)
                     .Include(o => o.Store)
                     .Include(o => o.Deposits)
                     .Include(z => z.OrderDetails)
                     .Include(p => p.PackageOrders)
-                    .Include(h => h.PromotionOrders));
+                    .Include(h => h.PromotionOrders)) ?? throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
             string json = "";
-            string? customerInfo = "";
+            //string? customerInfo = "";
+            //command here //
+          
+            //here//
+            
             var seller = orderExist.User.FullName;
             List<OrderProductFromPosRequest>? productJson = JsonConvert.DeserializeObject<List<OrderProductFromPosRequest>>(json);
-            if(customerInfo == null) customerInfo = "";
-            CustomerInfo? customer = JsonConvert.DeserializeObject<CustomerInfo>(customerInfo);
+            
             if (orderExist == null)
             {
                 return new ResponseAPI()
@@ -384,7 +397,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 MessageResponse = OrderMessage.GetOrdersSuccessfully,
                 StatusCode = HttpStatusCodes.OK,
-                Data = new { orderExist, productJson, customer ,seller}
+                Data = new { orderExist, productJson ,seller}
             };
         }
         public async Task<ResponseAPI> CreateOrderForCashier(CreateOrderForCashierRequest req)
@@ -1015,7 +1028,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             var orders = await _unitOfWork.GetRepository<Order>().
                 GetListAsync(predicate: x => x.Status == OrderStatus.Pending,
-                include: z => z.Include(a => a.PackageOrders));
+                include: z => z.Include(a => a.PackageOrders).Include(p => p.PromotionOrders));
             foreach (var order in orders)
             {
                 if (TimeUtils.GetCurrentSEATime().Subtract(order.CrDate).TotalMinutes > 5)
@@ -1025,13 +1038,16 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
                 }
                 foreach(var packageOrder in order.PackageOrders)
+                {                
+                    packageOrder.Status = OrderStatus.Canceled;
+                    packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
+                }
+                foreach(var orderPromotion in order.PromotionOrders)
                 {
-                    if (TimeUtils.GetCurrentSEATime().Subtract(packageOrder.CrDate).TotalMinutes > 5)
-                    {
-                        packageOrder.Status = OrderStatus.Canceled;
-                        packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                        _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
-                    }
+                    orderPromotion.Deflag = true;
+                    orderPromotion.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<PromotionOrder>().UpdateAsync(orderPromotion);
                 }
             }
             await _unitOfWork.CommitAsync();
