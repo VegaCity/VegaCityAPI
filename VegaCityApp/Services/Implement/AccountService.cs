@@ -102,9 +102,8 @@ namespace VegaCityApp.Service.Implement
             };
             await _unitOfWork.GetRepository<UserStoreMapping>().InsertAsync(mapping);
             //update wallet user
-            var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(
-                predicate: x => x.UserId == user.Id);
-            wallet.StoreId = storeId;
+            user.Wallets.SingleOrDefault().StoreId = storeId;
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(user.Wallets.SingleOrDefault());
             await _unitOfWork.CommitAsync();
             return user.Id;
         }
@@ -729,28 +728,10 @@ namespace VegaCityApp.Service.Implement
                         ZoneId = zone.Id
                     };
                     await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
-                    //var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
-                    //    predicate: x => x.Name == WalletTypeEnum.StoreWallet.GetDescriptionFromEnum());
-                    //var wallet = new Wallet
-                    //{
-                    //    Id = Guid.NewGuid(),
-                    //    UserId = user.Data.Id,
-                    //    Balance = 0,
-                    //    BalanceHistory = 0,
-                    //    CrDate = TimeUtils.GetCurrentSEATime(),
-                    //    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    //    Deflag = false,
-                    //    StartDate = TimeUtils.GetCurrentSEATime(),
-                    //    StoreId = newStore.Id,
-                    //    WalletTypeId = walletType.Id,
-                    //    BalanceStart = 0
-                    //};
-                    //await _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
                     await _unitOfWork.CommitAsync();
                     #endregion
                     //update user
                     var result = await UpdateUserApproving(user.Data, newStore.Id);
-                    await _unitOfWork.CommitAsync();
                     if (result != Guid.Empty)
                     {
                         #region send mail

@@ -455,10 +455,10 @@ namespace VegaCityApp.API.Services.Implement
             {
                 throw new BadHttpRequestException(StoreMessage.StoreWalletIsPendingClose, HttpStatusCodes.BadRequest);
             }
-            if (storeTrack.Wallets.SingleOrDefault().Balance <= 50000)
-            {
-                throw new BadHttpRequestException(StoreMessage.MustGreaterThan50K, HttpStatusCodes.BadRequest);
-            }
+            //if (storeTrack.Wallets.SingleOrDefault().Balance <= 50000)
+            //{
+            //    throw new BadHttpRequestException(StoreMessage.MustGreaterThan50K, HttpStatusCodes.BadRequest);
+            //}
             return new ResponseAPI
             {
                 MessageResponse = StoreMessage.GetStoreSuccess,
