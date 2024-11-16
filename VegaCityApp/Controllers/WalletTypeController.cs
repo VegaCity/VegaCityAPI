@@ -66,22 +66,22 @@ namespace VegaCityApp.API.Controllers
             var result = await _walletTypeService.GetAllWalletType(size, page);
             return Ok(result);
         }
-        [HttpPost(WalletTypeEndpoint.AddServiceStoreToWalletType)]
-        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin)]
-        public async Task<IActionResult> AddServiceStoreToWalletType(Guid id, Guid serviceStoreId)
-        {
-            var result = await _walletTypeService.AddServiceStoreToWalletType(id, serviceStoreId);
-            return StatusCode(result.StatusCode, result);
-        }
-        [HttpDelete(WalletTypeEndpoint.RemoveServiceStoreToWalletType)]
-        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin)]
-        public async Task<IActionResult> RemoveServiceStoreToWalletType(Guid id, Guid serviceStoreId)
-        {
-            var result = await _walletTypeService.RemoveServiceStoreToWalletType(id, serviceStoreId);
-            return StatusCode(result.StatusCode, result);
-        }
+        //[HttpPost(WalletTypeEndpoint.AddServiceStoreToWalletType)]
+        //[ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        //[CustomAuthorize(RoleEnum.Admin)]
+        //public async Task<IActionResult> AddServiceStoreToWalletType(Guid id, Guid serviceStoreId)
+        //{
+        //    var result = await _walletTypeService.AddServiceStoreToWalletType(id, serviceStoreId);
+        //    return StatusCode(result.StatusCode, result);
+        //}
+        //[HttpDelete(WalletTypeEndpoint.RemoveServiceStoreToWalletType)]
+        //[ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        //[CustomAuthorize(RoleEnum.Admin)]
+        //public async Task<IActionResult> RemoveServiceStoreToWalletType(Guid id, Guid serviceStoreId)
+        //{
+        //    var result = await _walletTypeService.RemoveServiceStoreToWalletType(id, serviceStoreId);
+        //    return StatusCode(result.StatusCode, result);
+        //}
         [HttpPost(WalletTypeEndpoint.RequestWithdrawMoneyWallet)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.CashierWeb)]

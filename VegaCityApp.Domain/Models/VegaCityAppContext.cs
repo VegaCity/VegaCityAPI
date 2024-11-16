@@ -334,10 +334,14 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.CusName).HasMaxLength(50);
 
+                entity.Property(e => e.EndDate).HasColumnType("datetime");
+
                 entity.Property(e => e.PhoneNumber)
                     .HasMaxLength(10)
                     .IsUnicode(false)
                     .IsFixedLength();
+
+                entity.Property(e => e.StartDate).HasColumnType("datetime");
 
                 entity.Property(e => e.Status)
                     .HasMaxLength(50)
@@ -354,7 +358,6 @@ namespace VegaCityApp.Domain.Models
                 entity.HasOne(d => d.Package)
                     .WithMany(p => p.PackageOrders)
                     .HasForeignKey(d => d.PackageId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PackageOrder_Package");
 
                 entity.HasOne(d => d.Vcard)

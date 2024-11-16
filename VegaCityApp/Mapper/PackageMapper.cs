@@ -8,8 +8,8 @@ namespace VegaCityApp.API.Mapper
     {
         public PackageMapper()
         {
-            CreateMap<PackageItem, GetListPackageItemResponse>();
-            CreateMap<GetListPackageItemResponse, PackageItem>();
+            CreateMap<PackageOrder, GetListPackageItemResponse>();
+            CreateMap<GetListPackageItemResponse, PackageOrder>();
         }
     }
 }

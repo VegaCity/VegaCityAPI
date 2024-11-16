@@ -19,4 +19,9 @@
         Expired,
         Blocked
     }
+    public enum PackageTypeEnum
+    {
+        SpecificPackage,
+        ServicePackage
+    }
 }

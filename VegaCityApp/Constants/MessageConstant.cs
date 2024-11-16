@@ -221,6 +221,7 @@ public static class MessageConstant
 
     public static class PackageMessage
     {
+        public const string InvalidPackageType = "Package Type Invalid";
         public const string CreatePackageSuccessfully = "Create Package Successfully !!";
         public const string CreatePackageFail = "Create Package Fail !!";
         public const string GetPackagesSuccessfully = "Get Packages Successfully !!";
@@ -257,12 +258,12 @@ public static class MessageConstant
     public static class PackageItemMessage
     {
         public const string InvalidType = "Cannot Proceed Charge Money With Type Specific!!";
-        public const string RfIdExist = "RfId already exist !!";
-        public const string ActiveRfIdExist = "RfId already exist and currently Active!!";
+        public const string RfIdExist = "V-Card Id already exist !!";
+        public const string ActiveRfIdExist = "V-Card Id already exist and currently Active!!";
         public const string EmailExist = "Email already exist !!";
         public const string EmailInvalid = "Email Invalid";
         public const string CreatePackageItemSuccessfully = "Create Package Item Successfully!";
-        public const string CreatePackageItemFail = "Create Package Item Failed!";
+        public const string CreatePackageItemFail = "Create Package Order Failed!";
         public const string GetPackageItemsSuccessfully = "Get Package Items Successfully!";
         public const string GetPackageItemsFail = "Get Package Items Failed!";
         public const string GetPackageItemSuccessfully = "Get Package Item Successfully!";
@@ -276,7 +277,7 @@ public static class MessageConstant
         public const string PackageItemExists = "Package Item Name already exists!";
         public const string PhoneNumberExist = "Phone Number already exist !!";
         public const string CCCDExist = "CCCD already exist !!";
-        public const string PackageItemExpired = "PackageItem Expired !!";
+        public const string PackageItemExpired = "Package Order Expired !!";
         public const string CreateSuccessFully = "Create PackageItem Successfully !!";
         public const string SearchPackageItemSuccess = "Search PackageItem Successfully !!";
         public const string SearchAllPackageItemsSuccess = "Search All PackageItems Successfully !!";

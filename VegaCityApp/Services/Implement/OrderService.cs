@@ -79,7 +79,7 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
             //create order Detail
             List<Product> products = new List<Product>();
-            List<Domain.Models.StoreService> storeServices = new List<Domain.Models.StoreService>();
+            //List<Domain.Models.StoreService> storeServices = new List<Domain.Models.StoreService>();
             if (req.SaleType == SaleType.Product)
             {
                 foreach (var item in req.ProductData)

@@ -11,7 +11,7 @@ namespace VegaCityApp.API.Services.Interface
     public interface IStoreService
     {
         #region CRUD Store
-        Task<ResponseAPI<Store>> CreateStore(CreateStoreRequest req)
+        Task<ResponseAPI<Store>> CreateStore(CreateStoreRequest req);
         Task<ResponseAPI> UpdateStore(Guid storeId,UpdateStoreRequest req);
         Task<ResponseAPI<IEnumerable<GetStoreResponse>>> SearchAllStore(Guid apiKey, int size, int page);
         Task<ResponseAPI> DeleteStore(Guid StoreId);
