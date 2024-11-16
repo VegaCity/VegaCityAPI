@@ -56,7 +56,7 @@ public static class DependencyServices
         string Database = "VegaCityApp";
         string Port = "6789";
         //string Host = "LAPTOP-R0K7KBGI\\TRANGQUOCDAT";
-        //string Host = "LEVIATHAN";
+        ////string Host = "LEVIATHAN";
         //string UserName = "sa";
         //string Password = "12345";
         //string Database = "VegaCityApp";
@@ -87,7 +87,6 @@ public static class DependencyServices
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IWalletTypeService, WalletTypeService>();
-        services.AddScoped<IServiceStore, ServiceStore>();
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IPromotionService, PromotionService>();

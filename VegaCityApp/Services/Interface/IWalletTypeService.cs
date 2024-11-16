@@ -13,8 +13,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> DeleteWalletType(Guid id);
         Task<ResponseAPI> GetWalletTypeById(Guid id);
         Task<ResponseAPI<IEnumerable<WalletTypeResponse>>> GetAllWalletType(int size, int page);
-        Task<ResponseAPI> AddServiceStoreToWalletType(Guid id, Guid serviceStoreId);
-        Task<ResponseAPI> RemoveServiceStoreToWalletType(Guid id, Guid serviceStoreId);
         Task CheckExpireWallet();
         Task EndDayCheckWalletCashier(Guid apiKey);
         Task<ResponseAPI> RequestWithdrawMoneyWallet(Guid id, WithdrawMoneyRequest request);

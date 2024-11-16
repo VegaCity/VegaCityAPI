@@ -25,95 +25,6 @@ namespace VegaCityApp.API.Services.Implement
             IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
         }
-
-        public async Task<ResponseAPI> AddServiceStoreToWalletType(Guid id, Guid serviceStoreId)
-        {
-            //check wallet type
-            var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(predicate: x => x.Id == id && !x.Deflag);
-            if (walletType == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = WalletTypeMessage.NotFoundWalletType
-                };
-            }
-            //check service store
-            var serviceStore = await _unitOfWork.GetRepository<Domain.Models.StoreService>().SingleOrDefaultAsync(
-                predicate: x => x.Id == serviceStoreId && !x.Deflag);
-            if (serviceStore == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = WalletTypeMessage.NotFoundServiceStore
-                };
-            }
-            //add service store to wallet type
-            var newMapping = new WalletTypeStoreServiceMapping
-            {
-                Id = Guid.NewGuid(),
-                WalletTypeId = id,
-                StoreServiceId = serviceStoreId,
-                CrDate = TimeUtils.GetCurrentSEATime()
-            };
-            await _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().InsertAsync(newMapping);
-            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
-            {
-                StatusCode = HttpStatusCodes.OK,
-                MessageResponse = WalletTypeMessage.AddServiceStoreToWalletTypeSuccess,
-                Data = serviceStore
-            } : new ResponseAPI
-            {
-                StatusCode = HttpStatusCodes.BadRequest,
-                MessageResponse = WalletTypeMessage.AddServiceStoreToWalletTypeFail
-            };
-        }
-        public async Task<ResponseAPI> RemoveServiceStoreToWalletType(Guid id, Guid serviceStoreId)
-        {
-            //check wallet type
-            var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(predicate: x => x.Id == id && !x.Deflag);
-            if (walletType == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = WalletTypeMessage.NotFoundWalletType
-                };
-            }
-            //check service store
-            var serviceStore = await _unitOfWork.GetRepository<Domain.Models.StoreService>().SingleOrDefaultAsync(predicate: x => x.Id == serviceStoreId && !x.Deflag);
-            if (serviceStore == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = WalletTypeMessage.NotFoundServiceStore
-                };
-            }
-            //remove service store to wallet type
-            var mapping = await _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().SingleOrDefaultAsync(
-                predicate: x => x.WalletTypeId == id && x.StoreServiceId == serviceStoreId);
-            if (mapping == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = WalletTypeMessage.NotFoundServiceStoreInWalletType
-                };
-            }
-            _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().DeleteAsync(mapping);
-            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
-            {
-                StatusCode = HttpStatusCodes.OK,
-                MessageResponse = WalletTypeMessage.RemoveServiceStoreToWalletTypeSuccess,
-                Data = serviceStore
-            } : new ResponseAPI
-            {
-                StatusCode = HttpStatusCodes.BadRequest,
-                MessageResponse = WalletTypeMessage.RemoveServiceStoreToWalletTypeFail
-            };
-        }
         public async Task<ResponseAPI> CreateWalletType(WalletTypeRequest walletTypeRequest)
         {
             Guid apiKey = GetMarketZoneIdFromJwt();
@@ -140,7 +51,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> DeleteWalletType(Guid id)
         {
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync
-                (predicate: x => x.Id == id && !x.Deflag, include: z => z.Include(a => a.WalletTypeStoreServiceMappings)
+                (predicate: x => x.Id == id && !x.Deflag, include: z => z.Include(a => a.WalletTypeMappings)
                 );
             if (walletType == null)
             {
@@ -150,11 +61,11 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = WalletTypeMessage.NotFoundWalletType
                 };
             }
-            if (walletType.WalletTypeStoreServiceMappings.Count > 0)
+            if (walletType.WalletTypeMappings.Count > 0)
             {
-                foreach (var item in walletType.WalletTypeStoreServiceMappings)
+                foreach (var item in walletType.WalletTypeMappings)
                 {
-                    _unitOfWork.GetRepository<WalletTypeStoreServiceMapping>().DeleteAsync(item);
+                    _unitOfWork.GetRepository<WalletTypeMapping>().DeleteAsync(item);
                 }
             }
             walletType.Deflag = true;
@@ -378,7 +289,7 @@ namespace VegaCityApp.API.Services.Implement
             //wallet user
             var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync
                 (predicate: x => x.Id == id && !x.Deflag,
-                 include: userStore => userStore.Include(z => z.User).Include(z => z.PackageItems));
+                 include: userStore => userStore.Include(z => z.User).Include(z => z.PackageOrder));
             if (wallet == null)
             {
                 return new ResponseAPI
@@ -425,30 +336,24 @@ namespace VegaCityApp.API.Services.Implement
                     await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
                 }
             }
-            else if (wallet.PackageItems.Count > 0)
+            else if (wallet.PackageOrder != null)
             {
-                foreach (var item in wallet.PackageItems)
-                {
-                    if (item.WalletId == wallet.Id)
+
+                    transaction = new Transaction
                     {
-                        transaction = new Transaction
-                        {
-                            Id = Guid.NewGuid(),
-                            Type = TransactionType.WithdrawMoney,
-                            WalletId = wallet.Id,
-                            Amount = request.Amount, // wallet etag
-                            IsIncrease = false,
-                            Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                            CrDate = TimeUtils.GetCurrentSEATime(),
-                            Status = TransactionStatus.Pending,
-                            Description = "Withdraw money for package item",
-                            UpsDate = TimeUtils.GetCurrentSEATime(),
-                            UserId = cashierWebId
-                        };
-                        await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
-                    }
-                    else throw new BadHttpRequestException(WalletTypeMessage.NotAllowWithdraw);
-                }
+                        Id = Guid.NewGuid(),
+                        Type = TransactionType.WithdrawMoney,
+                        WalletId = wallet.Id,
+                        Amount = request.Amount, // wallet etag
+                        IsIncrease = false,
+                        Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        Status = TransactionStatus.Pending,
+                        Description = "Withdraw money for package item",
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        UserId = cashierWebId
+                    };
+                    await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction); 
             }
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
             {
@@ -502,7 +407,7 @@ namespace VegaCityApp.API.Services.Implement
             //wallet user
             var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync
                 (predicate: x => x.Id == id && !x.Deflag,
-                 include: userStore => userStore.Include(z => z.User).Include(z => z.PackageItems));
+                 include: userStore => userStore.Include(z => z.User).Include(z => z.PackageOrder));
             if (wallet == null)
             {
                 return new ResponseAPI
@@ -541,30 +446,14 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
                 }
             }
-            else if (wallet.PackageItems.Count > 0)
+            else if (wallet.PackageOrder != null)
             {
-                foreach (var item in wallet.PackageItems)
-                {
-
-                    if (item.WalletId == wallet.Id)
-                    {
-                        transactionAvailable.Status = TransactionStatus.Success;
-                        transactionAvailable.UpsDate = TimeUtils.GetCurrentSEATime();
-                        _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionAvailable);
-                        wallet.Balance -= transactionAvailable.Amount;
-                        wallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                        _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
-                    }
-                    else
-                    {
-                        return new ResponseAPI
-                        {
-                            StatusCode = HttpStatusCodes.BadRequest,
-                            MessageResponse = WalletTypeMessage.NotAllowWithdraw
-                        };
-                    }
-                }
-
+                transactionAvailable.Status = TransactionStatus.Success;
+                transactionAvailable.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionAvailable);
+                wallet.Balance -= transactionAvailable.Amount;
+                wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
             }
             var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
                 (predicate: x => x.Id == cashierWeb.MarketZoneId);
@@ -572,7 +461,7 @@ namespace VegaCityApp.API.Services.Implement
                 (predicate: x => x.Email == marketZone.Email && x.Status == (int)UserStatusEnum.Active,
                     include: wallet => wallet.Include(z => z.Wallets));
             Wallet adminWallet = admin.Wallets.SingleOrDefault();
-            string name = wallet.User != null ? wallet.User.FullName : wallet.PackageItems.SingleOrDefault().Name;
+            string name = wallet.User != null ? wallet.User.FullName : wallet.PackageOrder.CusName;
             var transactionBalanceAdmin = new Transaction
             {
                 Id = Guid.NewGuid(),

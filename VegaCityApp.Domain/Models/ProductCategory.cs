@@ -17,7 +17,9 @@ namespace VegaCityApp.Domain.Models
         public DateTime UpsDate { get; set; }
         public bool Deflag { get; set; }
         public string? Description { get; set; }
+        public Guid? StoreId { get; set; }
 
+        public virtual Store? Store { get; set; }
         public virtual ICollection<Product> Products { get; set; }
         public virtual ICollection<WalletTypeMapping> WalletTypeMappings { get; set; }
     }

@@ -9,7 +9,6 @@ namespace VegaCityApp.Domain.Models
         {
             PackageDetails = new HashSet<PackageDetail>();
             WalletTypeMappings = new HashSet<WalletTypeMapping>();
-            WalletTypeStoreServiceMappings = new HashSet<WalletTypeStoreServiceMapping>();
             Wallets = new HashSet<Wallet>();
         }
 
@@ -23,7 +22,6 @@ namespace VegaCityApp.Domain.Models
         public virtual MarketZone MarketZone { get; set; } = null!;
         public virtual ICollection<PackageDetail> PackageDetails { get; set; }
         public virtual ICollection<WalletTypeMapping> WalletTypeMappings { get; set; }
-        public virtual ICollection<WalletTypeStoreServiceMapping> WalletTypeStoreServiceMappings { get; set; }
         public virtual ICollection<Wallet> Wallets { get; set; }
     }
 }

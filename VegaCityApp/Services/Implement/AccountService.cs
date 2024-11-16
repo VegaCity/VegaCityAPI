@@ -69,10 +69,14 @@ namespace VegaCityApp.Service.Implement
         {
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
                 predicate: x => x.Name == WalletTypeEnum.UserWallet.GetDescriptionFromEnum());
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
+                predicate: x => x.Id == userId);
             var newWallet = new Wallet
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
+                Name = user.FullName,
+                BalanceStart = 0,
                 Balance = 0,
                 BalanceHistory = 0,
                 CrDate = TimeUtils.GetCurrentSEATime(),
@@ -97,6 +101,10 @@ namespace VegaCityApp.Service.Implement
                 StoreId = storeId
             };
             await _unitOfWork.GetRepository<UserStoreMapping>().InsertAsync(mapping);
+            //update wallet user
+            var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(
+                predicate: x => x.UserId == user.Id);
+            wallet.StoreId = storeId;
             await _unitOfWork.CommitAsync();
             return user.Id;
         }
@@ -721,22 +729,23 @@ namespace VegaCityApp.Service.Implement
                         ZoneId = zone.Id
                     };
                     await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
-                    var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
-                        predicate: x => x.Name == WalletTypeEnum.StoreWallet.GetDescriptionFromEnum());
-                    var wallet = new Wallet
-                    {
-                        Id = Guid.NewGuid(),
-                        UserId = user.Data.Id,
-                        Balance = 0,
-                        BalanceHistory = 0,
-                        CrDate = TimeUtils.GetCurrentSEATime(),
-                        UpsDate = TimeUtils.GetCurrentSEATime(),
-                        Deflag = false,
-                        StartDate = TimeUtils.GetCurrentSEATime(),
-                        StoreId = newStore.Id,
-                        WalletTypeId = walletType.Id
-                    };
-                    await _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
+                    //var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
+                    //    predicate: x => x.Name == WalletTypeEnum.StoreWallet.GetDescriptionFromEnum());
+                    //var wallet = new Wallet
+                    //{
+                    //    Id = Guid.NewGuid(),
+                    //    UserId = user.Data.Id,
+                    //    Balance = 0,
+                    //    BalanceHistory = 0,
+                    //    CrDate = TimeUtils.GetCurrentSEATime(),
+                    //    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    //    Deflag = false,
+                    //    StartDate = TimeUtils.GetCurrentSEATime(),
+                    //    StoreId = newStore.Id,
+                    //    WalletTypeId = walletType.Id,
+                    //    BalanceStart = 0
+                    //};
+                    //await _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
                     await _unitOfWork.CommitAsync();
                     #endregion
                     //update user
@@ -884,7 +893,7 @@ namespace VegaCityApp.Service.Implement
                     UpsDate = x.UpsDate,
                     RoleId = x.RoleId,
                     Status = x.Status,
-                    RegisterStoreType = x.RegisterStoreType == (int) StoreTypeEnum.Food ? "Store Product" : "Store Service"
+                    //RegisterStoreType = x.RegisterStoreType == (int) StoreTypeEnum.Food ? "Store Product" : "Store Service"
                 },
                 page: page,
                 size: size,
@@ -1095,11 +1104,11 @@ namespace VegaCityApp.Service.Implement
                                                        && x.Amount > 0
                                                        && x.Type != "WithdrawMoney",
                                                        null, null);
-            var deposits = await _unitOfWork.GetRepository<Deposit>()
-                                      .GetListAsync(x => x.CrDate >= startDate
-                                                      && x.CrDate <= endDate
-                                                      && x.Amount > 0,
-                                                      null, null);
+            //var deposits = await _unitOfWork.GetRepository<Deposit>()
+            //                          .GetListAsync(x => x.CrDate >= startDate
+            //                                          && x.CrDate <= endDate
+            //                                          && x.Amount > 0,
+            //                                          null, null);
             var packages = await _unitOfWork.GetRepository<Package>().GetListAsync(x => x.CrDate >= startDate
                                                        && x.CrDate <= endDate,
                                                         null, null);
@@ -1135,22 +1144,22 @@ namespace VegaCityApp.Service.Implement
             }
             else if (roleCurrent == "CashierWeb" || roleCurrent == "CashierApp")
             {
-                var groupedStaticsCashier = deposits
-              .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
-              .Select(g => new
-              {
-                  Name = g.Key, // Month name
-                  TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                  TotalTransactionsAmount = g.Sum(t => t.Amount),
-                  EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                  OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
-                  PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
-              }).ToList();
+              //  var groupedStaticsCashier = deposits
+              //.GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+              //.Select(g => new
+              //{
+              //    Name = g.Key, // Month name
+              //    TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
+              //    TotalTransactionsAmount = g.Sum(t => t.Amount),
+              //    EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
+              //    OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
+              //    PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
+              //}).ToList();
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.OK,
                     MessageResponse = "Get Cashier's Dashboard Successfully!",
-                    Data = groupedStaticsCashier
+                    //Data = groupedStaticsCashier
                 };
             }
             // case store 
@@ -1302,8 +1311,7 @@ namespace VegaCityApp.Service.Implement
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
                 predicate: x => x.Id == StoreId && !x.Deflag && x.Status == (int)StoreStatusEnum.Blocked,
                 include: z => z.Include(s => s.Wallets)
-                               .Include(a => a.StoreServices)
-                               .Include(a => a.Menus).ThenInclude(a => a.Products).ThenInclude(o => o.ProductCategory)
+                               .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings).ThenInclude(o => o.Product).ThenInclude(a => a.ProductCategory)
             );
             if (store == null)
             {
@@ -1368,8 +1376,8 @@ namespace VegaCityApp.Service.Implement
             var searchName = NormalizeString(req.StoreName);
             var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && x.Status == (int)StoreStatusEnum.Blocked
                                                                                , include: z => z.Include(s => s.Wallets)
-                                                                                                .Include(a => a.StoreServices)
-                                                                                                .Include(a => a.Menus).ThenInclude(a => a.Products));
+                                                                                               
+                                                                                                .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings).ThenInclude(a => a.Product).ThenInclude(a => a.ProductCategory));
             var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name) == searchName || NormalizeString(x.ShortName) == searchName);
             if (storeTrack == null)
             {
@@ -1402,44 +1410,33 @@ namespace VegaCityApp.Service.Implement
                 }
                 if (req.Status == "REJECTED")
                 {
-                    if (storeTrack.StoreType == StoreTypeHelper.allowedStoreTypes[2])
+                    var processedCategories = new HashSet<Guid>();
+                    foreach (var menu in storeTrack.Menus)
                     {
-                        foreach (var service in storeTrack.StoreServices)
-                        {
-                            service.Deflag = false;
-                            service.UpsDate = TimeUtils.GetCurrentSEATime();
-                            _unitOfWork.GetRepository<VegaCityApp.Domain.Models.StoreService>().UpdateAsync(service);
-                        }
-                    }
-                    else
-                    {
-                        var processedCategories = new HashSet<Guid>();
-                        foreach (var menu in storeTrack.Menus)
-                        {
-                            menu.Deflag = false;
-                            menu.UpsDate = TimeUtils.GetCurrentSEATime();
-                            _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
+                        menu.Deflag = false;
+                        menu.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
 
-                            foreach (var product in menu.Products)
+                        foreach (var product in menu.MenuProductMappings)
+                        {
+                            var Itemproduct = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: c => c.Id == product.ProductId);
+                            Itemproduct.Status = "Active";
+                            Itemproduct.UpsDate = TimeUtils.GetCurrentSEATime();
+                            _unitOfWork.GetRepository<Product>().UpdateAsync(Itemproduct);
+
+                            if (!processedCategories.Contains(Itemproduct.ProductCategoryId))
                             {
-                                product.Status = "Active";
-                                product.UpsDate = TimeUtils.GetCurrentSEATime();
-                                _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+                                var productCategory = await _unitOfWork.GetRepository<ProductCategory>()
+                                                        .SingleOrDefaultAsync(predicate: c => c.Id == Itemproduct.ProductCategoryId);
 
-                                if (!processedCategories.Contains(product.ProductCategoryId))
+                                if (productCategory != null && productCategory.Deflag)
                                 {
-                                    var productCategory = await _unitOfWork.GetRepository<ProductCategory>()
-                                                          .SingleOrDefaultAsync(predicate: c => c.Id == product.ProductCategoryId);
+                                    productCategory.Deflag = false;
+                                    productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
+                                    _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
 
-                                    if (productCategory != null && productCategory.Deflag)
-                                    {
-                                        productCategory.Deflag = false;
-                                        productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
-                                        _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
-
-                                        // Add to processedCategories to avoid re-processing
-                                        processedCategories.Add(product.ProductCategoryId);
-                                    }
+                                    // Add to processedCategories to avoid re-processing
+                                    processedCategories.Add(Itemproduct.ProductCategoryId);
                                 }
                             }
                         }

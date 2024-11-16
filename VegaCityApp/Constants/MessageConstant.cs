@@ -221,6 +221,7 @@ public static class MessageConstant
 
     public static class PackageMessage
     {
+        public const string InvalidPackageType = "Package Type Invalid";
         public const string CreatePackageSuccessfully = "Create Package Successfully !!";
         public const string CreatePackageFail = "Create Package Fail !!";
         public const string GetPackagesSuccessfully = "Get Packages Successfully !!";
@@ -257,12 +258,12 @@ public static class MessageConstant
     public static class PackageItemMessage
     {
         public const string InvalidType = "Cannot Proceed Charge Money With Type Specific!!";
-        public const string RfIdExist = "RfId already exist !!";
-        public const string ActiveRfIdExist = "RfId already exist and currently Active!!";
+        public const string RfIdExist = "V-Card Id already exist !!";
+        public const string ActiveRfIdExist = "V-Card Id already exist and currently Active!!";
         public const string EmailExist = "Email already exist !!";
         public const string EmailInvalid = "Email Invalid";
         public const string CreatePackageItemSuccessfully = "Create Package Item Successfully!";
-        public const string CreatePackageItemFail = "Create Package Item Failed!";
+        public const string CreatePackageItemFail = "Create Package Order Failed!";
         public const string GetPackageItemsSuccessfully = "Get Package Items Successfully!";
         public const string GetPackageItemsFail = "Get Package Items Failed!";
         public const string GetPackageItemSuccessfully = "Get Package Item Successfully!";
@@ -276,7 +277,7 @@ public static class MessageConstant
         public const string PackageItemExists = "Package Item Name already exists!";
         public const string PhoneNumberExist = "Phone Number already exist !!";
         public const string CCCDExist = "CCCD already exist !!";
-        public const string PackageItemExpired = "PackageItem Expired !!";
+        public const string PackageItemExpired = "Package Order Expired !!";
         public const string CreateSuccessFully = "Create PackageItem Successfully !!";
         public const string SearchPackageItemSuccess = "Search PackageItem Successfully !!";
         public const string SearchAllPackageItemsSuccess = "Search All PackageItems Successfully !!";
@@ -354,6 +355,37 @@ public static class MessageConstant
     }
     public static class StoreMessage
     {
+        public const string GetProductCategorySuccess = "Get Product Category Successfully!";
+        public const string GetListProductCategorySuccess = "Get List Product Category Successfully!";
+        public const string GetListProductCategoryFail = "Get List Product Category Failed!";
+        public const string DeleteProductCategorySuccess = "Delete Product Category Successfully!";
+        public const string DeleteProductCategoryFail = "Delete Product Category Failed!";
+        public const string CreateProductCategorySuccess = "Create Product Category Successfully!";
+        public const string NotFoundProductCategory = "Product Category Not Found!";
+        public const string UpdateProductCategorySuccess = "Update Product Category Successfully!";
+        public const string UpdateProductCategoryFail = "Update Product Category Failed!";
+        public const string GetProductSuccess = "Get Product Successfully!";
+        public const string GetListProductSuccess = "Get List Product Successfully!";
+        public const string GetListProductFail = "Get List Product Failed!";
+        public const string InvalidProductPrice = "Product Price Must Be Greater Than Zero!";
+        public const string UpdateProductSuccess = "Update Product Successfully!";
+        public const string UpdateProductFail = "Update Product Failed!";
+        public const string DeleteProductSuccess = "Delete Product Successfully!";
+        public const string DeleteProductFail = "Delete Product Failed!";
+        public const string InvalidProductStatus = "Product Status Invalid";
+        public const string NotFoundProduct = "Product Not Found";
+        public const string CreateProductSuccess = "Create Product Successfully!";
+        public const string GetMenuSuccess = "Get Menu Successfully!";
+        public const string GetListMenuSuccess = "Get List Menu Successfully!";
+        public const string GetListMenuFail = "Get List Menu Failed!";
+        public const string DeletedMenuSuccess = "Delete Menu Successfully!";
+        public const string DeletedMenuFail = "Delete Menu Failed!";
+        public const string UpdateMenuFailed = "Update Menu Failed!";
+        public const string UpdateMenuSuccess = "Update Menu Successfully!";
+        public const string NotFoundMenu = "Menu Not Found";
+        public const string CreateMenuSuccess = "Create Menu Successfully!";
+        public const string InvalidDateFilter = "Invalid Date Filter";
+        public const string CreateStoreSuccess = "Create Store Successfully!";
         public const string PriceMustBeGreaterThanZero = "Price Must Be Greater Than Zero!";
         public const string InvalidStoreStatus = "Invalid Store Status";
         public const string UpdateStoreSuccesss = "Update Store Successfully!";

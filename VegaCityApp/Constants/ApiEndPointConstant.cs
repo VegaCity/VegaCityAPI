@@ -96,13 +96,37 @@ public static class ApiEndPointConstant
     }
     public static class StoreEndpoint
     {
+        #region Endpoint CRUD Store
+        public const string CreateStore = ApiEndpoint + "/store";
         public const string UpdateStore = ApiEndpoint + "/store/{id}";
         public const string GetListStore = ApiEndpoint + "/stores";
         public const string GetStore = ApiEndpoint + "/store/{id}";
         public const string DeleteStore = ApiEndpoint + "/store/{id}";
-        public const string GetMenu = ApiEndpoint + "/store/{phone}/menu";
+        #endregion
+        //public const string GetMenu = ApiEndpoint + "/store/{phone}/menu";
         public const string GetWalletStore = ApiEndpoint + "/store/wallet";
         public const string RequestCloseForStore = ApiEndpoint + "/store/{id}/request-close";
+        #region Endpoint CRUD Menu
+        public const string CreateMenu = ApiEndpoint + "/store/{storeId}/menu";
+        public const string UpdateMenu = ApiEndpoint + "/store/menu/{id}";
+        public const string DeleteMenu = ApiEndpoint + "/store/menu/{menuid}";
+        public const string GetMenu = ApiEndpoint + "/store/menu/{id}";
+        public const string GetListMenu = ApiEndpoint + "/store/{storeId}/menus";
+        #endregion
+        #region Endpoint CRUD Product
+        public const string CreateProduct = ApiEndpoint + "/store/menu/{menuId}/product";
+        public const string UpdateProduct = ApiEndpoint + "/store/product/{id}";
+        public const string DeleteProduct = ApiEndpoint + "/store/product/{id}";
+        public const string GetProduct = ApiEndpoint + "/store/product/{id}";
+        public const string GetListProduct = ApiEndpoint + "/store/menu/{menuId}/products";
+        #endregion
+        #region Endpoint CRUD ProductCategory
+        public const string CreateProductCategory = ApiEndpoint + "/store/product-category";
+        public const string UpdateProductCategory = ApiEndpoint + "/store/product-category/{id}";
+        public const string DeleteProductCategory = ApiEndpoint + "/store/product-category/{id}";
+        public const string GetProductCategory = ApiEndpoint + "/store/product-category/{id}";
+        public const string GetListProductCategory = ApiEndpoint + "/store/product-categories";
+        #endregion
     }
     public static class HouseEndpoint
     {
