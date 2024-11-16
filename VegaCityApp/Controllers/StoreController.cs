@@ -22,14 +22,14 @@ namespace VegaCityApp.API.Controllers
             _storeService = storeService;
         }
         #region CRUD Store
-        [HttpPost(StoreEndpoint.CreateStore)]
-        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
-        public async Task<IActionResult> CreateStore([FromBody] CreateStoreRequest req)
-        {
-            var result = await _storeService.CreateStore(req);
-            return StatusCode(result.StatusCode, result);
-        }
+        //[HttpPost(StoreEndpoint.CreateStore)]
+        //[ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        //[CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
+        //public async Task<IActionResult> CreateStore([FromBody] CreateStoreRequest req)
+        //{
+        //    var result = await _storeService.CreateStore(req);
+        //    return StatusCode(result.StatusCode, result);
+        //}
         [HttpGet(StoreEndpoint.GetListStore)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> SearchAllStore([FromQuery] Guid apiKey, [FromQuery] int size = 10, [FromQuery] int page = 1)
@@ -99,29 +99,29 @@ namespace VegaCityApp.API.Controllers
         [HttpPatch(StoreEndpoint.UpdateMenu)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Store)]
-        public async Task<IActionResult> UpdateMenu(Guid menuId, UpdateMenuRequest req)
+        public async Task<IActionResult> UpdateMenu(Guid id, UpdateMenuRequest req)
         {
-            var result = await _storeService.UpdateMenu(menuId, req);
+            var result = await _storeService.UpdateMenu(id, req);
             return StatusCode(result.StatusCode, result);
         }
         [HttpDelete(StoreEndpoint.DeleteMenu)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin)]
-        public async Task<IActionResult> DeleteMenu(Guid menuId)
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
+        public async Task<IActionResult> DeleteMenu(Guid menuid)
         {
-            var result = await _storeService.DeleteMenu(menuId);
+            var result = await _storeService.DeleteMenu(menuid);
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(StoreEndpoint.GetMenu)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchMenu(Guid menuId)
+        public async Task<IActionResult> SearchMenu(Guid id)
         {
-            var result = await _storeService.SearchMenu(menuId);
+            var result = await _storeService.SearchMenu(id);
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(StoreEndpoint.GetListMenu)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchAllMenu([FromQuery]Guid storeId, [FromQuery] int page, [FromQuery] int size)
+        public async Task<IActionResult> SearchAllMenu(Guid storeId, [FromQuery] int page = 1, [FromQuery] int size = 10)
         {
             var result = await _storeService.SearchAllMenu(storeId, page, size);
             return StatusCode(result.StatusCode, result);
@@ -139,29 +139,29 @@ namespace VegaCityApp.API.Controllers
         [HttpPatch(StoreEndpoint.UpdateProduct)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Store)]
-        public async Task<IActionResult> UpdateProduct(Guid productId, UpdateProductRequest req)
+        public async Task<IActionResult> UpdateProduct(Guid id, UpdateProductRequest req)
         {
-            var result = await _storeService.UpdateProduct(productId, req);
+            var result = await _storeService.UpdateProduct(id, req);
             return StatusCode(result.StatusCode, result);
         }
         [HttpDelete(StoreEndpoint.DeleteProduct)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
-        public async Task<IActionResult> DeleteProduct(Guid productId)
+        public async Task<IActionResult> DeleteProduct(Guid id)
         {
-            var result = await _storeService.DeleteProduct(productId);
+            var result = await _storeService.DeleteProduct(id);
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(StoreEndpoint.GetProduct)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchProduct(Guid productId)
+        public async Task<IActionResult> SearchProduct(Guid id)
         {
-            var result = await _storeService.SearchProduct(productId);
+            var result = await _storeService.SearchProduct(id);
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(StoreEndpoint.GetListProduct)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchAllProduct([FromQuery] Guid menuId, [FromQuery] int page, [FromQuery] int size)
+        public async Task<IActionResult> SearchAllProduct(Guid menuId, [FromQuery] int page = 1, [FromQuery] int size = 10)
         {
             var result = await _storeService.SearchAllProduct(menuId, page, size);
             return StatusCode(result.StatusCode, result);
@@ -171,37 +171,37 @@ namespace VegaCityApp.API.Controllers
         [HttpPost(StoreEndpoint.CreateProductCategory)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Store)]
-        public async Task<IActionResult> CreateProductCategory(Guid storeId, CreateProductCategoryRequest req)
+        public async Task<IActionResult> CreateProductCategory(CreateProductCategoryRequest req)
         {
-            var result = await _storeService.CreateProductCategory(storeId, req);
+            var result = await _storeService.CreateProductCategory(req);
             return StatusCode(result.StatusCode, result);
         }
         [HttpPatch(StoreEndpoint.UpdateProductCategory)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Store)]
-        public async Task<IActionResult> UpdateProductCategory(Guid productCategoryId, UpdateProductCategoryRequest req)
+        public async Task<IActionResult> UpdateProductCategory(Guid id, UpdateProductCategoryRequest req)
         {
-            var result = await _storeService.UpdateProductCategory(productCategoryId, req);
+            var result = await _storeService.UpdateProductCategory(id, req);
             return StatusCode(result.StatusCode, result);
         }
         [HttpDelete(StoreEndpoint.DeleteProductCategory)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.Store)]
-        public async Task<IActionResult> DeleteProductCategory(Guid productCategoryId)
+        public async Task<IActionResult> DeleteProductCategory(Guid id)
         {
-            var result = await _storeService.DeleteProductCategory(productCategoryId);
+            var result = await _storeService.DeleteProductCategory(id);
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(StoreEndpoint.GetProductCategory)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchProductCategory(Guid productCategoryId)
+        public async Task<IActionResult> SearchProductCategory(Guid id)
         {
-            var result = await _storeService.SearchProductCategory(productCategoryId);
+            var result = await _storeService.SearchProductCategory(id);
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(StoreEndpoint.GetListProductCategory)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> SearchAllProductCategory([FromQuery] Guid storeId, [FromQuery] int page, [FromQuery] int size)
+        public async Task<IActionResult> SearchAllProductCategory([FromQuery] Guid storeId, [FromQuery] int page = 1, [FromQuery] int size = 10)
         {
             var result = await _storeService.SearchAllProductCategory(storeId, page, size);
             return StatusCode(result.StatusCode, result);

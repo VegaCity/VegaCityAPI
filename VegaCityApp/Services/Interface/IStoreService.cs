@@ -11,7 +11,7 @@ namespace VegaCityApp.API.Services.Interface
     public interface IStoreService
     {
         #region CRUD Store
-        Task<ResponseAPI<Store>> CreateStore(CreateStoreRequest req);
+        Task<ResponseAPI<Store>> CreateStore(Guid userStoreId,CreateStoreRequest req);
         Task<ResponseAPI> UpdateStore(Guid storeId,UpdateStoreRequest req);
         Task<ResponseAPI<IEnumerable<GetStoreResponse>>> SearchAllStore(Guid apiKey, int size, int page);
         Task<ResponseAPI> DeleteStore(Guid StoreId);
@@ -35,11 +35,11 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI<IEnumerable<GetProductResponse>>> SearchAllProduct(Guid MenuId, int page, int size);
         #endregion
         #region CRUD ProductCategory
-        Task<ResponseAPI> CreateProductCategory(Guid StoreId, CreateProductCategoryRequest req);
+        Task<ResponseAPI> CreateProductCategory(CreateProductCategoryRequest req);
         Task<ResponseAPI> UpdateProductCategory(Guid ProductCategoryId, UpdateProductCategoryRequest req);
         Task<ResponseAPI> DeleteProductCategory(Guid ProductCategoryId);
         Task<ResponseAPI<ProductCategory>> SearchProductCategory(Guid ProductCategoryId);
-        Task<ResponseAPI<IEnumerable<GetProductCategoryResponse>>> SearchAllProductCategory(Guid StoreId, int page, int size);
+        Task<ResponseAPI<IEnumerable<GetProductCategoryResponse>>> SearchAllProductCategory(Guid StoreId,int page, int size);
         #endregion
     }
 }

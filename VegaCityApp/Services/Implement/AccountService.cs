@@ -59,7 +59,7 @@ namespace VegaCityApp.Service.Implement
                 Status = role != null && role.Name == RoleEnum.Store.GetDescriptionFromEnum()? (int)UserStatusEnum.PendingVerify: (int) UserStatusEnum.Active,
                 Password = role != null && role.Name == RoleEnum.Store.GetDescriptionFromEnum()? null : PasswordUtil.GenerateCharacter(10),
                 IsChange = false,
-                //RegisterStoreType = req.RegisterStoreType != null ? req.RegisterStoreType : null
+                RegisterStoreType = req.RegisterStoreType != null ? req.RegisterStoreType : null
             };
             await _unitOfWork.GetRepository<User>().InsertAsync(newUser);
             await _unitOfWork.CommitAsync();
@@ -69,10 +69,14 @@ namespace VegaCityApp.Service.Implement
         {
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
                 predicate: x => x.Name == WalletTypeEnum.UserWallet.GetDescriptionFromEnum());
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
+                predicate: x => x.Id == userId);
             var newWallet = new Wallet
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
+                Name = user.FullName,
+                BalanceStart = 0,
                 Balance = 0,
                 BalanceHistory = 0,
                 CrDate = TimeUtils.GetCurrentSEATime(),
@@ -97,6 +101,10 @@ namespace VegaCityApp.Service.Implement
                 StoreId = storeId
             };
             await _unitOfWork.GetRepository<UserStoreMapping>().InsertAsync(mapping);
+            //update wallet user
+            var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(
+                predicate: x => x.UserId == user.Id);
+            wallet.StoreId = storeId;
             await _unitOfWork.CommitAsync();
             return user.Id;
         }
@@ -721,22 +729,23 @@ namespace VegaCityApp.Service.Implement
                         ZoneId = zone.Id
                     };
                     await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
-                    var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
-                        predicate: x => x.Name == WalletTypeEnum.StoreWallet.GetDescriptionFromEnum());
-                    var wallet = new Wallet
-                    {
-                        Id = Guid.NewGuid(),
-                        UserId = user.Data.Id,
-                        Balance = 0,
-                        BalanceHistory = 0,
-                        CrDate = TimeUtils.GetCurrentSEATime(),
-                        UpsDate = TimeUtils.GetCurrentSEATime(),
-                        Deflag = false,
-                        StartDate = TimeUtils.GetCurrentSEATime(),
-                        StoreId = newStore.Id,
-                        WalletTypeId = walletType.Id
-                    };
-                    await _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
+                    //var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
+                    //    predicate: x => x.Name == WalletTypeEnum.StoreWallet.GetDescriptionFromEnum());
+                    //var wallet = new Wallet
+                    //{
+                    //    Id = Guid.NewGuid(),
+                    //    UserId = user.Data.Id,
+                    //    Balance = 0,
+                    //    BalanceHistory = 0,
+                    //    CrDate = TimeUtils.GetCurrentSEATime(),
+                    //    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    //    Deflag = false,
+                    //    StartDate = TimeUtils.GetCurrentSEATime(),
+                    //    StoreId = newStore.Id,
+                    //    WalletTypeId = walletType.Id,
+                    //    BalanceStart = 0
+                    //};
+                    //await _unitOfWork.GetRepository<Wallet>().InsertAsync(wallet);
                     await _unitOfWork.CommitAsync();
                     #endregion
                     //update user

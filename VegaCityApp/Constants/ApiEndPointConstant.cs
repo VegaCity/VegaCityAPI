@@ -109,7 +109,7 @@ public static class ApiEndPointConstant
         #region Endpoint CRUD Menu
         public const string CreateMenu = ApiEndpoint + "/store/{storeId}/menu";
         public const string UpdateMenu = ApiEndpoint + "/store/menu/{id}";
-        public const string DeleteMenu = ApiEndpoint + "/store/menu/{id}";
+        public const string DeleteMenu = ApiEndpoint + "/store/menu/{menuid}";
         public const string GetMenu = ApiEndpoint + "/store/menu/{id}";
         public const string GetListMenu = ApiEndpoint + "/store/{storeId}/menus";
         #endregion
@@ -121,11 +121,11 @@ public static class ApiEndPointConstant
         public const string GetListProduct = ApiEndpoint + "/store/menu/{menuId}/products";
         #endregion
         #region Endpoint CRUD ProductCategory
-        public const string CreateProductCategory = ApiEndpoint + "/store/{storeId}/product-category";
+        public const string CreateProductCategory = ApiEndpoint + "/store/product-category";
         public const string UpdateProductCategory = ApiEndpoint + "/store/product-category/{id}";
         public const string DeleteProductCategory = ApiEndpoint + "/store/product-category/{id}";
         public const string GetProductCategory = ApiEndpoint + "/store/product-category/{id}";
-        public const string GetListProductCategory = ApiEndpoint + "/store/{storeId}/product-categories";
+        public const string GetListProductCategory = ApiEndpoint + "/store/product-categories";
         #endregion
     }
     public static class HouseEndpoint
