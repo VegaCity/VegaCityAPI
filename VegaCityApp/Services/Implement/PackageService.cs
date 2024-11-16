@@ -624,13 +624,14 @@ namespace VegaCityApp.API.Services.Implement
                     StartDate = x.StartDate,
                     Status = x.Status,
                     UpsDate = x.UpsDate,
-                    IsAdult = x.IsAdult
+                    IsAdult = x.IsAdult,
+                    WalletTypeName = x.Wallets.SingleOrDefault().WalletType.Name
                 },
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.CusName),
                 predicate: x => x.Package.Zone.MarketZoneId == GetMarketZoneIdFromJwt(),
-                include: x => x.Include(a => a.Package).ThenInclude(c => c.Zone)
+                include: x => x.Include(a => a.Package).ThenInclude(c => c.Zone).Include(b => b.Wallets).ThenInclude(t => t.WalletType)
                 );
                 return new ResponseAPI<IEnumerable<GetListPackageItemResponse>>
                 {
