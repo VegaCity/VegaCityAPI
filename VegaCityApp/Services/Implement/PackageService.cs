@@ -623,7 +623,8 @@ namespace VegaCityApp.API.Services.Implement
                     PhoneNumber = x.PhoneNumber,
                     StartDate = x.StartDate,
                     Status = x.Status,
-                    UpsDate = x.UpsDate
+                    UpsDate = x.UpsDate,
+                    IsAdult = x.IsAdult
                 },
                 page: page,
                 size: size,
@@ -662,7 +663,9 @@ namespace VegaCityApp.API.Services.Implement
             var packageOrder = await _unitOfWork.GetRepository<PackageOrder>().SingleOrDefaultAsync(
                 predicate: x => x.Id == PackageOrderId || x.VcardId == rfid,
                 //&& x.Status == PackageItemStatus.Active.ToString() && x.Status == PackageItemStatus.Inactive.ToString()
-                include: z => z.Include(a => a.Package).Include(a => a.Vcard).Include(a => a.Wallets)
+                include: z => z.Include(a => a.Package)
+                               .Include(a => a.Vcard)
+                               .Include(a => a.Wallets).ThenInclude(a => a.WalletType)
             );
 
             if (packageOrder == null)
