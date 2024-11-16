@@ -649,21 +649,27 @@ namespace VegaCityApp.API.Services.Implement
                     wallet.Balance += order.TotalAmount;
                     wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
-                    ////create deposit
-                    //var deposit = new Deposit()
-                    //{
-                    //    Id = Guid.NewGuid(),
-                    //    CrDate = TimeUtils.GetCurrentSEATime(),
-                    //    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    //    Amount = order.TotalAmount + order.PromotionOrders.SingleOrDefault().DiscountAmount,
-                    //    WalletId = wallet.Id,
-                    //    OrderId = order.Id,
-                    //    IsIncrease = true,
-                    //    Name = "Deposit from order " + order.InvoiceId,
-                    //    PackageItemId = (Guid)order.PackageItemId,
-                    //    PaymentType = PaymentTypeEnum.Cash.GetDescriptionFromEnum()
-                    //};
-                    //await _unitOfWork.GetRepository<Deposit>().InsertAsync(deposit);
+                    var transactionCharge = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
+                        (predicate: x => x.Id == Guid.Parse(req.TransactionChargeId))
+                        ?? throw new BadHttpRequestException("Transaction charge not found", HttpStatusCodes.NotFound);
+
+                    transactionCharge.Status = TransactionStatus.Success.GetDescriptionFromEnum();
+                    transactionCharge.UpsDate = TimeUtils.GetCurrentSEATime();
+                    // transactionCharge.DespositId = deposit.Id;
+                    _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionCharge);
+                    var customerMoneyTransfer = new CustomerMoneyTransfer()
+                    {
+                        Id = Guid.NewGuid(),
+                        Amount = order.TotalAmount,
+                        IsIncrease = true,
+                        MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
+                        PackageOrderId = order.PackageOrderId,
+                        TransactionId = transactionCharge.Id,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        Status = OrderStatus.Completed.GetDescriptionFromEnum(),
+                        UpsDate = TimeUtils.GetCurrentSEATime()
+                    };
+                    await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(customerMoneyTransfer);
 
                     //update wallet package item
                     var packageOrderWallet = order.PackageOrder.Wallets.SingleOrDefault();
@@ -674,14 +680,7 @@ namespace VegaCityApp.API.Services.Implement
                     packageOrderWallet.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderWallet);
 
-                    var transactionCharge = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
-                        (predicate: x => x.Id == Guid.Parse(req.TransactionChargeId))
-                        ?? throw new BadHttpRequestException("Transaction charge not found", HttpStatusCodes.NotFound);
-
-                    transactionCharge.Status = TransactionStatus.Success.GetDescriptionFromEnum();
-                    transactionCharge.UpsDate = TimeUtils.GetCurrentSEATime();
-                   // transactionCharge.DespositId = deposit.Id;
-                    _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionCharge);
+                    
                     //create new CUSTOMERMONEY TRANSFER
                     var newCusTransfer = new CustomerMoneyTransfer()
                     {
