@@ -7,7 +7,7 @@
         Expired = 2,
         Blocked = -1
     }
-     public enum PackageItemParentStatusEnum
+    public enum PackageItemParentStatusEnum
     {
         True = 1,
         False = 0,
@@ -22,7 +22,6 @@
     public enum PackageTypeEnum
     {
         SpecificPackage,
-        ServicePackage,
-        all
+        ServicePackage
     }
 }
