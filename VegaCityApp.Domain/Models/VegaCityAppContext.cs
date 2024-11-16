@@ -228,6 +228,11 @@ namespace VegaCityApp.Domain.Models
                     .HasForeignKey(d => d.PackageId)
                     .HasConstraintName("FK_Order_Package");
 
+                entity.HasOne(d => d.PackageOrder)
+                    .WithMany(p => p.Orders)
+                    .HasForeignKey(d => d.PackageOrderId)
+                    .HasConstraintName("FK_Order_PackageOrder");
+
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.StoreId)
