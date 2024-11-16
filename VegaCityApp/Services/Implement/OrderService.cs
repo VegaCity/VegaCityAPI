@@ -535,7 +535,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             Guid marketZoneId = GetMarketZoneIdFromJwt();
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
-                predicate: x => x.InvoiceId == req.InvoiceId ,
+                predicate: x => x.InvoiceId == req.InvoiceId,
                 include: order => order.Include(h => h.Payments).Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(a => a.OrderDetails).Include(x => x.Package)
                                        .Include(g => g.PackageOrder)
@@ -897,16 +897,9 @@ namespace VegaCityApp.API.Services.Implement
                 sessionUser.TotalFinalAmountOrder += order.TotalAmount;
                 _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
 
-                if (order.Package.PackageOrders.Count != 0)
-                {
-                    foreach (var packageOrder in order.Package.PackageOrders)
-                    {
-                        packageOrder.Status = OrderStatus.Completed;
-                        packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                        _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
-                    }
-                }
-                else throw new BadHttpRequestException("Package order not found", HttpStatusCodes.NotFound);
+                order.PackageOrder.Status = OrderStatus.Completed;
+                order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
 
                 //wallet cashier
                 var wallet = order.User.Wallets.FirstOrDefault();
