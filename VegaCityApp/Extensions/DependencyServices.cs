@@ -36,12 +36,12 @@ public static class DependencyServices
             .AddEnvironmentVariables(EnvironmentVariableConstant.Prefix).Build();
         //services.AddDbContext<VegaCityAppContext>(options => options.UseSqlServer("Data Source=LAPTOP-R0K7KBGI\\TRANGQUOCDAT;Initial Catalog=VegaCityApp2;Persist Security Info=True;User ID=sa;Password=12345;Trust Server Certificate=True"));
         services.AddDbContext<VegaCityAppContext>(options => options.UseSqlServer(CreateConnectionString(configuration)));
-        services.AddHangfire(config => config
-         .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-         .UseSimpleAssemblyNameTypeSerializer()
-         .UseRecommendedSerializerSettings()
-         .UseSqlServerStorage(CreateConnectionString(configuration)));
-        services.AddHangfireServer();
+        //services.AddHangfire(config => config
+        // .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        // .UseSimpleAssemblyNameTypeSerializer()
+        // .UseRecommendedSerializerSettings()
+        // .UseSqlServerStorage(CreateConnectionString(configuration)));
+        //services.AddHangfireServer();
         return services;
     }
 
