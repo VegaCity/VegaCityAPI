@@ -369,7 +369,7 @@ namespace VegaCityApp.API.Services.Implement
                     .Include(u => u.User)
                     .Include(o => o.Store)
                     .Include(z => z.OrderDetails)
-                    .Include(p => p.Package).ThenInclude(h => h.PackageOrders)
+                    .Include(p => p.PackageOrder)
                     .Include(h => h.PromotionOrders)) ?? throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
             string json = "";
             //string? customerInfo = "";
@@ -607,7 +607,7 @@ namespace VegaCityApp.API.Services.Implement
             //
             if (order.SaleType == SaleType.PackageItemCharge)
             {
-                if(order.Package.PackageOrders.SingleOrDefault() == null) throw new BadHttpRequestException("Package item or sale type not found", HttpStatusCodes.NotFound);
+                if(order.PackageOrder == null) throw new BadHttpRequestException("Package item or sale type not found", HttpStatusCodes.NotFound);
             }
             if(order.Payments.SingleOrDefault().Name != PaymentTypeEnum.Cash.GetDescriptionFromEnum()) 
                 throw new BadHttpRequestException("Payment is not cash", HttpStatusCodes.BadRequest);
@@ -764,18 +764,9 @@ namespace VegaCityApp.API.Services.Implement
                     sessionUser.TotalCashReceive += order.TotalAmount;
                     sessionUser.TotalFinalAmountOrder += order.TotalAmount;
                     _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
-
-                    if (order.Package.PackageOrders.Count != 0)
-                    {
-                        foreach (var packageOrder in order.Package.PackageOrders)
-                        {
-                            packageOrder.Status = OrderStatus.Completed;
-                            packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                            _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
-                        }
-                    }
-                    else throw new BadHttpRequestException("Package order not found", HttpStatusCodes.NotFound);
-
+                    order.PackageOrder.Status = OrderStatus.Completed;
+                    order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
                     //wallet cashier
                     var wallet = order.User.Wallets.FirstOrDefault();
                     wallet.Balance += order.TotalAmount;
@@ -856,7 +847,7 @@ namespace VegaCityApp.API.Services.Implement
                         Amount = order.TotalAmount,
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                        Description = "Refund money from order: " + order.InvoiceId + "to PackageItem: " + order.Package.PackageOrders.SingleOrDefault().CusName,
+                        Description = "Refund money from order: " + order.InvoiceId + "to PackageItem: " + order.PackageOrder.CusName,
                         IsIncrease = false,
                         Status = TransactionStatus.Success.GetDescriptionFromEnum(),
                         Type = TransactionType.RefundMoney,

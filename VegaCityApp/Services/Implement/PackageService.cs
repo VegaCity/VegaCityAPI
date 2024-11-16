@@ -903,7 +903,7 @@ namespace VegaCityApp.API.Services.Implement
                     Id = Guid.NewGuid(),
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     FinalAmount = req.ChargeAmount,
-                    Name = "Charge Money for: " + packageOrderExsit.CusName + "with balance: " + req.ChargeAmount,
+                    Name = req.PaymentType,
                     OrderId = newOrder.Id,
                     UpsDate = TimeUtils.GetCurrentSEATime(),
                     Status = PaymentStatus.Pending,
