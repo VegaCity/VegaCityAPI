@@ -13,7 +13,7 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> CreatePackage(CreatePackageRequest req);
         Task<ResponseAPI> UpdatePackage(Guid packageId, UpdatePackageRequest req);
         Task<ResponseAPI<IEnumerable<GetPackageResponse>>> SearchAllPackage(int size, int page);
-        Task<ResponseAPI<Package>> SearchPackage(Guid PackageId);
+        Task<ResponseAPI<Package>> SearchPackage(Guid? PackageId);
         Task<ResponseAPI> DeletePackage(Guid PackageId);
         Task<ResponseAPI> CreatePackageItem(int quantity, CreatePackageItemRequest req);
         Task<ResponseAPI> ActivePackageItem(Guid packageItem);

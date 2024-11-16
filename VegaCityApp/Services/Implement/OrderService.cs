@@ -557,7 +557,8 @@ namespace VegaCityApp.API.Services.Implement
                     var transactionFee = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
                         (predicate: x => x.Id == Guid.Parse(req.TransactionId))
                         ?? throw new BadHttpRequestException("Transaction charge not found", HttpStatusCodes.NotFound);
-
+                    if(transactionFee.Status == "Success")
+                       throw new BadHttpRequestException("Order had been PAID", HttpStatusCodes.BadRequest);
                     transactionFee.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                     transactionFee.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionFee);
@@ -569,13 +570,10 @@ namespace VegaCityApp.API.Services.Implement
                     order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
                     order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
-
-
-                    order.Package.PackageOrders.SingleOrDefault().Status = PackageItemStatus.Active.GetDescriptionFromEnum();
-                    order.Package.PackageOrders.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.Package.PackageOrders.SingleOrDefault());
                    
+                    order.PackageOrder.Status = PackageItemStatus.Active.GetDescriptionFromEnum();
+                    order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                   _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
                      ////UPDATE CASHIER WALLET
                      order.User.Wallets.SingleOrDefault().Balance += 50000;
                      order.User.Wallets.SingleOrDefault().BalanceHistory += 50000;

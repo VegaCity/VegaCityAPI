@@ -19,6 +19,13 @@
         Expired,
         Blocked
     }
+    public enum VCardStatus
+    {
+        Active,
+        Inactive,
+        Expired,
+        Blocked
+    }
     public enum PackageTypeEnum
     {
         SpecificPackage,

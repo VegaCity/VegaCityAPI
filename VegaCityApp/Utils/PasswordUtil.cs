@@ -101,5 +101,29 @@ namespace VegaCityApp.API.Utils
             var random = new Random();
             return random.Next(100000, 999999).ToString();
         }
+        public class UniqueIdGenerator
+        {
+            private static HashSet<string> generatedIds = new HashSet<string>();
+
+            public static string GenerateUniqueRandomNumber(int length)
+            {
+                const string chars = "0123456789";
+                Random random = new Random();
+                string newId;
+
+                // Keep generating until we have a unique ID
+                do
+                {
+                    newId = new string(Enumerable.Repeat(chars, length)
+                                                 .Select(s => s[random.Next(s.Length)]).ToArray());
+                }
+                while (generatedIds.Contains(newId));
+
+                // Add the new unique ID to the set
+                generatedIds.Add(newId);
+
+                return newId;
+            }
+        }
     }
 }
