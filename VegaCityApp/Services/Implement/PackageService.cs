@@ -33,8 +33,8 @@ namespace VegaCityApp.API.Services.Implement
             if(req.Price <= 0) throw new BadHttpRequestException("The number must be more than 0", HttpStatusCodes.BadRequest);
             if (req.MoneyStart <= 0) throw new BadHttpRequestException("The number must be more than 0", HttpStatusCodes.BadRequest);
             if (req.Duration <= 0) throw new BadHttpRequestException("The number must be more than 0", HttpStatusCodes.BadRequest);
-            if (EnumUtil.ParseEnum<PackageTypeEnum>(req.Type) != PackageTypeEnum.SpecificPackage 
-                || EnumUtil.ParseEnum<PackageTypeEnum>(req.Type) != PackageTypeEnum.ServicePackage)
+            if (!EnumUtil.ParseEnum<PackageTypeEnum>(req.Type).Equals(PackageTypeEnum.SpecificPackage)
+                && !EnumUtil.ParseEnum<PackageTypeEnum>(req.Type).Equals(PackageTypeEnum.ServicePackage))
                 throw new BadHttpRequestException(PackageMessage.InvalidPackageType, HttpStatusCodes.BadRequest);
             var checkZone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == req.ZoneId)
                 ?? throw new BadHttpRequestException(ZoneMessage.SearchZoneFail, HttpStatusCodes.NotFound);
@@ -567,8 +567,9 @@ namespace VegaCityApp.API.Services.Implement
                         CusEmail = req.CusEmail,
                         CusCccdpassport = req.CusCccdpassport,
                         PhoneNumber = req.PhoneNumber,
-                        StartDate = TimeUtils.GetCurrentSEATime(),
-                        EndDate = TimeUtils.GetCurrentSEATime().AddDays(package.Data.Duration)
+                        //StartDate = TimeUtils.GetCurrentSEATime(),
+                        //EndDate = TimeUtils.GetCurrentSEATime().AddDays(package.Data.Duration)
+                        IsAdult = true
                     };
                     packageOrders.Add(_mapper.Map<GetListPackageItemResponse>(newPackageOrder));
                     await _unitOfWork.GetRepository<PackageOrder>().InsertAsync(newPackageOrder);
@@ -582,8 +583,8 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime(),
                         Deflag = false,
                         WalletTypeId = package.Data.PackageDetails.SingleOrDefault().WalletTypeId,
-                        StartDate = TimeUtils.GetCurrentSEATime(),
-                        EndDate = TimeUtils.GetCurrentSEATime().AddDays(package.Data.Duration),
+                        //StartDate = TimeUtils.GetCurrentSEATime(),
+                        //EndDate = TimeUtils.GetCurrentSEATime().AddDays(package.Data.Duration),
                         Name = req.CusName,
                         PackageOrderId = newPackageOrder.Id
                     };
@@ -661,7 +662,7 @@ namespace VegaCityApp.API.Services.Implement
             var packageOrder = await _unitOfWork.GetRepository<PackageOrder>().SingleOrDefaultAsync(
                 predicate: x => x.Id == PackageOrderId || x.VcardId == rfid,
                 //&& x.Status == PackageItemStatus.Active.ToString() && x.Status == PackageItemStatus.Inactive.ToString()
-                include: z => z.Include(a => a.Package)
+                include: z => z.Include(a => a.Package).Include(a => a.Vcard).Include(a => a.Wallets)
             );
 
             if (packageOrder == null)
@@ -748,6 +749,23 @@ namespace VegaCityApp.API.Services.Implement
                     throw new BadHttpRequestException(PackageItemMessage.ActiveRfIdExist, HttpStatusCodes.BadRequest);
                 }
             }
+            var newVCard = new Vcard
+            {
+                Id = rfId,
+                Cccdpassport = packageOrder.Data.CusCccdpassport,
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                Status = PackageItemStatus.Active.GetDescriptionFromEnum(),
+                Email = packageOrder.Data.CusEmail,
+                EndDate = packageOrder.Data.EndDate,
+                ImageUrl = packageOrder.Data.Package.ImageUrl,
+                Name = packageOrder.Data.CusName,
+                PhoneNumber = packageOrder.Data.PhoneNumber,
+                IsAdult = packageOrder.Data.IsAdult,
+                StartDate = packageOrder.Data.StartDate
+            };
+            await _unitOfWork.GetRepository<Vcard>().InsertAsync(newVCard);
+
             packageOrder.Data.VcardId = rfId;
             packageOrder.Data.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder.Data);
@@ -762,7 +780,7 @@ namespace VegaCityApp.API.Services.Implement
                 StatusCode = HttpStatusCodes.BadRequest
             };
         } 
-        public async Task<ResponseAPI> ActivePackageItem(Guid packageOrderId, ActivatePackageItemRequest req)
+        public async Task<ResponseAPI> ActivePackageItem(Guid packageOrderId)
         {
             var packageOrderExist = await SearchPackageItem(packageOrderId, null);
             #region check 
@@ -781,23 +799,14 @@ namespace VegaCityApp.API.Services.Implement
             {
                 throw new BadHttpRequestException(PackageItemMessage.AlreadyActivated, HttpStatusCodes.BadRequest);
             }
-            if (!ValidationUtils.IsCCCD(req.Cccdpassport))
-                throw new BadHttpRequestException(PackageItemMessage.CCCDInvalid, HttpStatusCodes.BadRequest);
-            if (!ValidationUtils.IsEmail(req.Email))
-                throw new BadHttpRequestException(PackageItemMessage.EmailInvalid, HttpStatusCodes.BadRequest);
-            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
-                throw new BadHttpRequestException(PackageItemMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
+            
             packageOrderExist.Data.Status = PackageItemStatusEnum.Active.GetDescriptionFromEnum();
-            packageOrderExist.Data.CusName = req.Name.Trim();
-            packageOrderExist.Data.PhoneNumber = req.PhoneNumber.Trim();
-            packageOrderExist.Data.CusCccdpassport = req.Cccdpassport.Trim();
-            packageOrderExist.Data.CusEmail = req.Email.Trim();
             packageOrderExist.Data.StartDate = TimeUtils.GetCurrentSEATime();
             packageOrderExist.Data.EndDate = TimeUtils.GetCurrentSEATime().AddDays(packageOrderExist.Data.Package.Duration);
             packageOrderExist.Data.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrderExist.Data);
             //update wallet
-            var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.Id == packageOrderExist.Data.Wallets.SingleOrDefault().Id);
+            var wallet = packageOrderExist.Data.Wallets.SingleOrDefault();
             wallet.StartDate = TimeUtils.GetCurrentSEATime();
             wallet.EndDate = TimeUtils.GetCurrentSEATime().AddDays(packageOrderExist.Data.Package.Duration);
             wallet.UpsDate = TimeUtils.GetCurrentSEATime();

@@ -22,6 +22,7 @@
     public enum PackageTypeEnum
     {
         SpecificPackage,
-        ServicePackage
+        ServicePackage,
+        all
     }
 }

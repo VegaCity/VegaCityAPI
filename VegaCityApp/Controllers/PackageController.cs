@@ -142,9 +142,9 @@ namespace VegaCityApp.API.Controllers
         [CustomAuthorize(RoleEnum.CashierWeb)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [SwaggerOperation(Summary = "Get ready to active")]
-        public async Task<IActionResult> ActivePackageItem(Guid id, [FromBody] ActivatePackageItemRequest request)
+        public async Task<IActionResult> ActivePackageItem(Guid id)
         {
-            var result = await _packageService.ActivePackageItem(id, request);
+            var result = await _packageService.ActivePackageItem(id);
             return StatusCode(result.StatusCode, result);
         }
         [HttpPost(PackageEndpoint.PrepareChargeMoney)]
