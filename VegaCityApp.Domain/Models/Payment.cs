@@ -11,14 +11,14 @@ namespace VegaCityApp.Domain.Models
         }
 
         public Guid Id { get; set; }
-        public string? Name { get; set; }
-        public DateTime? CrDate { get; set; }
-        public DateTime? UpsDate { get; set; }
-        public string? Status { get; set; }
-        public int? FinalAmount { get; set; }
-        public Guid? OrderId { get; set; }
+        public string Name { get; set; } = null!;
+        public DateTime CrDate { get; set; }
+        public DateTime UpsDate { get; set; }
+        public string Status { get; set; } = null!;
+        public int FinalAmount { get; set; }
+        public Guid OrderId { get; set; }
 
-        public virtual Order? Order { get; set; }
+        public virtual Order Order { get; set; } = null!;
         public virtual ICollection<Transaction> Transactions { get; set; }
     }
 }

@@ -268,7 +268,7 @@ public static class MessageConstant
         public const string GetPackageItemsFail = "Get Package Items Failed!";
         public const string GetPackageItemSuccessfully = "Get Package Item Successfully!";
         public const string GetPackageItemFail = "Get Package Item Failed!";
-        public const string NotFoundPackageItem = "Package Item Not Found!";
+        public const string NotFoundPackageItem = "Package Order Not Found!";
         public const string FoundPackageItem = "Get Package Item Successfully!";
         public const string UpdatePackageItemSuccessfully = "Update Package Item Successfully!";
         public const string UpdatePackageItemFail = "Update Package Item Failed!";

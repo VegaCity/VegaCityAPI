@@ -851,7 +851,7 @@ namespace VegaCityApp.API.Services.Implement
                 }
             }
             var packageOrderExsit = await _unitOfWork.GetRepository<PackageOrder>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageOrderId
-            && x.CusCccdpassport == req.CccdPassport, include: w => w.Include(wallet => wallet.Wallets).ThenInclude(w => w.WalletType).Include(z => z.Package))
+            , include: w => w.Include(wallet => wallet.Wallets).ThenInclude(w => w.WalletType).Include(z => z.Package))
                 ?? throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
             if(packageOrderExsit.EndDate <= TimeUtils.GetCurrentSEATime())
             {
@@ -1099,7 +1099,6 @@ namespace VegaCityApp.API.Services.Implement
             _unitOfWork.GetRepository<PackageOrder>().UpdateRange(packageOrders);
             await _unitOfWork.CommitAsync();
         }
-
         public async Task<ResponseAPI> PackageItemPayment(Guid packageOrderId, int totalPrice, Guid storeId, List<OrderProduct> products)
         {
            
@@ -1292,7 +1291,6 @@ namespace VegaCityApp.API.Services.Implement
                    MessageResponse = EtagMessage.FailedToPay
                };
         }
-
         public async Task SolveWalletPackageItem(Guid apiKey)
         {
             var packageItems = await _unitOfWork.GetRepository<PackageOrder>().GetListAsync
@@ -1356,7 +1354,6 @@ namespace VegaCityApp.API.Services.Implement
             }
             await _unitOfWork.CommitAsync();
         }
-
         private static string NormalizeString(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -1381,7 +1378,6 @@ namespace VegaCityApp.API.Services.Implement
 
             return result;
         }
-
         public async Task <ResponseAPI> GetLostPackageItem(GetLostPackageItemRequest req)
         {
             //need authorize cashierWeb
