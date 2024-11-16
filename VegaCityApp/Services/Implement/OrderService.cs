@@ -571,10 +571,10 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
 
 
-                    order.Package.PackageOrders.SingleOrDefault().Status = PackageItemStatus.Active.GetDescriptionFromEnum();
-                    order.Package.PackageOrders.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    order.PackageOrder  .Status = PackageItemStatus.Active.GetDescriptionFromEnum();
+                    order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
 
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.Package.PackageOrders.SingleOrDefault());
+                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
                    
                      ////UPDATE CASHIER WALLET
                      order.User.Wallets.SingleOrDefault().Balance += 50000;
@@ -726,7 +726,7 @@ namespace VegaCityApp.API.Services.Implement
                         Amount = order.TotalAmount,
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                        Description = "Refund money from order: " + order.InvoiceId + "to PackageItem: " + order.Package.PackageOrders.SingleOrDefault().CusName,
+                        Description = "Refund money from order: " + order.InvoiceId + "to PackageItem: " + order.PackageOrder.CusName,
                         IsIncrease = false,
                         Status = TransactionStatus.Success.GetDescriptionFromEnum(),
                         Type = TransactionType.RefundMoney,
