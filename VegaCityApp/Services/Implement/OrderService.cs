@@ -471,7 +471,6 @@ namespace VegaCityApp.API.Services.Implement
                 PackageOrderId = newPackageOrder.Id,
             };
             await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
-
             //payment
             var newPayment = new Payment()
             {
@@ -485,19 +484,19 @@ namespace VegaCityApp.API.Services.Implement
             };
             await _unitOfWork.GetRepository<Payment>().InsertAsync(newPayment);
             //create order Detail
-            //var orderDetail = new OrderDetail() //add userId here
-            //{
-            //    Id = Guid.NewGuid(),
-            //    OrderId = newOrder.Id,
-            //    CrDate = TimeUtils.GetCurrentSEATime(),
-            //    UpsDate = TimeUtils.GetCurrentSEATime(),
-            //    Quantity = count,
-            //    Amount = req.TotalAmount,
-            //    FinalAmount = amount,
-            //    PromotionAmount = 0,
-            //    Vatamount = (int)(EnvironmentVariableConstant.VATRate * amount),
-            //};
-            //await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
+            var orderDetail = new OrderDetail() //add userId here
+            {
+                Id = Guid.NewGuid(),
+                OrderId = newOrder.Id,
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                Quantity = count,
+                Amount = req.TotalAmount,
+                FinalAmount = amount,
+                PromotionAmount = 0,
+                Vatamount = (int)(EnvironmentVariableConstant.VATRate * amount)
+            };
+            await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
             var transaction = new Transaction
             {
                 Id = Guid.NewGuid(),
@@ -538,7 +537,7 @@ namespace VegaCityApp.API.Services.Implement
             var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
                 predicate: x => x.InvoiceId == req.InvoiceId ,
                 include: order => order.Include(h => h.Payments).Include(a => a.User).ThenInclude(b => b.Wallets)
-                                       .Include(x => x.Package)
+                                       .Include(a => a.OrderDetails).Include(x => x.Package)
                                        .Include(g => g.PackageOrder)
                                        .ThenInclude(r => r.Wallets).Include(p => p.PromotionOrders));
             var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
@@ -620,6 +619,9 @@ namespace VegaCityApp.API.Services.Implement
                     order.Status = OrderStatus.Completed;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                    //updateOrderDetail
+                    order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime(); //may add new Status for OrderDetail Below
+                    _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
                     //update payment 
                     order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
                     order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();

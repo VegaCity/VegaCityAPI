@@ -172,6 +172,9 @@ namespace VegaCityApp.API.Services.Implement
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
 
+            var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
+                (predicate: x => x.UserId == order.UserId)
+                ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
             //check id? etagtype or package
             string productJson = null;
             OrderProductFromCashierRequest productData = null;
@@ -221,6 +224,18 @@ namespace VegaCityApp.API.Services.Implement
                 Description = "Add" + order.SaleType + " Balance By " + order.Payments.SingleOrDefault().Name + " to cashier web: " + order.User.FullName,
             };
             await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
+
+            order.User.Wallets.SingleOrDefault().BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
+            order.User.Wallets.SingleOrDefault().Balance += Int32.Parse(order.TotalAmount.ToString());
+            order.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+            await _unitOfWork.GetRepository<Wallet>().InsertAsync(order.User.Wallets.SingleOrDefault());
+
+            //session update
+            sessionUser.TotalQuantityOrder += 1;
+            sessionUser.TotalCashReceive += order.TotalAmount;
+            sessionUser.TotalFinalAmountOrder += order.TotalAmount;
+            _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
+
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
@@ -241,7 +256,8 @@ namespace VegaCityApp.API.Services.Implement
                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(x => x.PackageOrder).ThenInclude(r => r.Wallets)
                                        .Include(s => s.PromotionOrders).ThenInclude(a => a.Promotion)
-                                       .Include(a => a.Payments));
+                                       .Include(a => a.Payments)
+                                       .Include(o => o.OrderDetails));
                 var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
                     (predicate: x => x.UserId == order.UserId)
                     ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
@@ -259,6 +275,13 @@ namespace VegaCityApp.API.Services.Implement
                     order.Status = OrderStatus.Completed;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+                    order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime(); //may add new Status for OrderDetail Below
+                    _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
+                    //payment
+                    order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
+                    order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
                     //quantity promotion -
                     //
                     order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
@@ -377,6 +400,12 @@ namespace VegaCityApp.API.Services.Implement
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
 
+                    order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime(); //may add new Status for OrderDetail Below
+                    _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
+                    //payment
+                    order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
+                    order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
                     //session update
                     sessionUser.TotalQuantityOrder += 1;
                     sessionUser.TotalCashReceive += order.TotalAmount;
@@ -620,6 +649,11 @@ namespace VegaCityApp.API.Services.Implement
                  include: detail => detail.Include(a => a.OrderDetails).Include(u => u.User).ThenInclude(w => w.Wallets));
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+            var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
+            (predicate: x => x.UserId == order.UserId)
+            ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
             //check id? etagtype or package
             string productJson = null;
             OrderProductFromCashierRequest productData = null;
@@ -670,7 +704,18 @@ namespace VegaCityApp.API.Services.Implement
                 Description = "Add" + order.SaleType + " Balance By " + order.Payments.SingleOrDefault().Name +  " to cashier web: " + order.User.FullName,
             };
             await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
-            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+            order.User.Wallets.SingleOrDefault().BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
+            order.User.Wallets.SingleOrDefault().Balance += Int32.Parse(order.TotalAmount.ToString());
+            order.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+            await _unitOfWork.GetRepository<Wallet>().InsertAsync(order.User.Wallets.SingleOrDefault());
+
+            //session update
+            sessionUser.TotalQuantityOrder += 1;
+            sessionUser.TotalCashReceive += order.TotalAmount;
+            sessionUser.TotalFinalAmountOrder += order.TotalAmount;
+            _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
+
             return await _unitOfWork.CommitAsync() > 0
             ? new ResponseAPI()
             {
@@ -692,7 +737,8 @@ namespace VegaCityApp.API.Services.Implement
                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(x => x.PackageOrder).ThenInclude(r => r.Wallets)
                                        .Include(s => s.PromotionOrders).ThenInclude(a => a.Promotion)
-                                       .Include(a => a.Payments));
+                                       .Include(a => a.Payments)
+                                       .Include(o => o.OrderDetails));
                 var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
                     (predicate: x => x.UserId == order.UserId)
                     ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
@@ -701,8 +747,8 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     if (order.PackageOrder == null) throw new BadHttpRequestException("Package item or sale type not found", HttpStatusCodes.NotFound);
                 }
-                if (order.Payments.SingleOrDefault().Name != PaymentTypeEnum.Momo.GetDescriptionFromEnum())
-                    throw new BadHttpRequestException("Payment is not Momo", HttpStatusCodes.BadRequest);
+                if (order.Payments.SingleOrDefault().Name != PaymentTypeEnum.VnPay.GetDescriptionFromEnum())
+                    throw new BadHttpRequestException("Payment is not VnPay", HttpStatusCodes.BadRequest);
                 //bonus here
                 int PromotionAmount = 0; //not use
                 if (order.PromotionOrders.Count == 1)
@@ -710,6 +756,13 @@ namespace VegaCityApp.API.Services.Implement
                     order.Status = OrderStatus.Completed;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+                    order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime(); //may add new Status for OrderDetail Below
+                    _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
+                    //payment
+                    order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
+                    order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
                     //quantity promotion -
                     //
                     order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
@@ -827,6 +880,13 @@ namespace VegaCityApp.API.Services.Implement
                     order.Status = OrderStatus.Completed;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+                    order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime(); //may add new Status for OrderDetail Below
+                    _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
+                    //payment
+                    order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
+                    order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
 
                     //session update
                     sessionUser.TotalQuantityOrder += 1;
@@ -1083,6 +1143,9 @@ namespace VegaCityApp.API.Services.Implement
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
 
+            var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
+            (predicate: x => x.UserId == order.UserId)
+            ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
             //check id? etagtype or package
             string productJson = null;
             OrderProductFromCashierRequest productData = null;
@@ -1144,6 +1207,16 @@ namespace VegaCityApp.API.Services.Implement
             };
             await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
 
+            order.User.Wallets.SingleOrDefault().BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
+            order.User.Wallets.SingleOrDefault().Balance += Int32.Parse(order.TotalAmount.ToString());
+            order.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+            await _unitOfWork.GetRepository<Wallet>().InsertAsync(order.User.Wallets.SingleOrDefault());
+
+            //session update
+            sessionUser.TotalQuantityOrder += 1;
+            sessionUser.TotalCashReceive += order.TotalAmount;
+            sessionUser.TotalFinalAmountOrder += order.TotalAmount;
+            _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
             // Commit the transaction
             var commitResult = await _unitOfWork.CommitAsync();
 
@@ -1169,7 +1242,18 @@ namespace VegaCityApp.API.Services.Implement
                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(x => x.PackageOrder).ThenInclude(r => r.Wallets)
                                        .Include(s => s.PromotionOrders).ThenInclude(a => a.Promotion)
-                                       .Include(a => a.Payments));
+                                       .Include(a => a.Payments)
+                                       .Include(o => o.OrderDetails));
+                                       
+                var orderCompleted = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.InvoiceId == invoiceId && x.Status == OrderStatus.Completed);
+                if (orderCompleted != null)
+                {
+                    return new ResponseAPI
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PayOSConfiguration.ipnUrl + orderCompleted.Id // URL for client-side redirection
+                    };
+                }
                 var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
                     (predicate: x => x.UserId == order.UserId)
                     ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
@@ -1178,8 +1262,8 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     if (order.PackageOrder == null) throw new BadHttpRequestException("Package item or sale type not found", HttpStatusCodes.NotFound);
                 }
-                if (order.Payments.SingleOrDefault().Name != PaymentTypeEnum.Momo.GetDescriptionFromEnum())
-                    throw new BadHttpRequestException("Payment is not Momo", HttpStatusCodes.BadRequest);
+                if (order.Payments.SingleOrDefault().Name != PaymentTypeEnum.PayOS.GetDescriptionFromEnum())
+                    throw new BadHttpRequestException("Payment is not PayOS", HttpStatusCodes.BadRequest);
                 //bonus here
                 int PromotionAmount = 0; //not use
                 if (order.PromotionOrders.Count == 1)
@@ -1187,6 +1271,13 @@ namespace VegaCityApp.API.Services.Implement
                     order.Status = OrderStatus.Completed;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+                    order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime(); //may add new Status for OrderDetail Below
+                    _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
+                    //payment
+                    order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
+                    order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
                     //quantity promotion -
                     //
                     order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
@@ -1305,6 +1396,12 @@ namespace VegaCityApp.API.Services.Implement
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
 
+                    order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime(); //may add new Status for OrderDetail Below
+                    _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
+                    //payment
+                    order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
+                    order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
                     //session update
                     sessionUser.TotalQuantityOrder += 1;
                     sessionUser.TotalCashReceive += order.TotalAmount;
@@ -1521,6 +1618,9 @@ namespace VegaCityApp.API.Services.Implement
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
 
+            var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
+            (predicate: x => x.UserId == order.UserId)
+            ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
             //check id? etagtype or package
             string productJson = null;
             OrderProductFromCashierRequest productData = null;
@@ -1558,6 +1658,18 @@ namespace VegaCityApp.API.Services.Implement
             };
             await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
 
+            order.User.Wallets.SingleOrDefault().BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
+            order.User.Wallets.SingleOrDefault().Balance += Int32.Parse(order.TotalAmount.ToString());
+            order.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+            await _unitOfWork.GetRepository<Wallet>().InsertAsync(order.User.Wallets.SingleOrDefault());
+
+            //session update
+            sessionUser.TotalQuantityOrder += 1;
+            sessionUser.TotalCashReceive += order.TotalAmount;
+            sessionUser.TotalFinalAmountOrder += order.TotalAmount;
+            _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
+
+
             return await _unitOfWork.CommitAsync() > 0
                 ? new ResponseAPI()
                 {
@@ -1580,7 +1692,8 @@ namespace VegaCityApp.API.Services.Implement
                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(x => x.PackageOrder).ThenInclude(r => r.Wallets)
                                        .Include(s => s.PromotionOrders).ThenInclude(a => a.Promotion)
-                                       .Include(a => a.Payments));
+                                       .Include(a => a.Payments)
+                                       .Include(o => o.OrderDetails));
                 var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
                     (predicate: x => x.UserId == order.UserId)
                     ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
@@ -1598,6 +1711,13 @@ namespace VegaCityApp.API.Services.Implement
                     order.Status = OrderStatus.Completed;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+                    order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime(); //may add new Status for OrderDetail Below
+                    _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
+                    //payment
+                    order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
+                    order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
                     //quantity promotion -
                     //
                     order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
@@ -1716,6 +1836,12 @@ namespace VegaCityApp.API.Services.Implement
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
 
+                    order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime(); //may add new Status for OrderDetail Below
+                    _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
+                    //payment
+                    order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
+                    order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
                     //session update
                     sessionUser.TotalQuantityOrder += 1;
                     sessionUser.TotalCashReceive += order.TotalAmount;
