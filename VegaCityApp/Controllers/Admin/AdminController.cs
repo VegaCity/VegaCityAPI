@@ -31,7 +31,7 @@ namespace VegaCityApp.API.Controllers.Admin
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         [CustomAuthorize(RoleEnum.Admin)]
         [SwaggerOperation(Summary = "Create new session for user")]
-        public async Task<IActionResult> CreateSession(Guid id,[FromBody] SessionRequest request)
+        public async Task<IActionResult> CreateSession(Guid id, [FromBody] SessionRequest request)
         {
             var result = await _service.CreateUserSession(id, request);
             return StatusCode(result.StatusCode, result);
@@ -48,7 +48,7 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpGet(UserEndpoint.GetAllSessions)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]
-        [SwaggerOperation(Summary = "Get all session")]
+        [SwaggerOperation(Summary = "Get all sessions")]
         public async Task<IActionResult> GetAllSessions([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _service.GetAllUserSessions(page, size);
@@ -65,7 +65,8 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpPost(UserEndpoint.CreateUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        [SwaggerOperation(Summary = "Create new user for admin, cashier web, cashier app")]
+        [SwaggerOperation(Summary = "Create new user for admin, cashier web, cashier app",
+                          Description = "If role 'Store'<br/> <b> RegisterStoreType : 0,1,2 (Food, Clothing, Service)</b>")]
         [CustomAuthorize(RoleEnum.Admin)]
         public async Task<IActionResult> AdminCreateUser([FromBody] RegisterRequest request)
         {
@@ -75,7 +76,8 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpPost(UserEndpoint.ApproveUser)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
         [CustomAuthorize(RoleEnum.Admin)]
-        [SwaggerOperation(Summary = "Approve user !! Get Ready !!")]
+        [SwaggerOperation(Summary = "Approve user !! Get Ready !!",
+                          Description = "StoreType : 0,1,2 (Food, Clothing, Service)<br/> Status: APPROVED, REJECTED ")]
         public async Task<IActionResult> ApproveUser(Guid userId, [FromBody] ApproveRequest request)
         {
             var result = await _service.ApproveUser(userId, request);
