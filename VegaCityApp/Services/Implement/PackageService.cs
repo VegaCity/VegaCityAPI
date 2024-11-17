@@ -234,7 +234,7 @@ namespace VegaCityApp.API.Services.Implement
                     include: y => y.Include(t => t.Package)
                     .Include(w => w.Wallets).ThenInclude(t => t.WalletType)
                     .Include(tr => tr.Wallets).ThenInclude(t => t.Transactions)); //may defect
-                if (packageOrderExist.Status == PackageItemStatusEnum.Inactive.GetDescriptionFromEnum())
+                if (packageOrderExist.Status == PackageItemStatusEnum.InActive.GetDescriptionFromEnum())
                 {
                     throw new BadHttpRequestException(PackageItemMessage.MustActivated, HttpStatusCodes.NotFound);
                 }
@@ -285,7 +285,7 @@ namespace VegaCityApp.API.Services.Implement
                     if (hasPendingTransaction)
                     {
 
-                       
+
                         //New CHARGE ORDER OPEN CARD FEE if balance <50
                         if (packageOrderExist.Wallets.SingleOrDefault().Balance > 50000)
                         {
@@ -360,7 +360,7 @@ namespace VegaCityApp.API.Services.Implement
                             };
                             await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newDepositII);
 
-                            packageOrderExist.Status = PackageItemStatus.Active.GetDescriptionFromEnum();
+                            packageOrderExist.Status = PackageItemStatusEnum.Active.GetDescriptionFromEnum();
                             packageOrderExist.UpsDate = TimeUtils.GetCurrentSEATime();
                             _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrderExist);
 
@@ -392,7 +392,7 @@ namespace VegaCityApp.API.Services.Implement
                                 throw new BadHttpRequestException(PackageItemMessage.orderUNPAID, HttpStatusCodes.BadRequest);
 
                             }
-                            packageOrderExist.Status = PackageItemStatus.Inactive.GetDescriptionFromEnum();
+                            packageOrderExist.Status = PackageItemStatusEnum.InActive.GetDescriptionFromEnum();
                             packageOrderExist.UpsDate = TimeUtils.GetCurrentSEATime();
                             _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrderExist);
                             var newChargeFeeOder = new Order
@@ -491,7 +491,7 @@ namespace VegaCityApp.API.Services.Implement
                             PackageId = packageOrderExist.PackageId,
                             CrDate = TimeUtils.GetCurrentSEATime(),
                             UpsDate = TimeUtils.GetCurrentSEATime(),
-                            Status = PackageItemStatus.Inactive.GetDescriptionFromEnum(),
+                            Status = PackageItemStatusEnum.InActive.GetDescriptionFromEnum(),
                             CusName = req.CusName,
                             CusEmail = packageOrderExist.CusEmail,
                             CusCccdpassport = packageOrderExist.CusCccdpassport,
@@ -562,7 +562,7 @@ namespace VegaCityApp.API.Services.Implement
                         PackageId = req.PackageId,
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         UpsDate = TimeUtils.GetCurrentSEATime(),
-                        Status = PackageItemStatus.Inactive.GetDescriptionFromEnum(),
+                        Status = PackageItemStatusEnum.InActive.GetDescriptionFromEnum(),
                         CusName = req.CusName,
                         CusEmail = req.CusEmail,
                         CusCccdpassport = req.CusCccdpassport,
@@ -789,7 +789,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             var packageOrder = await SearchPackageItem(packageOrderId, rfId);
 
-            if (packageOrder.Data.Status != PackageItemStatus.Active.GetDescriptionFromEnum())
+            if (packageOrder.Data.Status != PackageItemStatusEnum.Active.GetDescriptionFromEnum())
                 throw new BadHttpRequestException(PackageItemMessage.MustActivated, HttpStatusCodes.BadRequest);
             #region check 
             // after done main flow, make utils service to shorten this code
@@ -828,7 +828,7 @@ namespace VegaCityApp.API.Services.Implement
                 Cccdpassport = packageOrder.Data.CusCccdpassport,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
-                Status = PackageItemStatus.Active.GetDescriptionFromEnum(),
+                Status = PackageItemStatusEnum.Active.GetDescriptionFromEnum(),
                 Email = packageOrder.Data.CusEmail,
                 EndDate = packageOrder.Data.EndDate,
                 ImageUrl = packageOrder.Data.Package.ImageUrl,
@@ -989,7 +989,7 @@ namespace VegaCityApp.API.Services.Implement
                     CusName = packageOrderExsit.CusName,
                     PackageId = packageOrderExsit.PackageId,
                     PhoneNumber = packageOrderExsit.PhoneNumber,
-                    Status = PackageItemStatus.Inactive.GetDescriptionFromEnum(),
+                    Status = PackageItemStatusEnum.InActive.GetDescriptionFromEnum(),
                 };
                 await _unitOfWork.GetRepository<PackageOrder>().InsertAsync(packageOrder);
                 var transactionCharge = new Transaction()
@@ -1090,7 +1090,7 @@ namespace VegaCityApp.API.Services.Implement
                     CusEmail = packageOrderExsit.CusEmail,
                     CusName = packageOrderExsit.CusName,
                     PackageId = packageOrderExsit.PackageId,
-                    Status = PackageItemStatus.Inactive.GetDescriptionFromEnum(),
+                    Status = PackageItemStatusEnum.InActive.GetDescriptionFromEnum(),
                     PhoneNumber = packageOrderExsit.PhoneNumber
                 };
                 await _unitOfWork.GetRepository<PackageOrder>().InsertAsync(packageOrder);
@@ -1454,7 +1454,7 @@ namespace VegaCityApp.API.Services.Implement
 
             var packageOrders = await _unitOfWork.GetRepository<PackageOrder>().GetListAsync(
                predicate: x => x.CusCccdpassport == req.Cccdpassport && x.CusEmail == req.Email
-               && x.Status == PackageItemStatus.Active.GetDescriptionFromEnum(),
+               && x.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum(),
                include: p => p.Include(w => w.Wallets).Include(a => a.Package).Include(v => v.Vcard)
                );
 
@@ -1490,7 +1490,7 @@ namespace VegaCityApp.API.Services.Implement
             //after run api to get by cccd and mark as Blocked, transfer money, check log transaction
             //case lost vcard
             //check cus transfer to create new card
-            packageOrderLost.Status = PackageItemStatus.Blocked.GetDescriptionFromEnum();
+            packageOrderLost.Status = PackageItemStatusEnum.Blocked.GetDescriptionFromEnum();
             packageOrderLost.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrderLost);
 

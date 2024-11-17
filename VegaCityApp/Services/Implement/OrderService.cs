@@ -571,7 +571,7 @@ namespace VegaCityApp.API.Services.Implement
                 order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
 
-                order.PackageOrder.Status = PackageItemStatus.Active.GetDescriptionFromEnum();
+                order.PackageOrder.Status = PackageItemStatusEnum.Active.GetDescriptionFromEnum();
                 order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
                 ////UPDATE CASHIER WALLET
@@ -1068,8 +1068,9 @@ namespace VegaCityApp.API.Services.Implement
         public async Task CheckOrderPending()
         {
             var orders = await _unitOfWork.GetRepository<Order>().
-                GetListAsync(predicate: x => x.Status == OrderStatus.Pending);
-            // include: z => z.Include(a => a.PackageOrders).Include(p => p.PromotionOrders));
+                GetListAsync(predicate: x => x.Status == OrderStatus.Pending,
+                             include: z => z.Include(a => a.PackageOrder)
+                                            .Include(p => p.PromotionOrders));
             foreach (var order in orders)
             {
                 if (TimeUtils.GetCurrentSEATime().Subtract(order.CrDate).TotalMinutes > 5)
@@ -1078,12 +1079,7 @@ namespace VegaCityApp.API.Services.Implement
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
                 }
-                //foreach(var packageOrder in order.PackageOrders)
-                //{                
-                //    packageOrder.Status = OrderStatus.Canceled;
-                //    packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                //    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
-                //}
+                order.PackageOrder.Status = PackageItemStatusEnum.InActive.GetDescriptionFromEnum();
                 foreach (var orderPromotion in order.PromotionOrders)
                 {
                     orderPromotion.Deflag = true;
