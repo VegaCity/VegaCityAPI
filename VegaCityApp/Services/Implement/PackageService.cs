@@ -285,10 +285,7 @@ namespace VegaCityApp.API.Services.Implement
                     if (hasPendingTransaction)
                     {
 
-                        //packageOrderExist.VcardId = UniqueIdGenerator.GenerateUniqueRandomNumber(10);
-                        packageOrderExist.Status = PackageItemStatus.Inactive.GetDescriptionFromEnum();
-                        packageOrderExist.UpsDate = TimeUtils.GetCurrentSEATime();
-                        _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrderExist);
+                       
                         //New CHARGE ORDER OPEN CARD FEE if balance <50
                         if (packageOrderExist.Wallets.SingleOrDefault().Balance > 50000)
                         {
@@ -328,7 +325,6 @@ namespace VegaCityApp.API.Services.Implement
                             packageOrderExist.Wallets.SingleOrDefault().Deflag = false;
                             _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderExist.Wallets.SingleOrDefault());
 
-
                             ////UPDATE CASHIER WALLET
                             wallet.Balance += 50000;
                             wallet.BalanceHistory += 50000;
@@ -340,6 +336,7 @@ namespace VegaCityApp.API.Services.Implement
                             session.TotalCashReceive += 50000;
                             session.TotalFinalAmountOrder += 50000;
                             _unitOfWork.GetRepository<UserSession>().UpdateAsync(session);
+
 
 
                             var transactionIds = packageOrderExist.Wallets.SingleOrDefault().Transactions;
@@ -362,6 +359,10 @@ namespace VegaCityApp.API.Services.Implement
                                 TransactionId = transaction.Id
                             };
                             await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newDepositII);
+
+                            packageOrderExist.Status = PackageItemStatus.Active.GetDescriptionFromEnum();
+                            packageOrderExist.UpsDate = TimeUtils.GetCurrentSEATime();
+                            _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrderExist);
 
                             if (await _unitOfWork.CommitAsync() > 0)
                             {
@@ -391,6 +392,9 @@ namespace VegaCityApp.API.Services.Implement
                                 throw new BadHttpRequestException(PackageItemMessage.orderUNPAID, HttpStatusCodes.BadRequest);
 
                             }
+                            packageOrderExist.Status = PackageItemStatus.Inactive.GetDescriptionFromEnum();
+                            packageOrderExist.UpsDate = TimeUtils.GetCurrentSEATime();
+                            _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrderExist);
                             var newChargeFeeOder = new Order
                             {
                                 Id = Guid.NewGuid(),
@@ -1494,9 +1498,12 @@ namespace VegaCityApp.API.Services.Implement
             packageOrderLost.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderLost.Wallets.SingleOrDefault());
 
+            if(packageOrderLost.Vcard != null)
+            {
 
-            packageOrderLost.Vcard.Status = VCardStatus.Blocked.GetDescriptionFromEnum();
-            _unitOfWork.GetRepository<Vcard>().DeleteAsync(packageOrderLost.Vcard);
+                packageOrderLost.Vcard.Status = VCardStatus.Blocked.GetDescriptionFromEnum();
+                _unitOfWork.GetRepository<Vcard>().DeleteAsync(packageOrderLost.Vcard);
+            }
 
             //Transaction
             var newTransaction = new Transaction
