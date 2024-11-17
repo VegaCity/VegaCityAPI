@@ -624,7 +624,12 @@ namespace VegaCityApp.Service.Implement
                 try
                 {
                     var subject = UserMessage.YourPasswordToChange;
-                    var body = "Your Your Password To Change. Your password is: " + newUser.Password;
+                    var body = $"<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;'>" +
+                                               $"<h1 style='color: #007bff;'>Welcome to our Vega City!</h1>" +
+                                               $"<p>Thanks for signing up our services.</p>" +
+                                               $"<p><strong>This is your password to change: {newUser.Password}</strong></p>" +
+                                               $"<p>Please access this website to change password: <a href='https://vegacity.id.vn/change-password'>Link Access !!</a></p>" +
+                                           $"</div>";
                     await MailUtil.SendMailAsync(newUser.Email, subject, body);
                 }
                 catch (Exception ex)
@@ -745,7 +750,13 @@ namespace VegaCityApp.Service.Implement
                             try
                             {
                                 var subject = UserMessage.ApproveSuccessfully;
-                                var body = "Your account has been approved. Your password is: " + user.Data.Password + "\nPlease access this website to change password: http://localhost:3000/change-password";
+                                //var body = $"Your account has been approved. Your password is: " + user.Data.Password + "\nPlease access this website to change password: http://localhost:3000/change-password";
+                                var body = $"<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;'>" +
+                                               $"<h1 style='color: #007bff;'>Welcome to our Vega City!</h1>" +
+                                               $"<p>Thanks for signing up our services.</p>" +
+                                               $"<p><strong>This is your password to change: {user.Data.Password}</strong></p>" +
+                                               $"<p>Please access this website to change password: <a href='https://vegacity.id.vn/change-password'>Link Access !!</a></p>" +
+                                           $"</div>";
                                 await MailUtil.SendMailAsync(user.Data.Email, subject, body);
                             }
                             catch (Exception ex)
@@ -1202,7 +1213,12 @@ namespace VegaCityApp.Service.Implement
             try
             {
                 var subject = UserMessage.YourPasswordToChange;
-                var body = "Your Your Password To Change. Your password is: " + user.Password;
+                var body = $"<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;'>" +
+                                               $"<h1 style='color: #007bff;'>Welcome to our Vega City!</h1>" +
+                                               $"<p>Thanks for signing up our services.</p>" +
+                                               $"<p><strong>This is your password to change: {user.Password}</strong></p>" +
+                                               $"<p>Please access this website to change password: <a href='https://vegacity.id.vn/change-password'>Link Access !!</a></p>" +
+                                           $"</div>"; ;
                 await MailUtil.SendMailAsync(user.Email, subject, body);
                 await _unitOfWork.CommitAsync();
             }
@@ -1463,7 +1479,13 @@ namespace VegaCityApp.Service.Implement
                 {
                     //var admin = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == Guid.Parse(EnvironmentVariableConstant.marketZoneId));
                     var subject = UserMessage.ResolvedMessage;
-                    var body = "We have process your closing request and decide the Status will be: " + req.Status;
+                    //var body = "We have process your closing request and decide the Status will be: " + req.Status;
+                    var body = $"<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;'>" +
+                                               $"<h1 style='color: #007bff;'>Welcome to our Vega City!</h1>" +
+                                               $"<p>Thanks for closing request.</p>" +
+                                               $"<p><strong>We have process your closing request and decide the Status will be: {req.Status}</strong></p>" +
+
+                                           $"</div>";
                     await MailUtil.SendMailAsync(storeTrack.Email, subject, body);
                 }
                 catch (Exception ex)

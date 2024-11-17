@@ -137,6 +137,9 @@ public static class MessageConstant
         public const string PhoneNumberExist = "Phone Number already exist !!";
         public const string CCCDExist = "CCCD already exist !!";
         public const string SendMailFail = "Send Mail Fail !!";
+        public const string SendMailError = "Send Mail Fail !! But don't worry it, your V-Card is still activated !";
+        public const string SendMailLostError = "Send Mail Fail !! But don't worry it, your V-Card is still mark lost !";
+        public const string SendEmailChargeError = "Send Mail Fail !! But don't worry it, your V-Card is still charged money !";
         public const string UserHadToken = "User Had Token !!";
         public const string RefreshTokenSuccessfully = "Refresh Token Successfully !!";
         public const string RefreshTokenFail = "Refresh Token Fail !!";

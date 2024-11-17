@@ -556,7 +556,12 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     var admin = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == Guid.Parse(EnvironmentVariableConstant.marketZoneId));
                     var subject = UserMessage.PendingApproveCloseStore;
-                    var body = "You have new Closing Store requset is pending: " + store.Name;
+                    //var body = "You have new Closing Store request is pending: " + store.Name;
+                    var body = $"<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;'>" +
+                           $"<h1 style='color: #007bff;'>Welcome to our Vega City!</h1>" +
+                           $"<p>Thanks for closing Store request.</p>" +
+                           $"<p><strong>You have new Closing Store request is pending: {store.Name}</strong></p>" +
+                       $"</div>";
                     await MailUtil.SendMailAsync(admin.Email, subject, body);
                 }
                 catch (Exception ex)

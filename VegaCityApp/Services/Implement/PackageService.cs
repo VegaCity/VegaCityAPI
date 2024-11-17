@@ -884,16 +884,60 @@ namespace VegaCityApp.API.Services.Implement
             wallet.EndDate = TimeUtils.GetCurrentSEATime().AddDays(packageOrderExist.Data.Package.Duration);
             wallet.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
-
-            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            int check = await _unitOfWork.CommitAsync();
+            if (check > 0)
+            {
+                //send email
+                if (packageOrderExist.Data.CusEmail != null)
+                {
+                    try
+                    {
+                        string subject = "Activate VCard Vega City Successfully";
+                        string body = $@"
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                            <div style='background-color: #007bff; color: white; padding: 20px; text-align: center;'>
+                                <h1 style='margin: 0;'>Welcome to our Vega City!</h1>
+                            </div>
+                            <div style='padding: 20px; background-color: #f9f9f9;'>
+                                <p style='font-size: 16px; color: #333;'>Hello, <strong>{packageOrderExist.Data.CusName}</strong>,</p>
+                                <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                    Thanks for signing up our service. We are happy to accompany you on the upcoming journey.
+                                </p>
+                                <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                    Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
+                                </p>
+                                <div style='margin-top: 20px; text-align: center;'>
+                                    <a style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                        Your VCard is activated successfully !!
+                                    </a>
+                                </div>
+                                <div style='margin-top: 20px; text-align: center;'>
+                                    <a href='https://vegacity.id.vn/etagEdit/{packageOrderExist.Data.Id}' style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                         Click here to see more
+                                    </a>
+                                </div>
+                            </div>
+                            <div style='background-color: #333; color: white; padding: 10px; text-align: center; font-size: 14px;'>
+                                <p style='margin: 0;'>© 2024 Vega City. All rights reserved.</p>
+                            </div>
+                        </div>";
+                        await MailUtil.SendMailAsync(packageOrderExist.Data.CusEmail, subject, body);
+                    }
+                    catch (Exception ex)
+                    {
+                        return new ResponseAPI
+                        {
+                            StatusCode = HttpStatusCodes.OK,
+                            MessageResponse = UserMessage.SendMailError
+                        };
+                    }
+                }
+            }
+            return new ResponseAPI()
             {
                 MessageResponse = EtagMessage.ActivateEtagSuccess,
                 StatusCode = HttpStatusCodes.OK,
                 Data = new { packageItemId = packageOrderExist.Data.Id }
-            } : new ResponseAPI()
-            {
-                MessageResponse = EtagMessage.ActivateEtagFail,
-                StatusCode = HttpStatusCodes.BadRequest
             };
         }
         public async Task<ResponseAPI> PrepareChargeMoneyEtag(ChargeMoneyRequest req)
@@ -1467,6 +1511,9 @@ namespace VegaCityApp.API.Services.Implement
             #region check 
             // after done main flow, make utils service to shorten this code
             var userId = GetUserIdFromJwt();
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == userId)
+                ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't exist in system",
+                                                            HttpStatusCodes.BadRequest);
             var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
                 predicate: x => x.UserId == userId && x.ZoneId == packageOrderLost.Package.ZoneId
                                && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
@@ -1497,7 +1544,7 @@ namespace VegaCityApp.API.Services.Implement
             packageOrderLost.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderLost.Wallets.SingleOrDefault());
 
-            if(packageOrderLost.Vcard != null)
+            if (packageOrderLost.Vcard != null)
             {
 
                 packageOrderLost.Vcard.Status = VCardStatus.Blocked.GetDescriptionFromEnum();
@@ -1521,15 +1568,61 @@ namespace VegaCityApp.API.Services.Implement
                 //need to update with status is success & add deposit id above
             };
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(newTransaction);
-            return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
+            int check = await _unitOfWork.CommitAsync();
+            if (check > 0)
+            {
+                if (packageOrderLost.CusEmail != null)
+                {
+                    try
+                    {
+                        string subject = "Lost VCard Vega City";
+                        string body = $@"
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                            <div style='background-color: #ff4d4f; color: white; padding: 20px; text-align: center;'>
+                                <h1 style='margin: 0;'>Notification Lost V-Card</h1>
+                            </div>
+                            <div style='padding: 20px; background-color: #f9f9f9;'>
+                                <p style='font-size: 16px; color: #333;'>Hello, <strong>{packageOrderLost.CusName}</strong>,</p>
+                                <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                    We have received your request to report your lost V-Card with the following information:
+                                </p>
+                                <ul style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                    <li><strong>Number V-Card:</strong> {packageOrderLost.VcardId}</li>
+                                </ul>
+                                <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                    For security reasons, your card has been temporarily blocked. If this is not what you requested, please contact us immediately via email {user.Email}. hoặc qua số điện thoại hỗ trợ : {user.PhoneNumber}.
+                                </p>
+                                
+                            </div>
+                            <div style='background-color: #333; color: white; padding: 10px; text-align: center; font-size: 14px;'>
+                                <p style='margin: 0;'>© 2024 Vega City. All rights reserved.</p>
+                            </div>
+                        </div>";
+                        await MailUtil.SendMailAsync(packageOrderLost.CusEmail, subject, body);
+                    }
+                    catch (Exception ex)
+                    {
+                        return new ResponseAPI
+                        {
+                            StatusCode = HttpStatusCodes.OK,
+                            MessageResponse = UserMessage.SendMailLostError
+                        };
+                    }
+                }
+            }
+            else
+            {
+                return new ResponseAPI()
+                {
+                    MessageResponse = PackageItemMessage.FailedToMark,
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
+            return new ResponseAPI()
             {
                 MessageResponse = PackageItemMessage.SuccessfullyReadyToCreate,
                 StatusCode = HttpStatusCodes.OK,
                 Data = new { packageItemId = packageOrderLost.Id }
-            } : new ResponseAPI()
-            {
-                MessageResponse = PackageItemMessage.FailedToMark,
-                StatusCode = HttpStatusCodes.BadRequest
             };
         }
         //assign new 
