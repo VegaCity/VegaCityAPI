@@ -1032,6 +1032,8 @@ namespace VegaCityApp.API.Services.Implement
         #region CRUD ProductCategory
         public async Task<ResponseAPI> CreateProductCategory(CreateProductCategoryRequest req)
         {
+            var storeUserId = GetUserIdFromJwt();
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.UserStoreMappings.SingleOrDefault().UserId == storeUserId );
             req.Name = req.Name.Trim();
             if (req.Description != null)
             {
@@ -1042,6 +1044,7 @@ namespace VegaCityApp.API.Services.Implement
             newProductCategory.CrDate = TimeUtils.GetCurrentSEATime();
             newProductCategory.UpsDate = TimeUtils.GetCurrentSEATime();
             newProductCategory.Deflag = false;
+            newProductCategory.StoreId = store.Id;
             await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCategory);
             var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync(
                 predicate: x => x.Name == WalletTypeEnum.SpecificWallet.GetDescriptionFromEnum()
