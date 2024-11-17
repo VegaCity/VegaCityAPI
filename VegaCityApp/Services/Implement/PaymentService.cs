@@ -34,7 +34,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> MomoPayment(PaymentRequest request)
         {
             var checkOrder = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                             (predicate: x => x.InvoiceId == request.InvoiceId 
+                             (predicate: x => x.InvoiceId == request.InvoiceId
                                            && x.Status == OrderStatus.Pending);
             if (checkOrder == null)
             {
@@ -44,9 +44,10 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = PaymentMessage.OrderNotFound
                 };
             }
-            
+
             //create momo payment request
-            if (request.Key != null) {
+            if (request.Key != null)
+            {
                 //checkKey
                 try
                 {
@@ -107,7 +108,7 @@ namespace VegaCityApp.API.Services.Implement
                         Data = ex.Message
                     };
                 }
-            } 
+            }
             else
             {
                 //else
@@ -123,7 +124,7 @@ namespace VegaCityApp.API.Services.Implement
                     orderInfo = PaymentMomo.orderInfo,
                     partnerCode = PaymentMomo.MomoPartnerCode,
                     redirectUrl = PaymentMomo.redirectUrl,
-                    ipnUrl = PaymentMomo.ipnUrl+ checkOrder.Id,
+                    ipnUrl = PaymentMomo.ipnUrl + checkOrder.Id,
                     amount = checkOrder.TotalAmount,
                     orderId = request.InvoiceId,
                     requestId = request.InvoiceId,
@@ -240,7 +241,7 @@ namespace VegaCityApp.API.Services.Implement
                 ? new ResponseAPI()
                 {
                     StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PaymentMomo.ipnUrl + order.Id 
+                    MessageResponse = PaymentMomo.ipnUrl + order.Id
                 }
                 : new ResponseAPI()
                 {
@@ -323,7 +324,7 @@ namespace VegaCityApp.API.Services.Implement
                     cusWallet.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(cusWallet);
 
-                    
+
 
                     transactionCharge.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                     transactionCharge.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -375,16 +376,66 @@ namespace VegaCityApp.API.Services.Implement
                     //walletAdmin.BalanceHistory -= order.TotalAmount;
                     //walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
                     //_unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
-                    return await _unitOfWork.CommitAsync() > 0
-                        ? new ResponseAPI()
+                    int check = await _unitOfWork.CommitAsync();
+                    if (check > 0)
+                    {
+                        if (order.PackageOrder.CusEmail != null)
                         {
-                            StatusCode = HttpStatusCodes.NoContent,
-                            MessageResponse = PaymentZaloPay.ipnUrl + order.Id
+                            try
+                            {
+                                string subject = "Charge Money VCard Vega City Successfully";
+                                string body = $@"
+                                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                                        <div style='background-color: #007bff; color: white; padding: 20px; text-align: center;'>
+                                            <h1 style='margin: 0;'>Welcome to our Vega City!</h1>
+                                        </div>
+                                        <div style='padding: 20px; background-color: #f9f9f9;'>
+                                            <p style='font-size: 16px; color: #333;'>Hello, <strong>{order.PackageOrder.CusName}</strong>,</p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Thanks for charging Money to V-Card our service. We are happy to accompany you on the upcoming journey.
+                                            </p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
+                                            </p>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                    Your VCard {order.PackageOrder.CusName} is charging money with {order.TotalAmount} successfully !!
+                                                </a>
+                                            </div>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a href='https://vegacity.id.vn/etagEdit/{order.PackageOrder.Id}' style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                     Click here to see your balance
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div style='background-color: #333; color: white; padding: 10px; text-align: center; font-size: 14px;'>
+                                            <p style='margin: 0;'>© 2024 Vega City. All rights reserved.</p>
+                                        </div>
+                                    </div>";
+                                await MailUtil.SendMailAsync(order.PackageOrder.CusEmail, subject, body);
+                            }
+                            catch (Exception ex)
+                            {
+                                return new ResponseAPI
+                                {
+                                    StatusCode = HttpStatusCodes.OK,
+                                    MessageResponse = UserMessage.SendEmailChargeError
+                                };
+                            }
                         }
-                        : new ResponseAPI()
+                    }
+                    else
+                    {
+                        return new ResponseAPI()
                         {
                             StatusCode = HttpStatusCodes.InternalServerError
                         };
+                    }
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentZaloPay.ipnUrl + order.Id
+                    };
                 }
                 else
                 {
@@ -433,7 +484,7 @@ namespace VegaCityApp.API.Services.Implement
                     order.PackageOrder.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.PackageOrder.Wallets.SingleOrDefault());
 
-                    
+
 
                     transactionCharge.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                     transactionCharge.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -485,18 +536,69 @@ namespace VegaCityApp.API.Services.Implement
                     walletAdmin.BalanceHistory -= order.TotalAmount;
                     walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
-                    return await _unitOfWork.CommitAsync() > 0
-                        ? new ResponseAPI()
+                    int check = await _unitOfWork.CommitAsync();
+                    if (check > 0)
+                    {
+                        if (order.PackageOrder.CusEmail != null)
                         {
-                            StatusCode = HttpStatusCodes.NoContent,
-                            MessageResponse = PaymentMomo.ipnUrl + order.Id
+                            try
+                            {
+                                string subject = "Charge Money VCard Vega City Successfully";
+                                string body = $@"
+                                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                                        <div style='background-color: #007bff; color: white; padding: 20px; text-align: center;'>
+                                            <h1 style='margin: 0;'>Welcome to our Vega City!</h1>
+                                        </div>
+                                        <div style='padding: 20px; background-color: #f9f9f9;'>
+                                            <p style='font-size: 16px; color: #333;'>Hello, <strong>{order.PackageOrder.CusName}</strong>,</p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Thanks for charging Money to V-Card our service. We are happy to accompany you on the upcoming journey.
+                                            </p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
+                                            </p>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                    Your VCard {order.PackageOrder.CusName} is charging money with {order.TotalAmount} successfully !!
+                                                </a>
+                                            </div>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a href='https://vegacity.id.vn/etagEdit/{order.PackageOrder.Id}' style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                     Click here to see your balance
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div style='background-color: #333; color: white; padding: 10px; text-align: center; font-size: 14px;'>
+                                            <p style='margin: 0;'>© 2024 Vega City. All rights reserved.</p>
+                                        </div>
+                                    </div>";
+                                await MailUtil.SendMailAsync(order.PackageOrder.CusEmail, subject, body);
+                            }
+                            catch (Exception ex)
+                            {
+                                return new ResponseAPI
+                                {
+                                    StatusCode = HttpStatusCodes.OK,
+                                    MessageResponse = UserMessage.SendEmailChargeError
+                                };
+                            }
                         }
-                        : new ResponseAPI()
+                    }
+                    else
+                    {
+                        return new ResponseAPI()
                         {
                             StatusCode = HttpStatusCodes.InternalServerError
                         };
+                    }
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentMomo.ipnUrl + order.Id
+                    };
                 }
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new ResponseAPI()
                 {
@@ -523,51 +625,51 @@ namespace VegaCityApp.API.Services.Implement
             {
                 try
                 {
-                   
-                        var tickCharge = TimeUtils.GetCurrentSEATime().ToString();
-                        var vnpayCharge = new VnPayLibrary();
-                        vnpayCharge.AddRequestData("vnp_Version", VnPayConfig.Version);
-                        vnpayCharge.AddRequestData("vnp_Command", VnPayConfig.Command);
-                        vnpayCharge.AddRequestData("vnp_TmnCode", VnPayConfig.TmnCode);
-                        vnpayCharge.AddRequestData("vnp_Amount", (orderExisted.TotalAmount*100 ).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 
-                        // vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()));
-                        vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"));
-                        vnpayCharge.AddRequestData("vnp_CurrCode", VnPayConfig.CurrCode);
-                        vnpayCharge.AddRequestData("vnp_IpAddr", VnPayUtils.GetIpAddress(context));
-                        vnpayCharge.AddRequestData("vnp_Locale", VnPayConfig.Locale);
-                        vnpayCharge.AddRequestData("vnp_OrderInfo", "Thanh toán cho đơn hàng (InvoiceId):" + req.InvoiceId);
-                        vnpayCharge.AddRequestData("vnp_OrderType", "other"); //default value: other
-                        vnpayCharge.AddRequestData("vnp_ReturnUrl", req.UrlDirect);
-                        vnpayCharge.AddRequestData("vnp_TxnRef", tickCharge); // Mã tham chiếu của giao dịch tại hệ thống của merchant. Mã này là duy nhất dùng để phân biệt các đơn hàng gửi sang VNPAY. Không được trùng lặp trong ngày
 
-                        var paymentUrlChargeMoney = vnpayCharge.CreateRequestUrl(VnPayConfig.BaseUrl, VnPayConfig.HashSecret);
-                        //
-                        if (paymentUrlChargeMoney == null)
+                    var tickCharge = TimeUtils.GetCurrentSEATime().ToString();
+                    var vnpayCharge = new VnPayLibrary();
+                    vnpayCharge.AddRequestData("vnp_Version", VnPayConfig.Version);
+                    vnpayCharge.AddRequestData("vnp_Command", VnPayConfig.Command);
+                    vnpayCharge.AddRequestData("vnp_TmnCode", VnPayConfig.TmnCode);
+                    vnpayCharge.AddRequestData("vnp_Amount", (orderExisted.TotalAmount * 100).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 
+                                                                                                           // vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()));
+                    vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"));
+                    vnpayCharge.AddRequestData("vnp_CurrCode", VnPayConfig.CurrCode);
+                    vnpayCharge.AddRequestData("vnp_IpAddr", VnPayUtils.GetIpAddress(context));
+                    vnpayCharge.AddRequestData("vnp_Locale", VnPayConfig.Locale);
+                    vnpayCharge.AddRequestData("vnp_OrderInfo", "Thanh toán cho đơn hàng (InvoiceId):" + req.InvoiceId);
+                    vnpayCharge.AddRequestData("vnp_OrderType", "other"); //default value: other
+                    vnpayCharge.AddRequestData("vnp_ReturnUrl", req.UrlDirect);
+                    vnpayCharge.AddRequestData("vnp_TxnRef", tickCharge); // Mã tham chiếu của giao dịch tại hệ thống của merchant. Mã này là duy nhất dùng để phân biệt các đơn hàng gửi sang VNPAY. Không được trùng lặp trong ngày
+
+                    var paymentUrlChargeMoney = vnpayCharge.CreateRequestUrl(VnPayConfig.BaseUrl, VnPayConfig.HashSecret);
+                    //
+                    if (paymentUrlChargeMoney == null)
+                    {
+                        return new ResponseAPI
                         {
-                            return new ResponseAPI
-                            {
-                                StatusCode = HttpStatusCodes.InternalServerError,
-                                MessageResponse = PaymentMessage.vnPayFailed
-                            };
-                        }
-
-                        return new ResponseAPI()
-                        {
-                            StatusCode = HttpStatusCodes.OK,
-                            MessageResponse = PaymentMessage.VnPaySuccess,
-                            Data = new VnPaymentResponse()
-                            {
-                                Success = true,
-                                PaymentMethod = "VnPay",
-                                OrderDescription = "Thanh toán VnPay cho đơn hàng :" + req.InvoiceId,
-                                OrderId = req.InvoiceId,
-                                Amount = orderExisted.TotalAmount,
-                                VnPayResponse = paymentUrlChargeMoney,
-                                CrDate = TimeUtils.GetCurrentSEATime()
-
-                            }
+                            StatusCode = HttpStatusCodes.InternalServerError,
+                            MessageResponse = PaymentMessage.vnPayFailed
                         };
-                    
+                    }
+
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.OK,
+                        MessageResponse = PaymentMessage.VnPaySuccess,
+                        Data = new VnPaymentResponse()
+                        {
+                            Success = true,
+                            PaymentMethod = "VnPay",
+                            OrderDescription = "Thanh toán VnPay cho đơn hàng :" + req.InvoiceId,
+                            OrderId = req.InvoiceId,
+                            Amount = orderExisted.TotalAmount,
+                            VnPayResponse = paymentUrlChargeMoney,
+                            CrDate = TimeUtils.GetCurrentSEATime()
+
+                        }
+                    };
+
                 }
                 catch (Exception ex)
                 {
@@ -583,7 +685,7 @@ namespace VegaCityApp.API.Services.Implement
             vnpay.AddRequestData("vnp_Version", VnPayConfig.Version);
             vnpay.AddRequestData("vnp_Command", VnPayConfig.Command);
             vnpay.AddRequestData("vnp_TmnCode", VnPayConfig.TmnCode);
-            vnpay.AddRequestData("vnp_Amount", (orderExisted.TotalAmount *100 ).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 10000000
+            vnpay.AddRequestData("vnp_Amount", (orderExisted.TotalAmount * 100).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 10000000
             vnpay.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"));
             //vnpay.AddRequestData("vnp_CreateDate", TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()));
             vnpay.AddRequestData("vnp_CurrCode", VnPayConfig.CurrCode);
@@ -646,7 +748,7 @@ namespace VegaCityApp.API.Services.Implement
             //{
             //    StartDate = TimeUtils.GetCurrentSEATime(),
             //};
-            
+
             if (order.OrderDetails.Count > 0)
             {
                 foreach (var item in order.OrderDetails)
@@ -655,7 +757,7 @@ namespace VegaCityApp.API.Services.Implement
                     productData = JsonConvert.DeserializeObject<OrderProductFromCashierRequest>(productJson);
                     if (productData != null)
                     {
-                        
+
                         var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
                             (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
                         //if (etagType != null)
@@ -686,7 +788,7 @@ namespace VegaCityApp.API.Services.Implement
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 Status = TransactionStatus.Success,
-                Description = "Add" + order.SaleType + " Balance By " + order.Payments.SingleOrDefault().Name +  " to cashier web: " + order.User.FullName,
+                Description = "Add" + order.SaleType + " Balance By " + order.Payments.SingleOrDefault().Name + " to cashier web: " + order.User.FullName,
             };
             await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
 
@@ -705,7 +807,7 @@ namespace VegaCityApp.API.Services.Implement
             ? new ResponseAPI()
             {
                 StatusCode = HttpStatusCodes.NoContent,
-                MessageResponse = PaymentMomo.ipnUrl + order.Id 
+                MessageResponse = PaymentMomo.ipnUrl + order.Id
             }
             : new ResponseAPI()
             {
@@ -841,16 +943,66 @@ namespace VegaCityApp.API.Services.Implement
                     //walletAdmin.BalanceHistory -= order.TotalAmount;
                     //walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
                     //_unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
-                    return await _unitOfWork.CommitAsync() > 0
-                        ? new ResponseAPI()
+                    int check = await _unitOfWork.CommitAsync();
+                    if (check > 0)
+                    {
+                        if (order.PackageOrder.CusEmail != null)
                         {
-                            StatusCode = HttpStatusCodes.NoContent,
-                            MessageResponse = PaymentZaloPay.ipnUrl + order.Id
+                            try
+                            {
+                                string subject = "Charge Money VCard Vega City Successfully";
+                                string body = $@"
+                                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                                        <div style='background-color: #007bff; color: white; padding: 20px; text-align: center;'>
+                                            <h1 style='margin: 0;'>Welcome to our Vega City!</h1>
+                                        </div>
+                                        <div style='padding: 20px; background-color: #f9f9f9;'>
+                                            <p style='font-size: 16px; color: #333;'>Hello, <strong>{order.PackageOrder.CusName}</strong>,</p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Thanks for charging Money to V-Card our service. We are happy to accompany you on the upcoming journey.
+                                            </p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
+                                            </p>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                    Your VCard {order.PackageOrder.CusName} is charging money with {order.TotalAmount} successfully !!
+                                                </a>
+                                            </div>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a href='https://vegacity.id.vn/etagEdit/{order.PackageOrder.Id}' style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                     Click here to see your balance
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div style='background-color: #333; color: white; padding: 10px; text-align: center; font-size: 14px;'>
+                                            <p style='margin: 0;'>© 2024 Vega City. All rights reserved.</p>
+                                        </div>
+                                    </div>";
+                                await MailUtil.SendMailAsync(order.PackageOrder.CusEmail, subject, body);
+                            }
+                            catch (Exception ex)
+                            {
+                                return new ResponseAPI
+                                {
+                                    StatusCode = HttpStatusCodes.OK,
+                                    MessageResponse = UserMessage.SendEmailChargeError
+                                };
+                            }
                         }
-                        : new ResponseAPI()
+                    }
+                    else
+                    {
+                        return new ResponseAPI()
                         {
                             StatusCode = HttpStatusCodes.InternalServerError
                         };
+                    }
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentZaloPay.ipnUrl + order.Id
+                    };
                 }
                 else
                 {
@@ -950,16 +1102,66 @@ namespace VegaCityApp.API.Services.Implement
                     walletAdmin.BalanceHistory -= order.TotalAmount;
                     walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
-                    return await _unitOfWork.CommitAsync() > 0
-                        ? new ResponseAPI()
+                    int check = await _unitOfWork.CommitAsync();
+                    if (check > 0)
+                    {
+                        if (order.PackageOrder.CusEmail != null)
                         {
-                            StatusCode = HttpStatusCodes.NoContent,
-                            MessageResponse = PaymentMomo.ipnUrl + order.Id
+                            try
+                            {
+                                string subject = "Charge Money VCard Vega City Successfully";
+                                string body = $@"
+                                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                                        <div style='background-color: #007bff; color: white; padding: 20px; text-align: center;'>
+                                            <h1 style='margin: 0;'>Welcome to our Vega City!</h1>
+                                        </div>
+                                        <div style='padding: 20px; background-color: #f9f9f9;'>
+                                            <p style='font-size: 16px; color: #333;'>Hello, <strong>{order.PackageOrder.CusName}</strong>,</p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Thanks for charging Money to V-Card our service. We are happy to accompany you on the upcoming journey.
+                                            </p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
+                                            </p>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                    Your VCard {order.PackageOrder.CusName} is charging money with {order.TotalAmount} successfully !!
+                                                </a>
+                                            </div>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a href='https://vegacity.id.vn/etagEdit/{order.PackageOrder.Id}' style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                     Click here to see your balance
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div style='background-color: #333; color: white; padding: 10px; text-align: center; font-size: 14px;'>
+                                            <p style='margin: 0;'>© 2024 Vega City. All rights reserved.</p>
+                                        </div>
+                                    </div>";
+                                await MailUtil.SendMailAsync(order.PackageOrder.CusEmail, subject, body);
+                            }
+                            catch (Exception ex)
+                            {
+                                return new ResponseAPI
+                                {
+                                    StatusCode = HttpStatusCodes.OK,
+                                    MessageResponse = UserMessage.SendEmailChargeError
+                                };
+                            }
                         }
-                        : new ResponseAPI()
+                    }
+                    else
+                    {
+                        return new ResponseAPI()
                         {
                             StatusCode = HttpStatusCodes.InternalServerError
                         };
+                    }
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentMomo.ipnUrl + order.Id
+                    };
                 }
             }
             catch (Exception ex)
@@ -974,7 +1176,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> PayOSPayment(PaymentRequest req)
         {
             var checkOrder = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.InvoiceId == req.InvoiceId && x.Status == OrderStatus.Pending,
-                     include: y => y.Include( a => a.PackageOrder));
+                     include: y => y.Include(a => a.PackageOrder));
             if (checkOrder == null)
             {
                 return new ResponseAPI()
@@ -1045,46 +1247,46 @@ namespace VegaCityApp.API.Services.Implement
             }
             //if key null
 
-                //here
-                try
-                {
-                    var paymentData = new PaymentData(
-                        orderCode: Int64.Parse(InnvoiceIdInt),  // Bạn có thể tạo mã đơn hàng tại đây
-                        amount: checkOrder.TotalAmount,
-                        description: "đơn hàng :" + req.InvoiceId,
-                        items: itemDataList,
-                        cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
-                        returnUrl: req.UrlDirect,  // URL khi thanh toán thành công
-                        buyerName: null,//customerInfo.FullName.ToString(),//customerInfo.FullName.ToString(),
-                        //buyerEmail: customerInfo.Email.ToString(), // very require email here!
-                        buyerEmail: null,
-                        buyerPhone: null,//customerInfo.PhoneNumber.ToString(),//,
-                        buyerAddress: null,// customerInfo.Email.ToString(),
-                        expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
-                    );
+            //here
+            try
+            {
+                var paymentData = new PaymentData(
+                    orderCode: Int64.Parse(InnvoiceIdInt),  // Bạn có thể tạo mã đơn hàng tại đây
+                    amount: checkOrder.TotalAmount,
+                    description: "đơn hàng :" + req.InvoiceId,
+                    items: itemDataList,
+                    cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
+                    returnUrl: req.UrlDirect,  // URL khi thanh toán thành công
+                    buyerName: null,//customerInfo.FullName.ToString(),//customerInfo.FullName.ToString(),
+                                    //buyerEmail: customerInfo.Email.ToString(), // very require email here!
+                    buyerEmail: null,
+                    buyerPhone: null,//customerInfo.PhoneNumber.ToString(),//,
+                    buyerAddress: null,// customerInfo.Email.ToString(),
+                    expiredAt: (int)DateTime.UtcNow.AddMinutes(30).Subtract(new DateTime(1970, 1, 1)).TotalSeconds
+                );
 
-                    // Gọi hàm createPaymentLink từ PayOS với đối tượng PaymentData
-                    var paymentUrl = await _payOs.createPaymentLink(paymentData);
+                // Gọi hàm createPaymentLink từ PayOS với đối tượng PaymentData
+                var paymentUrl = await _payOs.createPaymentLink(paymentData);
 
-                    //return Ok(new { Url = paymentUrl });
-                    return new ResponseAPI
-                    {
-                        MessageResponse = PaymentMessage.PayOSPaymentSuccess,
-                        StatusCode = HttpStatusCodes.OK,
-                        Data = paymentUrl
-                    };
-                }
-                catch (Exception ex)
+                //return Ok(new { Url = paymentUrl });
+                return new ResponseAPI
                 {
-                    //string error = ErrorUtil.GetErrorString("Exception", ex.Message);
-                    //return StatusCode(StatusCodes.Status500InternalServerError, error);
-                    return new ResponseAPI
-                    {
-                        MessageResponse = PaymentMessage.PayOSPaymentFail + ex.Message,
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        Data = null
-                    };
-                }          
+                    MessageResponse = PaymentMessage.PayOSPaymentSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = paymentUrl
+                };
+            }
+            catch (Exception ex)
+            {
+                //string error = ErrorUtil.GetErrorString("Exception", ex.Message);
+                //return StatusCode(StatusCodes.Status500InternalServerError, error);
+                return new ResponseAPI
+                {
+                    MessageResponse = PaymentMessage.PayOSPaymentFail + ex.Message,
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    Data = null
+                };
+            }
         }
         public async Task<ResponseAPI> UpdatePayOSOrder(string code, string id, string status, string orderCode)
         {
@@ -1212,7 +1414,7 @@ namespace VegaCityApp.API.Services.Implement
                                        .Include(s => s.PromotionOrders).ThenInclude(a => a.Promotion)
                                        .Include(a => a.Payments)
                                        .Include(o => o.OrderDetails));
-                                       
+
                 var orderCompleted = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.InvoiceId == invoiceId && x.Status == OrderStatus.Completed);
                 if (orderCompleted != null)
                 {
@@ -1338,16 +1540,66 @@ namespace VegaCityApp.API.Services.Implement
                     walletAdmin.BalanceHistory -= order.TotalAmount;
                     walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
-                    return await _unitOfWork.CommitAsync() > 0
-                        ? new ResponseAPI()
+                    int check = await _unitOfWork.CommitAsync();
+                    if (check > 0)
+                    {
+                        if (order.PackageOrder.CusEmail != null)
                         {
-                            StatusCode = HttpStatusCodes.NoContent,
-                            MessageResponse = PaymentZaloPay.ipnUrl + order.Id
+                            try
+                            {
+                                string subject = "Charge Money VCard Vega City Successfully";
+                                string body = $@"
+                                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                                        <div style='background-color: #007bff; color: white; padding: 20px; text-align: center;'>
+                                            <h1 style='margin: 0;'>Welcome to our Vega City!</h1>
+                                        </div>
+                                        <div style='padding: 20px; background-color: #f9f9f9;'>
+                                            <p style='font-size: 16px; color: #333;'>Hello, <strong>{order.PackageOrder.CusName}</strong>,</p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Thanks for charging Money to V-Card our service. We are happy to accompany you on the upcoming journey.
+                                            </p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
+                                            </p>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                    Your VCard {order.PackageOrder.CusName} is charging money with {order.TotalAmount} successfully !!
+                                                </a>
+                                            </div>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a href='https://vegacity.id.vn/etagEdit/{order.PackageOrder.Id}' style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                     Click here to see your balance
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div style='background-color: #333; color: white; padding: 10px; text-align: center; font-size: 14px;'>
+                                            <p style='margin: 0;'>© 2024 Vega City. All rights reserved.</p>
+                                        </div>
+                                    </div>";
+                                await MailUtil.SendMailAsync(order.PackageOrder.CusEmail, subject, body);
+                            }
+                            catch (Exception ex)
+                            {
+                                return new ResponseAPI
+                                {
+                                    StatusCode = HttpStatusCodes.OK,
+                                    MessageResponse = UserMessage.SendEmailChargeError
+                                };
+                            }
                         }
-                        : new ResponseAPI()
+                    }
+                    else
+                    {
+                        return new ResponseAPI()
                         {
                             StatusCode = HttpStatusCodes.InternalServerError
                         };
+                    }
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentZaloPay.ipnUrl + order.Id
+                    };
                 }
                 else
                 {
@@ -1448,16 +1700,66 @@ namespace VegaCityApp.API.Services.Implement
                     walletAdmin.BalanceHistory -= order.TotalAmount;
                     walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
-                    return await _unitOfWork.CommitAsync() > 0
-                        ? new ResponseAPI()
+                    int check = await _unitOfWork.CommitAsync();
+                    if (check > 0)
+                    {
+                        if (order.PackageOrder.CusEmail != null)
                         {
-                            StatusCode = HttpStatusCodes.NoContent,
-                            MessageResponse = PaymentMomo.ipnUrl + order.Id
+                            try
+                            {
+                                string subject = "Charge Money VCard Vega City Successfully";
+                                string body = $@"
+                                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                                        <div style='background-color: #007bff; color: white; padding: 20px; text-align: center;'>
+                                            <h1 style='margin: 0;'>Welcome to our Vega City!</h1>
+                                        </div>
+                                        <div style='padding: 20px; background-color: #f9f9f9;'>
+                                            <p style='font-size: 16px; color: #333;'>Hello, <strong>{order.PackageOrder.CusName}</strong>,</p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Thanks for charging Money to V-Card our service. We are happy to accompany you on the upcoming journey.
+                                            </p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
+                                            </p>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                    Your VCard {order.PackageOrder.CusName} is charging money with {order.TotalAmount} successfully !!
+                                                </a>
+                                            </div>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a href='https://vegacity.id.vn/etagEdit/{order.PackageOrder.Id}' style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                     Click here to see your balance
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div style='background-color: #333; color: white; padding: 10px; text-align: center; font-size: 14px;'>
+                                            <p style='margin: 0;'>© 2024 Vega City. All rights reserved.</p>
+                                        </div>
+                                    </div>";
+                                await MailUtil.SendMailAsync(order.PackageOrder.CusEmail, subject, body);
+                            }
+                            catch (Exception ex)
+                            {
+                                return new ResponseAPI
+                                {
+                                    StatusCode = HttpStatusCodes.OK,
+                                    MessageResponse = UserMessage.SendEmailChargeError
+                                };
+                            }
                         }
-                        : new ResponseAPI()
+                    }
+                    else
+                    {
+                        return new ResponseAPI()
                         {
                             StatusCode = HttpStatusCodes.InternalServerError
                         };
+                    }
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentMomo.ipnUrl + order.Id
+                    };
                 }
             }
             catch (Exception ex)
@@ -1473,16 +1775,17 @@ namespace VegaCityApp.API.Services.Implement
         {
             var checkOrder = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
                              (predicate: x => x.InvoiceId == req.InvoiceId
-                                           && x.Status    == OrderStatus.Pending);
+                                           && x.Status == OrderStatus.Pending);
             if (checkOrder == null)
             {
                 return new ResponseAPI
                 {
-                    StatusCode      = HttpStatusCodes.NotFound,
+                    StatusCode = HttpStatusCodes.NotFound,
                     MessageResponse = PaymentMessage.OrderNotFound
                 };
             }
-            var embed_data = new {
+            var embed_data = new
+            {
                 redirecturl = req.UrlDirect ?? PaymentZaloPay.redirectUrl,
             };
             var items = new List<Object>();
@@ -1592,7 +1895,7 @@ namespace VegaCityApp.API.Services.Implement
 
                         var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
                             (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
-                       
+
                     }
                 }
             }
@@ -1760,16 +2063,66 @@ namespace VegaCityApp.API.Services.Implement
                     walletAdmin.BalanceHistory -= order.TotalAmount;
                     walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
-                    return await _unitOfWork.CommitAsync() > 0
-                        ? new ResponseAPI()
+                    int check = await _unitOfWork.CommitAsync();
+                    if (check > 0)
+                    {
+                        if (order.PackageOrder.CusEmail != null)
                         {
-                            StatusCode = HttpStatusCodes.NoContent,
-                            MessageResponse = PaymentZaloPay.ipnUrl + order.Id
+                            try
+                            {
+                                string subject = "Charge Money VCard Vega City Successfully";
+                                string body = $@"
+                                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                                        <div style='background-color: #007bff; color: white; padding: 20px; text-align: center;'>
+                                            <h1 style='margin: 0;'>Welcome to our Vega City!</h1>
+                                        </div>
+                                        <div style='padding: 20px; background-color: #f9f9f9;'>
+                                            <p style='font-size: 16px; color: #333;'>Hello, <strong>{order.PackageOrder.CusName}</strong>,</p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Thanks for charging Money to V-Card our service. We are happy to accompany you on the upcoming journey.
+                                            </p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
+                                            </p>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                    Your VCard {order.PackageOrder.CusName} is charging money with {order.TotalAmount} successfully !!
+                                                </a>
+                                            </div>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a href='https://vegacity.id.vn/etagEdit/{order.PackageOrder.Id}' style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                     Click here to see your balance
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div style='background-color: #333; color: white; padding: 10px; text-align: center; font-size: 14px;'>
+                                            <p style='margin: 0;'>© 2024 Vega City. All rights reserved.</p>
+                                        </div>
+                                    </div>";
+                                await MailUtil.SendMailAsync(order.PackageOrder.CusEmail, subject, body);
+                            }
+                            catch (Exception ex)
+                            {
+                                return new ResponseAPI
+                                {
+                                    StatusCode = HttpStatusCodes.OK,
+                                    MessageResponse = UserMessage.SendEmailChargeError
+                                };
+                            }
                         }
-                        : new ResponseAPI()
+                    }
+                    else
+                    {
+                        return new ResponseAPI()
                         {
                             StatusCode = HttpStatusCodes.InternalServerError
                         };
+                    }
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentZaloPay.ipnUrl + order.Id
+                    };
                 }
                 else
                 {
@@ -1868,16 +2221,66 @@ namespace VegaCityApp.API.Services.Implement
                     walletAdmin.BalanceHistory -= order.TotalAmount;
                     walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
-                    return await _unitOfWork.CommitAsync() > 0
-                        ? new ResponseAPI()
+                    int check = await _unitOfWork.CommitAsync();
+                    if (check > 0)
+                    {
+                        if (order.PackageOrder.CusEmail != null)
                         {
-                            StatusCode = HttpStatusCodes.NoContent,
-                            MessageResponse = PaymentMomo.ipnUrl + order.Id
+                            try
+                            {
+                                string subject = "Charge Money VCard Vega City Successfully";
+                                string body = $@"
+                                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                                        <div style='background-color: #007bff; color: white; padding: 20px; text-align: center;'>
+                                            <h1 style='margin: 0;'>Welcome to our Vega City!</h1>
+                                        </div>
+                                        <div style='padding: 20px; background-color: #f9f9f9;'>
+                                            <p style='font-size: 16px; color: #333;'>Hello, <strong>{order.PackageOrder.CusName}</strong>,</p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Thanks for charging Money to V-Card our service. We are happy to accompany you on the upcoming journey.
+                                            </p>
+                                            <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                                Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
+                                            </p>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                    Your VCard {order.PackageOrder.CusName} is charging money with {order.TotalAmount} successfully !!
+                                                </a>
+                                            </div>
+                                            <div style='margin-top: 20px; text-align: center;'>
+                                                <a href='https://vegacity.id.vn/etagEdit/{order.PackageOrder.Id}' style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                                     Click here to see your balance
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div style='background-color: #333; color: white; padding: 10px; text-align: center; font-size: 14px;'>
+                                            <p style='margin: 0;'>© 2024 Vega City. All rights reserved.</p>
+                                        </div>
+                                    </div>";
+                                await MailUtil.SendMailAsync(order.PackageOrder.CusEmail, subject, body);
+                            }
+                            catch (Exception ex)
+                            {
+                                return new ResponseAPI
+                                {
+                                    StatusCode = HttpStatusCodes.OK,
+                                    MessageResponse = UserMessage.SendEmailChargeError
+                                };
+                            }
                         }
-                        : new ResponseAPI()
+                    }
+                    else
+                    {
+                        return new ResponseAPI()
                         {
                             StatusCode = HttpStatusCodes.InternalServerError
                         };
+                    }
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentMomo.ipnUrl + order.Id
+                    };
                 }
             }
             catch (Exception ex)
