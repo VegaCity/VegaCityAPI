@@ -18,6 +18,7 @@
     {
         public const string Success = "Success";
         public const string Pending = "Pending";
+        public const string Fail = "Cancel";
     }
     public enum CurrencyEnum
     {

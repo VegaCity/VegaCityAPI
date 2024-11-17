@@ -1023,19 +1023,19 @@ namespace VegaCityApp.API.Services.Implement
                 };
                 await _unitOfWork.GetRepository<Payment>().InsertAsync(newPayment);
                 string key = req.PaymentType + "_" + newOrder.InvoiceId;
-                var packageOrder = new PackageOrder()
-                {
-                    Id = Guid.NewGuid(),
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    CusCccdpassport = req.CccdPassport,
-                    CusEmail = packageOrderExsit.CusEmail,
-                    CusName = packageOrderExsit.CusName,
-                    PackageId = packageOrderExsit.PackageId,
-                    PhoneNumber = packageOrderExsit.PhoneNumber,
-                    Status = PackageItemStatusEnum.InActive.GetDescriptionFromEnum(),
-                };
-                await _unitOfWork.GetRepository<PackageOrder>().InsertAsync(packageOrder);
+                //var packageOrder = new PackageOrder()
+                //{
+                //    Id = Guid.NewGuid(),
+                //    CrDate = TimeUtils.GetCurrentSEATime(),
+                //    UpsDate = TimeUtils.GetCurrentSEATime(),
+                //    CusCccdpassport = req.CccdPassport,
+                //    CusEmail = packageOrderExsit.CusEmail,
+                //    CusName = packageOrderExsit.CusName,
+                //    PackageId = packageOrderExsit.PackageId,
+                //    PhoneNumber = packageOrderExsit.PhoneNumber,
+                //    Status = PackageItemStatusEnum.InActive.GetDescriptionFromEnum(),
+                //};
+                //await _unitOfWork.GetRepository<PackageOrder>().InsertAsync(packageOrder);
                 var transactionCharge = new Transaction()
                 {
                     Id = Guid.NewGuid(),
@@ -1061,7 +1061,6 @@ namespace VegaCityApp.API.Services.Implement
                         invoiceId = newOrder.InvoiceId,
                         balance = req.ChargeAmount,
                         transactionChargeId = transactionCharge.Id,
-                        packageOrderId = packageOrder.Id,
                         packageItemId = packageOrderExsit.Id,
                         Key = key,
                         UrlDirect = $"https://api.vegacity.id.vn/api/v1/payment/{req.PaymentType.ToLower()}/order/charge-money", //https://localhost:44395/api/v1/payment/momo/order, http://14.225.204.144:8000/api/v1/payment/momo/order
