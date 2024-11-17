@@ -49,10 +49,10 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
 
-    //app.UseHangfireDashboard();
-    //app.MapHangfireDashboard();
+    app.UseHangfireDashboard();
+    app.MapHangfireDashboard();
 
-    //BackgroundJobs.RecurringJobs();
+    BackgroundJobs.RecurringJobs();
     app.MapControllers();
 
     app.Run();
