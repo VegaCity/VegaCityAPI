@@ -284,8 +284,8 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
                     //quantity promotion -
                     //
-                    order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
-                    _unitOfWork.GetRepository<Promotion>().UpdateAsync(order.PromotionOrders.SingleOrDefault().Promotion);
+                    //order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
+                    //_unitOfWork.GetRepository<Promotion>().UpdateAsync(order.PromotionOrders.SingleOrDefault().Promotion);
                     //session update
                     //
                     //session update
@@ -351,7 +351,7 @@ namespace VegaCityApp.API.Services.Implement
                     var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
                         (predicate: x => x.Email == marketZone.Email && x.MarketZoneId == marketZone.Id, include: z => z.Include(w => w.Wallets));
                     if (admin == null) throw new BadHttpRequestException("Admin not found", HttpStatusCodes.NotFound);
-                    var walletAdmin = admin.Wallets.FirstOrDefault();
+                    var walletAdmin = admin.Wallets.SingleOrDefault();
                     //bill admin refund money to packageItem
                     var transactionAdminBalanceHistory = new VegaCityApp.Domain.Models.Transaction()
                     {
@@ -371,9 +371,9 @@ namespace VegaCityApp.API.Services.Implement
                     await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionAdminBalanceHistory);
 
 
-                    walletAdmin.BalanceHistory -= order.TotalAmount;
-                    walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
+                    //walletAdmin.BalanceHistory -= order.TotalAmount;
+                    //walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
+                    //_unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
                     return await _unitOfWork.CommitAsync() > 0
                         ? new ResponseAPI()
                         {
@@ -749,8 +749,8 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
                     //quantity promotion -
                     //
-                    order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
-                    _unitOfWork.GetRepository<Promotion>().UpdateAsync(order.PromotionOrders.SingleOrDefault().Promotion);
+                    //order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
+                    //_unitOfWork.GetRepository<Promotion>().UpdateAsync(order.PromotionOrders.SingleOrDefault().Promotion);
                     //session update
                     //
                     //session update
@@ -836,9 +836,9 @@ namespace VegaCityApp.API.Services.Implement
                     await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionAdminBalanceHistory);
 
 
-                    walletAdmin.BalanceHistory -= order.TotalAmount;
-                    walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
+                    //walletAdmin.BalanceHistory -= order.TotalAmount;
+                    //walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
+                    //_unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
                     return await _unitOfWork.CommitAsync() > 0
                         ? new ResponseAPI()
                         {
@@ -1246,8 +1246,8 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
                     //quantity promotion -
                     //
-                    order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
-                    _unitOfWork.GetRepository<Promotion>().UpdateAsync(order.PromotionOrders.SingleOrDefault().Promotion);
+                    //order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
+                    //_unitOfWork.GetRepository<Promotion>().UpdateAsync(order.PromotionOrders.SingleOrDefault().Promotion);
                     //session update
                     //
                     //session update
@@ -1670,8 +1670,8 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
                     //quantity promotion -
                     //
-                    order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
-                    _unitOfWork.GetRepository<Promotion>().UpdateAsync(order.PromotionOrders.SingleOrDefault().Promotion);
+                    //order.PromotionOrders.SingleOrDefault().Promotion.Quantity -= 1;
+                    //_unitOfWork.GetRepository<Promotion>().UpdateAsync(order.PromotionOrders.SingleOrDefault().Promotion);
                     //session update
                     //
                     //session update
