@@ -11,6 +11,6 @@ namespace VegaCityApp.API.Payload.Request.Store
         public string? Email { get; set; }
         public string? Description { get; set; }
         public int? Status { get; set; }
-        public StoreTypeEnum? StoreType { get; set; }
+        public int? StoreType { get; set; }
     }
 }

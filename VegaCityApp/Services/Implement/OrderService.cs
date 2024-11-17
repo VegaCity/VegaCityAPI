@@ -488,6 +488,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 Id = Guid.NewGuid(),
                 OrderId = newOrder.Id,
+                //ProductId = Guid.Parse(req.ProductData.SingleOrDefault().Id),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Quantity = count,
@@ -1114,8 +1115,9 @@ namespace VegaCityApp.API.Services.Implement
         {
             var orders = await _unitOfWork.GetRepository<Order>().
                 GetListAsync(predicate: x => x.Status == OrderStatus.Pending,
-                             include: z => z.Include(a => a.PackageOrder)
-                                            .Include(p => p.PromotionOrders));
+                             include: z => z.Include(p => p.PromotionOrders)
+                                            .Include(a => a.Transactions)
+                                            .Include(a => a.Payments));
             foreach (var order in orders)
             {
                 if (TimeUtils.GetCurrentSEATime().Subtract(order.CrDate).TotalMinutes > 5)
@@ -1124,12 +1126,32 @@ namespace VegaCityApp.API.Services.Implement
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
                 }
-                order.PackageOrder.Status = PackageItemStatusEnum.InActive.GetDescriptionFromEnum();
-                foreach (var orderPromotion in order.PromotionOrders)
+                if (order.PromotionOrders.Count > 0)
                 {
-                    orderPromotion.Deflag = true;
-                    orderPromotion.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<PromotionOrder>().UpdateAsync(orderPromotion);
+                    foreach (var orderPromotion in order.PromotionOrders)
+                    {
+                        orderPromotion.Deflag = true;
+                        orderPromotion.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<PromotionOrder>().UpdateAsync(orderPromotion);
+                    }
+                }
+                if (order.Transactions.Count > 0)
+                {
+                    foreach (var transaction in order.Transactions)
+                    {
+                        transaction.Status = TransactionStatus.Fail.GetDescriptionFromEnum();
+                        transaction.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+                    }
+                }
+                if (order.Payments.Count > 0)
+                {
+                    foreach (var payment in order.Payments)
+                    {
+                        payment.Status = PaymentStatus.Canceled;
+                        payment.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Payment>().UpdateAsync(payment);
+                    }
                 }
             }
             await _unitOfWork.CommitAsync();
