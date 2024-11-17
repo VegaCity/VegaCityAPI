@@ -617,9 +617,9 @@ namespace VegaCityApp.API.Services.Implement
                     order.Status = OrderStatus.Completed;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-                    //updateOrderDetail
-                    order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime(); //may add new Status for OrderDetail Below
-                    _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
+                    ////updateOrderDetail
+                    //order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime(); //may add new Status for OrderDetail Below
+                    //_unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
                     //update payment 
                     order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
                     order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();

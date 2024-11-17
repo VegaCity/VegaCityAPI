@@ -1081,19 +1081,19 @@ namespace VegaCityApp.API.Services.Implement
                     Status = PaymentStatus.Pending,
                 };
                 await _unitOfWork.GetRepository<Payment>().InsertAsync(newPayment);
-                var packageOrder = new PackageOrder()
-                {
-                    Id = Guid.NewGuid(),
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    CusCccdpassport = req.CccdPassport,
-                    CusEmail = packageOrderExsit.CusEmail,
-                    CusName = packageOrderExsit.CusName,
-                    PackageId = packageOrderExsit.PackageId,
-                    Status = PackageItemStatusEnum.InActive.GetDescriptionFromEnum(),
-                    PhoneNumber = packageOrderExsit.PhoneNumber
-                };
-                await _unitOfWork.GetRepository<PackageOrder>().InsertAsync(packageOrder);
+                //var packageOrder = new PackageOrder()
+                //{
+                //    Id = Guid.NewGuid(),
+                //    CrDate = TimeUtils.GetCurrentSEATime(),
+                //    UpsDate = TimeUtils.GetCurrentSEATime(),
+                //    CusCccdpassport = req.CccdPassport,
+                //    CusEmail = packageOrderExsit.CusEmail,
+                //    CusName = packageOrderExsit.CusName,
+                //    PackageId = packageOrderExsit.PackageId,
+                //    Status = PackageItemStatusEnum.InActive.GetDescriptionFromEnum(),
+                //    PhoneNumber = packageOrderExsit.PhoneNumber
+                //};
+                //await _unitOfWork.GetRepository<PackageOrder>().InsertAsync(packageOrder);
                 var newPromotionOrder = new PromotionOrder()
                 {
                     Id = Guid.NewGuid(),
@@ -1129,8 +1129,7 @@ namespace VegaCityApp.API.Services.Implement
                     Data = new
                     {
                         invoiceId = newOrder.InvoiceId,
-                        packageOrderId = packageOrder.Id,
-                        packageItemId = packageOrderExsit.Id,
+                        packageOrderId = packageOrderExsit.Id,
                         transactionChargeId = transactionCharge.Id,
                         balance = req.ChargeAmount,
                         Key = req.PaymentType + "_" + newOrder.InvoiceId,
