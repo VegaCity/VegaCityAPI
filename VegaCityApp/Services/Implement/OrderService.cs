@@ -1115,7 +1115,8 @@ namespace VegaCityApp.API.Services.Implement
             var orders = await _unitOfWork.GetRepository<Order>().
                 GetListAsync(predicate: x => x.Status == OrderStatus.Pending,
                              include: z => z.Include(p => p.PromotionOrders)
-                                            .Include(a => a.Transactions));
+                                            .Include(a => a.Transactions)
+                                            .Include(a => a.Payments));
             foreach (var order in orders)
             {
                 if (TimeUtils.GetCurrentSEATime().Subtract(order.CrDate).TotalMinutes > 5)
@@ -1140,6 +1141,15 @@ namespace VegaCityApp.API.Services.Implement
                         transaction.Status = TransactionStatus.Fail.GetDescriptionFromEnum();
                         transaction.UpsDate = TimeUtils.GetCurrentSEATime();
                         _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+                    }
+                }
+                if (order.Payments.Count > 0)
+                {
+                    foreach (var payment in order.Payments)
+                    {
+                        payment.Status = PaymentStatus.Canceled;
+                        payment.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Payment>().UpdateAsync(payment);
                     }
                 }
             }
