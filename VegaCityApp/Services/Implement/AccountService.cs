@@ -35,11 +35,11 @@ namespace VegaCityApp.Service.Implement
         {
             var role = await _unitOfWork.GetRepository<Role>()
                 .SingleOrDefaultAsync(predicate: r => r.Name == req.RoleName.Trim().Replace(" ", string.Empty));
-            if(req.RegisterStoreType != null)
+            if (req.RegisterStoreType != null)
             {
                 if (!StoreTypeHelper.allowedStoreTypes.Contains((int)req.RegisterStoreType))
                 {
-                    throw new BadHttpRequestException("Invalid Store Type",HttpStatusCodes.BadRequest);
+                    throw new BadHttpRequestException("Invalid Store Type", HttpStatusCodes.BadRequest);
                 }
             }
             var newUser = new User
@@ -56,14 +56,14 @@ namespace VegaCityApp.Service.Implement
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Gender = (int)GenderEnum.Other,
-                Status = role != null && role.Name == RoleEnum.Store.GetDescriptionFromEnum()? (int)UserStatusEnum.PendingVerify: (int) UserStatusEnum.Active,
-                Password = role != null && role.Name == RoleEnum.Store.GetDescriptionFromEnum()? null : PasswordUtil.GenerateCharacter(10),
+                Status = role != null && role.Name == RoleEnum.Store.GetDescriptionFromEnum() ? (int)UserStatusEnum.PendingVerify : (int)UserStatusEnum.Active,
+                Password = role != null && role.Name == RoleEnum.Store.GetDescriptionFromEnum() ? null : PasswordUtil.GenerateCharacter(10),
                 IsChange = false,
                 RegisterStoreType = req.RegisterStoreType != null ? req.RegisterStoreType : null
             };
             await _unitOfWork.GetRepository<User>().InsertAsync(newUser);
             await _unitOfWork.CommitAsync();
-            return  newUser;
+            return newUser;
         }
         private async Task<bool> CreateUserWallet(Guid userId)
         {
@@ -144,11 +144,11 @@ namespace VegaCityApp.Service.Implement
             switch (user.Status)
             {
                 case (int)UserStatusEnum.Active:
-                    if(user.Role.Name == RoleEnum.Store.GetDescriptionFromEnum())
+                    if (user.Role.Name == RoleEnum.Store.GetDescriptionFromEnum())
                     {
                         //check mapping store
                         var store = await _unitOfWork.GetRepository<UserStoreMapping>().SingleOrDefaultAsync(
-                            predicate: x => x.UserId == user.Id) 
+                            predicate: x => x.UserId == user.Id)
                             ?? throw new BadHttpRequestException("Store Not Mapping with account", HttpStatusCodes.BadRequest);
                     }
                     if (user.Password == PasswordUtil.HashPassword(req.Password))
@@ -170,7 +170,7 @@ namespace VegaCityApp.Service.Implement
                         var tokenRefresh = "";
                         //check expire date
                         var exDay = JwtUtil.GetExpireDate(refreshToken.Token);
-                        if(TimeUtils.GetCurrentSEATime() > exDay)
+                        if (TimeUtils.GetCurrentSEATime() > exDay)
                         {
                             return new LoginResponse
                             {
@@ -186,7 +186,7 @@ namespace VegaCityApp.Service.Implement
                             _unitOfWork.GetRepository<UserRefreshToken>().UpdateAsync(refreshToken);
                             tokenRefresh = refreshToken.Token;
                         }
-                        return await _unitOfWork.CommitAsync() > 0? new LoginResponse
+                        return await _unitOfWork.CommitAsync() > 0 ? new LoginResponse
                         {
                             StatusCode = HttpStatusCodes.OK,
                             MessageResponse = UserMessage.LoginSuccessfully,
@@ -202,7 +202,7 @@ namespace VegaCityApp.Service.Implement
                                     RefreshToken = tokenRefresh
                                 }
                             }
-                        }: new LoginResponse
+                        } : new LoginResponse
                         {
                             StatusCode = HttpStatusCodes.BadRequest,
                             MessageResponse = UserMessage.SaveRefreshTokenFail
@@ -250,7 +250,7 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.EndDateInvalid
                 };
             }
-            
+
             var user = await SearchUser(userId);
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == req.ZoneId && !x.Deflag)
                 ?? throw new BadHttpRequestException("Zone not found");
@@ -291,7 +291,8 @@ namespace VegaCityApp.Service.Implement
         }
         public async Task<ResponseAPI<IEnumerable<GetUserSessions>>> GetAllUserSessions(int page, int size)
         {
-            try {
+            try
+            {
                 var sessions = await _unitOfWork.GetRepository<UserSession>().GetPagingListAsync(
                     selector: x => new GetUserSessions
                     {
@@ -323,7 +324,7 @@ namespace VegaCityApp.Service.Implement
                     },
                     Data = sessions.Items
                 };
-            } 
+            }
             catch (Exception ex)
             {
                 return new ResponseAPI<IEnumerable<GetUserSessions>>
@@ -429,7 +430,7 @@ namespace VegaCityApp.Service.Implement
                 //create wallet
                 var result = await CreateUserWallet(newUser.Id);
                 if (!result)
-                    throw new BadHttpRequestException(UserMessage.CreateWalletFail); 
+                    throw new BadHttpRequestException(UserMessage.CreateWalletFail);
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.Created,
@@ -622,7 +623,8 @@ namespace VegaCityApp.Service.Implement
                     var subject = UserMessage.YourPasswordToChange;
                     var body = "Your Your Password To Change. Your password is: " + newUser.Password;
                     await MailUtil.SendMailAsync(newUser.Email, subject, body);
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
                     return new ResponseAPI
                     {
@@ -652,7 +654,7 @@ namespace VegaCityApp.Service.Implement
             var user = await SearchUser(userId);
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Location == req.LocationZone && !x.Deflag)
                 ?? throw new BadHttpRequestException("Zone not found");
-            if (user.Data.Status == (int) UserStatusEnum.Active)
+            if (user.Data.Status == (int)UserStatusEnum.Active)
             {
                 return new ResponseAPI
                 {
@@ -799,7 +801,7 @@ namespace VegaCityApp.Service.Implement
 
             if (user.IsChange == false)
             {
-                if(RoleHelper.allowedRoles.Contains(user.Role.Name))
+                if (RoleHelper.allowedRoles.Contains(user.Role.Name))
                 {
                     if (user.Password == req.OldPassword.Trim())
                     {
@@ -829,7 +831,7 @@ namespace VegaCityApp.Service.Implement
             }
             else
             {
-                if(user.Password == PasswordUtil.HashPassword(req.OldPassword.Trim()))
+                if (user.Password == PasswordUtil.HashPassword(req.OldPassword.Trim()))
                 {
                     user.Password = PasswordUtil.HashPassword(req.NewPassword.Trim());
                     _unitOfWork.GetRepository<User>().UpdateAsync(user);
@@ -881,7 +883,7 @@ namespace VegaCityApp.Service.Implement
                 orderBy: x => x.OrderByDescending(z => z.FullName),
                 predicate: x => //x.Status == (int)UserStatusEnum.Active || x.Status == (int)UserStatusEnum.PendingVerify &&
                                 x.MarketZoneId == apiKey);
-                
+
                 return new ResponseAPI<IEnumerable<GetUserResponse>>
                 {
                     MessageResponse = UserMessage.GetListSuccess,
@@ -903,7 +905,7 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.GetAllUserFail + ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError,
                     Data = null,
-                    MetaData=null
+                    MetaData = null
                 };
             }
         }
@@ -911,10 +913,10 @@ namespace VegaCityApp.Service.Implement
         public async Task<ResponseAPI<User>> SearchUser(Guid UserId)
         {
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                predicate: x => x.Id == UserId 
-                && (x.Status ==(int) UserStatusEnum.Active || x.Status ==(int)UserStatusEnum.PendingVerify),
+                predicate: x => x.Id == UserId
+                && (x.Status == (int)UserStatusEnum.Active || x.Status == (int)UserStatusEnum.PendingVerify),
                 include: user => user
-                        .Include(y => y.Wallets)
+                        .Include(y => y.Wallets).ThenInclude(a => a.WalletType)
                         .Include(y => y.UserStoreMappings).ThenInclude(y => y.Store)
                         .Include(y => y.Role)
             ) ?? throw new BadHttpRequestException(UserMessage.NotFoundUser);
@@ -927,7 +929,7 @@ namespace VegaCityApp.Service.Implement
         }
         public async Task<ResponseAPI> UpdateUser(Guid userId, UpdateUserAccountRequest req)
         {
-            if(!ValidationUtils.IsPhoneNumber(req.PhoneNumber.Trim()))
+            if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber.Trim()))
             {
                 return new ResponseAPI()
                 {
@@ -968,7 +970,7 @@ namespace VegaCityApp.Service.Implement
         public async Task<ResponseAPI> DeleteUser(Guid UserId)
         {
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
-                (predicate: x => x.Id == UserId && x.Status ==(int) UserStatusEnum.Active);
+                (predicate: x => x.Id == UserId && x.Status == (int)UserStatusEnum.Active);
             if (user == null)
             {
                 return new ResponseAPI()
@@ -1017,7 +1019,7 @@ namespace VegaCityApp.Service.Implement
         {
             var currentMarketZoneId = GetMarketZoneIdFromJwt();
             var marketzone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == currentMarketZoneId);
-            if(marketzone == null)
+            if (marketzone == null)
             {
                 return new ResponseAPI()
                 {
@@ -1076,7 +1078,7 @@ namespace VegaCityApp.Service.Implement
 
             DateTime? endDate = startDate.AddDays(((int)req.Days));
             var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
-                                                       && x.CrDate <= endDate && x.Status == OrderStatus.Completed, null,null);
+                                                       && x.CrDate <= endDate && x.Status == OrderStatus.Completed, null, null);
             //var etags = await _unitOfWork.GetRepository<Etag>().GetListAsync(x => x.CrDate >= startDate
             //                                           && x.CrDate <= endDate, null, null);
             var transactions = await _unitOfWork.GetRepository<Transaction>()
@@ -1112,7 +1114,7 @@ namespace VegaCityApp.Service.Implement
                    TotalTransactions = transactions.Count(o => o.CrDate.ToString("MMM") == g.Key),
                    TotalTransactionsAmount = g.Sum(t => t.Amount),
                    //  EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                   EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key ),
+                   EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
                    OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
 
                }).ToList();
@@ -1125,17 +1127,17 @@ namespace VegaCityApp.Service.Implement
             }
             else if (roleCurrent == "CashierWeb" || roleCurrent == "CashierApp")
             {
-              //  var groupedStaticsCashier = deposits
-              //.GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
-              //.Select(g => new
-              //{
-              //    Name = g.Key, // Month name
-              //    TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
-              //    TotalTransactionsAmount = g.Sum(t => t.Amount),
-              //    EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
-              //    OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
-              //    PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
-              //}).ToList();
+                //  var groupedStaticsCashier = deposits
+                //.GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+                //.Select(g => new
+                //{
+                //    Name = g.Key, // Month name
+                //    TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                //    TotalTransactionsAmount = g.Sum(t => t.Amount),
+                //    EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                //    OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
+                //    PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
+                //}).ToList();
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.OK,
@@ -1166,8 +1168,8 @@ namespace VegaCityApp.Service.Implement
         public async Task<string> ReAssignEmail(Guid userId, ReAssignEmail req)
         {
             Guid marketZoneId = GetMarketZoneIdFromJwt();
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == userId 
-            && x.Status ==(int) UserStatusEnum.PendingVerify && x.MarketZoneId == marketZoneId);
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == userId
+            && x.Status == (int)UserStatusEnum.PendingVerify && x.MarketZoneId == marketZoneId);
             if (user == null)
             {
                 return UserMessage.UserNotFound;
@@ -1357,7 +1359,7 @@ namespace VegaCityApp.Service.Implement
             var searchName = NormalizeString(req.StoreName);
             var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && x.Status == (int)StoreStatusEnum.Blocked
                                                                                , include: z => z.Include(s => s.Wallets)
-                                                                                               
+
                                                                                                 .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings).ThenInclude(a => a.Product).ThenInclude(a => a.ProductCategory));
             var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name) == searchName || NormalizeString(x.ShortName) == searchName);
             if (storeTrack == null)
@@ -1368,7 +1370,7 @@ namespace VegaCityApp.Service.Implement
             //{
             //    throw new BadHttpRequestException(StoreMessage.MustGreaterThan50K, HttpStatusCodes.BadRequest);
             //}
-            
+
             if (req.Status == "APPROVED")
             {
                 //storeTrack.Wallets.SingleOrDefault().Deflag = false;
@@ -1379,7 +1381,7 @@ namespace VegaCityApp.Service.Implement
                 storeTrack.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Store>().UpdateAsync(storeTrack);
             }
-            else if(req.Status != null)
+            else if (req.Status != null)
             {
                 if (req.Status != "REJECTED")
                 {
@@ -1431,7 +1433,7 @@ namespace VegaCityApp.Service.Implement
                     _unitOfWork.GetRepository<Store>().UpdateAsync(storeTrack);
 
                 }
-               
+
             }
             var result = await _unitOfWork.CommitAsync();
             if (result > 0)

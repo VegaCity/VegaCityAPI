@@ -3,6 +3,6 @@
     public class ApproveStatus
     {
         public static string APPROVED = "APPROVED";
-        public static string REJECT = "REJECT";
+        public static string REJECT = "REJECTED";
     }
 }

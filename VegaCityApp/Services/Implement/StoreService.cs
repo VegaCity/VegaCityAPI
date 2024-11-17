@@ -55,6 +55,7 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> UpdateStore(Guid storeId, UpdateStoreRequest req)
         {
+            string roleJwt = GetRoleFromJwt();
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
                 (predicate: x => x.Id == storeId && !x.Deflag);
             if (store == null)
@@ -65,8 +66,20 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = StoreMessage.NotFoundStore
                 };
             }
+            if (roleJwt == RoleEnum.Admin.GetDescriptionFromEnum())
+            {
+                if (!Enum.IsDefined(typeof(StoreTypeEnum), req.StoreType))
+                {
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.BadRequest,
+                        MessageResponse = StoreMessage.InvalidStoreStatus
+                    };
+                }
+                store.StoreType = req.StoreType != null ? (int)req.StoreType : store.StoreType;
+            }
             store.Name = req.Name != null ? req.Name.Trim() : store.Name;
-            if(req.Status != null)
+            if (req.Status != null)
             {
                 if (!Enum.IsDefined(typeof(StoreStatusEnum), req.Status))
                 {
@@ -76,9 +89,9 @@ namespace VegaCityApp.API.Services.Implement
                         MessageResponse = StoreMessage.InvalidStoreStatus
                     };
                 }
-                store.Status = (int) req.Status;
+                store.Status = (int)req.Status;
             }
-            
+
             store.Address = req.Address != null ? req.Address.Trim() : store.Address;
             store.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : store.PhoneNumber;
             store.ShortName = req.ShortName != null ? req.ShortName.Trim() : store.ShortName;
@@ -176,23 +189,25 @@ namespace VegaCityApp.API.Services.Implement
             }
             string storeType = null;
             //check storetype enum and parse to string
-            if(!StoreTypeHelper.allowedStoreTypes.Contains((int) store.StoreType))
+            if (!StoreTypeHelper.allowedStoreTypes.Contains((int)store.StoreType))
             {
                 throw new BadHttpRequestException(StoreMessage.InvalidStoreType, HttpStatusCodes.BadRequest);
             }
             else
             {
-                if(store.StoreType == (int)StoreTypeEnum.Service)
+                if (store.StoreType == (int)StoreTypeEnum.Service)
                 {
                     storeType = StoreTypeEnum.Service.GetDescriptionFromEnum();
                 }
                 else if (store.StoreType == (int)StoreTypeEnum.Food)
                 {
                     storeType = StoreTypeEnum.Food.GetDescriptionFromEnum();
-                }else if(store.StoreType == (int)StoreTypeEnum.Other)
+                }
+                else if (store.StoreType == (int)StoreTypeEnum.Other)
                 {
                     storeType = StoreTypeEnum.Other.GetDescriptionFromEnum();
-                }else if(store.StoreType == (int)StoreTypeEnum.Clothing)
+                }
+                else if (store.StoreType == (int)StoreTypeEnum.Clothing)
                 {
                     storeType = StoreTypeEnum.Clothing.GetDescriptionFromEnum();
                 }
@@ -301,7 +316,7 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = StoreMessage.NotFoundMenu
                 };
             }
-            if(req.DateFilter != null)
+            if (req.DateFilter != null)
             {
                 if (!Enum.IsDefined(typeof(DateFilterEnum), req.DateFilter))
                 {
@@ -417,7 +432,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI<Menu>> SearchMenu(Guid MenuId)
         {
             var menu = await _unitOfWork.GetRepository<Menu>().SingleOrDefaultAsync(
-                predicate: x => x.Id == MenuId && !x.Deflag, 
+                predicate: x => x.Id == MenuId && !x.Deflag,
                 include: z => z.Include(a => a.MenuProductMappings).ThenInclude(a => a.Product).ThenInclude(a => a.ProductCategory));
             if (menu == null)
             {
@@ -444,10 +459,10 @@ namespace VegaCityApp.API.Services.Implement
                 throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
             }
             var searchName = NormalizeString(req.StoreName);
-            var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && (x.Status == (int)StoreStatusEnum.Opened || x.Status == (int)StoreStatusEnum.Closed) 
-                                                                               ,include: w => w.Include(u => u.Wallets));
-            var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name )== searchName ||  NormalizeString(x.ShortName) == searchName);
-            if(storeTrack == null)
+            var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && (x.Status == (int)StoreStatusEnum.Opened || x.Status == (int)StoreStatusEnum.Closed)
+                                                                               , include: w => w.Include(u => u.Wallets));
+            var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name) == searchName || NormalizeString(x.ShortName) == searchName);
+            if (storeTrack == null)
             {
                 throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
             }
@@ -522,7 +537,7 @@ namespace VegaCityApp.API.Services.Implement
                         }
                     }
                 }
-                
+
             }
             //store.Wallets.SingleOrDefault().Deflag = true;
             //store.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
@@ -530,10 +545,10 @@ namespace VegaCityApp.API.Services.Implement
 
             store.Status = (int)StoreStatusEnum.Blocked; //implement count 7 days from blocked status (UPSDATE) here
             store.UpsDate = TimeUtils.GetCurrentSEATime();
-             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
+            _unitOfWork.GetRepository<Store>().UpdateAsync(store);
 
 
-            var result = await _unitOfWork.CommitAsync();      
+            var result = await _unitOfWork.CommitAsync();
             if (result > 0)
             {
                 #region send mail
@@ -591,7 +606,7 @@ namespace VegaCityApp.API.Services.Implement
         //           ?? throw new BadHttpRequestException("Store not found", HttpStatusCodes.NotFound);
         //    if (store.Wallets.Count > 0)
         //    {
-                
+
         //        if (store.StoreType.GetDescriptionFromEnum() == StoreTypeEnum.Service.GetDescriptionFromEnum())
         //            throw new BadHttpRequestException("This store is service store, not support menu");
         //        if (checkMenu == null)
@@ -833,7 +848,7 @@ namespace VegaCityApp.API.Services.Implement
         #region CRUD Product
         public async Task<ResponseAPI> CreateProduct(Guid MenuId, CreateProductRequest req)
         {
-            if(req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
+            if (req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
             var menu = await _unitOfWork.GetRepository<Menu>().SingleOrDefaultAsync(
                 predicate: x => x.Id == MenuId && !x.Deflag);
             if (menu == null)
@@ -874,11 +889,11 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> UpdateProduct(Guid ProductId, UpdateProductRequest req)
         {
-            if(req.Price!= null)
+            if (req.Price != null)
             {
-                if(req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
+                if (req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
             }
-            if(req.Status != "InActive") throw new BadHttpRequestException(StoreMessage.InvalidProductStatus, HttpStatusCodes.BadRequest);
+            if (req.Status != "InActive") throw new BadHttpRequestException(StoreMessage.InvalidProductStatus, HttpStatusCodes.BadRequest);
             var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync
                 (predicate: x => x.Id == ProductId && x.Status == "Active");
             if (product == null)
@@ -1024,7 +1039,7 @@ namespace VegaCityApp.API.Services.Implement
             newProductCategory.Deflag = false;
             await _unitOfWork.GetRepository<ProductCategory>().InsertAsync(newProductCategory);
             var walletTypes = await _unitOfWork.GetRepository<WalletType>().GetListAsync(
-                predicate: x => x.Name == WalletTypeEnum.SpecificWallet.GetDescriptionFromEnum() 
+                predicate: x => x.Name == WalletTypeEnum.SpecificWallet.GetDescriptionFromEnum()
                 || x.Name == WalletTypeEnum.ServiceWallet.GetDescriptionFromEnum() && !x.Deflag);
             if (walletTypes.Count <= 0)
             {
@@ -1067,7 +1082,7 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = StoreMessage.NotFoundProductCategory
                 };
             }
-            productCategory.Name = req.Name != null ? req.Name.Trim(): productCategory.Name;
+            productCategory.Name = req.Name != null ? req.Name.Trim() : productCategory.Name;
             productCategory.Description = req.Description != null ? req.Description.Trim() : productCategory.Description;
             productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
@@ -1117,14 +1132,14 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
-        public async Task<ResponseAPI<IEnumerable<GetProductCategoryResponse>>> SearchAllProductCategory(Guid StoreId,int page, int size)
+        public async Task<ResponseAPI<IEnumerable<GetProductCategoryResponse>>> SearchAllProductCategory(Guid StoreId, int page, int size)
         {
             try
             {
                 var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
                     predicate: x => x.Id == StoreId && !x.Deflag, include: z => z.Include(z => z.Menus))
                     ?? throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
-                
+
                 IPaginate<GetProductCategoryResponse> data = await _unitOfWork.GetRepository<ProductCategory>().GetPagingListAsync(
                 selector: x => new GetProductCategoryResponse()
                 {

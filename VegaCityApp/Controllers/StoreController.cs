@@ -32,6 +32,9 @@ namespace VegaCityApp.API.Controllers
         //}
         [HttpGet(StoreEndpoint.GetListStore)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [SwaggerOperation(summary: "Search All Stores",
+            description: "<b>Store Type: 0,1,2 (Food, Clothing, Service)<br/>" +
+                         "Store Status: 0,1,2,3 (Opened, Closed, InActive, Blocked)</b>")]
         public async Task<IActionResult> SearchAllStore([FromQuery] Guid apiKey, [FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _storeService.SearchAllStore(apiKey, size, page);
@@ -48,6 +51,9 @@ namespace VegaCityApp.API.Controllers
         [HttpPatch(StoreEndpoint.UpdateStore)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Store)]
+        [SwaggerOperation(summary: "Update store",
+            description: "<b>Store Type: 0,1,2 (Food, Clothing, Service)<br/>" +
+                         "Store Status: 0,1,2,3 (Opened, Closed, InActive, Blocked)</b><br/>")]
         public async Task<IActionResult> UpdateStore(Guid id, UpdateStoreRequest req)
         {
             var result = await _storeService.UpdateStore(id, req);

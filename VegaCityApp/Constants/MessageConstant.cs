@@ -347,7 +347,7 @@ public static class MessageConstant
         public const string SearchZonesSuccess = "Get List Zones Successfully!";
         public const string SearchZonesFail = "Get List Zones Failed";
         public const string SearchZoneSuccess = "Get Zone Successfully!";
-        public const string SearchZoneFail = "Get Zone Failed";
+        public const string SearchZoneFail = "Zone is not found";
         public const string DeleteZoneSuccess = "Delete Zone Successfully!";
         public const string DeleteZoneFailed = "Failed To Delete Zone";
         public const string HouseStillExist = "Failed To Update Location Since House Still Intact!";

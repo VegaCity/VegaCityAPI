@@ -19,7 +19,7 @@ using static VegaCityApp.API.Utils.PasswordUtil;
 
 namespace VegaCityApp.API.Services.Implement
 {
-    public class PackageService: BaseService<PackageService>, IPackageService
+    public class PackageService : BaseService<PackageService>, IPackageService
     {
         public PackageService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<PackageService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
@@ -30,8 +30,8 @@ namespace VegaCityApp.API.Services.Implement
         {
             var packageExist = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync(predicate: x => x.Name == req.Name && !x.Deflag);
             if (packageExist != null)
-            throw new BadHttpRequestException(PackageMessage.ExistedPackageName, HttpStatusCodes.BadRequest);
-            if(req.Price <= 0) throw new BadHttpRequestException("The number must be more than 0", HttpStatusCodes.BadRequest);
+                throw new BadHttpRequestException(PackageMessage.ExistedPackageName, HttpStatusCodes.BadRequest);
+            if (req.Price <= 0) throw new BadHttpRequestException("The number must be more than 0", HttpStatusCodes.BadRequest);
             if (req.MoneyStart <= 0) throw new BadHttpRequestException("The number must be more than 0", HttpStatusCodes.BadRequest);
             if (req.Duration <= 0) throw new BadHttpRequestException("The number must be more than 0", HttpStatusCodes.BadRequest);
             if (!EnumUtil.ParseEnum<PackageTypeEnum>(req.Type).Equals(PackageTypeEnum.SpecificPackage)
@@ -95,9 +95,9 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = PackageMessage.NotFoundPackage
                 };
             }
-            package.Name = req.Name != null? req.Name.Trim() : package.Name;
+            package.Name = req.Name != null ? req.Name.Trim() : package.Name;
             package.Description = req.Description != null ? req.Description.Trim() : package.Description;
-            package.Price = req.Price?? package.Price;
+            package.Price = req.Price ?? package.Price;
             package.Duration = req.Duration ?? package.Duration;
             package.ImageUrl = req.ImageUrl != null ? req.ImageUrl.Trim() : package.ImageUrl;
             package.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -340,7 +340,7 @@ namespace VegaCityApp.API.Services.Implement
                             session.TotalCashReceive += 50000;
                             session.TotalFinalAmountOrder += 50000;
                             _unitOfWork.GetRepository<UserSession>().UpdateAsync(session);
-                            
+
 
                             var transactionIds = packageOrderExist.Wallets.SingleOrDefault().Transactions;
                             var transaction = transactionIds.SingleOrDefault(predicate: x => x.OrderId == null);
@@ -712,7 +712,7 @@ namespace VegaCityApp.API.Services.Implement
                     predicate: x => x.Id == PackageOrderId,
                     include: z => z.Include(a => a.Package)
                                    .Include(a => a.Vcard)
-                                   .Include(a => a.Wallets)
+                                   .Include(a => a.Wallets).ThenInclude(a => a.WalletType)
                                    .Include(c => c.CustomerMoneyTransfers)
                 );
             }
@@ -722,7 +722,7 @@ namespace VegaCityApp.API.Services.Implement
                     predicate: x => x.VcardId == rfid,
                     include: z => z.Include(a => a.Package)
                                    .Include(a => a.Vcard)
-                                   .Include(a => a.Wallets)
+                                   .Include(a => a.Wallets).ThenInclude(a => a.WalletType)
                                    .Include(c => c.CustomerMoneyTransfers)
                 );
             }
@@ -798,8 +798,8 @@ namespace VegaCityApp.API.Services.Implement
                 ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
                                                             HttpStatusCodes.BadRequest);
             #endregion
-            
-            if(packageOrder.Data.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum() && packageOrder.Data.VcardId == rfId)
+
+            if (packageOrder.Data.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum() && packageOrder.Data.VcardId == rfId)
                 throw new BadHttpRequestException(PackageItemMessage.RfIdExist, HttpStatusCodes.BadRequest);
             var packageOrdersVCardId = await _unitOfWork.GetRepository<PackageOrder>().GetListAsync(predicate: x => x.VcardId == rfId);
             var packageOrderVCardIdExisted = packageOrdersVCardId.SingleOrDefault(
@@ -807,16 +807,16 @@ namespace VegaCityApp.API.Services.Implement
                );
             if (packageOrderVCardIdExisted != null)
             {
-                if (packageOrderVCardIdExisted.Status == PackageItemStatusEnum.Blocked.GetDescriptionFromEnum())
-                {
-                    packageOrderVCardIdExisted.VcardId = "Format at " + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime());
-                    packageOrderVCardIdExisted.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrderVCardIdExisted);
-                }
-                else
-                {
-                    throw new BadHttpRequestException(PackageItemMessage.ActiveRfIdExist, HttpStatusCodes.BadRequest);
-                }
+                //if (packageOrderVCardIdExisted.Status == PackageItemStatusEnum.Blocked.GetDescriptionFromEnum())
+                //{
+                //    packageOrderVCardIdExisted.VcardId = null;
+                //    packageOrderVCardIdExisted.UpsDate = TimeUtils.GetCurrentSEATime();
+                //    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrderVCardIdExisted);
+                //}
+                //else
+                //{
+                //    throw new BadHttpRequestException(PackageItemMessage.ActiveRfIdExist, HttpStatusCodes.BadRequest);
+                //}
             }
             var newVCard = new Vcard
             {
@@ -848,7 +848,7 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = PackageItemMessage.UpdatePackageItemFail,
                 StatusCode = HttpStatusCodes.BadRequest
             };
-        } 
+        }
         public async Task<ResponseAPI> ActivePackageItem(Guid packageOrderId)
         {
             var packageOrderExist = await SearchPackageItem(packageOrderId, null);
@@ -868,7 +868,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 throw new BadHttpRequestException(PackageItemMessage.AlreadyActivated, HttpStatusCodes.BadRequest);
             }
-            
+
             packageOrderExist.Data.Status = PackageItemStatusEnum.Active.GetDescriptionFromEnum();
             packageOrderExist.Data.StartDate = TimeUtils.GetCurrentSEATime();
             packageOrderExist.Data.EndDate = TimeUtils.GetCurrentSEATime().AddDays(packageOrderExist.Data.Package.Duration);
@@ -905,7 +905,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             var promotionAutos = await _unitOfWork.GetRepository<Promotion>().GetListAsync(
                 predicate: x => x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
-                               && x.Status == (int) PromotionStatusEnum.Automation
+                               && x.Status == (int)PromotionStatusEnum.Automation
             );
             foreach (var prAuto in promotionAutos)
             {
@@ -918,7 +918,7 @@ namespace VegaCityApp.API.Services.Implement
             var packageOrderExsit = await _unitOfWork.GetRepository<PackageOrder>().SingleOrDefaultAsync(predicate: x => x.Id == req.PackageOrderId
             , include: w => w.Include(wallet => wallet.Wallets).ThenInclude(w => w.WalletType).Include(z => z.Package))
                 ?? throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
-            if(packageOrderExsit.EndDate <= TimeUtils.GetCurrentSEATime())
+            if (packageOrderExsit.EndDate <= TimeUtils.GetCurrentSEATime())
             {
                 throw new BadHttpRequestException(PackageItemMessage.PackageItemExpired, HttpStatusCodes.NotFound);
             }
@@ -1030,7 +1030,7 @@ namespace VegaCityApp.API.Services.Implement
                 Promotion checkPromo = await CheckPromo(req.PromoCode, req.ChargeAmount)
                     ?? throw new BadHttpRequestException(PromotionMessage.AddPromotionFail, HttpStatusCodes.BadRequest);
                 int amountPromo = 0;
-                if(checkPromo.Status != (int)PromotionStatusEnum.Automation)
+                if (checkPromo.Status != (int)PromotionStatusEnum.Automation)
                 {
                     if (checkPromo.MaxDiscount <= req.ChargeAmount * (int)checkPromo.DiscountPercent)
                     {
@@ -1045,13 +1045,13 @@ namespace VegaCityApp.API.Services.Implement
                 }
                 else
                 {
-                    if(req.ChargeAmount >= checkPromo.RequireAmount)
+                    if (req.ChargeAmount >= checkPromo.RequireAmount)
                     {
-                        amountPromo = (int) checkPromo.MaxDiscount;
+                        amountPromo = (int)checkPromo.MaxDiscount;
                     }
                 }
-                
-                
+
+
                 var newOrder = new Order()
                 {
                     Id = Guid.NewGuid(),
@@ -1135,18 +1135,18 @@ namespace VegaCityApp.API.Services.Implement
 
                     }
                 };
-            } 
+            }
         }
         private async Task<Promotion> CheckPromo(string promoCode, int amount)
         {
             var checkPromo = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
-                    (predicate: x => x.PromotionCode == promoCode && x.Status == (int)PromotionStatusEnum.Active || x.Status == (int) PromotionStatusEnum.Automation)
+                    (predicate: x => x.PromotionCode == promoCode && x.Status == (int)PromotionStatusEnum.Active || x.Status == (int)PromotionStatusEnum.Automation)
                     ?? throw new BadHttpRequestException(PromotionMessage.NotFoundPromotion, HttpStatusCodes.NotFound);
             if (checkPromo.EndDate < TimeUtils.GetCurrentSEATime())
                 throw new BadHttpRequestException(PromotionMessage.PromotionExpired, HttpStatusCodes.BadRequest);
             if (checkPromo.Quantity <= 0)
                 throw new BadHttpRequestException(PromotionMessage.PromotionOutOfStock, HttpStatusCodes.BadRequest);
-            if(checkPromo.RequireAmount > amount)
+            if (checkPromo.RequireAmount > amount)
                 throw new BadHttpRequestException(PromotionMessage.PromotionRequireAmount, HttpStatusCodes.BadRequest);
             return checkPromo;
         }
@@ -1166,9 +1166,9 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> PackageItemPayment(Guid packageOrderId, int totalPrice, Guid storeId, List<OrderProduct> products)
         {
-           
+
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
-                (predicate: x => !x.Deflag && x.Id == storeId && x.Status == (int)StoreStatusEnum.Opened, 
+                (predicate: x => !x.Deflag && x.Id == storeId && x.Status == (int)StoreStatusEnum.Opened,
                 include: z => z.Include(a => a.UserStoreMappings).Include(z => z.Wallets));
             if (store == null)
             {
@@ -1201,7 +1201,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-            
+
             var order = new Order()
             {
                 Id = Guid.NewGuid(),
@@ -1364,7 +1364,7 @@ namespace VegaCityApp.API.Services.Implement
             var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
                 (predicate: x => x.Id == apiKey, include: z => z.Include(a => a.MarketZoneConfig));
             var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
-                (predicate: x => x.Email == marketZone.Email && x.Status == (int)UserStatusEnum.Active && x.MarketZoneId == apiKey, 
+                (predicate: x => x.Email == marketZone.Email && x.Status == (int)UserStatusEnum.Active && x.MarketZoneId == apiKey,
                 include: a => a.Include(z => z.Wallets));
             Wallet adminWallet = admin.Wallets.SingleOrDefault();
             if (packageItems.Count == 0)
@@ -1373,9 +1373,9 @@ namespace VegaCityApp.API.Services.Implement
             }
             else
             {
-                foreach(var item in packageItems)
+                foreach (var item in packageItems)
                 {
-                    if(item.Wallets.SingleOrDefault().Balance > 0)
+                    if (item.Wallets.SingleOrDefault().Balance > 0)
                     {
                         var transaction = new Transaction
                         {
@@ -1392,7 +1392,7 @@ namespace VegaCityApp.API.Services.Implement
                             UserId = admin.Id
                         };
                         await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
-                        
+
                         var transactionTransfer = new CustomerMoneyTransfer
                         {
                             Id = Guid.NewGuid(),
@@ -1443,13 +1443,13 @@ namespace VegaCityApp.API.Services.Implement
 
             return result;
         }
-        public async Task <ResponseAPI> GetLostPackageItem(GetLostPackageItemRequest req)
+        public async Task<ResponseAPI> GetLostPackageItem(GetLostPackageItemRequest req)
         {
             //need authorize cashierWeb
             var searchName = NormalizeString(req.FullName);
 
             var packageOrders = await _unitOfWork.GetRepository<PackageOrder>().GetListAsync(
-               predicate: x => x.CusCccdpassport == req.Cccdpassport && x.CusEmail == req.Email 
+               predicate: x => x.CusCccdpassport == req.Cccdpassport && x.CusEmail == req.Email
                && x.Status == PackageItemStatus.Active.GetDescriptionFromEnum(),
                include: p => p.Include(w => w.Wallets).Include(a => a.Package).Include(v => v.Vcard)
                );
@@ -1478,7 +1478,7 @@ namespace VegaCityApp.API.Services.Implement
                 throw new BadHttpRequestException(PackageItemMessage.EmailInvalid, HttpStatusCodes.BadRequest);
             if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
                 throw new BadHttpRequestException(PackageItemMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
-            if(packageOrderLost.EndDate <= TimeUtils.GetCurrentSEATime())
+            if (packageOrderLost.EndDate <= TimeUtils.GetCurrentSEATime())
             {
                 throw new BadHttpRequestException(PackageItemMessage.PackageItemExpired, HttpStatusCodes.BadRequest);
             }

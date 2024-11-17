@@ -1,4 +1,6 @@
-﻿namespace VegaCityApp.API.Payload.Request.Store
+﻿using VegaCityApp.API.Enums;
+
+namespace VegaCityApp.API.Payload.Request.Store
 {
     public class UpdateStoreRequest
     {
@@ -9,5 +11,6 @@
         public string? Email { get; set; }
         public string? Description { get; set; }
         public int? Status { get; set; }
+        public StoreTypeEnum? StoreType { get; set; }
     }
 }

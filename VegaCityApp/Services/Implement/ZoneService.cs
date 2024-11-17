@@ -12,7 +12,7 @@ using static VegaCityApp.API.Constants.MessageConstant;
 
 namespace VegaCityApp.API.Services.Implement
 {
-    public class ZoneService: BaseService<ZoneService>, IZoneService
+    public class ZoneService : BaseService<ZoneService>, IZoneService
     {
         public ZoneService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<ZoneService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
@@ -60,7 +60,7 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> UpdateZone(Guid Id, UpdateZoneRequest req)
         {
-          
+
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == Id && !x.Deflag,
                 include: z => z.Include(zone => zone.Stores));
             if (zone == null)
@@ -146,8 +146,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI<Zone>> SearchZone(Guid ZoneId)
         {
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(
-                predicate: x => x.Id == ZoneId && !x.Deflag,
-                include: zone => zone.Include(y => y.Stores))
+                predicate: x => x.Id == ZoneId && !x.Deflag)
                 ?? throw new BadHttpRequestException(ZoneMessage.SearchZoneFail, HttpStatusCodes.NotFound);
 
             return new ResponseAPI<Zone>
