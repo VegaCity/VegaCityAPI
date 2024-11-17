@@ -19,15 +19,18 @@ using VegaCityApp.API.Payload.Request.Store;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Text;
+using VegaCityApp.API.Services.Interface;
 
 namespace VegaCityApp.Service.Implement
 {
     public class AccountService : BaseService<AccountService>, IAccountService
     {
+        private readonly IStoreService _storeService;
         public AccountService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<AccountService> logger,
             IMapper mapper,
-            IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor, mapper)
+            IHttpContextAccessor httpContextAccessor, IStoreService storeService) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
+            _storeService = storeService;
         }
 
         #region Private Method
@@ -970,7 +973,11 @@ namespace VegaCityApp.Service.Implement
         public async Task<ResponseAPI> DeleteUser(Guid UserId)
         {
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
-                (predicate: x => x.Id == UserId && x.Status == (int)UserStatusEnum.Active);
+                (predicate: x => x.Id == UserId && x.Status == (int)UserStatusEnum.Active,
+                 include: z => z.Include(a => a.UserRefreshTokens)
+                                .Include(a => a.UserSessions)
+                                .Include(a => a.UserStoreMappings).ThenInclude(a => a.Store)
+                                .Include(a => a.Wallets));
             if (user == null)
             {
                 return new ResponseAPI()
@@ -984,18 +991,31 @@ namespace VegaCityApp.Service.Implement
                 case (int)UserStatusEnum.Active:
                     user.Status = (int)UserStatusEnum.Disable;
                     user.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<UserRefreshToken>().DeleteRangeAsync(user.UserRefreshTokens);
+                    if (user.UserSessions.Count > 0)
+                    {
+                        user.UserSessions.SingleOrDefault().Status = SessionStatusEnum.Canceled.GetDescriptionFromEnum();
+                        _unitOfWork.GetRepository<UserSession>().UpdateRange(user.UserSessions);
+                    }
+                    //delete store include menu and product
+                    await _storeService.DeleteStore(user.UserStoreMappings.SingleOrDefault().Store.Id);
+                    if (user.UserStoreMappings.Count > 0)
+                    {
+                        _unitOfWork.GetRepository<UserStoreMapping>().DeleteRangeAsync(user.UserStoreMappings);
+                    }
+                    if (user.Wallets.Count > 0)
+                    {
+                        user.Wallets.SingleOrDefault().Deflag = true;
+                        _unitOfWork.GetRepository<Wallet>().UpdateRange(user.Wallets);
+                    }
                     _unitOfWork.GetRepository<User>().UpdateAsync(user);
-                    return await _unitOfWork.CommitAsync() > 0
-                        ? new ResponseAPI()
-                        {
-                            MessageResponse = UserMessage.DeleteUserSuccess,
-                            StatusCode = HttpStatusCodes.OK
-                        }
-                        : new ResponseAPI()
-                        {
-                            MessageResponse = UserMessage.DeleteUserFail,
-                            StatusCode = HttpStatusCodes.BadRequest
-                        };
+                    await _unitOfWork.CommitAsync();
+
+                    return new ResponseAPI()
+                    {
+                        MessageResponse = UserMessage.DeleteUserSuccess,
+                        StatusCode = HttpStatusCodes.OK
+                    };
                 case (int)UserStatusEnum.Ban:
                     return new ResponseAPI()
                     {
