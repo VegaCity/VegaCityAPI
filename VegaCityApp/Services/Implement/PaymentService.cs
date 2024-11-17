@@ -294,14 +294,6 @@ namespace VegaCityApp.API.Services.Implement
                     sessionUser.TotalFinalAmountOrder += order.TotalAmount;
                     _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
 
-
-
-                    order.PackageOrder.Status = OrderStatus.Completed;
-                    order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
-                    
-                    
-                    
                     //wallet cashier
                     var wallet = order.User.Wallets.FirstOrDefault();
                     wallet.Balance += order.TotalAmount;
@@ -411,14 +403,6 @@ namespace VegaCityApp.API.Services.Implement
                     sessionUser.TotalCashReceive += order.TotalAmount;
                     sessionUser.TotalFinalAmountOrder += order.TotalAmount;
                     _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
-
-                    
-                    
-                    order.PackageOrder.Status = OrderStatus.Completed;
-                    order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
-                    
-                    
 
                     //wallet cashier
                     var wallet = order.User.Wallets.FirstOrDefault();
@@ -775,14 +759,6 @@ namespace VegaCityApp.API.Services.Implement
                     sessionUser.TotalFinalAmountOrder += order.TotalAmount;
                     _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
 
-
-
-                    order.PackageOrder.Status = OrderStatus.Completed;
-                    order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
-
-
-
                     //wallet cashier
                     var wallet = order.User.Wallets.FirstOrDefault();
                     wallet.Balance += order.TotalAmount;
@@ -894,14 +870,6 @@ namespace VegaCityApp.API.Services.Implement
                     sessionUser.TotalFinalAmountOrder += order.TotalAmount;
                     _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
 
-
-
-                    order.PackageOrder.Status = OrderStatus.Completed;
-                    order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
-
-
-
                     //wallet cashier
                     var wallet = order.User.Wallets.FirstOrDefault();
                     wallet.Balance += order.TotalAmount;
@@ -929,8 +897,6 @@ namespace VegaCityApp.API.Services.Implement
                     order.PackageOrder.Wallets.SingleOrDefault().BalanceHistory += order.TotalAmount;
                     order.PackageOrder.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.PackageOrder.Wallets.SingleOrDefault());
-
-
 
                     transactionCharge.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                     transactionCharge.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -1290,14 +1256,6 @@ namespace VegaCityApp.API.Services.Implement
                     sessionUser.TotalFinalAmountOrder += order.TotalAmount;
                     _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
 
-
-
-                    order.PackageOrder.Status = OrderStatus.Completed;
-                    order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
-
-
-
                     //wallet cashier
                     var wallet = order.User.Wallets.FirstOrDefault();
                     wallet.Balance += order.TotalAmount;
@@ -1407,14 +1365,6 @@ namespace VegaCityApp.API.Services.Implement
                     sessionUser.TotalCashReceive += order.TotalAmount;
                     sessionUser.TotalFinalAmountOrder += order.TotalAmount;
                     _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
-
-
-
-                    order.PackageOrder.Status = OrderStatus.Completed;
-                    order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
-
-
 
                     //wallet cashier
                     var wallet = order.User.Wallets.FirstOrDefault();
@@ -1730,14 +1680,6 @@ namespace VegaCityApp.API.Services.Implement
                     sessionUser.TotalFinalAmountOrder += order.TotalAmount;
                     _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
 
-
-
-                    order.PackageOrder.Status = OrderStatus.Completed;
-                    order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
-
-
-
                     //wallet cashier
                     var wallet = order.User.Wallets.FirstOrDefault();
                     wallet.Balance += order.TotalAmount;
@@ -1765,8 +1707,6 @@ namespace VegaCityApp.API.Services.Implement
                     order.PackageOrder.Wallets.SingleOrDefault().BalanceHistory += order.TotalAmount + order.PromotionOrders.SingleOrDefault().DiscountAmount;
                     order.PackageOrder.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.PackageOrder.Wallets.SingleOrDefault());
-
-
 
                     transactionCharge.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                     transactionCharge.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -1848,14 +1788,6 @@ namespace VegaCityApp.API.Services.Implement
                     sessionUser.TotalFinalAmountOrder += order.TotalAmount;
                     _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
 
-
-
-                    order.PackageOrder.Status = OrderStatus.Completed;
-                    order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
-
-
-
                     //wallet cashier
                     var wallet = order.User.Wallets.FirstOrDefault();
                     wallet.Balance += order.TotalAmount;
@@ -1883,8 +1815,6 @@ namespace VegaCityApp.API.Services.Implement
                     order.PackageOrder.Wallets.SingleOrDefault().BalanceHistory += order.TotalAmount;
                     order.PackageOrder.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.PackageOrder.Wallets.SingleOrDefault());
-
-
 
                     transactionCharge.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                     transactionCharge.UpsDate = TimeUtils.GetCurrentSEATime();

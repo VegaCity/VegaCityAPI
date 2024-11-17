@@ -172,12 +172,12 @@ namespace VegaCityApp.API.Services.Implement
             }
             if(orderExisted.Package.PackageOrders.Count() != 0)
             {
-                foreach (var packageOrder in orderExisted.Package.PackageOrders)
-                {
-                    packageOrder.Status = OrderStatus.Canceled;
-                    packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
-                }
+                //foreach (var packageOrder in orderExisted.Package.PackageOrders)
+                //{
+                //    packageOrder.Status = OrderStatus.Canceled;
+                //    packageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                //    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder);
+                //}
                 if(orderExisted.PromotionOrders.Count() != 0)
                 {
                     foreach (var promotionOrder in orderExisted.PromotionOrders)
@@ -556,7 +556,8 @@ namespace VegaCityApp.API.Services.Implement
                     var transactionFee = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
                         (predicate: x => x.Id == Guid.Parse(req.TransactionId))
                         ?? throw new BadHttpRequestException("Transaction charge not found", HttpStatusCodes.NotFound);
-
+                    if(transactionFee.Status == "Success")
+                       throw new BadHttpRequestException("Order had been PAID", HttpStatusCodes.BadRequest);
                     transactionFee.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                     transactionFee.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionFee);
@@ -568,13 +569,10 @@ namespace VegaCityApp.API.Services.Implement
                     order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
                     order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
-
-
+                   
                     order.PackageOrder.Status = PackageItemStatus.Active.GetDescriptionFromEnum();
                     order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
-                   
+                   _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
                      ////UPDATE CASHIER WALLET
                      order.User.Wallets.SingleOrDefault().Balance += 50000;
                      order.User.Wallets.SingleOrDefault().BalanceHistory += 50000;
@@ -750,9 +748,9 @@ namespace VegaCityApp.API.Services.Implement
                     sessionUser.TotalCashReceive += order.TotalAmount;
                     sessionUser.TotalFinalAmountOrder += order.TotalAmount;
                     _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
-                    order.PackageOrder.Status = OrderStatus.Completed;
-                    order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
+                    //order.PackageOrder.Status = OrderStatus.Completed;
+                    //order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                    //_unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
                     //wallet cashier
                     var wallet = order.User.Wallets.FirstOrDefault();
                     wallet.Balance += order.TotalAmount;
@@ -873,9 +871,9 @@ namespace VegaCityApp.API.Services.Implement
                 sessionUser.TotalFinalAmountOrder += order.TotalAmount;
                 _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
 
-                order.PackageOrder.Status = OrderStatus.Completed;
-                order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
+                //order.PackageOrder.Status = OrderStatus.Completed;
+                //order.PackageOrder.UpsDate = TimeUtils.GetCurrentSEATime();
+                //_unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
 
                 //wallet cashier
                 var wallet = order.User.Wallets.FirstOrDefault();
