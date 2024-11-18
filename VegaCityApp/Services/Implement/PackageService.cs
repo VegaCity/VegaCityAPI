@@ -907,8 +907,8 @@ namespace VegaCityApp.API.Services.Implement
                                     Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
                                 </p>
                                 <div style='margin-top: 20px; text-align: center;'>
-                                    <a style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
-                                        Your VCard is activated successfully !!
+                                    <a style='display: inline-block; background-color: #28a745; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); font-weight: bold;'>
+                                        Your VCard has been activated successfully!
                                     </a>
                                 </div>
                                 <div style='margin-top: 20px; text-align: center;'>
