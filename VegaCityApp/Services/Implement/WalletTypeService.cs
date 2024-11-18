@@ -264,9 +264,13 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = WalletTypeMessage.AmountInvalid
                 };
             }
+            if(request.Amount <= 50000)
+            {
+                throw new BadHttpRequestException("User must withdraw at least " + 50000 + "VND", HttpStatusCodes.BadRequest);
+            }
             //must using atleast 30% of balanceStart in order to withdraw 
             //case after charge (balance history  larger than balance start => balance se tu bao nhieu la duoc rut? )
-           
+
             Transaction transaction = null;
             Guid cashierWebId = GetUserIdFromJwt();
             string role = GetRoleFromJwt();
@@ -362,7 +366,7 @@ namespace VegaCityApp.API.Services.Implement
                 var notiAmount = mustUse - wallet.BalanceStart * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate;
                 if (mustUse <= wallet.BalanceStart * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate)
                 {
-                    throw new BadHttpRequestException("User must use atleast " + notiAmount + "VND");
+                    throw new BadHttpRequestException("User must use at least " + notiAmount + "VND", HttpStatusCodes.BadRequest);
                 }
                 transaction = new Transaction
                 {
