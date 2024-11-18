@@ -340,7 +340,7 @@ namespace VegaCityApp.API.Services.Implement
 
 
                             var transactionIds = packageOrderExist.Wallets.SingleOrDefault().Transactions;
-                            var transaction = transactionIds.SingleOrDefault(predicate: x => x.OrderId == null);
+                            var transaction = transactionIds.SingleOrDefault(predicate: x => x.OrderId == null && x.Status == "Pending");
                             transaction.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                             transaction.OrderId = newChargeFeeOderPAID.Id;
                             _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);

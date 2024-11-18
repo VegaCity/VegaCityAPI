@@ -164,98 +164,117 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> UpdateOrderPaidForCashier(IPNMomoRequest req)
         {
-            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
+            try
+            {
+                var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
                 (predicate: x => x.InvoiceId == req.orderId && x.Status == OrderStatus.Pending,
                  include: detail => detail.Include(a => a.OrderDetails)
                                           .Include(u => u.User).ThenInclude(w => w.Wallets)
                                           .Include(o => o.Payments));
-            // Update the order to 'Completed'
-            order.Status = OrderStatus.Completed;
-            order.UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-            //Update the payment
-            order.Payments.SingleOrDefault().Status = PaymentStatus.Completed.GetDescriptionFromEnum();
-            order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
-            //update the orderDetail
-            order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-            _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
-
-            var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
-                (predicate: x => x.UserId == order.UserId)
-                ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
-            //check id? etagtype or package
-            string productJson = null;
-            OrderProductFromCashierRequest productData = null;
-            //GenerateEtagRequest reqGenerate = new GenerateEtagRequest()
-            //{
-            //    StartDate = TimeUtils.GetCurrentSEATime(),
-            //};
-            //List<Guid> res = new List<Guid>();
-            //if (order.OrderDetails.Count > 0)
-            //{
-            //    foreach (var item in order.OrderDetails)
-            //    {
-            //        //productJson = item.ProductJson.Replace("[","").Replace("]","");
-            //        productData = JsonConvert.DeserializeObject<OrderProductFromCashierRequest>(productJson);
-            //        if (productData != null)
-            //        {
-
-            //            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
-            //                (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
-            //            //if (etagType != null)
-            //            //{
-            //            //    //generate etag
-            //            //    var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
-            //            //    res = response.Data;
-            //            //}
-            //            //else if (package != null)
-            //            //{
-            //            //    package.PackageETagTypeMappings.ToList().ForEach(async x =>
-            //            //    {
-            //            //        var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
-            //            //        res = response.Data;
-            //            //    });
-            //            //}
-            //        }
-            //    }
-            //}
-            var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
-            {
-                Id = Guid.NewGuid(),
-                Type = TransactionType.ChargeMoney,
-                WalletId = order.User.Wallets.SingleOrDefault().Id,
-                Amount = Int32.Parse(order.TotalAmount.ToString()),
-                IsIncrease = true,
-                Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                CrDate = TimeUtils.GetCurrentSEATime(),
-                Status = TransactionStatus.Success,
-                Description = "Add" + order.SaleType + " Balance By " + order.Payments.SingleOrDefault().Name + " to cashier web: " + order.User.FullName,
-            };
-            await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
-
-            order.User.Wallets.SingleOrDefault().BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
-            order.User.Wallets.SingleOrDefault().Balance += Int32.Parse(order.TotalAmount.ToString());
-            order.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-             _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.User.Wallets.SingleOrDefault());
-
-            //session update
-            sessionUser.TotalQuantityOrder += 1;
-            sessionUser.TotalCashReceive += order.TotalAmount;
-            sessionUser.TotalFinalAmountOrder += order.TotalAmount;
-            _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
-
-            return await _unitOfWork.CommitAsync() > 0
-                ? new ResponseAPI()
+                if(order == null)
                 {
-                    StatusCode = HttpStatusCodes.NoContent,
-                    MessageResponse = PaymentMomo.ipnUrl + order.Id
+                    throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
                 }
-                : new ResponseAPI()
+                var currentSEATime = TimeUtils.GetCurrentSEATime();
+                if (currentSEATime < new DateTime(1753, 1, 1) || currentSEATime > new DateTime(9999, 12, 31))
                 {
-                    StatusCode = HttpStatusCodes.InternalServerError
-                };
-        }
+                    throw new InvalidOperationException("Invalid DateTime returned by TimeUtils.GetCurrentSEATime()");
+                }
+
+                // Update the order to 'Completed'
+                order.Status = OrderStatus.Completed;
+                order.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                ////Update the payment
+                //order.Payments.SingleOrDefault().Status = PaymentStatus.Completed.GetDescriptionFromEnum();
+                //order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                //_unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
+                ////update the orderDetail
+                //order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                //_unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
+
+                var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
+                    (predicate: x => x.UserId == order.UserId)
+                    ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
+                //check id? etagtype or package
+                string productJson = null;
+                OrderProductFromCashierRequest productData = null;
+                //GenerateEtagRequest reqGenerate = new GenerateEtagRequest()
+                //{
+                //    StartDate = TimeUtils.GetCurrentSEATime(),
+                //};
+                //List<Guid> res = new List<Guid>();
+                //if (order.OrderDetails.Count > 0)
+                //{
+                //    foreach (var item in order.OrderDetails)
+                //    {
+                //        //productJson = item.ProductJson.Replace("[","").Replace("]","");
+                //        productData = JsonConvert.DeserializeObject<OrderProductFromCashierRequest>(productJson);
+                //        if (productData != null)
+                //        {
+
+                //            var package = await _unitOfWork.GetRepository<Package>().SingleOrDefaultAsync
+                //                (predicate: x => x.Id == Guid.Parse(productData.Id) && !x.Deflag);
+                //            //if (etagType != null)
+                //            //{
+                //            //    //generate etag
+                //            //    var response = await _service.GenerateEtag(productData.Quantity, etagType.Id, reqGenerate);
+                //            //    res = response.Data;
+                //            //}
+                //            //else if (package != null)
+                //            //{
+                //            //    package.PackageETagTypeMappings.ToList().ForEach(async x =>
+                //            //    {
+                //            //        var response = await _service.GenerateEtag(x.QuantityEtagType, x.EtagTypeId, reqGenerate);
+                //            //        res = response.Data;
+                //            //    });
+                //            //}
+                //        }
+                //    }
+                //}
+                //var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
+                //{
+                //    Id = Guid.NewGuid(),
+                //    Type = TransactionType.ChargeMoney,
+                //    WalletId = order.User.Wallets.SingleOrDefault().Id,
+                //    Amount = Int32.Parse(order.TotalAmount.ToString()),
+                //    IsIncrease = true,
+                //    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                //    CrDate = TimeUtils.GetCurrentSEATime(),
+                //    Status = TransactionStatus.Success,
+                //    Description = "Add" + order.SaleType + " Balance By " + order.Payments.SingleOrDefault().Name + " to cashier web: " + order.User.FullName,
+                //};
+                //await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
+
+                //order.User.Wallets.SingleOrDefault().BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
+                //order.User.Wallets.SingleOrDefault().Balance += Int32.Parse(order.TotalAmount.ToString());
+                //order.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                //_unitOfWork.GetRepository<Wallet>().UpdateAsync(order.User.Wallets.SingleOrDefault());
+
+                //session update
+                sessionUser.TotalQuantityOrder += 1;
+                sessionUser.TotalCashReceive += order.TotalAmount;
+                sessionUser.TotalFinalAmountOrder += order.TotalAmount;
+                _unitOfWork.GetRepository<UserSession>().UpdateAsync(sessionUser);
+
+
+                return await _unitOfWork.CommitAsync() > 0
+                    ? new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentMomo.ipnUrl + order.Id
+                    }
+                    : new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.InternalServerError
+                    };
+
+            }
+            catch (Exception ex)
+            {
+                throw new BadHttpRequestException("Error is :" + ex.Message, HttpStatusCodes.BadRequest);
+            }
+            }
         public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(IPNMomoRequest req)
         {
             try
@@ -643,7 +662,7 @@ namespace VegaCityApp.API.Services.Implement
                     vnpayCharge.AddRequestData("vnp_TmnCode", VnPayConfig.TmnCode);
                     vnpayCharge.AddRequestData("vnp_Amount", (orderExisted.TotalAmount * 100).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 
                                                                                                            // vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()));
-                    vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"));
+                    vnpayCharge.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"));
                     vnpayCharge.AddRequestData("vnp_CurrCode", VnPayConfig.CurrCode);
                     vnpayCharge.AddRequestData("vnp_IpAddr", VnPayUtils.GetIpAddress(context));
                     vnpayCharge.AddRequestData("vnp_Locale", VnPayConfig.Locale);
@@ -696,7 +715,7 @@ namespace VegaCityApp.API.Services.Implement
             vnpay.AddRequestData("vnp_Command", VnPayConfig.Command);
             vnpay.AddRequestData("vnp_TmnCode", VnPayConfig.TmnCode);
             vnpay.AddRequestData("vnp_Amount", (orderExisted.TotalAmount * 100).ToString()); //Số tiền thanh toán. Số tiền không mang các ký tự phân tách thập phân, phần nghìn, ký tự tiền tệ. Để gửi số tiền thanh toán là 100,000 VND (một trăm nghìn VNĐ) thì merchant cần nhân thêm 100 lần (khử phần thập phân), sau đó gửi sang VNPAY là: 10000000
-            vnpay.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().AddHours(7).ToString("yyyyMMddHHmmss"));
+            vnpay.AddRequestData("vnp_CreateDate", TimeUtils.GetCurrentSEATime().ToString("yyyyMMddHHmmss"));
             //vnpay.AddRequestData("vnp_CreateDate", TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()));
             vnpay.AddRequestData("vnp_CurrCode", VnPayConfig.CurrCode);
             vnpay.AddRequestData("vnp_IpAddr", VnPayUtils.GetIpAddress(context));

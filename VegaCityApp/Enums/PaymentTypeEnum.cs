@@ -44,9 +44,9 @@ namespace VegaCityApp.API.Enums
         public const string partnerName = "MoMo Payment";
         public const int orderExpireTime = 30;
         //after success payment, redirect to this url
-        //public const string redirectUrl = "https://localhost:44395/api/v1/payment/momo/order";
+        public const string redirectUrl = "https://localhost:7127/api/v1/payment/momo/order";
         //public const string redirectUrlChargeMoney = "https://localhost:44395/api/v1/payment/momo/order/charge-money";
-        public const string redirectUrl = "https://api.vegacity.id.vn/api/v1/payment/momo/order";
+        //public const string redirectUrl = "https://api.vegacity.id.vn/api/v1/payment/momo/order";
         public const string redirectUrlChargeMoney = "https://api.vegacity.id.vn/api/v1/payment/momo/order/charge-money";
         //after success payment, send a request to this url to update order or something
         public const string ipnUrl = "https://vegacity.id.vn/order-status?status=success&orderId=";
@@ -77,10 +77,10 @@ namespace VegaCityApp.API.Enums
         public const string Command = "pay";
         public const string CurrCode = "VND";
         public const string Locale = "vn";
-        //public const string PaymentBackReturnUrl = "https://localhost:7127/api/v1/payment/vnpay/order";//redirect sau khi thanh toan
+        public const string PaymentBackReturnUrl = "https://localhost:7127/api/v1/payment/vnpay/order";//redirect sau khi thanh toan
         //public const string VnPaymentBackReturnUrl = "https://localhost:44395/api/v1/payment/vnpay/order/charge-money";
         public const string ipnUrl = "https://vegacity.id.vn/user/order-status?status=success&orderId=";
-        public const string PaymentBackReturnUrl = "https://api.vegacity.id.vn/api/v1/payment/vnpay/order";
+        //public const string PaymentBackReturnUrl = "https://api.vegacity.id.vn/api/v1/payment/vnpay/order";
         public const string VnPaymentBackReturnUrlChargeMoney = "https://api.vegacity.id.vn/api/v1/payment/vnpay/order/charge-money";
 
     }
