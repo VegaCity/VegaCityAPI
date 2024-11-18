@@ -227,7 +227,7 @@ namespace VegaCityApp.API.Services.Implement
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
                 (predicate: x => x.Id == StoreId && !x.Deflag,
-                 include: z => z.Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings).ThenInclude(a => a.Product));
+                 include: z => z.Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings));
             if (store == null)
             {
                 return new ResponseAPI()
@@ -1033,7 +1033,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> CreateProductCategory(CreateProductCategoryRequest req)
         {
             var storeUserId = GetUserIdFromJwt();
-            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.UserStoreMappings.SingleOrDefault().UserId == storeUserId );
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.UserStoreMappings.SingleOrDefault().UserId == storeUserId);
             req.Name = req.Name.Trim();
             if (req.Description != null)
             {
@@ -1156,7 +1156,8 @@ namespace VegaCityApp.API.Services.Implement
                     CrDate = x.CrDate,
                     UpsDate = x.UpsDate,
                     Deflag = x.Deflag,
-                    Description = x.Description
+                    Description = x.Description,
+                    StoreId = (Guid)x.StoreId
                 },
                 page: page,
                 size: size,
