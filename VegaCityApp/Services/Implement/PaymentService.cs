@@ -1266,10 +1266,10 @@ namespace VegaCityApp.API.Services.Implement
              item.quantity,
              item.price
              )).ToList();
-            string InnvoiceIdInt = req.InvoiceId.Substring(3);
 
             if (req.Key != null && PaymentTypeHelper.allowedPaymentTypes.Contains(req.Key.Split('_')[0]) && req.Key.Split("_")[1] == checkOrder.InvoiceId)
             {
+                string InnvoiceIdInt = req.InvoiceId.Substring(3);
 
                 var paymentDataChargeMoney = new PaymentData(
                      orderCode: Int64.Parse(InnvoiceIdInt),  // Bạn có thể tạo mã đơn hàng tại đây
@@ -1304,12 +1304,12 @@ namespace VegaCityApp.API.Services.Implement
             try
             {
                 var paymentData = new PaymentData(
-                    orderCode: Int64.Parse(InnvoiceIdInt),  // Bạn có thể tạo mã đơn hàng tại đây
+                    orderCode: Int64.Parse(checkOrder.InvoiceId),  // Bạn có thể tạo mã đơn hàng tại đây
                     amount: checkOrder.TotalAmount,
                     description: "đơn hàng :" + req.InvoiceId,
                     items: itemDataList,
                     cancelUrl: "http://yourdomain.com/payment/cancel",  // URL khi thanh toán bị hủy
-                    returnUrl: req.UrlDirect,  // URL khi thanh toán thành công
+                    returnUrl: PayOSConfiguration.ReturnUrl,  // URL khi thanh toán thành công
                     buyerName: null,//customerInfo.FullName.ToString(),//customerInfo.FullName.ToString(),
                                     //buyerEmail: customerInfo.Email.ToString(), // very require email here!
                     buyerEmail: null,
@@ -1346,12 +1346,12 @@ namespace VegaCityApp.API.Services.Implement
             var invoiceId = orderCode.ToString();
 
             // Fetch the order and check if it's still pending
-            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync
-                 (predicate: x => x.InvoiceId == invoiceId && x.Status == OrderStatus.Pending,
-                  include: detail => detail.Include(a => a.OrderDetails).Include(u => u.User).ThenInclude(w => w.Wallets)
-                                           .Include(x => x.PackageOrder).ThenInclude(r => r.Wallets)
-                                           .Include(s => s.PromotionOrders).ThenInclude(a => a.Promotion)
-                                           .Include(a => a.Payments));
+            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
+                 predicate: x => x.InvoiceId == invoiceId && x.Status == OrderStatus.Pending,
+                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
+                                        .Include(x => x.PackageOrder).ThenInclude(r => r.Wallets)
+                                        .Include(a => a.Payments)
+                                        .Include(o => o.OrderDetails));
             var orderCompleted = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.InvoiceId == invoiceId && x.Status == OrderStatus.Completed);
             if (orderCompleted != null)
             {
@@ -1361,6 +1361,11 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = PayOSConfiguration.ipnUrl + orderCompleted.Id // URL for client-side redirection
                 };
             }
+            if (order == null)
+            {
+                throw new BadHttpRequestException(PaymentMessage.OrderNotFound, HttpStatusCodes.NotFound);
+            }
+            
             // Update the order to 'Completed'
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
