@@ -534,6 +534,10 @@ namespace VegaCityApp.Service.Implement
         }
         public async Task<ResponseAPI> AdminCreateUser(RegisterRequest req)
         {
+            if (req.RoleName == RoleEnum.Admin.GetDescriptionFromEnum())
+            {
+                throw new BadHttpRequestException("You are not allowed to create Role Admin", HttpStatusCodes.BadRequest);
+            }
             Guid apiKey = GetMarketZoneIdFromJwt();
             #region validate form
             if (!ValidationUtils.IsEmail(req.Email))
