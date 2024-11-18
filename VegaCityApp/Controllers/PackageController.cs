@@ -31,7 +31,7 @@ namespace VegaCityApp.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
         [HttpGet(PackageEndpoint.GetListPackage)]
-        [CustomAuthorize(RoleEnum.Admin,RoleEnum.CashierApp,RoleEnum.CashierWeb)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> SearchAllPackage([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
@@ -142,9 +142,9 @@ namespace VegaCityApp.API.Controllers
         [CustomAuthorize(RoleEnum.CashierWeb)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [SwaggerOperation(Summary = "Get ready to active")]
-        public async Task<IActionResult> ActivePackageItem(Guid id)
+        public async Task<IActionResult> ActivePackageItem(Guid id, [FromBody] CustomerInfo req)
         {
-            var result = await _packageService.ActivePackageItem(id);
+            var result = await _packageService.ActivePackageItem(id, req);
             return StatusCode(result.StatusCode, result);
         }
         [HttpPost(PackageEndpoint.PrepareChargeMoney)]
