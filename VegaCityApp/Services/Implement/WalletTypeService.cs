@@ -264,12 +264,18 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = WalletTypeMessage.AmountInvalid
                 };
             }
+            //must using atleast 30% of balanceStart in order to withdraw 
+            //case after charge (balance history  larger than balance start => balance se tu bao nhieu la duoc rut? )
+           
             Transaction transaction = null;
             Guid cashierWebId = GetUserIdFromJwt();
             string role = GetRoleFromJwt();
             var cashierWeb = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
                 (predicate: x => x.Id == cashierWebId && x.Status == (int)UserStatusEnum.Active,
-                 include: wl => wl.Include(a => a.Role));
+                 include: wl => wl.Include(a => a.Role)
+                                  .Include(p => p.MarketZone).ThenInclude(m => m.MarketZoneConfig));
+
+
             if (cashierWeb == null)
             {
                 return new ResponseAPI
@@ -336,9 +342,28 @@ namespace VegaCityApp.API.Services.Implement
                     await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
                 }
             }
-            else if (wallet.PackageOrder != null)
+            else if (wallet.PackageOrder != null) //End user
             {
+                //case 1  : 1000 000 , start : 1,000,000
+                //must Use = 0 (k rut dc)
 
+                //case 2 : 2000000 , start 1,000,000 (da nap) (da co Promo)
+                //must User = 1 000 000 
+
+                //case 3: 500 000 , start 1000 000, 80% =>
+                //must use -500 000 
+
+                ///case 4 : start 500 
+                //charge 1500 000 balance 2000000, 
+                //must use 1500 000
+                // case ** specific 
+                // BH > 100% BStart 
+                var mustUse = wallet.BalanceHistory - request.Amount; 
+                var notiAmount = mustUse - wallet.BalanceStart * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate;
+                if (mustUse <= wallet.BalanceStart * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate)
+                {
+                    throw new BadHttpRequestException("User must use atleast " + notiAmount + "VND");
+                }
                 transaction = new Transaction
                 {
                     Id = Guid.NewGuid(),
