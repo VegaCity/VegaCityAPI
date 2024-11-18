@@ -1452,7 +1452,7 @@ namespace VegaCityApp.API.Services.Implement
                             Amount = item.Wallets.SingleOrDefault().Balance,
                             MarketZoneId = marketZone.Id,
                             IsIncrease = true,
-                            Status = TransactionStatus.Success,
+                            Status = OrderStatus.Completed,
                             PackageOrderId = item.Id,
                             TransactionId = transaction.Id
                         };

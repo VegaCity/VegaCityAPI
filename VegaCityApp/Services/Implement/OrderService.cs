@@ -654,7 +654,7 @@ namespace VegaCityApp.API.Services.Implement
                         TransactionId = transactionCharge.Id,
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         Status = OrderStatus.Completed.GetDescriptionFromEnum(),
-                        UpsDate = TimeUtils.GetCurrentSEATime()
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
                     };
                     await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(customerMoneyTransfer);
 
@@ -668,19 +668,7 @@ namespace VegaCityApp.API.Services.Implement
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderWallet);
 
 
-                    //create new CUSTOMERMONEY TRANSFER
-                    var newCusTransfer = new CustomerMoneyTransfer()
-                    {
-                        Id = Guid.NewGuid(),
-                        Amount = order.TotalAmount + order.PromotionOrders.SingleOrDefault().DiscountAmount,
-                        IsIncrease = true,
-                        MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-                        PackageOrderId = order.PackageOrderId,
-                        TransactionId = transactionCharge.Id,
-                        CrDate = TimeUtils.GetCurrentSEATime(),
-                        UpsDate = TimeUtils.GetCurrentSEATime()
-                    };
-                    await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newCusTransfer);
+                    
                     //bill cashier receive money from packageItem
                     var transactionCashierBalance = new Transaction()
                     {
@@ -1016,7 +1004,8 @@ namespace VegaCityApp.API.Services.Implement
                 PackageOrderId = order.PackageOrderId,
                 TransactionId = transaction.Id,
                 CrDate = TimeUtils.GetCurrentSEATime(),
-                UpsDate = TimeUtils.GetCurrentSEATime()
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                Status = OrderStatus.Completed,
             };
             await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newCusTransfer);
 

@@ -1122,7 +1122,7 @@ namespace VegaCityApp.Service.Implement
                                                        && x.Amount > 0
                                                        && x.Type != "WithdrawMoney",
                                                        null, null);
-            //var deposits = await _unitOfWork.GetRepository<Deposit>()
+            //var deposits = await _unitOfWork.GetRepository<CustomerMoneyTransfer>()
             //                          .GetListAsync(x => x.CrDate >= startDate
             //                                          && x.CrDate <= endDate
             //                                          && x.Amount > 0,
@@ -1162,23 +1162,23 @@ namespace VegaCityApp.Service.Implement
             }
             else if (roleCurrent == "CashierWeb" || roleCurrent == "CashierApp")
             {
-                //  var groupedStaticsCashier = deposits
-                //.GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
-                //.Select(g => new
-                //{
-                //    Name = g.Key, // Month name
-                //    TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                //    TotalTransactionsAmount = g.Sum(t => t.Amount),
-                //    EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                //    OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
-                //    PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
-                //}).ToList();
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.OK,
-                    MessageResponse = "Get Cashier's Dashboard Successfully!",
-                    //Data = groupedStaticsCashier
-                };
+              //  var groupedStaticsCashier = deposits
+              //.GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+              //.Select(g => new
+              //{
+              //    Name = g.Key, // Month name
+              //    TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
+              //    TotalTransactionsAmount = g.Sum(t => t.Amount),
+              //    EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
+              //    OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
+              //    PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
+              //}).ToList();
+              //  return new ResponseAPI
+              //  {
+              //      StatusCode = HttpStatusCodes.OK,
+              //      MessageResponse = "Get Cashier's Dashboard Successfully!",
+              //      //Data = groupedStaticsCashier
+              //  };
             }
             // case store 
             var storeOrders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
