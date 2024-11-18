@@ -185,13 +185,13 @@ namespace VegaCityApp.API.Services.Implement
                 order.Status = OrderStatus.Completed;
                 order.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-                ////Update the payment
-                //order.Payments.SingleOrDefault().Status = PaymentStatus.Completed.GetDescriptionFromEnum();
-                //order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-                //_unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
-                ////update the orderDetail
-                //order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-                //_unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
+                //Update the payment
+                order.Payments.SingleOrDefault().Status = PaymentStatus.Completed.GetDescriptionFromEnum();
+                order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
+                //update the orderDetail
+                order.OrderDetails.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<OrderDetail>().UpdateAsync(order.OrderDetails.SingleOrDefault());
 
                 var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
                     (predicate: x => x.UserId == order.UserId)
@@ -232,24 +232,26 @@ namespace VegaCityApp.API.Services.Implement
                 //        }
                 //    }
                 //}
-                //var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
-                //{
-                //    Id = Guid.NewGuid(),
-                //    Type = TransactionType.ChargeMoney,
-                //    WalletId = order.User.Wallets.SingleOrDefault().Id,
-                //    Amount = Int32.Parse(order.TotalAmount.ToString()),
-                //    IsIncrease = true,
-                //    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                //    CrDate = TimeUtils.GetCurrentSEATime(),
-                //    Status = TransactionStatus.Success,
-                //    Description = "Add" + order.SaleType + " Balance By " + order.Payments.SingleOrDefault().Name + " to cashier web: " + order.User.FullName,
-                //};
-                //await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
+                var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
+                {
+                    Id = Guid.NewGuid(),
+                    Type = TransactionType.ChargeMoney,
+                    WalletId = order.User.Wallets.SingleOrDefault().Id,
+                    Amount = Int32.Parse(order.TotalAmount.ToString()),
+                    IsIncrease = true,
+                    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    Status = TransactionStatus.Success,
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    UserId = order.UserId,
+                    Description = "Add" + order.SaleType + " Balance By " + order.Payments.SingleOrDefault().Name + " to cashier web: " + order.User.FullName,
+                };
+                await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
 
-                //order.User.Wallets.SingleOrDefault().BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
-                //order.User.Wallets.SingleOrDefault().Balance += Int32.Parse(order.TotalAmount.ToString());
-                //order.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-                //_unitOfWork.GetRepository<Wallet>().UpdateAsync(order.User.Wallets.SingleOrDefault());
+                order.User.Wallets.SingleOrDefault().BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
+                order.User.Wallets.SingleOrDefault().Balance += Int32.Parse(order.TotalAmount.ToString());
+                order.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.User.Wallets.SingleOrDefault());
 
                 //session update
                 sessionUser.TotalQuantityOrder += 1;
@@ -764,11 +766,15 @@ namespace VegaCityApp.API.Services.Implement
                 (predicate: x => x.InvoiceId == invoiceId[1] && x.Status == OrderStatus.Pending,
                  include: detail => detail.Include(a => a.OrderDetails).Include(u => u.User).ThenInclude(w => w.Wallets)
                                            .Include(p => p.Payments));
+            if(order == null)
+            {
+                throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
+            }
             // Update the order to 'Completed'
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-            //Update the payment
+            ////Update the payment
             order.Payments.SingleOrDefault().Status = PaymentStatus.Completed.GetDescriptionFromEnum();
             order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Payment>().UpdateAsync(order.Payments.SingleOrDefault());
@@ -829,7 +835,9 @@ namespace VegaCityApp.API.Services.Implement
                 IsIncrease = true,
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = TransactionStatus.Success,
+                UserId = order.UserId,
                 Description = "Add" + order.SaleType + " Balance By " + order.Payments.SingleOrDefault().Name + " to cashier web: " + order.User.FullName,
             };
             await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
@@ -837,7 +845,8 @@ namespace VegaCityApp.API.Services.Implement
             order.User.Wallets.SingleOrDefault().BalanceHistory += Int32.Parse(order.TotalAmount.ToString());
             order.User.Wallets.SingleOrDefault().Balance += Int32.Parse(order.TotalAmount.ToString());
             order.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-             _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.User.Wallets.SingleOrDefault());
+            _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.User.Wallets.SingleOrDefault());
+
 
             //session update
             sessionUser.TotalQuantityOrder += 1;
@@ -1423,7 +1432,9 @@ namespace VegaCityApp.API.Services.Implement
                 IsIncrease = true,
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = TransactionStatus.Success,
+                UserId = order.UserId,
                 Description = "Add" + order.SaleType + " Balance By " + order.Payments.SingleOrDefault().Name + " to cashier web: " + order.User.FullName,
             };
             await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
@@ -1971,7 +1982,9 @@ namespace VegaCityApp.API.Services.Implement
                 IsIncrease = true,
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 CrDate = TimeUtils.GetCurrentSEATime(),
+                UpsDate = TimeUtils.GetCurrentSEATime(),
                 Status = TransactionStatus.Success,
+                UserId = order.UserId,
                 Description = "Add" + order.SaleType + " Balance By " + order.Payments.SingleOrDefault().Name + " to cashier web: " + order.User.FullName,
             };
             await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().InsertAsync(transactionCashierBalance);
