@@ -330,6 +330,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             menu.Name = req.Name.Trim();
             menu.ImageUrl = req.ImageUrl?.Trim();
+            menu.DateFilter = req.DateFilter;
             menu.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
             var result = await _unitOfWork.CommitAsync();
@@ -898,9 +899,9 @@ namespace VegaCityApp.API.Services.Implement
             {
                 if (req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
             }
-            if (req.Status != "InActive") throw new BadHttpRequestException(StoreMessage.InvalidProductStatus, HttpStatusCodes.BadRequest);
+            if (req.Status != "Active") throw new BadHttpRequestException(StoreMessage.InvalidProductStatus, HttpStatusCodes.BadRequest);
             var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync
-                (predicate: x => x.Id == ProductId && x.Status == "Active");
+                (predicate: x => x.Id == ProductId && x.Status == "InActive");
             if (product == null)
             {
                 return new ResponseAPI()
@@ -981,7 +982,7 @@ namespace VegaCityApp.API.Services.Implement
                     page: page,
                     size: size,
                     orderBy: x => x.OrderByDescending(z => z.Name),
-                    predicate: x => x.MenuId == MenuId && x.Status == "Active",
+                    predicate: x => x.MenuId == MenuId && x.Status == "Active" ,
                     include: z => z.Include(a => a.ProductCategory));
                 return new ResponseAPI<IEnumerable<GetProductResponse>>
                 {

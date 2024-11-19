@@ -230,8 +230,10 @@ namespace VegaCityApp.API.Services.Implement
                     StoreId = x.StoreId,
                     PackageId = x.PackageId,
                     UserId = x.UserId,
+                    PaymentType = x.Payments.SingleOrDefault().Name
                 },
                 predicate: z => z.UserId == GetUserIdFromJwt(),
+                include: x => x.Include(p => p.Payments),
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name));
@@ -934,7 +936,7 @@ namespace VegaCityApp.API.Services.Implement
                                        .Include(c => c.Store)
                                        .Include(x => x.Package)
                                        .Include(g => g.PackageOrder).ThenInclude(w => w.Wallets)
-                                       .Include(p => p.PromotionOrders)
+                                       .Include(p => p.PromotionOrders).Include(t => t.Payments)
                 ) ?? throw new BadHttpRequestException("Order not found", HttpStatusCodes.NotFound);
             var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
                     (predicate: x => x.UserId == order.UserId)
