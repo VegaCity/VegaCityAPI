@@ -128,6 +128,17 @@ namespace VegaCityApp.API.Services.Implement
         {
             try
             {
+                var userInZone = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
+                    (predicate: x => x.Id == GetUserIdFromJwt() && x.Status == (int)UserStatusEnum.Active, include: x => x.Include(z => z.UserSessions))
+                    ?? throw new BadHttpRequestException(UserMessage.NotFoundUser, HttpStatusCodes.NotFound);
+                Guid zoneId = Guid.Empty;
+                foreach (var item in userInZone.UserSessions)
+                {
+                    if (item.Status == SessionStatusEnum.Active.GetDescriptionFromEnum())
+                    {
+                        zoneId = item.ZoneId;
+                    }
+                }
                 IPaginate<GetPackageResponse> data = await _unitOfWork.GetRepository<Package>().GetPagingListAsync(
 
                 selector: x => new GetPackageResponse()
@@ -147,8 +158,9 @@ namespace VegaCityApp.API.Services.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => x.Deflag == false
-            );
+                predicate: x => x.Deflag == false && x.ZoneId == zoneId,
+                include: x => x.Include(a => a.Zone)
+                );
                 return new ResponseAPI<IEnumerable<GetPackageResponse>>
                 {
                     MessageResponse = PackageMessage.GetPackagesSuccessfully,

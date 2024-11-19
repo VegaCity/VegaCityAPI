@@ -55,6 +55,7 @@ namespace VegaCityApp.API.Payload.Response
         public string? Address { get; set; }
         public int? Status { get; set; }
         public string? RegisterStoreType { get; set; }
+        public string RoleName { get; set; }
     }
 }
 

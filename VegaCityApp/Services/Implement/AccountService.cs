@@ -906,13 +906,15 @@ namespace VegaCityApp.Service.Implement
                     UpsDate = x.UpsDate,
                     RoleId = x.RoleId,
                     Status = x.Status,
-                    //RegisterStoreType = x.RegisterStoreType == (int) StoreTypeEnum.Food ? "Store Product" : "Store Service"
+                    RegisterStoreType = x.RegisterStoreType == (int)StoreTypeEnum.Food ? "Store Product" : "Store Service",
+                    RoleName = x.Role.Name
                 },
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.FullName),
                 predicate: x => //x.Status == (int)UserStatusEnum.Active || x.Status == (int)UserStatusEnum.PendingVerify &&
-                                x.MarketZoneId == apiKey);
+                                x.MarketZoneId == apiKey,
+                include: z => z.Include(z => z.Role));
 
                 return new ResponseAPI<IEnumerable<GetUserResponse>>
                 {
