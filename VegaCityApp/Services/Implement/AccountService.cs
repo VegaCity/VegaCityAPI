@@ -1128,19 +1128,21 @@ namespace VegaCityApp.Service.Implement
             DateTime? endDate = startDate.AddDays(((int)req.Days));
             var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
                                                        && x.CrDate <= endDate && x.Status == OrderStatus.Completed, null, null);
-            //var etags = await _unitOfWork.GetRepository<Etag>().GetListAsync(x => x.CrDate >= startDate
-            //                                           && x.CrDate <= endDate, null, null);
+            var etags = await _unitOfWork.GetRepository<PackageOrder>().GetListAsync(x => x.CrDate >= startDate
+                                                       && x.CrDate <= endDate && x.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum(), null, null);
             var transactions = await _unitOfWork.GetRepository<Transaction>()
                                        .GetListAsync(x => x.CrDate >= startDate
                                                        && x.CrDate <= endDate
+                                                       && x.Status == TransactionStatus.Success
                                                        && x.Amount > 0
                                                        && x.Type != "WithdrawMoney",
                                                        null, null);
-            //var deposits = await _unitOfWork.GetRepository<CustomerMoneyTransfer>()
-            //                          .GetListAsync(x => x.CrDate >= startDate
-            //                                          && x.CrDate <= endDate
-            //                                          && x.Amount > 0,
-            //                                          null, null);
+            var deposits = await _unitOfWork.GetRepository<CustomerMoneyTransfer>()
+                                      .GetListAsync(x => x.CrDate >= startDate
+                                                      && x.CrDate <= endDate
+                                                      && x.Status == OrderStatus.Completed
+                                                      && x.Amount > 0,
+                                                      null, null);
             var packages = await _unitOfWork.GetRepository<Package>().GetListAsync(x => x.CrDate >= startDate
                                                        && x.CrDate <= endDate,
                                                         null, null);
@@ -1163,7 +1165,7 @@ namespace VegaCityApp.Service.Implement
                    TotalTransactions = transactions.Count(o => o.CrDate.ToString("MMM") == g.Key),
                    TotalTransactionsAmount = g.Sum(t => t.Amount),
                    //  EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                   EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                   EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
                    OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
 
                }).ToList();
@@ -1176,35 +1178,67 @@ namespace VegaCityApp.Service.Implement
             }
             else if (roleCurrent == "CashierWeb" || roleCurrent == "CashierApp")
             {
-                //  var groupedStaticsCashier = deposits
-                //.GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
-                //.Select(g => new
-                //{
-                //    Name = g.Key, // Month name
-                //    TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                //    TotalTransactionsAmount = g.Sum(t => t.Amount),
-                //    EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                //    OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
-                //    PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
-                //}).ToList();
-                //  return new ResponseAPI
-                //  {
-                //      StatusCode = HttpStatusCodes.OK,
-                //      MessageResponse = "Get Cashier's Dashboard Successfully!",
-                //      //Data = groupedStaticsCashier
-                //  };
+                var groupedStaticsCashier = deposits
+              .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+              .Select(g => new
+              {
+                  Name = g.Key, // Month name
+                  TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                  TotalTransactionsAmount = g.Sum(t => t.Amount),
+                  EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                  OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
+                  //PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
+              }).ToList();
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = "Get Cashier's Dashboard Successfully!",
+                    //Data = groupedStaticsCashier
+                };
             }
             // case store 
+            var storeUser = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == GetUserIdFromJwt());
+            var storeId = storeUser.StoreId;
             var storeOrders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
-                                                       && x.CrDate <= endDate && x.StoreId != null && x.Status == OrderStatus.Completed,
+                                                       && x.CrDate <= endDate && x.StoreId == storeId && x.Status == OrderStatus.Completed,
                                                         null, null);
-            var groupedStaticsStore = orders
+            var transactionsStore = await _unitOfWork.GetRepository<Transaction>()
+                                       .GetListAsync(x => x.CrDate >= startDate
+                                                       && x.CrDate <= endDate
+                                                       && x.Amount > 0
+                                                       && x.Status == TransactionStatus.Success
+                                                       && x.Type == TransactionType.SellingProduct,
+                                                       null, null);
+            var menusStore = await _unitOfWork.GetRepository<Menu>().GetListAsync(x => x.StoreId == storeId && x.Deflag == false, null, null);
+            //find products                                                                          
+            var menuStore = menusStore.FirstOrDefault();
+            var menuIds = menusStore.Select(m => m.Id).ToList();
+            var productMappings = await _unitOfWork.GetRepository<MenuProductMapping>()
+                .GetListAsync(x => menuIds.Contains(x.MenuId), null, null);
+            var distinctProductIds = productMappings.Select(x => x.ProductId).Distinct().Count();
+
+
+            var productsStore = await _unitOfWork.GetRepository<Product>().GetListAsync(x => x.MenuId == menuStore.Id
+                                                                                         && x.Status == "Active", null, null);
+                                                                                        
+            //var productsStore = await _unitOfWork.GetRepository<Product>().GetListAsync(x => x.CrDate >= startDate
+            //                                                                               && x.CrDate <= endDate
+            //                                                                               && x.
+            //                                                                               && x.Status == "Active",null,null);
+            var groupedStaticsStore = storeOrders
              .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
              .Select(g => new
              {
                  Name = g.Key, // Month name
-                 OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
+                 OrderCount = storeOrders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
                  TotalAmountFromOrder = g.Sum(t => t.TotalAmount),
+                 TotalTransaction = transactionsStore.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                 TotalAmountFromTransaction = transactionsStore
+                                                .Where(o => o.CrDate.ToString("MMM") == g.Key)
+                                                .Sum(o => o.Amount),
+                 TotalMenu = menusStore.Count(),
+                 TotalProduct = distinctProductIds,  
+
                  //PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
              }).ToList();
             return new ResponseAPI
