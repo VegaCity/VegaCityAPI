@@ -134,7 +134,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                predicate: x => x.Email == req.Email,
+                predicate: x => x.Email == req.Email && x.Status == (int)UserStatusEnum.Active,
                 include: User => User.Include(y => y.Role));
             if (user == null)
             {
@@ -253,7 +253,9 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.EndDateInvalid
                 };
             }
-
+            var checkSessionExsit = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
+                predicate: x => x.UserId == userId && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum());
+            if (checkSessionExsit != null) throw new BadHttpRequestException("Session for this user is already exist", HttpStatusCodes.BadRequest);
             var user = await SearchUser(userId);
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == req.ZoneId && !x.Deflag)
                 ?? throw new BadHttpRequestException("Zone not found");
@@ -362,7 +364,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                predicate: x => x.Email == email && x.MarketZoneId == req.apiKey);
+                predicate: x => x.Email == email && x.MarketZoneId == req.apiKey && x.Status == (int)UserStatusEnum.Active);
             if (user == null)
             {
                 return new ResponseAPI
@@ -406,18 +408,26 @@ namespace VegaCityApp.Service.Implement
 
             //check if email is already exist
             var emailExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.Email == req.Email.Trim() && x.MarketZoneId == req.apiKey);
+                x.Email == req.Email.Trim() && x.MarketZoneId == req.apiKey && x.Status == (int)UserStatusEnum.Active);
             if (emailExist != null)
                 throw new BadHttpRequestException(UserMessage.EmailExist, HttpStatusCodes.BadRequest);
             var phoneNumberExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.PhoneNumber == req.PhoneNumber.Trim() && x.MarketZoneId == req.apiKey);
+                x.PhoneNumber == req.PhoneNumber.Trim() && x.MarketZoneId == req.apiKey && x.Status == (int)UserStatusEnum.Active);
             if (phoneNumberExist != null)
                 throw new BadHttpRequestException(UserMessage.PhoneNumberExist, HttpStatusCodes.BadRequest);
             var cccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
-                x.CccdPassport == req.CccdPassport.Trim() && x.MarketZoneId == req.apiKey);
+                x.CccdPassport == req.CccdPassport.Trim() && x.MarketZoneId == req.apiKey && x.Status == (int)UserStatusEnum.Active);
             if (cccdExist != null)
                 throw new BadHttpRequestException(UserMessage.CCCDExist, HttpStatusCodes.BadRequest);
-
+            //check ban user
+            var banEmailExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
+                x.Email == req.Email.Trim() && x.MarketZoneId == req.apiKey && x.Status == (int)UserStatusEnum.Ban);
+            if (banEmailExist != null)
+                throw new BadHttpRequestException(UserMessage.UserBan, HttpStatusCodes.BadRequest);
+            var banCccdExist = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x =>
+                x.CccdPassport == req.CccdPassport.Trim() && x.MarketZoneId == req.apiKey && x.Status == (int)UserStatusEnum.Ban);
+            if (banCccdExist != null)
+                throw new BadHttpRequestException(UserMessage.UserBan, HttpStatusCodes.BadRequest);
             //create new user
             var newUser = await CreateUserRegister(req, req.apiKey);
             //create refesh token
@@ -455,7 +465,7 @@ namespace VegaCityApp.Service.Implement
         {
             Tuple<string, Guid> guidClaim = null;
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                               predicate: x => x.Email == req.Email && x.MarketZoneId == req.apiKey,
+                               predicate: x => x.Email == req.Email && x.MarketZoneId == req.apiKey && x.Status == (int)UserStatusEnum.Active,
                                               include: User => User.Include(y => y.Role));
             var refreshToken = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
                                predicate: x => x.UserId == user.Id && x.Token == req.RefreshToken);
@@ -807,7 +817,9 @@ namespace VegaCityApp.Service.Implement
             }
 
             var user = await _unitOfWork.GetRepository<User>()
-                .SingleOrDefaultAsync(predicate: x => x.Email == req.Email.Trim() && x.MarketZoneId == req.apiKey, include: user => user.Include(x => x.Role));
+                .SingleOrDefaultAsync(predicate: x => x.Email == req.Email.Trim()
+                                              && x.MarketZoneId == req.apiKey
+                                              && x.Status == (int)UserStatusEnum.Active, include: user => user.Include(x => x.Role));
             if (user == null)
             {
                 return new ResponseAPI
@@ -991,7 +1003,7 @@ namespace VegaCityApp.Service.Implement
                 (predicate: x => x.Id == UserId && x.Status == (int)UserStatusEnum.Active,
                  include: z => z.Include(a => a.UserRefreshTokens)
                                 .Include(a => a.UserSessions)
-                                .Include(a => a.UserStoreMappings).ThenInclude(a => a.Store)
+                                .Include(a => a.UserStoreMappings)
                                 .Include(a => a.Wallets));
             if (user == null)
             {
@@ -1013,7 +1025,7 @@ namespace VegaCityApp.Service.Implement
                         _unitOfWork.GetRepository<UserSession>().UpdateRange(user.UserSessions);
                     }
                     //delete store include menu and product
-                    await _storeService.DeleteStore(user.UserStoreMappings.SingleOrDefault().Store.Id);
+                    await _storeService.DeleteStore((Guid)user.StoreId);
                     if (user.UserStoreMappings.Count > 0)
                     {
                         _unitOfWork.GetRepository<UserStoreMapping>().DeleteRangeAsync(user.UserStoreMappings);
@@ -1162,23 +1174,23 @@ namespace VegaCityApp.Service.Implement
             }
             else if (roleCurrent == "CashierWeb" || roleCurrent == "CashierApp")
             {
-              //  var groupedStaticsCashier = deposits
-              //.GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
-              //.Select(g => new
-              //{
-              //    Name = g.Key, // Month name
-              //    TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
-              //    TotalTransactionsAmount = g.Sum(t => t.Amount),
-              //    EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
-              //    OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
-              //    PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
-              //}).ToList();
-              //  return new ResponseAPI
-              //  {
-              //      StatusCode = HttpStatusCodes.OK,
-              //      MessageResponse = "Get Cashier's Dashboard Successfully!",
-              //      //Data = groupedStaticsCashier
-              //  };
+                //  var groupedStaticsCashier = deposits
+                //.GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+                //.Select(g => new
+                //{
+                //    Name = g.Key, // Month name
+                //    TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                //    TotalTransactionsAmount = g.Sum(t => t.Amount),
+                //    EtagCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                //    OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
+                //    PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
+                //}).ToList();
+                //  return new ResponseAPI
+                //  {
+                //      StatusCode = HttpStatusCodes.OK,
+                //      MessageResponse = "Get Cashier's Dashboard Successfully!",
+                //      //Data = groupedStaticsCashier
+                //  };
             }
             // case store 
             var storeOrders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate

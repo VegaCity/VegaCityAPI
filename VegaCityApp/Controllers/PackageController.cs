@@ -25,6 +25,7 @@ namespace VegaCityApp.API.Controllers
         [HttpPost(PackageEndpoint.CreatePackage)]
         [CustomAuthorize(RoleEnum.Admin)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
+        [SwaggerOperation(Summary = "Create Package", Description = "Type: SpecificPackage, ServicePackage")]
         public async Task<IActionResult> CreatePackage([FromBody] CreatePackageRequest request)
         {
             var result = await _packageService.CreatePackage(request);

@@ -266,7 +266,7 @@ namespace VegaCityApp.API.Services.Implement
                         Amount = order.TotalAmount,
                         IsIncrease = false,
                         MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-                        PackageOrderId = order.PackageOrderId,
+                        PackageOrderId = order.PackageOrder.Id,
                         TransactionId = transaction.Id,
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -404,7 +404,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 throw new BadHttpRequestException("Error is :" + ex.Message, HttpStatusCodes.BadRequest);
             }
-            }
+        }
         public async Task<ResponseAPI> UpdateOrderPaidForChargingMoney(IPNMomoRequest req)
         {
             try
@@ -469,7 +469,7 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime(),
                         Amount = order.TotalAmount + order.PromotionOrders.SingleOrDefault().DiscountAmount,
                         MarketZoneId = order.User.MarketZoneId,
-                        PackageOrderId = order.PackageOrderId,
+                        PackageOrderId = (Guid)order.PackageOrderId,
                         IsIncrease = true,
                         Status = TransactionStatus.Success.GetDescriptionFromEnum(),
                         TransactionId = transactionCharge.Id,
@@ -631,7 +631,7 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime(),
                         Amount = order.TotalAmount,
                         MarketZoneId = order.User.MarketZoneId,
-                        PackageOrderId = order.PackageOrderId,
+                        PackageOrderId = (Guid)order.PackageOrderId,
                         IsIncrease = true,
                         Status = TransactionStatus.Success.GetDescriptionFromEnum(),
                         TransactionId = transactionCharge.Id,
@@ -988,7 +988,7 @@ namespace VegaCityApp.API.Services.Implement
                     Amount = order.TotalAmount,
                     IsIncrease = false,
                     MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-                    PackageOrderId = order.PackageOrderId,
+                    PackageOrderId = order.PackageOrder.Id,
                     TransactionId = transaction.Id,
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -1186,7 +1186,7 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime(),
                         Amount = order.TotalAmount + order.PromotionOrders.SingleOrDefault().DiscountAmount,
                         MarketZoneId = order.User.MarketZoneId,
-                        PackageOrderId = order.PackageOrderId,
+                        PackageOrderId = (Guid)order.PackageOrderId,
                         IsIncrease = true,
                         Status = TransactionStatus.Success.GetDescriptionFromEnum(),
                         TransactionId = transactionCharge.Id,
@@ -1349,7 +1349,7 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime(),
                         Amount = order.TotalAmount,
                         MarketZoneId = order.User.MarketZoneId,
-                        PackageOrderId = order.PackageOrderId,
+                        PackageOrderId = (Guid)order.PackageOrderId,
                         IsIncrease = true,
                         Status = TransactionStatus.Success.GetDescriptionFromEnum(),
                         TransactionId = transactionCharge.Id,
@@ -1619,7 +1619,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 throw new BadHttpRequestException(PaymentMessage.OrderNotFound, HttpStatusCodes.NotFound);
             }
-            
+
             // Update the order to 'Completed'
             order.Status = OrderStatus.Completed;
             order.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -1717,7 +1717,7 @@ namespace VegaCityApp.API.Services.Implement
                     Amount = order.TotalAmount,
                     IsIncrease = false,
                     MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-                    PackageOrderId = order.PackageOrderId,
+                    PackageOrderId = order.PackageOrder.Id,
                     TransactionId = transaction.Id,
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -1928,7 +1928,7 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime(),
                         Amount = order.TotalAmount + order.PromotionOrders.SingleOrDefault().DiscountAmount,
                         MarketZoneId = order.User.MarketZoneId,
-                        PackageOrderId = order.PackageOrderId,
+                        PackageOrderId = (Guid)order.PackageOrderId,
                         IsIncrease = true,
                         Status = TransactionStatus.Success.GetDescriptionFromEnum(),
                         TransactionId = transactionCharge.Id,
@@ -2089,7 +2089,7 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime(),
                         Amount = order.TotalAmount,
                         MarketZoneId = order.User.MarketZoneId,
-                        PackageOrderId = order.PackageOrderId,
+                        PackageOrderId = (Guid)order.PackageOrderId,
                         IsIncrease = true,
                         Status = TransactionStatus.Success.GetDescriptionFromEnum(),
                         TransactionId = transactionCharge.Id,
@@ -2396,7 +2396,7 @@ namespace VegaCityApp.API.Services.Implement
                     Amount = order.TotalAmount,
                     IsIncrease = false,
                     MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-                    PackageOrderId = order.PackageOrderId,
+                    PackageOrderId = order.PackageOrder.Id,
                     TransactionId = transaction.Id,
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -2594,7 +2594,7 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime(),
                         Amount = order.TotalAmount + order.PromotionOrders.SingleOrDefault().DiscountAmount,
                         MarketZoneId = order.User.MarketZoneId,
-                        PackageOrderId = order.PackageOrderId,
+                        PackageOrderId = (Guid)order.PackageOrderId,
                         IsIncrease = true,
                         Status = TransactionStatus.Success.GetDescriptionFromEnum(),
                         TransactionId = transactionCharge.Id,
@@ -2751,9 +2751,9 @@ namespace VegaCityApp.API.Services.Implement
                         Id = Guid.NewGuid(),
                         CrDate = TimeUtils.GetCurrentSEATime(),
                         UpsDate = TimeUtils.GetCurrentSEATime(),
-                        Amount = order.TotalAmount ,
+                        Amount = order.TotalAmount,
                         MarketZoneId = order.User.MarketZoneId,
-                        PackageOrderId = order.PackageOrderId,
+                        PackageOrderId = (Guid)order.PackageOrderId,
                         IsIncrease = true,
                         Status = TransactionStatus.Success.GetDescriptionFromEnum(),
                         TransactionId = transactionCharge.Id,
