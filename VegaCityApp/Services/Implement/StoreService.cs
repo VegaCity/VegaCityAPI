@@ -899,11 +899,6 @@ namespace VegaCityApp.API.Services.Implement
             {
                 if (req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
             }
-            if (req.Status != null)
-            {
-                if (!req.Status.Equals("Active") || req.Status.Equals("InActive"))
-                    throw new BadHttpRequestException(StoreMessage.InvalidProductStatus, HttpStatusCodes.BadRequest);
-            }
             var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync
                 (predicate: x => x.Id == ProductId && x.Status == "Active");
             if (product == null)
@@ -917,7 +912,6 @@ namespace VegaCityApp.API.Services.Implement
             product.Name = req.Name != null ? req.Name.Trim() : product.Name;
             product.ImageUrl = req.ImageUrl != null ? req.ImageUrl.Trim() : product.ImageUrl;
             product.Price = (int)(req.Price != null ? req.Price : product.Price);
-            product.Status = req.Status != null ? req.Status : product.Status;
             product.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Product>().UpdateAsync(product);
             var result = await _unitOfWork.CommitAsync();
