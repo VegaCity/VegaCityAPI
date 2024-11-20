@@ -1028,6 +1028,8 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.InvalidPhoneNumber
                 };
             }
+            string role = GetRoleFromJwt();
+
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
                     (predicate: x => x.Id == userId && x.Status == (int)UserStatusEnum.Active);
             if (user == null)
@@ -1038,6 +1040,7 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.NotFoundUser
                 };
             }
+            if (role == RoleEnum.Admin.GetDescriptionFromEnum()) user.Status = (int)req.Status;
             user.FullName = req.FullName != null ? req.FullName.Trim() : user.FullName;
             user.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : user.PhoneNumber;
             user.Birthday = req.Birthday ?? user.Birthday;

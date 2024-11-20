@@ -111,6 +111,8 @@ namespace VegaCityApp.API.Controllers.Admin
         [HttpPatch(UserEndpoint.UpdateUserProfile)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb, RoleEnum.Store)]
+        [SwaggerOperation(Summary = "Update user profile !! Get Ready !!",
+            Description = "If role admin, status user: Ban, Disable, Active")]
         public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserAccountRequest request)
         {
             var result = await _service.UpdateUser(id, request);
