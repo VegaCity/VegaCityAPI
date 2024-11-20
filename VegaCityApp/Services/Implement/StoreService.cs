@@ -899,9 +899,13 @@ namespace VegaCityApp.API.Services.Implement
             {
                 if (req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
             }
-            if (req.Status != "Active") throw new BadHttpRequestException(StoreMessage.InvalidProductStatus, HttpStatusCodes.BadRequest);
+            if (req.Status != null)
+            {
+                if (!req.Status.Equals("Active") || req.Status.Equals("InActive"))
+                    throw new BadHttpRequestException(StoreMessage.InvalidProductStatus, HttpStatusCodes.BadRequest);
+            }
             var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync
-                (predicate: x => x.Id == ProductId && x.Status == "InActive");
+                (predicate: x => x.Id == ProductId && x.Status == "Active");
             if (product == null)
             {
                 return new ResponseAPI()
@@ -982,7 +986,7 @@ namespace VegaCityApp.API.Services.Implement
                     page: page,
                     size: size,
                     orderBy: x => x.OrderByDescending(z => z.Name),
-                    predicate: x => x.MenuId == MenuId && x.Status == "Active" ,
+                    predicate: x => x.MenuId == MenuId && x.Status == "Active",
                     include: z => z.Include(a => a.ProductCategory));
                 return new ResponseAPI<IEnumerable<GetProductResponse>>
                 {
