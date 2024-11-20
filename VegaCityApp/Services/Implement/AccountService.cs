@@ -465,7 +465,7 @@ namespace VegaCityApp.Service.Implement
         {
             Tuple<string, Guid> guidClaim = null;
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
-                               predicate: x => x.Email == req.Email && x.MarketZoneId == req.apiKey && x.Status == (int)UserStatusEnum.Active,
+                               predicate: x => x.Email == req.Email && x.MarketZoneId == req.apiKey,
                                               include: User => User.Include(y => y.Role));
             var refreshToken = await _unitOfWork.GetRepository<UserRefreshToken>().SingleOrDefaultAsync(
                                predicate: x => x.UserId == user.Id && x.Token == req.RefreshToken);
