@@ -36,6 +36,6 @@ namespace VegaCityApp.Service.Interface
         Task<ResponseAPI<IEnumerable<GetStoreResponse>>> GetAllClosingRequest([FromQuery] Guid apiKey, [FromQuery] int size = 10, [FromQuery] int page = 1);
         Task<ResponseAPI> SearchStoreClosing(Guid StoreId);
         Task<ResponseAPI> ResolveClosingStore(GetWalletStoreRequest req);
-
+        Task CheckSession();
     }
 }

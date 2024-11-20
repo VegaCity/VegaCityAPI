@@ -1188,7 +1188,7 @@ namespace VegaCityApp.Service.Implement
             var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
                                                        && x.CrDate <= endDate && x.Status == OrderStatus.Completed, null, null);
             var ordersCash = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
-                                                       && x.CrDate <= endDate && x.Status == OrderStatus.Completed 
+                                                       && x.CrDate <= endDate && x.Status == OrderStatus.Completed
                                                        && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum()
                                                        , null, null);
             var etags = await _unitOfWork.GetRepository<PackageOrder>().GetListAsync(x => x.CrDate >= startDate
@@ -1200,7 +1200,7 @@ namespace VegaCityApp.Service.Implement
                                                        && x.Amount > 0
                                                        && x.Type != "WithdrawMoney",
                                                        null, null);
-           
+
             var deposits = await _unitOfWork.GetRepository<CustomerMoneyTransfer>()
                                       .GetListAsync(x => x.CrDate >= startDate
                                                       && x.CrDate <= endDate
@@ -1288,7 +1288,7 @@ namespace VegaCityApp.Service.Implement
                                                        && x.CrDate <= endDate && x.StoreId == storeId && x.Status == OrderStatus.Completed,
                                                         null, null);
             var storeCashOrders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
-                                                       && x.CrDate <= endDate && x.StoreId == storeId && x.Status == OrderStatus.Completed && x.Payments.SingleOrDefault().Name== PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
+                                                       && x.CrDate <= endDate && x.StoreId == storeId && x.Status == OrderStatus.Completed && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
                                                         null, null);
             var transactionsStore = await _unitOfWork.GetRepository<Transaction>()
                                        .GetListAsync(x => x.CrDate >= startDate
@@ -1328,7 +1328,7 @@ namespace VegaCityApp.Service.Implement
                                                 .Where(o => o.CrDate.ToString("MMM") == g.Key)
                                                 .Sum(o => o.Amount),
                  TotalMenu = menusStore.Count(),
-                 TotalProduct = distinctProductIds,  
+                 TotalProduct = distinctProductIds,
                  //PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
              }).ToList();
             return new ResponseAPI
@@ -1538,7 +1538,7 @@ namespace VegaCityApp.Service.Implement
             var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && x.Status == (int)StoreStatusEnum.Blocked
                                                                                , include: z => z.Include(s => s.Wallets)
 
-                                                                                               // .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings).ThenInclude(a => a.Product).ThenInclude(a => a.ProductCategory)
+                                                                                                // .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings).ThenInclude(a => a.Product).ThenInclude(a => a.ProductCategory)
                                                                                                 );
             var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name) == searchName || NormalizeString(x.ShortName) == searchName);
             if (storeTrack == null)
@@ -1684,6 +1684,17 @@ namespace VegaCityApp.Service.Implement
             result = Regex.Replace(result, @"\s+", ""); // Loại bỏ tất cả khoảng trắng
 
             return result;
+        }
+        public async Task CheckSession()
+        {
+            var userSessions = await _unitOfWork.GetRepository<UserSession>().GetListAsync
+                (predicate: x => x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum() && x.EndDate < TimeUtils.GetCurrentSEATime());
+            foreach (var session in userSessions)
+            {
+                session.Status = SessionStatusEnum.Expired.GetDescriptionFromEnum();
+                _unitOfWork.GetRepository<UserSession>().UpdateAsync(session);
+            }
+            await _unitOfWork.CommitAsync();
         }
 
     }

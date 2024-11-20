@@ -26,6 +26,8 @@ namespace VegaCityApp.API.Extensions
             RecurringJob.AddOrUpdate<IPromotionService>(x => x.CheckExpiredPromotion(), cornMinute, timeZone: timeZone);
 
             RecurringJob.AddOrUpdate<IOrderService>(x => x.CheckOrderPending(), cornMinute, timeZone: timeZone);
+
+            RecurringJob.AddOrUpdate<IAccountService>(x => x.CheckSession(), cornDaily, timeZone: timeZone);
         }
     }
 }
