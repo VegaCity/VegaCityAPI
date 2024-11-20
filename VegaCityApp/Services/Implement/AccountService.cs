@@ -768,7 +768,7 @@ namespace VegaCityApp.Service.Implement
                                 var body = $"<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;'>" +
                                                $"<h1 style='color: #007bff;'>Welcome to our Vega City!</h1>" +
                                                $"<p>Thanks for signing up our services.</p>" +
-                                               $"<p><strong>This is your password to change: {user.Data.Password}</strong></p>" +
+                                               $"<p><strong>This is your code to verify: {user.Data.Password}</strong></p>" +
                                                $"<p>Please access this website to change password: <a href='https://vegacity.id.vn/change-password'>Link Access !!</a></p>" +
                                            $"</div>";
                                 await MailUtil.SendMailAsync(user.Data.Email, subject, body);
