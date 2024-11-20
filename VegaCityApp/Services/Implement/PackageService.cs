@@ -756,7 +756,7 @@ namespace VegaCityApp.API.Services.Implement
                 predicate: x => x.CusCccdpassport == packageOrder.CusCccdpassport && x.IsAdult == true
             );
 
-            var qrCodeString = EnCodeBase64.EncodeBase64Etag("https://vegacity.id.vn/etagEdit" + packageOrder.Id);
+            var qrCodeString = EnCodeBase64.EncodeBase64Etag("https://vegacity.id.vn/etagEdit/" + packageOrder.Id);
 
             return new ResponseAPI<PackageOrder>()
             {
