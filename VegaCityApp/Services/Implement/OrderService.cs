@@ -44,7 +44,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             var store = await _unitOfWork.GetRepository<Store>()
                 .SingleOrDefaultAsync(predicate: x => x.Id == req.StoreId && !x.Deflag && x.Status == (int)StoreStatusEnum.Opened)
-                ?? throw new BadHttpRequestException("Store not found", HttpStatusCodes.NotFound);
+                ?? throw new BadHttpRequestException("Store is not opened", HttpStatusCodes.NotFound);
             if (req.TotalAmount <= 0)
             {
                 return new ResponseAPI()
@@ -57,13 +57,13 @@ namespace VegaCityApp.API.Services.Implement
             Order newOrder;
             Transaction newTransaction;
             //
-           
+
             //create order Detail
             List<Product> products = new List<Product>();
             //List<Domain.Models.StoreService> storeServices = new List<Domain.Models.StoreService>();
             if (req.SaleType == SaleType.Product)
             {
-                if(req.PackageOrderId != null)
+                if (req.PackageOrderId != null)
                 {
                     var packageOrderExist = await _unitOfWork.GetRepository<PackageOrder>()
                    .SingleOrDefaultAsync(predicate: x => x.Id == req.PackageOrderId,
@@ -165,13 +165,13 @@ namespace VegaCityApp.API.Services.Implement
                 }
                 else
                 {
-               //     var packageOrderExist = await _unitOfWork.GetRepository<PackageOrder>()
-               //    .SingleOrDefaultAsync(predicate: x => x.Id == req.PackageOrderId,
-               //                          include: a => a.Include(v => v.Wallets)
-               //                                         .Include(p => p.Package))
-               //?? throw new BadHttpRequestException("Package Order not found", HttpStatusCodes.NotFound);
-               //     if (packageOrderExist.Wallets.SingleOrDefault().Balance < req.TotalAmount) throw new BadHttpRequestException("Balance not enough", HttpStatusCodes.BadRequest);
-               //     //add user ID for Store Type
+                    //     var packageOrderExist = await _unitOfWork.GetRepository<PackageOrder>()
+                    //    .SingleOrDefaultAsync(predicate: x => x.Id == req.PackageOrderId,
+                    //                          include: a => a.Include(v => v.Wallets)
+                    //                                         .Include(p => p.Package))
+                    //?? throw new BadHttpRequestException("Package Order not found", HttpStatusCodes.NotFound);
+                    //     if (packageOrderExist.Wallets.SingleOrDefault().Balance < req.TotalAmount) throw new BadHttpRequestException("Balance not enough", HttpStatusCodes.BadRequest);
+                    //     //add user ID for Store Type
                     newOrder = new Order()
                     {
                         Id = Guid.NewGuid(),
