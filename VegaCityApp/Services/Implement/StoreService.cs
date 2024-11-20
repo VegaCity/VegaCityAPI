@@ -485,11 +485,11 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> RequestCloseStore(Guid StoreId)
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
-                predicate: x => x.Id == StoreId && !x.Deflag,
-                include: z => z.Include(s => s.Wallets)
-                               .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings)
-                                                     .ThenInclude(o => o.Product)
-                                                     .ThenInclude(p => p.ProductCategory)
+                predicate: x => x.Id == StoreId && !x.Deflag,include: y => y.Include(z => z.UserStoreMappings)
+                //include: z => z.Include(s => s.Wallets)
+                //               .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings)
+                //                                     .ThenInclude(o => o.Product)
+                //                                     .ThenInclude(p => p.ProductCategory)
             );
             if (store == null)
             {
@@ -508,42 +508,45 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
 
-            var processedCategories = new HashSet<Guid>();
-            foreach (var menu in store.Menus)
-            {
-                menu.Deflag = true;
-                menu.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
+            //var processedCategories = new HashSet<Guid>();
+            //foreach (var menu in store.Menus)
+            //{
+            //    menu.Deflag = true;
+            //    menu.UpsDate = TimeUtils.GetCurrentSEATime();
+            //    _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
 
-                foreach (var item in menu.MenuProductMappings)
-                {
-                    var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == item.ProductId);
-                    product.Status = "InActive";
-                    product.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+            //    foreach (var item in menu.MenuProductMappings)
+            //    {
+            //        var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == item.ProductId);
+            //        product.Status = "InActive";
+            //        product.UpsDate = TimeUtils.GetCurrentSEATime();
+            //        _unitOfWork.GetRepository<Product>().UpdateAsync(product);
 
-                    if (!processedCategories.Contains(product.ProductCategoryId))
-                    {
-                        var productCategory = await _unitOfWork.GetRepository<ProductCategory>()
-                                                .SingleOrDefaultAsync(predicate: c => c.Id == product.ProductCategoryId);
+            //        if (!processedCategories.Contains(product.ProductCategoryId))
+            //        {
+            //            var productCategory = await _unitOfWork.GetRepository<ProductCategory>()
+            //                                    .SingleOrDefaultAsync(predicate: c => c.Id == product.ProductCategoryId);
 
-                        if (productCategory != null && !productCategory.Deflag)
-                        {
-                            productCategory.Deflag = true;
-                            productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
-                            _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
+            //            if (productCategory != null && !productCategory.Deflag)
+            //            {
+            //                productCategory.Deflag = true;
+            //                productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
+            //                _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
 
-                            // Add to processedCategories to avoid re-processing
-                            processedCategories.Add(product.ProductCategoryId);
-                        }
-                    }
-                }
+            //                // Add to processedCategories to avoid re-processing
+            //                processedCategories.Add(product.ProductCategoryId);
+            //            }
+            //        }
+            //    }
 
-            }
-            //store.Wallets.SingleOrDefault().Deflag = true;
-            //store.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-            //_unitOfWork.GetRepository<Wallet>().UpdateAsync(store.Wallets.SingleOrDefault());
-
+            //}
+            ////store.Wallets.SingleOrDefault().Deflag = true;
+            ////store.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+            ////_unitOfWork.GetRepository<Wallet>().UpdateAsync(store.Wallets.SingleOrDefault());
+            var storeAccount = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == GetUserIdFromJwt());
+            storeAccount.Status = (int)UserStatusEnum.Disable;
+            storeAccount.UpsDate = TimeUtils.GetCurrentSEATime();
+            _unitOfWork.GetRepository<User>().UpdateAsync(storeAccount);
             store.Status = (int)StoreStatusEnum.Blocked; //implement count 7 days from blocked status (UPSDATE) here
             store.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Store>().UpdateAsync(store);

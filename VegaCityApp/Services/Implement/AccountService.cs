@@ -1538,7 +1538,8 @@ namespace VegaCityApp.Service.Implement
             var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && x.Status == (int)StoreStatusEnum.Blocked
                                                                                , include: z => z.Include(s => s.Wallets)
 
-                                                                                                .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings).ThenInclude(a => a.Product).ThenInclude(a => a.ProductCategory));
+                                                                                               // .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings).ThenInclude(a => a.Product).ThenInclude(a => a.ProductCategory)
+                                                                                                );
             var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name) == searchName || NormalizeString(x.ShortName) == searchName);
             if (storeTrack == null)
             {
@@ -1571,41 +1572,44 @@ namespace VegaCityApp.Service.Implement
                 }
                 if (req.Status == "REJECTED")
                 {
-                    var processedCategories = new HashSet<Guid>();
-                    foreach (var menu in storeTrack.Menus)
-                    {
-                        menu.Deflag = false;
-                        menu.UpsDate = TimeUtils.GetCurrentSEATime();
-                        _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
+                    //var processedCategories = new HashSet<Guid>();
+                    //foreach (var menu in storeTrack.Menus)
+                    //{
+                    //    menu.Deflag = false;
+                    //    menu.UpsDate = TimeUtils.GetCurrentSEATime();
+                    //    _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
 
-                        foreach (var product in menu.MenuProductMappings)
-                        {
-                            var Itemproduct = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: c => c.Id == product.ProductId);
-                            Itemproduct.Status = "Active";
-                            Itemproduct.UpsDate = TimeUtils.GetCurrentSEATime();
-                            _unitOfWork.GetRepository<Product>().UpdateAsync(Itemproduct);
+                    //    foreach (var product in menu.MenuProductMappings)
+                    //    {
+                    //        var Itemproduct = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: c => c.Id == product.ProductId);
+                    //        Itemproduct.Status = "Active";
+                    //        Itemproduct.UpsDate = TimeUtils.GetCurrentSEATime();
+                    //        _unitOfWork.GetRepository<Product>().UpdateAsync(Itemproduct);
 
-                            if (!processedCategories.Contains(Itemproduct.ProductCategoryId))
-                            {
-                                var productCategory = await _unitOfWork.GetRepository<ProductCategory>()
-                                                        .SingleOrDefaultAsync(predicate: c => c.Id == Itemproduct.ProductCategoryId);
+                    //        if (!processedCategories.Contains(Itemproduct.ProductCategoryId))
+                    //        {
+                    //            var productCategory = await _unitOfWork.GetRepository<ProductCategory>()
+                    //                                    .SingleOrDefaultAsync(predicate: c => c.Id == Itemproduct.ProductCategoryId);
 
-                                if (productCategory != null && productCategory.Deflag)
-                                {
-                                    productCategory.Deflag = false;
-                                    productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
-                                    _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
+                    //            if (productCategory != null && productCategory.Deflag)
+                    //            {
+                    //                productCategory.Deflag = false;
+                    //                productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
+                    //                _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
 
-                                    // Add to processedCategories to avoid re-processing
-                                    processedCategories.Add(Itemproduct.ProductCategoryId);
-                                }
-                            }
-                        }
-                    }
+                    //                // Add to processedCategories to avoid re-processing
+                    //                processedCategories.Add(Itemproduct.ProductCategoryId);
+                    //            }
+                    //        }
+                    //    }
+                    //}
                     //storeTrack.Wallets.SingleOrDefault().Deflag = false;
                     //storeTrack.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
                     //_unitOfWork.GetRepository<Wallet>().UpdateAsync(storeTrack.Wallets.SingleOrDefault());
-
+                    var storeAccount = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.StoreId == storeTrack.Id);
+                    storeAccount.Status = (int)UserStatusEnum.Active;
+                    storeAccount.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<User>().UpdateAsync(storeAccount);
                     storeTrack.Status = (int)StoreStatusEnum.Opened;
                     storeTrack.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Store>().UpdateAsync(storeTrack);
