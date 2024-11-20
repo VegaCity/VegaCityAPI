@@ -21,18 +21,19 @@ namespace VegaCityApp.Service.Interface
         Task<ResponseAPI> DeleteSession(Guid sessionId);
         Task<ResponseAPI> RefreshToken(ReFreshTokenRequest req);
         Task<ResponseAPI> GetRefreshTokenByEmail(string email, GetApiKey req);
-        Task<ResponseAPI> Register (RegisterRequest req);
+        Task<ResponseAPI> Register(RegisterRequest req);
         Task<ResponseAPI> AdminCreateUser(RegisterRequest req);
-        Task<ResponseAPI> ApproveUser (Guid userId, ApproveRequest req);
-        Task<ResponseAPI> ChangePassword (ChangePasswordRequest req);
+        Task<ResponseAPI> ApproveUser(Guid userId, ApproveRequest req);
+        Task<ResponseAPI> ChangePassword(ChangePasswordRequest req);
         Task<ResponseAPI<IEnumerable<GetUserResponse>>> SearchAllUser(int size, int page);
+        Task<ResponseAPI<IEnumerable<GetUserResponse>>> SearchAllUserNoSession(int size, int page);
         Task<ResponseAPI<User>> SearchUser(Guid UserId);
         Task<ResponseAPI> UpdateUser(Guid userId, UpdateUserAccountRequest req);
         Task<ResponseAPI> DeleteUser(Guid UserId);
         Task<ResponseAPI> GetAdminWallet();
         Task<ResponseAPI> GetChartByDuration(AdminChartDurationRequest req);
         Task<string> ReAssignEmail(Guid userId, ReAssignEmail email);
-        Task<ResponseAPI<IEnumerable<GetStoreResponse>>> GetAllClosingRequest([FromQuery] Guid apiKey,[FromQuery] int size = 10, [FromQuery] int page = 1);
+        Task<ResponseAPI<IEnumerable<GetStoreResponse>>> GetAllClosingRequest([FromQuery] Guid apiKey, [FromQuery] int size = 10, [FromQuery] int page = 1);
         Task<ResponseAPI> SearchStoreClosing(Guid StoreId);
         Task<ResponseAPI> ResolveClosingStore(GetWalletStoreRequest req);
 

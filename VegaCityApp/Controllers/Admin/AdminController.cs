@@ -91,6 +91,14 @@ namespace VegaCityApp.API.Controllers.Admin
             var result = await _service.SearchAllUser(size, page);
             return Ok(result);
         }
+        [HttpGet(UserEndpoint.GetListUserNoSession)]
+        [ProducesResponseType(typeof(ResponseAPI<IEnumerable<GetUserResponse>>), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        public async Task<IActionResult> SearchAllUserNoSession([FromQuery] int size = 10, [FromQuery] int page = 1)
+        {
+            var result = await _service.SearchAllUserNoSession(size, page);
+            return Ok(result);
+        }
         [HttpGet(UserEndpoint.GetUserInfo)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierApp, RoleEnum.CashierWeb, RoleEnum.Store)]
