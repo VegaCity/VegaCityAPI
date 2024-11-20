@@ -1128,6 +1128,10 @@ namespace VegaCityApp.Service.Implement
             DateTime? endDate = startDate.AddDays(((int)req.Days));
             var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
                                                        && x.CrDate <= endDate && x.Status == OrderStatus.Completed, null, null);
+            var ordersCash = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
+                                                       && x.CrDate <= endDate && x.Status == OrderStatus.Completed 
+                                                       && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum()
+                                                       , null, null);
             var etags = await _unitOfWork.GetRepository<PackageOrder>().GetListAsync(x => x.CrDate >= startDate
                                                        && x.CrDate <= endDate && x.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum(), null, null);
             var transactions = await _unitOfWork.GetRepository<Transaction>()
@@ -1137,6 +1141,7 @@ namespace VegaCityApp.Service.Implement
                                                        && x.Amount > 0
                                                        && x.Type != "WithdrawMoney",
                                                        null, null);
+           
             var deposits = await _unitOfWork.GetRepository<CustomerMoneyTransfer>()
                                       .GetListAsync(x => x.CrDate >= startDate
                                                       && x.CrDate <= endDate
@@ -1167,6 +1172,8 @@ namespace VegaCityApp.Service.Implement
                    //  EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
                    EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
                    OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                   OrderCash = ordersCash.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                   OtherOrder = orders.Count(o => o.CrDate.ToString("MMM") == g.Key) - ordersCash.Count(o => o.CrDate.ToString("MMM") == g.Key)
 
                }).ToList();
                 return new ResponseAPI
@@ -1178,22 +1185,41 @@ namespace VegaCityApp.Service.Implement
             }
             else if (roleCurrent == "CashierWeb" || roleCurrent == "CashierApp")
             {
-                var groupedStaticsCashier = deposits
+                var ordersCashier = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
+                                                      && x.CrDate <= endDate && x.Status == OrderStatus.Completed && x.UserId == GetUserIdFromJwt(), null, null);
+                var ordersCashCashier = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
+                                                           && x.CrDate <= endDate && x.Status == OrderStatus.Completed
+                                                           && x.UserId == GetUserIdFromJwt()
+                                                           && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum()
+                                                           , null, null);
+                var transactionsCashier = await _unitOfWork.GetRepository<Transaction>()
+                                      .GetListAsync(x => x.CrDate >= startDate
+                                                      && x.CrDate <= endDate
+                                                      && x.Status == TransactionStatus.Success
+                                                      && x.Amount > 0
+                                                      && x.Type != "WithdrawMoney"
+                                                      && x.UserId == GetUserIdFromJwt(),
+                                                      null, null);
+                var groupedStaticsCashier = transactionsCashier
               .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
               .Select(g => new
               {
                   Name = g.Key, // Month name
-                  TotalTransactions = deposits.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                  TotalTransactionsAmount = g.Sum(t => t.Amount),
+                  TotalTransactions = transactionsCashier.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                  TotalAmountFromTransaction = transactionsCashier
+                                                .Where(o => o.CrDate.ToString("MMM") == g.Key)
+                                                .Sum(o => o.Amount),
                   EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                  OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
+                  OrderCount = ordersCashier.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                  OrderCash = ordersCashCashier.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                  OtherOrder = ordersCashier.Count(o => o.CrDate.ToString("MMM") == g.Key) - ordersCashCashier.Count(o => o.CrDate.ToString("MMM") == g.Key)
                   //PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
               }).ToList();
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.OK,
                     MessageResponse = "Get Cashier's Dashboard Successfully!",
-                    //Data = groupedStaticsCashier
+                    Data = groupedStaticsCashier
                 };
             }
             // case store 
@@ -1202,12 +1228,16 @@ namespace VegaCityApp.Service.Implement
             var storeOrders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
                                                        && x.CrDate <= endDate && x.StoreId == storeId && x.Status == OrderStatus.Completed,
                                                         null, null);
+            var storeCashOrders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
+                                                       && x.CrDate <= endDate && x.StoreId == storeId && x.Status == OrderStatus.Completed && x.Payments.SingleOrDefault().Name== PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
+                                                        null, null);
             var transactionsStore = await _unitOfWork.GetRepository<Transaction>()
                                        .GetListAsync(x => x.CrDate >= startDate
                                                        && x.CrDate <= endDate
                                                        && x.Amount > 0
                                                        && x.Status == TransactionStatus.Success
-                                                       && x.Type == TransactionType.SellingProduct,
+                                                       && x.Type == TransactionType.SellingProduct
+                                                       && x.UserId == storeUser.Id,
                                                        null, null);
             var menusStore = await _unitOfWork.GetRepository<Menu>().GetListAsync(x => x.StoreId == storeId && x.Deflag == false, null, null);
             //find products                                                                          
@@ -1231,14 +1261,15 @@ namespace VegaCityApp.Service.Implement
              {
                  Name = g.Key, // Month name
                  OrderCount = storeOrders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
-                 TotalAmountFromOrder = g.Sum(t => t.TotalAmount),
+                 OrderCashCount = storeCashOrders.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                 OtherOrderCount = storeOrders.Count(o => o.CrDate.ToString("MMM") == g.Key) - storeCashOrders.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                 //TotalAmountFromOrder = g.Sum(t => t.TotalAmount),
                  TotalTransaction = transactionsStore.Count(o => o.CrDate.ToString("MMM") == g.Key),
                  TotalAmountFromTransaction = transactionsStore
                                                 .Where(o => o.CrDate.ToString("MMM") == g.Key)
                                                 .Sum(o => o.Amount),
                  TotalMenu = menusStore.Count(),
                  TotalProduct = distinctProductIds,  
-
                  //PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
              }).ToList();
             return new ResponseAPI

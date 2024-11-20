@@ -247,32 +247,35 @@ namespace VegaCityApp.API.Services.Implement
                     if (walletStore == null) throw new BadHttpRequestException("Wallet store not found", HttpStatusCodes.NotFound);
 
                     //
-                    var packageOrderWallet = order.PackageOrder.Wallets.SingleOrDefault();
-                    packageOrderWallet.Balance -= order.TotalAmount;
-                    packageOrderWallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderWallet);
                     var transactions = await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().GetListAsync
-                        (predicate: x => x.Type == TransactionType.SellingProduct && x.UserId == order.UserId);
+                       (predicate: x => x.Type == TransactionType.SellingProduct && x.UserId == order.UserId);
                     var transaction = transactions.SingleOrDefault(predicate: y => y.Status == TransactionStatus.Pending.GetDescriptionFromEnum() && y.OrderId == order.Id)
                         ?? throw new BadHttpRequestException("Transaction sale not found", HttpStatusCodes.NotFound);
                     transaction.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                     transaction.UpsDate = TimeUtils.GetCurrentSEATime();
                     //transaction.DespositId = deposit.Id;
                     _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().UpdateAsync(transaction);
-
-                    var newCusTransfer = new CustomerMoneyTransfer()
+                    if (order.PackageOrderId != null)
                     {
-                        Id = Guid.NewGuid(),
-                        Amount = order.TotalAmount,
-                        IsIncrease = false,
-                        MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-                        PackageOrderId = order.PackageOrder.Id,
-                        TransactionId = transaction.Id,
-                        CrDate = TimeUtils.GetCurrentSEATime(),
-                        UpsDate = TimeUtils.GetCurrentSEATime(),
-                        Status = OrderStatus.Completed,
-                    };
-                    await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newCusTransfer);
+                        var packageOrderWallet = order.PackageOrder.Wallets.SingleOrDefault();
+                        packageOrderWallet.Balance -= order.TotalAmount;
+                        packageOrderWallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderWallet);
+
+                        var newCusTransfer = new CustomerMoneyTransfer()
+                        {
+                            Id = Guid.NewGuid(),
+                            Amount = order.TotalAmount,
+                            IsIncrease = false,
+                            MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
+                            PackageOrderId = order.PackageOrder.Id,
+                            TransactionId = transaction.Id,
+                            CrDate = TimeUtils.GetCurrentSEATime(),
+                            UpsDate = TimeUtils.GetCurrentSEATime(),
+                            Status = OrderStatus.Completed,
+                        };
+                        await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newCusTransfer);
+                    }
 
                     var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId,
                    include: z => z.Include(g => g.MarketZoneConfig));
@@ -969,32 +972,35 @@ namespace VegaCityApp.API.Services.Implement
                 if (walletStore == null) throw new BadHttpRequestException("Wallet store not found", HttpStatusCodes.NotFound);
 
                 //
-                var packageOrderWallet = order.PackageOrder.Wallets.SingleOrDefault();
-                packageOrderWallet.Balance -= order.TotalAmount;
-                packageOrderWallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderWallet);
                 var transactions = await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().GetListAsync
-                    (predicate: x => x.Type == TransactionType.SellingProduct && x.UserId == order.UserId);
+                   (predicate: x => x.Type == TransactionType.SellingProduct && x.UserId == order.UserId);
                 var transaction = transactions.SingleOrDefault(predicate: y => y.Status == TransactionStatus.Pending.GetDescriptionFromEnum() && y.OrderId == order.Id)
                     ?? throw new BadHttpRequestException("Transaction sale not found", HttpStatusCodes.NotFound);
                 transaction.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                 transaction.UpsDate = TimeUtils.GetCurrentSEATime();
                 //transaction.DespositId = deposit.Id;
                 _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().UpdateAsync(transaction);
-
-                var newCusTransfer = new CustomerMoneyTransfer()
+                if (order.PackageOrderId != null)
                 {
-                    Id = Guid.NewGuid(),
-                    Amount = order.TotalAmount,
-                    IsIncrease = false,
-                    MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-                    PackageOrderId = order.PackageOrder.Id,
-                    TransactionId = transaction.Id,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    Status = OrderStatus.Completed,
-                };
-                await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newCusTransfer);
+                    var packageOrderWallet = order.PackageOrder.Wallets.SingleOrDefault();
+                    packageOrderWallet.Balance -= order.TotalAmount;
+                    packageOrderWallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderWallet);
+
+                    var newCusTransfer = new CustomerMoneyTransfer()
+                    {
+                        Id = Guid.NewGuid(),
+                        Amount = order.TotalAmount,
+                        IsIncrease = false,
+                        MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
+                        PackageOrderId = order.PackageOrder.Id,
+                        TransactionId = transaction.Id,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        Status = OrderStatus.Completed,
+                    };
+                    await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newCusTransfer);
+                }
 
                 var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId,
                include: z => z.Include(g => g.MarketZoneConfig));
@@ -1698,10 +1704,7 @@ namespace VegaCityApp.API.Services.Implement
                 if (walletStore == null) throw new BadHttpRequestException("Wallet store not found", HttpStatusCodes.NotFound);
 
                 //
-                var packageOrderWallet = order.PackageOrder.Wallets.SingleOrDefault();
-                packageOrderWallet.Balance -= order.TotalAmount;
-                packageOrderWallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderWallet);
+
                 var transactions = await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().GetListAsync
                     (predicate: x => x.Type == TransactionType.SellingProduct && x.UserId == order.UserId);
                 var transaction = transactions.SingleOrDefault(predicate: y => y.Status == TransactionStatus.Pending.GetDescriptionFromEnum() && y.OrderId == order.Id)
@@ -1710,20 +1713,28 @@ namespace VegaCityApp.API.Services.Implement
                 transaction.UpsDate = TimeUtils.GetCurrentSEATime();
                 //transaction.DespositId = deposit.Id;
                 _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().UpdateAsync(transaction);
-
-                var newCusTransfer = new CustomerMoneyTransfer()
+                if (order.PackageOrderId != null)
                 {
-                    Id = Guid.NewGuid(),
-                    Amount = order.TotalAmount,
-                    IsIncrease = false,
-                    MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-                    PackageOrderId = order.PackageOrder.Id,
-                    TransactionId = transaction.Id,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    Status = OrderStatus.Completed,
-                };
-                await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newCusTransfer);
+                    var packageOrderWallet = order.PackageOrder.Wallets.SingleOrDefault();
+                    packageOrderWallet.Balance -= order.TotalAmount;
+                    packageOrderWallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderWallet);
+
+                    var newCusTransfer = new CustomerMoneyTransfer()
+                    {
+                        Id = Guid.NewGuid(),
+                        Amount = order.TotalAmount,
+                        IsIncrease = false,
+                        MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
+                        PackageOrderId = order.PackageOrder.Id,
+                        TransactionId = transaction.Id,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        Status = OrderStatus.Completed,
+                    };
+                    await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newCusTransfer);
+                }
+
 
                 var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId,
                include: z => z.Include(g => g.MarketZoneConfig));
@@ -2377,10 +2388,7 @@ namespace VegaCityApp.API.Services.Implement
                 if (walletStore == null) throw new BadHttpRequestException("Wallet store not found", HttpStatusCodes.NotFound);
 
                 //
-                var packageOrderWallet = order.PackageOrder.Wallets.SingleOrDefault();
-                packageOrderWallet.Balance -= order.TotalAmount;
-                packageOrderWallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderWallet);
+               
                 var transactions = await _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().GetListAsync
                     (predicate: x => x.Type == TransactionType.SellingProduct && x.UserId == order.UserId);
                 var transaction = transactions.SingleOrDefault(predicate: y => y.Status == TransactionStatus.Pending.GetDescriptionFromEnum() && y.OrderId == order.Id)
@@ -2389,20 +2397,27 @@ namespace VegaCityApp.API.Services.Implement
                 transaction.UpsDate = TimeUtils.GetCurrentSEATime();
                 //transaction.DespositId = deposit.Id;
                 _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().UpdateAsync(transaction);
-
-                var newCusTransfer = new CustomerMoneyTransfer()
+                if (order.PackageOrderId != null)
                 {
-                    Id = Guid.NewGuid(),
-                    Amount = order.TotalAmount,
-                    IsIncrease = false,
-                    MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
-                    PackageOrderId = order.PackageOrder.Id,
-                    TransactionId = transaction.Id,
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    Status = OrderStatus.Completed,
-                };
-                await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newCusTransfer);
+                    var packageOrderWallet = order.PackageOrder.Wallets.SingleOrDefault();
+                    packageOrderWallet.Balance -= order.TotalAmount;
+                    packageOrderWallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderWallet);
+
+                    var newCusTransfer = new CustomerMoneyTransfer()
+                    {
+                        Id = Guid.NewGuid(),
+                        Amount = order.TotalAmount,
+                        IsIncrease = false,
+                        MarketZoneId = Guid.Parse(EnvironmentVariableConstant.marketZoneId),
+                        PackageOrderId = order.PackageOrder.Id,
+                        TransactionId = transaction.Id,
+                        CrDate = TimeUtils.GetCurrentSEATime(),
+                        UpsDate = TimeUtils.GetCurrentSEATime(),
+                        Status = OrderStatus.Completed,
+                    };
+                    await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(newCusTransfer);
+                }
 
                 var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == order.User.MarketZoneId,
                include: z => z.Include(g => g.MarketZoneConfig));
