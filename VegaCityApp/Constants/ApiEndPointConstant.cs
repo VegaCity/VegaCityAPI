@@ -41,6 +41,7 @@ public static class ApiEndPointConstant
     }
     public static class UserEndpoint
     {
+        public const string GetListUserNoSession = ApiEndpoint + "/users/no-session";
         public const string GetAllClosingRequest = ApiEndpoint + "/user/closing-requests";
         public const string GetClosingRequest = ApiEndpoint + "/user/closing-request";
         public const string GetSession = ApiEndpoint + "/user/session/{id}";
