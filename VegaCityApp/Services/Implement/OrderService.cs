@@ -463,7 +463,8 @@ namespace VegaCityApp.API.Services.Implement
                     .Include(o => o.Store)
                     .Include(z => z.OrderDetails)
                     .Include(p => p.PackageOrder)
-                    .Include(h => h.PromotionOrders)) ?? throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
+                    .Include(h => h.PromotionOrders)
+                    .Include(a => a.Customer)) ?? throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
             string json = "";
             //string? customerInfo = "";
             //command here //

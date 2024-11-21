@@ -696,6 +696,7 @@ namespace VegaCityApp.API.Services.Implement
                                    .Include(a => a.Vcard)
                                    .Include(a => a.Wallets).ThenInclude(a => a.WalletType)
                                    .Include(c => c.CustomerMoneyTransfers)
+                                   .Include(b => b.Customer)
                 );
             }
             else
@@ -706,6 +707,7 @@ namespace VegaCityApp.API.Services.Implement
                                    .Include(a => a.Vcard)
                                    .Include(a => a.Wallets).ThenInclude(a => a.WalletType)
                                    .Include(c => c.CustomerMoneyTransfers)
+                                   .Include(b => b.Customer)
                 );
             }
 
