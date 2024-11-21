@@ -570,7 +570,7 @@ namespace VegaCityApp.API.Services.Implement
                      .SingleOrDefaultAsync(predicate: x => x.Email == req.CusEmail
                                                    && x.Cccdpassport == req.CusCccdpassport
                                                    && x.FullName == req.CusName
-                                                   && x.PhoneNumber == req.CusEmail);
+                                                   && x.PhoneNumber == req.PhoneNumber);
                 if (customer == null)
                 {
                     customer = new Customer
