@@ -209,24 +209,24 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime()
                     };
                     await _unitOfWork.GetRepository<Payment>().InsertAsync(newPayment);
-                    newTransaction = new Transaction()
-                    {
-                        Id = Guid.NewGuid(),
-                        Amount = req.TotalAmount,
-                        CrDate = TimeUtils.GetCurrentSEATime(),
-                        Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                        Description = "Transaction selling " + req.SaleType + " at Vega",
-                        IsIncrease = true,
-                        Status = TransactionStatus.Pending.GetDescriptionFromEnum(),
-                        OrderId = newOrder.Id,
-                        Type = TransactionType.SellingProduct.GetDescriptionFromEnum(),
-                        WalletId = null,
-                        UpsDate = TimeUtils.GetCurrentSEATime(),
-                        UserId = userID,
-                        StoreId = store.Id,
-                        PaymentId = newPayment.Id
-                    };
-                    await _unitOfWork.GetRepository<Transaction>().InsertAsync(newTransaction);
+                    //newTransaction = new Transaction()
+                    //{
+                    //    Id = Guid.NewGuid(),
+                    //    Amount = req.TotalAmount,
+                    //    CrDate = TimeUtils.GetCurrentSEATime(),
+                    //    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                    //    Description = "Transaction selling " + req.SaleType + " at Vega",
+                    //    IsIncrease = true,
+                    //    Status = TransactionStatus.Pending.GetDescriptionFromEnum(),
+                    //    OrderId = newOrder.Id,
+                    //    Type = TransactionType.SellingProduct.GetDescriptionFromEnum(),
+                    //    WalletId = null,
+                    //    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    //    UserId = userID,
+                    //    StoreId = store.Id,
+                    //    PaymentId = newPayment.Id
+                    //};
+                    //await _unitOfWork.GetRepository<Transaction>().InsertAsync(newTransaction);
                     newTransactionForStore = new Transaction
                     {
                         Id = Guid.NewGuid(),
@@ -253,8 +253,8 @@ namespace VegaCityApp.API.Services.Implement
                         {
                             OrderId = newOrder.Id,
                             invoiceId = newOrder.InvoiceId,
-                            transactionId = newTransaction.Id,
-                            newTransactionForStoreId = newTransactionForStore.Id
+                            transactionId = newTransactionForStore.Id,
+                            //newTransactionForStoreId = newTransactionForStore.Id
                         }
                     } : new ResponseAPI()
                     {
