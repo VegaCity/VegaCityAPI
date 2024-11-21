@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using System.Linq.Expressions;
 using VegaCityApp.API.Constants;
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Order;
@@ -315,10 +316,19 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
         }
-        public async Task<ResponseAPI<IEnumerable<GetOrderResponse>>> SearchAllOrders(int size, int page)
+        public async Task<ResponseAPI<IEnumerable<GetOrderResponse>>> SearchAllOrders(int size, int page, string status )
         {
             try
             {
+                Expression<Func<Order, bool>> predicate;
+                if (status == "ALL")
+                {
+                    predicate = z => z.UserId == GetUserIdFromJwt();
+                }
+                else 
+                {
+                    predicate = z => z.UserId == GetUserIdFromJwt() && z.Status.ToUpper() == status.ToUpper();
+                }
                 IPaginate<GetOrderResponse> data = await _unitOfWork.GetRepository<Order>().GetPagingListAsync(
                 selector: x => new GetOrderResponse()
                 {
@@ -333,7 +343,7 @@ namespace VegaCityApp.API.Services.Implement
                     UserId = x.UserId,
                     PaymentType = x.Payments.SingleOrDefault().Name
                 },
-                predicate: z => z.UserId == GetUserIdFromJwt(),
+                predicate:predicate,
                 include: x => x.Include(p => p.Payments),
                 page: page,
                 size: size,
