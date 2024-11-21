@@ -908,7 +908,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 MessageResponse = EtagMessage.ActivateEtagSuccess,
                 StatusCode = HttpStatusCodes.OK,
-                Data = new { packageItemId = packageOrderExist.Data.Id }
+                Data = new { packageOrderId = packageOrderExist.Data.Id }
             };
         }
         public async Task<ResponseAPI> PrepareChargeMoneyEtag(ChargeMoneyRequest req)
