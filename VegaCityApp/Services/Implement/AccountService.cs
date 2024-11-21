@@ -1048,9 +1048,9 @@ namespace VegaCityApp.Service.Implement
                 orderBy: x => x.OrderByDescending(z => z.FullName),
                 predicate: x => x.Status == (int)UserStatusEnum.Active
                              && x.MarketZoneId == apiKey
-                             && x.UserSessions.Count == 0
+                             && x.UserSessions.Any(z => z.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()) == false
                              && x.Role.Name != RoleEnum.Admin.GetDescriptionFromEnum(),
-                include: z => z.Include(z => z.Role));
+                include: z => z.Include(z => z.Role).Include(z => z.UserSessions));
 
                 return new ResponseAPI<IEnumerable<GetUserResponse>>
                 {

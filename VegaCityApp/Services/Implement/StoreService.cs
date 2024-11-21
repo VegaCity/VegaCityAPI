@@ -1274,7 +1274,7 @@ namespace VegaCityApp.API.Services.Implement
                 x.UpsDate <= DateFinalSettlemnet);
             if (storeMoneyTransfers.Count <= 0) throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
             var transactionStoreWithdraws = (List<Transaction>)await _unitOfWork.GetRepository<Transaction>().GetListAsync(
-                predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
+                predicate: x => x.StoreId == store.Id && x.Status == TransactionStatus.Success &&
                 x.Type == TransactionType.WithdrawMoney);
             List<StoreMoneyTransfer> storeMoneyTransfersListToStore = new List<StoreMoneyTransfer>();
 
