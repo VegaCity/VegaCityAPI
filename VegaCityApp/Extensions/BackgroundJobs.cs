@@ -11,7 +11,7 @@ namespace VegaCityApp.API.Extensions
         {
             var cornDaily = Cron.Daily();
             var cornHour = Cron.HourInterval(1);
-            var cornMinute = Cron.MinuteInterval(5);
+            var cornMinute = Cron.MinuteInterval(3);
             var timeZone = TimeUtils.GetSEATimeZone();
             RecurringJob.AddOrUpdate<IWalletTypeService>(x => x.CheckExpireWallet(), cornHour, timeZone: timeZone);
 
