@@ -14,12 +14,20 @@ namespace VegaCityApp.API.Services.Implement
 {
     public class ZoneService : BaseService<ZoneService>, IZoneService
     {
-        public ZoneService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<ZoneService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper) : base(unitOfWork, logger, httpContextAccessor, mapper)
+        private readonly IUtilService _util;
+
+        public ZoneService(IUnitOfWork<VegaCityAppContext> unitOfWork,
+                           ILogger<ZoneService> logger,
+                           IHttpContextAccessor httpContextAccessor,
+                           IMapper mapper,
+                           IUtilService util) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
+            _util = util;
         }
 
         public async Task<ResponseAPI> CreateZone(CreateZoneRequest req)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             Guid apiKey = GetMarketZoneIdFromJwt();
             var zoneExisted = await _unitOfWork.GetRepository<Zone>()
                 .SingleOrDefaultAsync(predicate: x => x.Name == req.Name && x.Location == req.Location && !x.Deflag);
@@ -57,10 +65,9 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = ZoneMessage.CreateZoneFail
             };
         }
-
         public async Task<ResponseAPI> UpdateZone(Guid Id, UpdateZoneRequest req)
         {
-
+            await _util.CheckUserSession(GetUserIdFromJwt());
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == Id && !x.Deflag,
                 include: z => z.Include(zone => zone.Stores));
             if (zone == null)
@@ -156,9 +163,9 @@ namespace VegaCityApp.API.Services.Implement
                 Data = zone
             };
         }
-
         public async Task<ResponseAPI> DeleteZone(Guid ZoneId)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             var zone = await SearchZone(ZoneId);
             zone.Data.Deflag = true;
             _unitOfWork.GetRepository<Zone>().UpdateAsync(zone.Data);

@@ -18,6 +18,7 @@ namespace VegaCityApp.Domain.Models
 
         public virtual DbSet<AggregatedCounter> AggregatedCounters { get; set; } = null!;
         public virtual DbSet<Counter> Counters { get; set; } = null!;
+        public virtual DbSet<Customer> Customers { get; set; } = null!;
         public virtual DbSet<CustomerMoneyTransfer> CustomerMoneyTransfers { get; set; } = null!;
         public virtual DbSet<Hash> Hashes { get; set; } = null!;
         public virtual DbSet<IssueType> IssueTypes { get; set; } = null!;
@@ -96,6 +97,29 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
                 entity.Property(e => e.ExpireAt).HasColumnType("datetime");
+            });
+
+            modelBuilder.Entity<Customer>(entity =>
+            {
+                entity.ToTable("Customer");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.Cccdpassport)
+                    .HasMaxLength(12)
+                    .IsUnicode(false)
+                    .HasColumnName("CCCDPassport");
+
+                entity.Property(e => e.Email)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.FullName).HasMaxLength(100);
+
+                entity.Property(e => e.PhoneNumber)
+                    .HasMaxLength(10)
+                    .IsUnicode(false)
+                    .IsFixedLength();
             });
 
             modelBuilder.Entity<CustomerMoneyTransfer>(entity =>
@@ -344,6 +368,11 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.UpsDate).HasColumnType("datetime");
 
+                entity.HasOne(d => d.Customer)
+                    .WithMany(p => p.Orders)
+                    .HasForeignKey(d => d.CustomerId)
+                    .HasConstraintName("FK_Order_Customer");
+
                 entity.HasOne(d => d.Package)
                     .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.PackageId)
@@ -383,6 +412,11 @@ namespace VegaCityApp.Domain.Models
                     .HasForeignKey(d => d.OrderId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Order_Detail_Order");
+
+                entity.HasOne(d => d.Package)
+                    .WithMany(p => p.OrderDetails)
+                    .HasForeignKey(d => d.PackageId)
+                    .HasConstraintName("FK_OrderDetail_Package");
 
                 entity.HasOne(d => d.Product)
                     .WithMany(p => p.OrderDetails)
@@ -475,6 +509,11 @@ namespace VegaCityApp.Domain.Models
                     .IsUnicode(false)
                     .HasColumnName("VCardId")
                     .IsFixedLength();
+
+                entity.HasOne(d => d.Customer)
+                    .WithMany(p => p.PackageOrders)
+                    .HasForeignKey(d => d.CustomerId)
+                    .HasConstraintName("FK_PackageOrder_Customer");
 
                 entity.HasOne(d => d.Package)
                     .WithMany(p => p.PackageOrders)

@@ -15,8 +15,10 @@ namespace VegaCityApp.Domain.Models
         public int Vatamount { get; set; }
         public int Quantity { get; set; }
         public int Amount { get; set; }
+        public Guid? PackageId { get; set; }
 
         public virtual Order Order { get; set; } = null!;
+        public virtual Package? Package { get; set; }
         public virtual Product? Product { get; set; }
     }
 }

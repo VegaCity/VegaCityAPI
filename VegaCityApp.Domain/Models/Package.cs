@@ -7,6 +7,7 @@ namespace VegaCityApp.Domain.Models
     {
         public Package()
         {
+            OrderDetails = new HashSet<OrderDetail>();
             Orders = new HashSet<Order>();
             PackageDetails = new HashSet<PackageDetail>();
             PackageOrders = new HashSet<PackageOrder>();
@@ -25,6 +26,7 @@ namespace VegaCityApp.Domain.Models
         public int Duration { get; set; }
 
         public virtual Zone Zone { get; set; } = null!;
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<PackageDetail> PackageDetails { get; set; }
         public virtual ICollection<PackageOrder> PackageOrders { get; set; }

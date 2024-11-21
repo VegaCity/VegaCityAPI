@@ -25,7 +25,9 @@ namespace VegaCityApp.Domain.Models
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public bool? IsAdult { get; set; }
+        public Guid? CustomerId { get; set; }
 
+        public virtual Customer? Customer { get; set; }
         public virtual Package? Package { get; set; }
         public virtual Vcard? Vcard { get; set; }
         public virtual ICollection<CustomerMoneyTransfer> CustomerMoneyTransfers { get; set; }

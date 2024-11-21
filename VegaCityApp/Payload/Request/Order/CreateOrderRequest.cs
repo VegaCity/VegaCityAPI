@@ -3,13 +3,12 @@
     public class CreateOrderRequest
     {
         public string SaleType { get; set; }
+        public string paymentType { get; set; }
         public Guid StoreId { get; set; }
         public int TotalAmount { get; set; }
         public Guid? PackageOrderId { get; set; }
         public Guid PackageId { get; set; }
         public List<OrderProductFromPosRequest> ProductData { get; set; }
-        //
-        public string paymentType { get; set; }
     }
     public class CreateOrderForCashierRequest
     {
@@ -31,8 +30,6 @@
         public string Email { get; set; }
         public string FullName { get; set; }
         public string PhoneNumber { get; set; }
-        // public string Address { get; set; }
-        //  public string Gender { get; set; }
         public string CccdPassport { get; set; }
     }
 }

@@ -18,15 +18,20 @@ namespace VegaCityApp.API.Services.Implement
 {
     public class WalletTypeService : BaseService<WalletTypeService>, IWalletTypeService
     {
+        private readonly IUtilService _util;
+
         public WalletTypeService(
             IUnitOfWork<VegaCityAppContext> unitOfWork,
             ILogger<WalletTypeService> logger,
             IMapper mapper,
-            IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor, mapper)
+            IHttpContextAccessor httpContextAccessor,
+            IUtilService util) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
+            _util = util;
         }
         public async Task<ResponseAPI> CreateWalletType(WalletTypeRequest walletTypeRequest)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             Guid apiKey = GetMarketZoneIdFromJwt();
             walletTypeRequest.Name = walletTypeRequest.Name.Trim();
             var newWalletType = _mapper.Map<WalletType>(walletTypeRequest);
@@ -47,9 +52,9 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = WalletTypeMessage.CreateWalletTypeFail
             };
         }
-
         public async Task<ResponseAPI> DeleteWalletType(Guid id)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync
                 (predicate: x => x.Id == id && !x.Deflag, include: z => z.Include(a => a.WalletTypeMappings)
                 );
@@ -81,7 +86,6 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = WalletTypeMessage.DeleteWalletTypeFail
             };
         }
-
         public async Task<ResponseAPI<IEnumerable<WalletTypeResponse>>> GetAllWalletType(int size, int page)
         {
             try
@@ -125,7 +129,6 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
-
         public async Task<ResponseAPI> GetWalletTypeById(Guid id)
         {
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
@@ -144,9 +147,9 @@ namespace VegaCityApp.API.Services.Implement
                 Data = walletType
             };
         }
-
         public async Task<ResponseAPI> UpdateWalletType(Guid Id, UpDateWalletTypeRequest walletTypeRequest)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(predicate: x => x.Id == Id && !x.Deflag);
             if (walletType == null)
             {
@@ -256,6 +259,7 @@ namespace VegaCityApp.API.Services.Implement
         //withraw money wallet
         public async Task<ResponseAPI> RequestWithdrawMoneyWallet(Guid id, WithdrawMoneyRequest request)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             if (!ValidationUtils.CheckNumber(request.Amount))
             {
                 return new ResponseAPI
@@ -263,10 +267,6 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest,
                     MessageResponse = WalletTypeMessage.AmountInvalid
                 };
-            }
-            if(request.Amount <= 50000)
-            {
-                throw new BadHttpRequestException("User must withdraw at least " + 50000 + "VND", HttpStatusCodes.BadRequest);
             }
             //must using atleast 30% of balanceStart in order to withdraw 
             //case after charge (balance history  larger than balance start => balance se tu bao nhieu la duoc rut? )
@@ -278,8 +278,6 @@ namespace VegaCityApp.API.Services.Implement
                 (predicate: x => x.Id == cashierWebId && x.Status == (int)UserStatusEnum.Active,
                  include: wl => wl.Include(a => a.Role)
                                   .Include(p => p.MarketZone).ThenInclude(m => m.MarketZoneConfig));
-
-
             if (cashierWeb == null)
             {
                 return new ResponseAPI
@@ -320,12 +318,43 @@ namespace VegaCityApp.API.Services.Implement
                 }
                 else if (wallet.User.StoreId == wallet.StoreId)
                 {
+                    var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(
+                         predicate: x => x.StoreId == wallet.StoreId && x.Status == OrderStatus.Completed &&
+                           x.UpsDate <= TimeUtils.GetCurrentSEATime() && x.SaleType == SaleType.Product, include: z => z.Include(z => z.Payments));
+                    if (orders.Count <= 0) throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
+                    var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == wallet.StoreId,
+                            include: z => z.Include(a => a.Zone).ThenInclude(a => a.MarketZone).ThenInclude(z => z.MarketZoneConfig));
+                    List<Payment> payments = new List<Payment>(); //list payment QRCode
+                    foreach (var order in orders)
+                    {
+                        foreach (var payment in order.Payments)
+                        {
+                            if (payment.Name == PaymentTypeEnum.QRCode.GetDescriptionFromEnum())
+                            {
+                                payments.Add(payment);
+                            }
+                        }
+                    }
+                    int AmountPayment = 0;
+                    foreach (var payment in payments)
+                    {
+                        AmountPayment += payment.FinalAmount;
+                    }
+                    int AmountTransfered = (int)(AmountPayment - AmountPayment * store.Zone.MarketZone.MarketZoneConfig.StoreStranferRate);
                     if (wallet.BalanceHistory < request.Amount)
                     {
                         return new ResponseAPI
                         {
                             StatusCode = HttpStatusCodes.BadRequest,
                             MessageResponse = WalletTypeMessage.NotEnoughBalance
+                        };
+                    }
+                    if (AmountTransfered < request.Amount)
+                    {
+                        return new ResponseAPI
+                        {
+                            StatusCode = HttpStatusCodes.BadRequest,
+                            MessageResponse = "Amount you can withdraw is " + AmountTransfered + "VND and your request amount is not enough"
                         };
                     }
                     transaction = new Transaction
@@ -348,6 +377,10 @@ namespace VegaCityApp.API.Services.Implement
             }
             else if (wallet.PackageOrder != null) //End user
             {
+                if (request.Amount <= 50000)
+                {
+                    throw new BadHttpRequestException("User must withdraw at least " + 50000 + "VND", HttpStatusCodes.BadRequest);
+                }
                 //case 1  : 1000 000 , start : 1,000,000
                 //must Use = 0 (k rut dc)
 
@@ -362,7 +395,7 @@ namespace VegaCityApp.API.Services.Implement
                 //must use 1500 000
                 // case ** specific 
                 // BH > 100% BStart 
-                var mustUse = wallet.BalanceHistory - request.Amount; 
+                var mustUse = wallet.BalanceHistory - request.Amount;
                 var notiAmount = mustUse - wallet.BalanceStart * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate;
                 if (mustUse <= wallet.BalanceStart * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate)
                 {
@@ -402,6 +435,7 @@ namespace VegaCityApp.API.Services.Implement
         //confirm withdraw money
         public async Task<ResponseAPI> WithdrawMoneyWallet(Guid id, Guid transactionId)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             Guid cashierWebId = GetUserIdFromJwt();
             string role = GetRoleFromJwt();
             var transactionAvailable = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync

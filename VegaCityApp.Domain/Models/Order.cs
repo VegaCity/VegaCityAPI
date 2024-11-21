@@ -25,7 +25,9 @@ namespace VegaCityApp.Domain.Models
         public Guid? PackageOrderId { get; set; }
         public Guid? PackageId { get; set; }
         public Guid UserId { get; set; }
+        public Guid? CustomerId { get; set; }
 
+        public virtual Customer? Customer { get; set; }
         public virtual Package? Package { get; set; }
         public virtual PackageOrder? PackageOrder { get; set; }
         public virtual Store? Store { get; set; }

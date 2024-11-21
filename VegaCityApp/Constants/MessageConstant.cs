@@ -191,6 +191,7 @@ public static class MessageConstant
 
     public static class OrderMessage
     {
+        public const string AmountNotEqual = "Amount Not Equal";
         public const string Canceled = "Order Was Canceled";
         public const string SaleTypeInvalid = "Sale Type Invalid";
         public const string PaymentTypeInvalid = "Payment Type Invalid";
@@ -358,6 +359,7 @@ public static class MessageConstant
     }
     public static class StoreMessage
     {
+        public const string FinalSettlementSuccess = "Final Settlement Successfully!";
         public const string GetProductCategorySuccess = "Get Product Category Successfully!";
         public const string GetListProductCategorySuccess = "Get List Product Category Successfully!";
         public const string GetListProductCategoryFail = "Get List Product Category Failed!";

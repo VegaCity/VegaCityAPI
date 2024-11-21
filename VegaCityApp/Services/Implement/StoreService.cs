@@ -21,12 +21,20 @@ namespace VegaCityApp.API.Services.Implement
 {
     public class StoreService : BaseService<StoreService>, IStoreService
     {
-        public StoreService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<StoreService> logger, IHttpContextAccessor httpContextAccessor, IMapper mapper) : base(unitOfWork, logger, httpContextAccessor, mapper)
+        private readonly IUtilService _util;
+
+        public StoreService(IUnitOfWork<VegaCityAppContext> unitOfWork,
+                            ILogger<StoreService> logger,
+                            IHttpContextAccessor httpContextAccessor,
+                            IMapper mapper,
+                            IUtilService util) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
+            _util = util;
         }
         #region CRUD Store
         public async Task<ResponseAPI<Store>> CreateStore(Guid ownerStoreId, CreateStoreRequest req)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             req.Name = req.Name.Trim();
             req.Address = req.Address.Trim();
             req.ShortName = req.ShortName?.Trim();
@@ -55,6 +63,7 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> UpdateStore(Guid storeId, UpdateStoreRequest req)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             string roleJwt = GetRoleFromJwt();
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync
                 (predicate: x => x.Id == storeId && !x.Deflag);
@@ -461,7 +470,7 @@ namespace VegaCityApp.API.Services.Implement
             }
             var searchName = NormalizeString(req.StoreName);
             var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && (x.Status == (int)StoreStatusEnum.Opened || x.Status == (int)StoreStatusEnum.Closed)
-                                                                               , include: w => w.Include(u => u.Wallets));
+                                                                               , include: w => w.Include(u => u.Wallets).Include(z => z.Zone));
             var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name) == searchName || NormalizeString(x.ShortName) == searchName);
             if (storeTrack == null)
             {
@@ -471,26 +480,76 @@ namespace VegaCityApp.API.Services.Implement
             {
                 throw new BadHttpRequestException(StoreMessage.StoreWalletIsPendingClose, HttpStatusCodes.BadRequest);
             }
-            //if (storeTrack.Wallets.SingleOrDefault().Balance <= 50000)
-            //{
-            //    throw new BadHttpRequestException(StoreMessage.MustGreaterThan50K, HttpStatusCodes.BadRequest);
-            //}
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
+                predicate: x => x.Id == storeTrack.Id,
+                include: z => z.Include(z => z.Zone).ThenInclude(z => z.MarketZone).ThenInclude(a => a.MarketZoneConfig))
+                ?? throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
+            //find order list store
+            var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(
+                predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
+                x.UpsDate <= TimeUtils.GetCurrentSEATime() && x.SaleType == SaleType.Product, include: z => z.Include(z => z.Payments));
+            if (orders.Count <= 0) throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
+            List<Payment> payments = new List<Payment>(); //list payment QRCode
+            foreach (var order in orders)
+            {
+                foreach (var payment in order.Payments)
+                {
+                    if (payment.Name == PaymentTypeEnum.QRCode.GetDescriptionFromEnum())
+                    {
+                        payments.Add(payment);
+                    }
+                }
+            }
+            int AmountPayment = 0;
+            foreach (var payment in payments)
+            {
+                AmountPayment += payment.FinalAmount;
+            }
+            int AmountTransfered = (int)(AmountPayment - AmountPayment * store.Zone.MarketZone.MarketZoneConfig.StoreStranferRate); // amount transfered to store
+            //find list orders store
+            var storeMoneyTransfers = await _unitOfWork.GetRepository<StoreMoneyTransfer>().GetListAsync(
+                predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
+                x.UpsDate <= TimeUtils.GetCurrentSEATime());
+            if (storeMoneyTransfers.Count <= 0) throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
+            var transactionStoreWithdraws = (List<Transaction>)await _unitOfWork.GetRepository<Transaction>().GetListAsync(
+                predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
+                x.Type == TransactionType.WithdrawMoney);
+            List<StoreMoneyTransfer> storeMoneyTransfersListToStore = new List<StoreMoneyTransfer>();
+
+            foreach (var storeTransfer in storeMoneyTransfers)
+            {
+                if (storeTransfer.Description.Split("to")[1].Trim() == "store")
+                {
+                    storeMoneyTransfersListToStore.Add(storeTransfer);
+                }
+            }
+            int amoutWithdrawed = 0;
+            foreach (var transaction in transactionStoreWithdraws)
+            {
+                amoutWithdrawed += transaction.Amount; //amount withdrawed from store
+            }
+            int amount = 0;
+            foreach (var storeTransfer in storeMoneyTransfersListToStore)
+            {
+                amount += storeTransfer.Amount;
+            }
+            if (AmountTransfered != amount)
+            {
+                throw new BadHttpRequestException(OrderMessage.AmountNotEqual, HttpStatusCodes.BadRequest);
+            }
+            int amountFinal = AmountTransfered - amoutWithdrawed;
             return new ResponseAPI
             {
                 MessageResponse = StoreMessage.GetStoreSuccess,
                 StatusCode = HttpStatusCodes.OK,
-                Data = storeTrack,
+                Data = new { storeTrack, amountCanWithdraw = amountFinal },
             };
         }
         public async Task<ResponseAPI> RequestCloseStore(Guid StoreId)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
-                predicate: x => x.Id == StoreId && !x.Deflag,include: y => y.Include(z => z.UserStoreMappings)
-                //include: z => z.Include(s => s.Wallets)
-                //               .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings)
-                //                                     .ThenInclude(o => o.Product)
-                //                                     .ThenInclude(p => p.ProductCategory)
-            );
+                predicate: x => x.Id == StoreId && !x.Deflag, include: y => y.Include(z => z.UserStoreMappings));
             if (store == null)
             {
                 return new ResponseAPI()
@@ -507,42 +566,6 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.BadRequest
                 };
             }
-
-            //var processedCategories = new HashSet<Guid>();
-            //foreach (var menu in store.Menus)
-            //{
-            //    menu.Deflag = true;
-            //    menu.UpsDate = TimeUtils.GetCurrentSEATime();
-            //    _unitOfWork.GetRepository<Menu>().UpdateAsync(menu);
-
-            //    foreach (var item in menu.MenuProductMappings)
-            //    {
-            //        var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == item.ProductId);
-            //        product.Status = "InActive";
-            //        product.UpsDate = TimeUtils.GetCurrentSEATime();
-            //        _unitOfWork.GetRepository<Product>().UpdateAsync(product);
-
-            //        if (!processedCategories.Contains(product.ProductCategoryId))
-            //        {
-            //            var productCategory = await _unitOfWork.GetRepository<ProductCategory>()
-            //                                    .SingleOrDefaultAsync(predicate: c => c.Id == product.ProductCategoryId);
-
-            //            if (productCategory != null && !productCategory.Deflag)
-            //            {
-            //                productCategory.Deflag = true;
-            //                productCategory.UpsDate = TimeUtils.GetCurrentSEATime();
-            //                _unitOfWork.GetRepository<ProductCategory>().UpdateAsync(productCategory);
-
-            //                // Add to processedCategories to avoid re-processing
-            //                processedCategories.Add(product.ProductCategoryId);
-            //            }
-            //        }
-            //    }
-
-            //}
-            ////store.Wallets.SingleOrDefault().Deflag = true;
-            ////store.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
-            ////_unitOfWork.GetRepository<Wallet>().UpdateAsync(store.Wallets.SingleOrDefault());
             var storeAccount = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == GetUserIdFromJwt());
             storeAccount.Status = (int)UserStatusEnum.Disable;
             storeAccount.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -550,8 +573,6 @@ namespace VegaCityApp.API.Services.Implement
             store.Status = (int)StoreStatusEnum.Blocked; //implement count 7 days from blocked status (UPSDATE) here
             store.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
-
-
             var result = await _unitOfWork.CommitAsync();
             if (result > 0)
             {
@@ -857,6 +878,7 @@ namespace VegaCityApp.API.Services.Implement
         #region CRUD Product
         public async Task<ResponseAPI> CreateProduct(Guid MenuId, CreateProductRequest req)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             if (req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
             var menu = await _unitOfWork.GetRepository<Menu>().SingleOrDefaultAsync(
                 predicate: x => x.Id == MenuId && !x.Deflag);
@@ -898,6 +920,7 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> UpdateProduct(Guid ProductId, UpdateProductRequest req)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             if (req.Price != null)
             {
                 if (req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
@@ -937,6 +960,7 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> DeleteProduct(Guid ProductId)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync
                 (predicate: x => x.Id == ProductId && x.Status == "Active");
             if (product == null)
@@ -1034,6 +1058,7 @@ namespace VegaCityApp.API.Services.Implement
         #region CRUD ProductCategory
         public async Task<ResponseAPI> CreateProductCategory(CreateProductCategoryRequest req)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             var storeUserId = GetUserIdFromJwt();
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.UserStoreMappings.SingleOrDefault().UserId == storeUserId);
             req.Name = req.Name.Trim();
@@ -1082,6 +1107,7 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> UpdateProductCategory(Guid ProductCategoryId, UpdateProductCategoryRequest req)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync
                 (predicate: x => x.Id == ProductCategoryId && !x.Deflag);
             if (productCategory == null)
@@ -1116,6 +1142,7 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> DeleteProductCategory(Guid ProductCategoryId)
         {
+            await _util.CheckUserSession(GetUserIdFromJwt());
             var productCategory = await _unitOfWork.GetRepository<ProductCategory>().SingleOrDefaultAsync
                 (predicate: x => x.Id == ProductCategoryId && !x.Deflag, include: z => z.Include(a => a.WalletTypeMappings));
             if (productCategory == null)
@@ -1211,5 +1238,74 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
         #endregion
+        public async Task<ResponseAPI> FinalSettlement(Guid StoreId, DateTime DateFinalSettlemnet)
+        {
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
+                predicate: x => x.Id == StoreId
+                            && !x.Deflag
+                            && x.Status == (int)StoreStatusEnum.Blocked,
+                include: z => z.Include(z => z.Zone).ThenInclude(z => z.MarketZone).ThenInclude(a => a.MarketZoneConfig))
+                ?? throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
+            //find order list store
+            var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(
+                predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
+                x.UpsDate <= DateFinalSettlemnet && x.SaleType == SaleType.Product, include: z => z.Include(z => z.Payments));
+            if (orders.Count <= 0) throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
+            List<Payment> payments = new List<Payment>(); //list payment QRCode
+            foreach (var order in orders)
+            {
+                foreach (var payment in order.Payments)
+                {
+                    if (payment.Name == PaymentTypeEnum.QRCode.GetDescriptionFromEnum())
+                    {
+                        payments.Add(payment);
+                    }
+                }
+            }
+            int AmountPayment = 0;
+            foreach (var payment in payments)
+            {
+                AmountPayment += payment.FinalAmount;
+            }
+            int AmountTransfered = (int)(AmountPayment - AmountPayment * store.Zone.MarketZone.MarketZoneConfig.StoreStranferRate); // amount transfered to store
+            //find list orders store
+            var storeMoneyTransfers = await _unitOfWork.GetRepository<StoreMoneyTransfer>().GetListAsync(
+                predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
+                x.UpsDate <= DateFinalSettlemnet);
+            if (storeMoneyTransfers.Count <= 0) throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
+            var transactionStoreWithdraws = (List<Transaction>)await _unitOfWork.GetRepository<Transaction>().GetListAsync(
+                predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
+                x.Type == TransactionType.WithdrawMoney);
+            List<StoreMoneyTransfer> storeMoneyTransfersListToStore = new List<StoreMoneyTransfer>();
+
+            foreach (var storeTransfer in storeMoneyTransfers)
+            {
+                if (storeTransfer.Description.Split("to")[1].Trim() == "store")
+                {
+                    storeMoneyTransfersListToStore.Add(storeTransfer);
+                }
+            }
+            int amoutWithdrawed = 0;
+            foreach (var transaction in transactionStoreWithdraws)
+            {
+                amoutWithdrawed += transaction.Amount; //amount withdrawed from store
+            }
+            int amount = 0;
+            foreach (var storeTransfer in storeMoneyTransfersListToStore)
+            {
+                amount += storeTransfer.Amount;
+            }
+            if (AmountTransfered != amount)
+            {
+                throw new BadHttpRequestException(OrderMessage.AmountNotEqual, HttpStatusCodes.BadRequest);
+            }
+            int amountFinal = AmountTransfered - amoutWithdrawed;
+            return new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = StoreMessage.FinalSettlementSuccess,
+                Data = new { amountCanWithdraw = amountFinal }
+            };
+        }
     }
 }

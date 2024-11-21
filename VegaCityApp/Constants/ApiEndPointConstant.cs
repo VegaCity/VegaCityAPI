@@ -105,6 +105,7 @@ public static class ApiEndPointConstant
         public const string DeleteStore = ApiEndpoint + "/store/{id}";
         #endregion
         //public const string GetMenu = ApiEndpoint + "/store/{phone}/menu";
+        public const string FinalSettlement = ApiEndpoint + "/store/{id}/final-settlement";
         public const string GetWalletStore = ApiEndpoint + "/store/wallet";
         public const string RequestCloseForStore = ApiEndpoint + "/store/{id}/request-close";
         #region Endpoint CRUD Menu
