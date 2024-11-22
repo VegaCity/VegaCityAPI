@@ -12,5 +12,10 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> DeleteMarketZone(Guid id);
         Task<ResponseAPI<MarketZone>> GetMarketZone(Guid id);
         Task<ResponseAPI<IEnumerable<GetMarketZoneResponse>>> SearchAllOrders(int size, int page);
+        Task<ResponseAPI> CreateRole(string name);
+        Task<ResponseAPI> DeleteRole(Guid id);
+        Task<ResponseAPI> UpdateRole(Guid id, string name);
+        Task<ResponseAPI<IEnumerable<Object>>> GetListRole(int size, int page);
+        Task<ResponseAPI> CreateMarketZoneConfig(Guid apiKey, double storeTransferRate, double withrawRate);
     }
 }

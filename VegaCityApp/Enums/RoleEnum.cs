@@ -7,7 +7,8 @@ namespace VegaCityApp.API.Enums
         Admin,
         CashierWeb,
         Store,
-        CashierApp
+        CashierApp,
+        AdminSystem,
     }
     public static class RoleHelper
     {
@@ -16,7 +17,8 @@ namespace VegaCityApp.API.Enums
             RoleEnum.CashierWeb.GetDescriptionFromEnum(),
             RoleEnum.Store.GetDescriptionFromEnum(),
             RoleEnum.Admin.GetDescriptionFromEnum(),
-            RoleEnum.CashierApp.GetDescriptionFromEnum()
+            RoleEnum.CashierApp.GetDescriptionFromEnum(),
+            RoleEnum.AdminSystem.GetDescriptionFromEnum(),
         };
     }
 }

@@ -21,6 +21,10 @@ public static class ApiEndPointConstant
     }
     public static class MarketZoneEndpoint
     {
+        public const string CreateMarketZoneConfig = ApiEndpoint + "/market-zone-config";
+        public const string GetListRole = ApiEndpoint + "/roles";
+        public const string UpdateRole = ApiEndpoint + "/role/{id}";
+        public const string CreateRole = ApiEndpoint + "/role";
         public const string CreateMarketZone = ApiEndpoint + "/market-zone";
         public const string UpdateMarketZone = ApiEndpoint + "/market-zone";
         public const string GetListMarketZone = ApiEndpoint + "/market-zones";

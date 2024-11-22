@@ -6,21 +6,27 @@ using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Admin;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.OrderResponse;
+using VegaCityApp.API.Payload.Response.StoreResponse;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;
 using VegaCityApp.Domain.Models;
 using VegaCityApp.Domain.Paginate;
 using VegaCityApp.Repository.Interfaces;
+using VegaCityApp.Service.Interface;
 using static VegaCityApp.API.Constants.MessageConstant;
 
 namespace VegaCityApp.API.Services.Implement
 {
     public class MarketZoneService : BaseService<MarketZoneService>, IMarketZoneService
     {
+        private readonly IAccountService _account;
+
         public MarketZoneService(IUnitOfWork<VegaCityAppContext> unitOfWork, ILogger<MarketZoneService> logger,
             IMapper mapper,
-            IHttpContextAccessor httpContextAccessor) : base(unitOfWork, logger, httpContextAccessor, mapper)
+            IHttpContextAccessor httpContextAccessor,
+            IAccountService account) : base(unitOfWork, logger, httpContextAccessor, mapper)
         {
+            _account = account;
         }
         public async Task<ResponseAPI> UpdateMarketZone(MarketZoneRequest request)
         {
@@ -124,17 +130,18 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> CreateMarketZone(MarketZoneRequest request)
         {
-            if(!ValidationUtils.IsPhoneNumber(request.PhoneNumber)) throw new BadHttpRequestException("Invalid phone number");
+            if (!ValidationUtils.IsPhoneNumber(request.PhoneNumber)) throw new BadHttpRequestException("Invalid phone number");
             if (!ValidationUtils.IsEmail(request.Email)) throw new BadHttpRequestException("Invalid email");
             bool marketZoneMap = await CreateMarketZoneFirst(request);
             if (!marketZoneMap) throw new BadHttpRequestException("Create market zone failed");
             //create admin marketZone
-            var role = await _unitOfWork.GetRepository<Role>().SingleOrDefaultAsync(predicate: x => x.Name == RoleEnum.Admin.GetDescriptionFromEnum()) 
+            var role = await _unitOfWork.GetRepository<Role>().SingleOrDefaultAsync(predicate: x => x.Name == RoleEnum.Admin.GetDescriptionFromEnum())
                 ?? throw new BadHttpRequestException("Role not found");
             var user = await CreateAdmin(request.Email, request.PhoneNumber, role.Id, request.Id, request.CccdPassport, request.Address)
                 ?? throw new BadHttpRequestException("Create admin failed");
+            var userExit = await _account.SearchUser(user.Id);
             //create admin reftoken
-            bool refToken = await CreateRefToken(user);
+            bool refToken = await CreateRefToken(userExit.Data);
             if (!refToken) throw new BadHttpRequestException("Create ref token failed");
 
             //create wallet admin
@@ -208,12 +215,6 @@ namespace VegaCityApp.API.Services.Implement
             };
             await _unitOfWork.GetRepository<User>().InsertAsync(user);
             await _unitOfWork.CommitAsync();
-            user.Role = new Role
-            {
-                Id = roleId,
-                Name = RoleEnum.Admin.GetDescriptionFromEnum(),
-                Deflag = false
-            };
             return user;
         }
         private async Task<bool> CreateMarketZoneFirst(MarketZoneRequest request)
@@ -225,15 +226,15 @@ namespace VegaCityApp.API.Services.Implement
             marketZoneMap.CrDate = TimeUtils.GetCurrentSEATime();
             marketZoneMap.UpsDate = TimeUtils.GetCurrentSEATime();
             await _unitOfWork.GetRepository<MarketZone>().InsertAsync(marketZoneMap);
-            
+
             return await _unitOfWork.CommitAsync() > 0;
         }
         private async Task<WalletType> CreateWalletTypeAdminFirst(string name, Guid apiKey)
         {
             var checkWalletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync
                 (predicate: x => x.Name == WalletTypeEnum.UserWallet.GetDescriptionFromEnum() && x.MarketZoneId == apiKey);
-            var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == apiKey) 
-                ??throw new BadHttpRequestException("Market zone not found");
+            var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == apiKey)
+                ?? throw new BadHttpRequestException("Market zone not found");
             if (checkWalletType != null) return checkWalletType;
             var walletType = new WalletType
             {
@@ -247,6 +248,127 @@ namespace VegaCityApp.API.Services.Implement
             await _unitOfWork.GetRepository<WalletType>().InsertAsync(walletType);
             await _unitOfWork.CommitAsync();
             return walletType;
+        }
+        public async Task<ResponseAPI> CreateRole(string name)
+        {
+            var newRole = new Role
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                Deflag = false
+            };
+            await _unitOfWork.GetRepository<Role>().InsertAsync(newRole);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.Created,
+                    MessageResponse = "Create role successfully",
+                    Data = newRole.Id
+                }
+                : new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    MessageResponse = "Create role failed"
+                };
+        }
+        public async Task<ResponseAPI> DeleteRole(Guid id)
+        {
+            var role = await _unitOfWork.GetRepository<Role>().SingleOrDefaultAsync(predicate: x => x.Id == id);
+            if (role == null) throw new BadHttpRequestException("Role not found");
+            role.Deflag = true;
+            _unitOfWork.GetRepository<Role>().UpdateAsync(role);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = "Delete role successfully",
+                    Data = role.Id
+                }
+                : new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    MessageResponse = "Delete role failed"
+                };
+        }
+        public async Task<ResponseAPI> UpdateRole(Guid id, string name)
+        {
+            var role = await _unitOfWork.GetRepository<Role>().SingleOrDefaultAsync(predicate: x => x.Id == id);
+            if (role == null) throw new BadHttpRequestException("Role not found");
+            role.Name = name.Trim();
+            _unitOfWork.GetRepository<Role>().UpdateAsync(role);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = "Update role successfully",
+                    Data = role.Id
+                }
+                : new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    MessageResponse = "Update role failed"
+                };
+        }
+        public async Task<ResponseAPI<IEnumerable<Object>>> GetListRole(int size, int page)
+        {
+            try
+            {
+                IPaginate<Object> data = (IPaginate<Object>)await _unitOfWork.GetRepository<Role>().GetPagingListAsync(
+                selector: x => new { name = x.Name },
+                page: page,
+                size: size,
+                orderBy: x => x.OrderByDescending(z => z.Name)
+
+                );
+                return new ResponseAPI<IEnumerable<Object>>
+                {
+                    MessageResponse = "Get List Role Success",
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI<IEnumerable<Object>>
+                {
+                    MessageResponse = "Get Roles fail: " + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null,
+                    MetaData = null
+                };
+            }
+        }
+        public async Task<ResponseAPI> CreateMarketZoneConfig(Guid apiKey, double storeTransferRate, double withrawRate)
+        {
+            var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync(predicate: x => x.Id == apiKey);
+            if (marketZone == null) throw new BadHttpRequestException("Market zone not found");
+            var marketZoneConfig = new MarketZoneConfig
+            {
+                Id = Guid.NewGuid(),
+                MarketZoneId = apiKey,
+                StoreStranferRate = storeTransferRate,
+                WithdrawRate = withrawRate
+            };
+            await _unitOfWork.GetRepository<MarketZoneConfig>().InsertAsync(marketZoneConfig);
+            return await _unitOfWork.CommitAsync() > 0
+                ? new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.Created,
+                    MessageResponse = "Create market zone config successfully",
+                    Data = marketZoneConfig.Id
+                }
+                : new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    MessageResponse = "Create market zone config failed"
+                };
         }
     }
 }
