@@ -251,7 +251,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 //case parent + lost
                 var packageOrderExist = await _unitOfWork.GetRepository<PackageOrder>().SingleOrDefaultAsync
-                    (predicate: x => x.Id == req.packageOrderId && x.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum(),
+                    (predicate: x => x.Id == req.packageOrderId,
                     include: y => y.Include(t => t.Package)
                                    .Include(w => w.Wallets).ThenInclude(t => t.WalletType)
                                    .Include(tr => tr.Wallets).ThenInclude(t => t.Transactions)); //may defect
@@ -492,9 +492,11 @@ namespace VegaCityApp.API.Services.Implement
                 else// for in here
                 {
                     if (packageOrderExist.IsAdult == false)
-                    {
                         throw new BadHttpRequestException(PackageItemMessage.NotAdult, HttpStatusCodes.BadRequest);
-                    }
+
+                    if(packageOrderExist.Status != PackageItemStatusEnum.Active.GetDescriptionFromEnum())
+                        throw new BadHttpRequestException(PackageItemMessage.MustActivated, HttpStatusCodes.BadRequest);
+                    
                     if (req.CusName == null)
                         throw new BadHttpRequestException("Name and PhoneNumber should not be null", HttpStatusCodes.BadRequest);
                     List<GetListPackageItemResponse> packageOrders = new List<GetListPackageItemResponse>();
