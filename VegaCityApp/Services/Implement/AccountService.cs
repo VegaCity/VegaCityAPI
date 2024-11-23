@@ -1118,7 +1118,7 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.NotFoundUser
                 };
             }
-            if (role == RoleEnum.Admin.GetDescriptionFromEnum()) user.Status = (int)req.Status;
+            if (role == RoleEnum.Admin.GetDescriptionFromEnum()) user.Status = (int)(req.Status ?? (int)UserStatusEnum.Active);
             user.FullName = req.FullName != null ? req.FullName.Trim() : user.FullName;
             user.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : user.PhoneNumber;
             user.Birthday = req.Birthday ?? user.Birthday;
