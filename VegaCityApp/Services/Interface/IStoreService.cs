@@ -20,7 +20,7 @@ namespace VegaCityApp.API.Services.Interface
         //Task<ResponseAPI> GetMenuFromPos(string phone);
         Task<ResponseAPI> SearchWalletStore(GetWalletStoreRequest req);
         Task<ResponseAPI> RequestCloseStore(Guid StoreId);
-        Task<ResponseAPI> FinalSettlement(Guid StoreId, DateTime DateFinalSettlemnet);
+        Task<ResponseAPI> FinalSettlement(Guid StoreId);
         #region CRUD Menu
         Task<ResponseAPI> CreateMenu(Guid StoreId, CreateMenuRequest req);
         Task<ResponseAPI> UpdateMenu(Guid MenuId, UpdateMenuRequest req);

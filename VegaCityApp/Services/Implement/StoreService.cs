@@ -1238,7 +1238,7 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
         #endregion
-        public async Task<ResponseAPI> FinalSettlement(Guid StoreId, DateTime DateFinalSettlemnet)
+        public async Task<ResponseAPI> FinalSettlement(Guid StoreId)
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
                 predicate: x => x.Id == StoreId
@@ -1249,7 +1249,7 @@ namespace VegaCityApp.API.Services.Implement
             //find order list store
             var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(
                 predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
-                x.UpsDate <= DateFinalSettlemnet && x.SaleType == SaleType.Product, include: z => z.Include(z => z.Payments));
+                x.UpsDate <= TimeUtils.GetCurrentSEATime() && x.SaleType == SaleType.Product, include: z => z.Include(z => z.Payments));
             if (orders.Count <= 0) throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
             List<Payment> payments = new List<Payment>(); //list payment QRCode
             foreach (var order in orders)
@@ -1271,7 +1271,7 @@ namespace VegaCityApp.API.Services.Implement
             //find list orders store
             var storeMoneyTransfers = await _unitOfWork.GetRepository<StoreMoneyTransfer>().GetListAsync(
                 predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
-                x.UpsDate <= DateFinalSettlemnet);
+                x.UpsDate <= TimeUtils.GetCurrentSEATime());
             if (storeMoneyTransfers.Count <= 0) throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
             var transactionStoreWithdraws = (List<Transaction>)await _unitOfWork.GetRepository<Transaction>().GetListAsync(
                 predicate: x => x.StoreId == store.Id && x.Status == TransactionStatus.Success &&

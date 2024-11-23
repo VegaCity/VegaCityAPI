@@ -80,9 +80,9 @@ namespace VegaCityApp.API.Controllers
         [HttpPost(StoreEndpoint.FinalSettlement)]
         [CustomAuthorize(RoleEnum.Store, RoleEnum.CashierWeb)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
-        public async Task<IActionResult> FinalSettlement(Guid id, [FromBody] DateTime date)
+        public async Task<IActionResult> FinalSettlement(Guid id)
         {
-            var result = await _storeService.FinalSettlement(id, date);
+            var result = await _storeService.FinalSettlement(id);
             return StatusCode(result.StatusCode, result);
         }
         [HttpPost(StoreEndpoint.GetWalletStore)]
