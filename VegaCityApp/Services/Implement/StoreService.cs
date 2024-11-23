@@ -518,7 +518,7 @@ namespace VegaCityApp.API.Services.Implement
 
             foreach (var storeTransfer in storeMoneyTransfers)
             {
-                if (storeTransfer.Description.Split("to")[1].Trim() == "store")
+                if (storeTransfer.Description.Split(" to ")[1].Trim() == "store")
                 {
                     storeMoneyTransfersListToStore.Add(storeTransfer);
                 }
