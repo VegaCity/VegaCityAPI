@@ -6,7 +6,7 @@
         public string paymentType { get; set; }
         public Guid StoreId { get; set; }
         public int TotalAmount { get; set; }
-        public Guid? PackageOrderId { get; set; }
+        public string? PackageOrderId { get; set; }
         //public Guid PackageId { get; set; }
         public List<OrderProductFromPosRequest> ProductData { get; set; }
     }
