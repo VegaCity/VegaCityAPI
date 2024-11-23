@@ -494,9 +494,9 @@ namespace VegaCityApp.API.Services.Implement
                     if (packageOrderExist.IsAdult == false)
                         throw new BadHttpRequestException(PackageItemMessage.NotAdult, HttpStatusCodes.BadRequest);
 
-                    if(packageOrderExist.Status != PackageItemStatusEnum.Active.GetDescriptionFromEnum())
+                    if (packageOrderExist.Status != PackageItemStatusEnum.Active.GetDescriptionFromEnum())
                         throw new BadHttpRequestException(PackageItemMessage.MustActivated, HttpStatusCodes.BadRequest);
-                    
+
                     if (req.CusName == null)
                         throw new BadHttpRequestException("Name and PhoneNumber should not be null", HttpStatusCodes.BadRequest);
                     List<GetListPackageItemResponse> packageOrders = new List<GetListPackageItemResponse>();
@@ -920,7 +920,8 @@ namespace VegaCityApp.API.Services.Implement
                 throw new BadHttpRequestException("CCCD/Passport is invalid", HttpStatusCodes.BadRequest);
             var promotionAutos = await _unitOfWork.GetRepository<Promotion>().GetListAsync(
                 predicate: x => x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
-                               && x.Status == (int)PromotionStatusEnum.Automation
+                             && x.MarketZoneId == GetMarketZoneIdFromJwt()
+                             && x.Status == (int)PromotionStatusEnum.Automation
             );
             foreach (var prAuto in promotionAutos)
             {
