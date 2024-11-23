@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Report;
 using VegaCityApp.API.Payload.Response;
@@ -43,6 +44,7 @@ namespace VegaCityApp.API.Controllers
         [HttpPatch(ReportEndpoint.UpdateReport)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.Store)]
+        [SwaggerOperation(Summary = "Update report by id", Description = "status: Processing = 1, Done = 2")]
         public async Task<IActionResult> UpdateReport(Guid id, [FromBody] SolveRequest request)
         {
             var result = await _reportService.UpdateReport(id, request);

@@ -103,7 +103,8 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = "Issue Type Not Found"
                 };
             }
-            _unitOfWork.GetRepository<IssueType>().DeleteAsync(issueType);
+            issueType.Deflag = true;
+            _unitOfWork.GetRepository<IssueType>().UpdateAsync(issueType);
             await _unitOfWork.CommitAsync();
             return new ResponseAPI
             {
@@ -125,11 +126,13 @@ namespace VegaCityApp.API.Services.Implement
                                {
                                    Id = x.Id,
                                    CrDate = x.CrDate,
-                                   Name = x.Name
+                                   Name = x.Name,
+                                   Deflag = x.Deflag
                                },
                                 page: page,
                                 size: size,
-                                orderBy: x => x.OrderByDescending(z => z.Name));
+                                orderBy: x => x.OrderByDescending(z => z.Name),
+                                predicate: x => !x.Deflag);
                 return new ResponseAPI<IEnumerable<IssueTypeResponse>>
                 {
                     MessageResponse = "Get All Issue Type Success",
