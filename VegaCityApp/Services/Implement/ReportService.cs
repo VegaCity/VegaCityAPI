@@ -36,22 +36,26 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
 
-        public async Task<ResponseAPI> CreateReport(string creator, ReportRequest req)
+        public async Task<ResponseAPI> CreateReport(ReportRequest req)
         {
-            //var report = _mapper.Map<DisputeReport>(req);
-            //report.Id = Guid.NewGuid();
-            //report.Creator = creator;
-            //report.CrDate = TimeUtils.GetCurrentSEATime();
-            //report.Status = (int) ReportStatus.Pending;
-            //report.StoreId = req.StoreId;
-            //await _unitOfWork.GetRepository<DisputeReport>().InsertAsync(report);
-           
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == req.CreatorStoreId);
+            var packageOrder = await _unitOfWork.GetRepository<PackageOrder>().SingleOrDefaultAsync
+                (predicate: x => x.Id == req.CreatorPackageOrderId
+                              && x.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum());
+            var report = _mapper.Map<Report>(req);
+            report.Id = Guid.NewGuid();
+            report.Status = (int)ReportStatus.Pending;
+            report.CrDate = TimeUtils.GetCurrentSEATime();
+            report.UpsDate = TimeUtils.GetCurrentSEATime();
+            report.Creator = store != null ? store.Name : packageOrder != null ? packageOrder.CusName : null;
+            await _unitOfWork.GetRepository<Report>().InsertAsync(report);
+
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = "Create Report Success",
-                //Data = report
-            }: new ResponseAPI
+                Data = report
+            } : new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.BadRequest,
                 MessageResponse = "Create Report Fail"
@@ -60,29 +64,31 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> UpdateReport(Guid id, SolveRequest req)
         {
             Guid userSolve = GetUserIdFromJwt();
-            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == userSolve);
-            //var report = await _unitOfWork.GetRepository<DisputeReport>().SingleOrDefaultAsync
-            //    (predicate: x => x.Id == id
-            //            && x.Status != (int)ReportStatus.Done
-            //           );
-            //if (report == null)
-            //{
-            //    return new ResponseAPI
-            //    {
-            //        StatusCode = HttpStatusCodes.NotFound,
-            //        MessageResponse = "Report Not Found"
-            //    };
-            //}
-            //report.Status = req.Status;
-            //report.SolveDate = TimeUtils.GetCurrentSEATime();
-            //report.Solution = req.Solution != null? req.Solution.Trim() : report.Solution;
-            //report.SolveBy = user.Email;
+            var report = await _unitOfWork.GetRepository<Report>().SingleOrDefaultAsync
+                (predicate: x => x.Id == id
+                        && x.Status != (int)ReportStatus.Done
+                       );
+            if (report == null)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.NotFound,
+                    MessageResponse = "Report Not Found"
+                };
+            }
+            if (req.Status != (int)ReportStatus.Processing || req.Status != (int)ReportStatus.Done)
+                throw new BadHttpRequestException("Invalid status", HttpStatusCodes.BadRequest);
+            report.Status = req.Status;
+            report.UpsDate = TimeUtils.GetCurrentSEATime();
+            report.Solution = req.Solution != null ? req.Solution.Trim() : report.Solution;
+            report.SolveBy = req.SolveBy != null ? req.SolveBy.Trim() : report.SolveBy;
+            report.SolveUserId = userSolve;
             await _unitOfWork.CommitAsync();
             return new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = "Update Report Success",
-                //Data = report
+                Data = report
             };
         }
 
@@ -142,7 +148,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 return new ResponseAPI<IEnumerable<IssueTypeResponse>>
                 {
-                    MessageResponse = "Get Issue Type Fail" + ex.Message,
+                    MessageResponse = "Get Issue Type Fail: " + ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError,
                     Data = null,
                     MetaData = null
@@ -154,37 +160,44 @@ namespace VegaCityApp.API.Services.Implement
         {
             try
             {
-                //IPaginate<ReportResponse> data = await _unitOfWork.GetRepository<DisputeReport>().GetPagingListAsync(
-                //               selector: x => new ReportResponse()
-                //               {
-                //                 Id = x.Id,
-                //                 Description = x.Description,
-                //                 IssueTypeId = x.IssueTypeId,
-                //                 StoreId = x.StoreId,
-                //                 Status = x.Status
-                //               },
-                //                page: page,
-                //                size: size,
-                //                orderBy: x => x.OrderByDescending(z => z.CrDate));
+                IPaginate<ReportResponse> data = await _unitOfWork.GetRepository<Report>().GetPagingListAsync(
+                               selector: x => new ReportResponse()
+                               {
+                                   Id = x.Id,
+                                   Description = x.Description,
+                                   IssueTypeId = x.IssueTypeId,
+                                   Status = x.Status,
+                                   Creator = x.Creator,
+                                   SolveBy = x.SolveBy,
+                                   Solution = x.Solution,
+                                   CrDate = x.CrDate,
+                                   UpsDate = x.UpsDate,
+                                   SolveUserId = x.SolveUserId,
+                                   CreatorPackageOrderId = x.CreatorPackageOrderId,
+                                   CreatorStoreId = x.CreatorStoreId
+                               },
+                                page: page,
+                                size: size,
+                                orderBy: x => x.OrderByDescending(z => z.CrDate));
                 return new ResponseAPI<IEnumerable<ReportResponse>>
                 {
                     MessageResponse = "Get All Reports Successfully!",
                     StatusCode = HttpStatusCodes.OK,
                     MetaData = new MetaData
                     {
-                        //Size = data.Size,
-                        //Page = data.Page,
-                        //Total = data.Total,
-                        //TotalPage = data.TotalPages
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
                     },
-                    //Data = data.Items
+                    Data = data.Items
                 };
             }
             catch (Exception ex)
             {
                 return new ResponseAPI<IEnumerable<ReportResponse>>
                 {
-                    MessageResponse = "Failed To Get  All Reports" + ex.Message,
+                    MessageResponse = "Failed To Get  All Reports: " + ex.Message,
                     StatusCode = HttpStatusCodes.InternalServerError,
                     Data = null,
                     MetaData = null

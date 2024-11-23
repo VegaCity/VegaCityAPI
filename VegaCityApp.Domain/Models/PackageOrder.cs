@@ -9,6 +9,7 @@ namespace VegaCityApp.Domain.Models
         {
             CustomerMoneyTransfers = new HashSet<CustomerMoneyTransfer>();
             Orders = new HashSet<Order>();
+            Reports = new HashSet<Report>();
             Wallets = new HashSet<Wallet>();
         }
 
@@ -32,6 +33,7 @@ namespace VegaCityApp.Domain.Models
         public virtual Vcard? Vcard { get; set; }
         public virtual ICollection<CustomerMoneyTransfer> CustomerMoneyTransfers { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
+        public virtual ICollection<Report> Reports { get; set; }
         public virtual ICollection<Wallet> Wallets { get; set; }
     }
 }

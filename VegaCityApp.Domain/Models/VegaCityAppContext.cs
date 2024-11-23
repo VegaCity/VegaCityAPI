@@ -651,20 +651,25 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.CrDate).HasColumnType("datetime");
 
-                entity.Property(e => e.Description).HasMaxLength(500);
+                entity.Property(e => e.Creator).HasMaxLength(100);
 
-                entity.Property(e => e.PackageItemId)
-                    .HasMaxLength(10)
-                    .IsUnicode(false)
-                    .IsFixedLength();
+                entity.Property(e => e.Description).HasMaxLength(500);
 
                 entity.Property(e => e.Solution).HasMaxLength(500);
 
-                entity.Property(e => e.SolveBy)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                entity.Property(e => e.SolveBy).HasMaxLength(100);
 
                 entity.Property(e => e.UpsDate).HasColumnType("datetime");
+
+                entity.HasOne(d => d.CreatorPackageOrder)
+                    .WithMany(p => p.Reports)
+                    .HasForeignKey(d => d.CreatorPackageOrderId)
+                    .HasConstraintName("FK_Report_PackageOrder");
+
+                entity.HasOne(d => d.CreatorStore)
+                    .WithMany(p => p.Reports)
+                    .HasForeignKey(d => d.CreatorStoreId)
+                    .HasConstraintName("FK_Report_Store");
 
                 entity.HasOne(d => d.IssueType)
                     .WithMany(p => p.Reports)
@@ -672,9 +677,9 @@ namespace VegaCityApp.Domain.Models
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Report_Issue_Type");
 
-                entity.HasOne(d => d.User)
+                entity.HasOne(d => d.SolveUser)
                     .WithMany(p => p.Reports)
-                    .HasForeignKey(d => d.UserId)
+                    .HasForeignKey(d => d.SolveUserId)
                     .HasConstraintName("FK_Report_User");
             });
 

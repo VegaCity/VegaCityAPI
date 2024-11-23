@@ -35,9 +35,9 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpPost(ReportEndpoint.CreateReport)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
-        public async Task<IActionResult> CreateReport([FromQuery] string PhoneNumberCreator, [FromBody] ReportRequest request)
+        public async Task<IActionResult> CreateReport([FromBody] ReportRequest request)
         {
-            var result = await _reportService.CreateReport(PhoneNumberCreator, request);
+            var result = await _reportService.CreateReport(request);
             return StatusCode(result.StatusCode, result);
         }
         [HttpPatch(ReportEndpoint.UpdateReport)]

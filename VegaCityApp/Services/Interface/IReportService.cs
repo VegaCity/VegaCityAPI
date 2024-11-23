@@ -11,7 +11,7 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI<IEnumerable<IssueTypeResponse>>> GetAllIssueType(int size, int page);
         Task<ResponseAPI<IEnumerable<ReportResponse>>> GetAllReports(int size, int page);
         Task<ResponseAPI> DeleteIssueType(Guid id);
-        Task<ResponseAPI> CreateReport(string creator, ReportRequest req);
+        Task<ResponseAPI> CreateReport(ReportRequest req);
         Task<ResponseAPI> UpdateReport(Guid id, SolveRequest req);
     }
 }
