@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Services.Interface;
 using VegaCityApp.API.Utils;

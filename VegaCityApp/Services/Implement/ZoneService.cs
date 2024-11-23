@@ -27,7 +27,7 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task<ResponseAPI> CreateZone(CreateZoneRequest req)
         {
-            await _util.CheckUserSession(GetUserIdFromJwt());
+            //await _util.CheckUserSession(GetUserIdFromJwt());
             Guid apiKey = GetMarketZoneIdFromJwt();
             var zoneExisted = await _unitOfWork.GetRepository<Zone>()
                 .SingleOrDefaultAsync(predicate: x => x.Name == req.Name && x.Location == req.Location && !x.Deflag);
@@ -67,7 +67,7 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> UpdateZone(Guid Id, UpdateZoneRequest req)
         {
-            await _util.CheckUserSession(GetUserIdFromJwt());
+            //await _util.CheckUserSession(GetUserIdFromJwt());
             var zone = await _unitOfWork.GetRepository<Zone>().SingleOrDefaultAsync(predicate: x => x.Id == Id && !x.Deflag,
                 include: z => z.Include(zone => zone.Stores));
             if (zone == null)
