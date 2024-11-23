@@ -469,7 +469,7 @@ namespace VegaCityApp.API.Services.Implement
                 throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
             }
             var searchName = NormalizeString(req.StoreName);
-            var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && (x.Status == (int)StoreStatusEnum.Opened || x.Status == (int)StoreStatusEnum.Closed)
+            var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && (x.Status == (int)StoreStatusEnum.Opened || x.Status == (int)StoreStatusEnum.Closed || x.Status == (int)StoreStatusEnum.Blocked)
                                                                                , include: w => w.Include(u => u.Wallets).Include(z => z.Zone));
             var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name) == searchName || NormalizeString(x.ShortName) == searchName);
             if (storeTrack == null)
