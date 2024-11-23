@@ -29,7 +29,8 @@ namespace VegaCityApp.API.Services.Implement
             }
             _unitOfWork.GetRepository<Transaction>().DeleteAsync(transaction);
             await _unitOfWork.CommitAsync();
-            return new ResponseAPI() {
+            return new ResponseAPI()
+            {
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = "Delete transaction successfully"
             };
@@ -55,7 +56,8 @@ namespace VegaCityApp.API.Services.Implement
                                },
                                 page: page,
                                 size: size,
-                                orderBy: x => x.OrderByDescending(z => z.CrDate));
+                                orderBy: x => x.OrderByDescending(z => z.CrDate),
+                                predicate: z => z.UserId == GetUserIdFromJwt());
                 return new ResponseAPI<IEnumerable<TransactionResponse>>
                 {
                     MessageResponse = "Get Transactions success !!",
