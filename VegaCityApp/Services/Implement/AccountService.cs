@@ -646,7 +646,9 @@ namespace VegaCityApp.Service.Implement
                     page: page,
                     size: size,
                     orderBy: x => x.OrderByDescending(z => z.StartDate),
-                    predicate: x => x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum());
+                    predicate: x => x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
+                                 && x.User.MarketZoneId == GetMarketZoneIdFromJwt(),
+                    include: x => x.Include(a => a.User));
                 return new ResponseAPI<IEnumerable<GetUserSessions>>
                 {
                     StatusCode = HttpStatusCodes.OK,
