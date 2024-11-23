@@ -46,6 +46,9 @@ namespace VegaCityApp.API.Services.Implement
                     };
                 }
             }
+            var promotions = await _unitOfWork.GetRepository<Promotion>().GetListAsync
+                (predicate: x => x.MarketZoneId == apiKey && x.Status == (int)PromotionStatusEnum.Automation);
+            if (promotions.Count > 0) throw new Exception("Only 1 Automation Promotion can be created", HttpStatusCodes.BadRequest);
             var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync
                 (predicate: x => x.PromotionCode == req.PromotionCode);
             if (promotion != null)
