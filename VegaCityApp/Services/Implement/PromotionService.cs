@@ -184,7 +184,7 @@ namespace VegaCityApp.API.Services.Implement
                     StartDate = x.StartDate,
                     EndDate = x.EndDate,
                 },
-                predicate: z => z.Quantity > 0,
+                predicate: z => z.Quantity > 0 && z.MarketZoneId == GetMarketZoneIdFromJwt(),
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name)

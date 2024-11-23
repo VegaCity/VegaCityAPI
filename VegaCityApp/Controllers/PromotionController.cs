@@ -41,6 +41,7 @@ namespace VegaCityApp.API.Controllers
         }
         [HttpGet(PromotionEndPoint.SearchAllPromotions)]
         [ProducesResponseType(typeof(ResponseAPI<IEnumerable<GetZoneResponse>>), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
         public async Task<IActionResult> SearchPromotions([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _promotionService.SearchPromotions(size, page);
