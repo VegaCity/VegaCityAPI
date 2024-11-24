@@ -85,9 +85,10 @@ namespace VegaCityApp.API.Services.Implement
             }
             report.Status = req.Status;
             report.UpsDate = TimeUtils.GetCurrentSEATime();
-            report.Solution = req.Solution != null ? req.Solution.Trim() : report.Solution;
-            report.SolveBy = req.SolveBy != null ? req.SolveBy.Trim() : report.SolveBy;
+            report.Solution = req.Solution != null ? req.Solution : report.Solution;
+            report.SolveBy = req.SolveBy != null ? req.SolveBy : report.SolveBy;
             report.SolveUserId = userSolve;
+            _unitOfWork.GetRepository<Report>().UpdateAsync(report);
             await _unitOfWork.CommitAsync();
             return new ResponseAPI
             {
