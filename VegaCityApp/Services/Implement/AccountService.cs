@@ -796,7 +796,7 @@ namespace VegaCityApp.Service.Implement
                     var body = $"<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;'>" +
                                                $"<h1 style='color: #007bff;'>Welcome to our Vega City!</h1>" +
                                                $"<p>Thanks for signing up our services.</p>" +
-                                               $"<p><strong>This is your password to change: {newUser.Password}</strong></p>" +
+                                               $"<p><strong>This is your code to verify: {newUser.Password}</strong></p>" +
                                                $"<p>Please access this website to change password: <a href='https://vegacity.id.vn/change-password'>Link Access !!</a></p>" +
                                            $"</div>";
                     await MailUtil.SendMailAsync(newUser.Email, subject, body);
@@ -1165,8 +1165,14 @@ namespace VegaCityApp.Service.Implement
                     _unitOfWork.GetRepository<UserRefreshToken>().DeleteRangeAsync(user.UserRefreshTokens);
                     if (user.UserSessions.Count > 0)
                     {
-                        user.UserSessions.SingleOrDefault().Status = SessionStatusEnum.Canceled.GetDescriptionFromEnum();
-                        _unitOfWork.GetRepository<UserSession>().UpdateRange(user.UserSessions);
+                        foreach (var session in user.UserSessions)
+                        {
+                            if (session.Status == SessionStatusEnum.Active.GetDescriptionFromEnum())
+                            {
+                                session.Status = SessionStatusEnum.Canceled.GetDescriptionFromEnum();
+                                _unitOfWork.GetRepository<UserSession>().UpdateAsync(session);
+                            }
+                        }
                     }
                     //delete store include menu and product
                     if (user.StoreId != null)
