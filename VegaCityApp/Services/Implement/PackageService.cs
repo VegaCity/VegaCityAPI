@@ -742,14 +742,14 @@ namespace VegaCityApp.API.Services.Implement
             var packageOrder = await SearchPackageItem(packageOrderId, null);
             #region check 
             // after done main flow, make utils service to shorten this code
-            var userId = GetUserIdFromJwt();
-            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
-                predicate: x => x.UserId == userId && x.ZoneId == packageOrder.Data.Package.ZoneId
-                               && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
-                               && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
-            )
-                ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
-                                                            HttpStatusCodes.BadRequest);
+            //var userId = GetUserIdFromJwt();
+            //var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
+            //    predicate: x => x.UserId == userId && x.ZoneId == packageOrder.Data.Package.ZoneId
+            //                   && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
+            //                   && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()
+            //)
+            //    ?? throw new BadHttpRequestException("You don't have permission to create package item because you don't have session",
+            //                                                HttpStatusCodes.BadRequest);
             #endregion
             //update
             packageOrder.Data.CusName = req.CusName != null ? req.CusName.Trim() : packageOrder.Data.CusName;
