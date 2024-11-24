@@ -76,8 +76,13 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = "Report Not Found"
                 };
             }
-            if (req.Status != (int)ReportStatus.Processing || req.Status != (int)ReportStatus.Done)
+            //if (req.Status != (int)ReportStatus.Processing || req.Status != (int)ReportStatus.Done)
+            //    throw new BadHttpRequestException("Invalid status", HttpStatusCodes.BadRequest);
+            if (!EnumUtil.ParseEnum<ReportStatus>(req.Status.ToString()).Equals(ReportStatus.Processing)
+                && !EnumUtil.ParseEnum<ReportStatus>(req.Status.ToString()).Equals(ReportStatus.Done))
+            {
                 throw new BadHttpRequestException("Invalid status", HttpStatusCodes.BadRequest);
+            }
             report.Status = req.Status;
             report.UpsDate = TimeUtils.GetCurrentSEATime();
             report.Solution = req.Solution != null ? req.Solution.Trim() : report.Solution;
