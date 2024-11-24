@@ -97,10 +97,10 @@ namespace VegaCityApp.Service.Implement
             await _unitOfWork.CommitAsync();
             return newUser;
         }
-        private async Task<bool> CreateUserWallet(Guid userId)
+        private async Task<bool> CreateUserWallet(Guid userId, Guid apiKey)
         {
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(
-                predicate: x => x.Name == WalletTypeEnum.UserWallet.GetDescriptionFromEnum());
+                predicate: x => x.Name == WalletTypeEnum.UserWallet.GetDescriptionFromEnum() && x.MarketZoneId == apiKey);
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
                 predicate: x => x.Id == userId);
             var newWallet = new Wallet
@@ -320,7 +320,7 @@ namespace VegaCityApp.Service.Implement
             if (newUser.Id != Guid.Empty)
             {
                 //create wallet
-                var result = await CreateUserWallet(newUser.Id);
+                var result = await CreateUserWallet(newUser.Id, req.apiKey);
                 if (!result)
                     throw new BadHttpRequestException(UserMessage.CreateWalletFail);
                 return new ResponseAPI
@@ -776,7 +776,7 @@ namespace VegaCityApp.Service.Implement
             var token = await RefreshToken(refresh);
             #endregion
             #region create wallet
-            var result = await CreateUserWallet(newUser.Id);
+            var result = await CreateUserWallet(newUser.Id, apiKey);
             if (!result)
             {
                 return new ResponseAPI
