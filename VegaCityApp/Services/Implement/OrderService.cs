@@ -839,7 +839,7 @@ namespace VegaCityApp.API.Services.Implement
                         (predicate: x => x.Id == Guid.Parse(req.TransactionChargeId))
                         ?? throw new BadHttpRequestException("Transaction charge not found", HttpStatusCodes.NotFound);
 
-                    transactionCharge.Status = TransactionStatus.Success.GetDescriptionFromEnum();
+                    transactionCharge.Status = TransactionStatus.Success;
                     transactionCharge.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionCharge);
                     var customerMoneyTransfer = new CustomerMoneyTransfer()
@@ -851,7 +851,7 @@ namespace VegaCityApp.API.Services.Implement
                         PackageOrderId = (Guid)order.PackageOrderId,
                         TransactionId = transactionCharge.Id,
                         CrDate = TimeUtils.GetCurrentSEATime(),
-                        Status = OrderStatus.Completed.GetDescriptionFromEnum(),
+                        Status = OrderStatus.Completed,
                         UpsDate = TimeUtils.GetCurrentSEATime()
                     };
                     await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(customerMoneyTransfer);
@@ -997,7 +997,7 @@ namespace VegaCityApp.API.Services.Implement
                         PackageOrderId = (Guid)order.PackageOrderId,
                         TransactionId = transactionCharge.Id,
                         CrDate = TimeUtils.GetCurrentSEATime(),
-                        Status = OrderStatus.Completed.GetDescriptionFromEnum(),
+                        Status = OrderStatus.Completed,
                         UpsDate = TimeUtils.GetCurrentSEATime()
                     };
                     await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(customerMoneyTransfer);

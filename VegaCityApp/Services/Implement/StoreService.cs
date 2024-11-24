@@ -558,7 +558,7 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound
                 };
             }
-            if (store.Status == (int)StoreStatusEnum.Blocked)
+            if (store.Status == (int)StoreStatusEnum.InActive)
             {
                 return new ResponseAPI()
                 {
@@ -570,7 +570,7 @@ namespace VegaCityApp.API.Services.Implement
             storeAccount.Status = (int)UserStatusEnum.Disable;
             storeAccount.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<User>().UpdateAsync(storeAccount);
-            store.Status = (int)StoreStatusEnum.Blocked; //implement count 7 days from blocked status (UPSDATE) here
+            store.Status = (int)StoreStatusEnum.InActive; //implement count 7 days from blocked status (UPSDATE) here
             store.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Store>().UpdateAsync(store);
             var result = await _unitOfWork.CommitAsync();

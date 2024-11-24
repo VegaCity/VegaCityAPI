@@ -787,6 +787,8 @@ namespace VegaCityApp.API.Services.Implement
             if (packageOrder.Data.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum() && packageOrder.Data.VcardId == rfId)
                 throw new BadHttpRequestException(PackageItemMessage.RfIdExist, HttpStatusCodes.BadRequest);
             var packageOrdersVCardId = await _unitOfWork.GetRepository<PackageOrder>().GetListAsync(predicate: x => x.VcardId == rfId);
+            if (packageOrdersVCardId.Any())
+                throw new BadHttpRequestException(PackageItemMessage.RfIdExist, HttpStatusCodes.BadRequest);
             var packageOrderVCardIdExisted = packageOrdersVCardId.SingleOrDefault(
                 x => x.VcardId == rfId
                );
@@ -1292,7 +1294,7 @@ namespace VegaCityApp.API.Services.Implement
                 Description = "Store Transfer: " + store.Name,
                 IsIncrease = true,
                 MarketZoneId = marketZone.Id,
-                Status = TransactionStatus.Success.GetDescriptionFromEnum(),
+                Status = OrderStatus.Completed,
             };
             await _unitOfWork.GetRepository<StoreMoneyTransfer>().InsertAsync(newStoreTransfer);
 
@@ -1329,7 +1331,7 @@ namespace VegaCityApp.API.Services.Implement
                 Description = "Payment From Store of: " + packageOrder.CusName,
                 IsIncrease = true,
                 MarketZoneId = marketZone.Id,
-                Status = TransactionStatus.Success.GetDescriptionFromEnum(),
+                Status = OrderStatus.Completed,
             };
             await _unitOfWork.GetRepository<StoreMoneyTransfer>().InsertAsync(newStoreTransaction);
             return await _unitOfWork.CommitAsync() > 0

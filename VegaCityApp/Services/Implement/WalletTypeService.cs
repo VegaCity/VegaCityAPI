@@ -377,30 +377,37 @@ namespace VegaCityApp.API.Services.Implement
             }
             else if (wallet.PackageOrder != null) //End user
             {
-                if (request.Amount <= 50000)
+                if (request.Amount < 50000)
                 {
                     throw new BadHttpRequestException("User must withdraw at least " + 50000 + "VND", HttpStatusCodes.BadRequest);
                 }
-                //case 1  : 1000 000 , start : 1,000,000
-                //must Use = 0 (k rut dc)
-
-                //case 2 : 2000000 , start 1,000,000 (da nap) (da co Promo)
-                //must User = 1 000 000 
-
-                //case 3: 500 000 , start 1000 000, 80% =>
-                //must use -500 000 
-
-                ///case 4 : start 500 
-                //charge 1500 000 balance 2000000, 
-                //must use 1500 000
-                // case ** specific 
-                // BH > 100% BStart 
-                var mustUse = wallet.BalanceHistory - request.Amount;
-                var notiAmount = mustUse - wallet.BalanceStart * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate;
-                if (mustUse <= wallet.BalanceStart * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate)
+                //case * package specific
+                // 150 700 
+                int atLeaseUse = 0;
+                int amountRate = 0;
+                if (wallet.BalanceHistory == wallet.BalanceStart)
                 {
-                    throw new BadHttpRequestException("User must use at least " + notiAmount + "VND", HttpStatusCodes.BadRequest);
+                    amountRate = (int)(wallet.BalanceStart * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate); // 700 * 0.8 = 560
+                    atLeaseUse = (int)(amountRate - (wallet.BalanceStart - wallet.Balance)); // 560 - (700 - 150) = 10
+                    if ((wallet.BalanceStart - wallet.Balance) != amountRate) // 700 - 150 != 560
+                        throw new BadHttpRequestException("User must pay more " + atLeaseUse + "VND to withdraw", HttpStatusCodes.BadRequest);
+                    if (request.Amount > wallet.Balance)
+                        throw new BadHttpRequestException("Balance is not enough", HttpStatusCodes.BadRequest);
                 }
+
+                //case ** package service
+                // 160 800 700
+                else
+                {
+                    amountRate = (int)(wallet.BalanceHistory * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate); // 800 * 0.8 = 640
+                    atLeaseUse = amountRate - (wallet.BalanceHistory - wallet.Balance); // 640 - (800 - 160) = 0
+                    if ((wallet.BalanceHistory - wallet.Balance) != amountRate) // 800 - 160 != 640 && 170 > 160
+                        throw new BadHttpRequestException("User must use at least " + atLeaseUse + "VND", HttpStatusCodes.BadRequest);
+                    if (request.Amount > wallet.Balance)
+                        throw new BadHttpRequestException("Balance is not enough", HttpStatusCodes.BadRequest);
+                }
+
+
                 transaction = new Transaction
                 {
                     Id = Guid.NewGuid(),

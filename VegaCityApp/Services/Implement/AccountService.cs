@@ -1500,7 +1500,7 @@ namespace VegaCityApp.Service.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.Name),
-                predicate: x => !x.Deflag && x.MarketZoneId == apiKey && x.Status == (int)StoreStatusEnum.Blocked
+                predicate: x => !x.Deflag && x.MarketZoneId == apiKey && x.Status == (int)StoreStatusEnum.InActive
                 );
                 return new ResponseAPI<IEnumerable<GetStoreResponse>>
                 {
@@ -1530,7 +1530,7 @@ namespace VegaCityApp.Service.Implement
         public async Task<ResponseAPI> SearchStoreClosing(Guid StoreId)
         {
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
-                predicate: x => x.Id == StoreId && !x.Deflag && x.Status == (int)StoreStatusEnum.Blocked,
+                predicate: x => x.Id == StoreId && !x.Deflag && x.Status == (int)StoreStatusEnum.InActive,
                 include: z => z.Include(s => s.Wallets)
                                .Include(a => a.Menus).ThenInclude(a => a.MenuProductMappings).ThenInclude(o => o.Product).ThenInclude(a => a.ProductCategory)
             );
@@ -1544,9 +1544,9 @@ namespace VegaCityApp.Service.Implement
             }
             string storeType = null;
             string storeStatus = null;
-            if (store.Status == (int)StoreStatusEnum.Blocked)
+            if (store.Status == (int)StoreStatusEnum.InActive)
             {
-                storeStatus = StoreStatusEnum.Blocked.GetDescriptionFromEnum();
+                storeStatus = StoreStatusEnum.InActive.GetDescriptionFromEnum();
             }
             //check storetype enum and parse to string
             if (!StoreTypeHelper.allowedStoreTypes.Contains((int)store.StoreType))
@@ -1593,13 +1593,13 @@ namespace VegaCityApp.Service.Implement
                 throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
             var searchName = NormalizeString(req.StoreName);
             var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber
-                                                                                            && x.Status == (int)StoreStatusEnum.Blocked,
+                                                                                            && x.Status == (int)StoreStatusEnum.InActive,
                                                                                include: z => z.Include(s => s.Wallets));
             var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name) == searchName || NormalizeString(x.ShortName) == searchName)
                 ?? throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
             if (req.Status == "APPROVED")
             {
-                storeTrack.Status = (int)StoreStatusEnum.Closed;
+                storeTrack.Status = (int)StoreStatusEnum.Blocked;
                 storeTrack.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Store>().UpdateAsync(storeTrack);
             }
