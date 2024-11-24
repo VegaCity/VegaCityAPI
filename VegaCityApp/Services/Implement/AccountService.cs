@@ -1169,10 +1169,13 @@ namespace VegaCityApp.Service.Implement
                         _unitOfWork.GetRepository<UserSession>().UpdateRange(user.UserSessions);
                     }
                     //delete store include menu and product
-                    await _storeService.DeleteStore((Guid)user.StoreId);
-                    if (user.UserStoreMappings.Count > 0)
+                    if (user.StoreId != null)
                     {
-                        _unitOfWork.GetRepository<UserStoreMapping>().DeleteRangeAsync(user.UserStoreMappings);
+                        await _storeService.DeleteStore((Guid)user.StoreId);
+                        if (user.UserStoreMappings.Count > 0)
+                        {
+                            _unitOfWork.GetRepository<UserStoreMapping>().DeleteRangeAsync(user.UserStoreMappings);
+                        }
                     }
                     if (user.Wallets.Count > 0)
                     {
@@ -1185,7 +1188,11 @@ namespace VegaCityApp.Service.Implement
                     return new ResponseAPI()
                     {
                         MessageResponse = UserMessage.DeleteUserSuccess,
-                        StatusCode = HttpStatusCodes.OK
+                        StatusCode = HttpStatusCodes.OK,
+                        Data = new
+                        {
+                            UserId = user.Id
+                        }
                     };
                 case (int)UserStatusEnum.Ban:
                     return new ResponseAPI()
