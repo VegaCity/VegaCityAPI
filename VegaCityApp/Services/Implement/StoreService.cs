@@ -85,6 +85,7 @@ namespace VegaCityApp.API.Services.Implement
                         MessageResponse = StoreMessage.InvalidStoreStatus
                     };
                 }
+                store.StoreTransferRate = req.StoreTransferRate != null ? (double)req.StoreTransferRate : store.StoreTransferRate;
                 store.StoreType = req.StoreType != null ? (int)req.StoreType : store.StoreType;
             }
             store.Name = req.Name != null ? req.Name.Trim() : store.Name;

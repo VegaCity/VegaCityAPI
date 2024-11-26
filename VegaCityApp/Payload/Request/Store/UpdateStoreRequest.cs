@@ -12,5 +12,6 @@ namespace VegaCityApp.API.Payload.Request.Store
         public string? Description { get; set; }
         public int? Status { get; set; }
         public int? StoreType { get; set; }
+        public double? StoreTransferRate { get; set; }
     }
 }
