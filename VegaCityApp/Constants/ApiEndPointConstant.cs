@@ -193,6 +193,9 @@ public static class ApiEndPointConstant
     }
     public static class TransactionEndpoint
     {
+        public const string GetListCustomerMoneyTransfer = ApiEndpoint + "/package-order/{PackageOrderId}/money-transfers";
+        public const string GetListStoreMoneyTransfer = ApiEndpoint + "/store/{storeId}/money-transfers";
+        public const string GetListTransactionByStoreId = ApiEndpoint + "/store/{storeId}/transactions";
         public const string GetListTransaction = ApiEndpoint + "/transactions";
         public const string GetTransaction = ApiEndpoint + "/transaction/{id}";
         public const string DeleteTransaction = ApiEndpoint + "/transaction/{id}";

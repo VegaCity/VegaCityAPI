@@ -31,6 +31,7 @@ namespace VegaCityApp.Domain.Models
         public Guid MarketZoneId { get; set; }
         public string? Description { get; set; }
         public int Status { get; set; }
+        public double? StoreTransferRate { get; set; }
 
         public virtual Zone? Zone { get; set; }
         public virtual ICollection<Menu> Menus { get; set; }

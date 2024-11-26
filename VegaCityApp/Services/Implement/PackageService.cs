@@ -740,6 +740,10 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> UpdatePackageItem(Guid packageOrderId, UpdatePackageItemRequest req)
         {
             var packageOrder = await SearchPackageItem(packageOrderId, null);
+            if (packageOrder.Data.Status != PackageItemStatusEnum.Active.GetDescriptionFromEnum())
+                throw new BadHttpRequestException("You cannot update your card", HttpStatusCodes.BadRequest);
+            if (packageOrder.Data.IsChangedInfo)
+                throw new BadHttpRequestException("Your info is changed, You cannot change it again", HttpStatusCodes.BadRequest);
             #region check 
             // after done main flow, make utils service to shorten this code
             //var userId = GetUserIdFromJwt();
@@ -753,7 +757,12 @@ namespace VegaCityApp.API.Services.Implement
             #endregion
             //update
             packageOrder.Data.CusName = req.CusName != null ? req.CusName.Trim() : packageOrder.Data.CusName;
+            packageOrder.Data.CusEmail = req.CusEmail != null ? req.CusEmail.Trim() : packageOrder.Data.CusEmail;
+            packageOrder.Data.CusCccdpassport = req.CusCccdPassport != null ? req.CusCccdPassport.Trim() : packageOrder.Data.CusCccdpassport;
+            packageOrder.Data.PhoneNumber = req.CusPhone != null ? req.CusPhone.Trim() : packageOrder.Data.PhoneNumber;
             packageOrder.Data.Status = req.Status != null ? req.Status.Trim() : packageOrder.Data.Status;
+            packageOrder.Data.UpsDate = TimeUtils.GetCurrentSEATime();
+            packageOrder.Data.IsChangedInfo = true;
             _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(packageOrder.Data);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {

@@ -340,7 +340,7 @@ namespace VegaCityApp.API.Services.Implement
                     {
                         AmountPayment += payment.FinalAmount;
                     }
-                    int AmountTransfered = (int)(AmountPayment - AmountPayment * store.Zone.MarketZone.MarketZoneConfig.StoreStranferRate);
+                    int AmountTransfered = (int)(AmountPayment - AmountPayment * store.StoreTransferRate);
                     if (wallet.BalanceHistory < request.Amount)
                     {
                         return new ResponseAPI
@@ -378,35 +378,18 @@ namespace VegaCityApp.API.Services.Implement
             else if (wallet.PackageOrder != null) //End user
             {
                 if (request.Amount < 50000)
-                {
-                    throw new BadHttpRequestException("User must withdraw at least " + 50000 + "VND", HttpStatusCodes.BadRequest);
-                }
+                    throw new BadHttpRequestException("User must withdraw greater than " + 50000 + "VND", HttpStatusCodes.BadRequest);
+
                 //case * package specific
                 // 150 700 
-                int atLeaseUse = 0;
-                int amountRate = 0;
-                if (wallet.BalanceHistory == wallet.BalanceStart)
-                {
-                    amountRate = (int)(wallet.BalanceStart * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate); // 700 * 0.8 = 560
-                    atLeaseUse = (int)(amountRate - (wallet.BalanceStart - wallet.Balance)); // 560 - (700 - 150) = 10
-                    if ((wallet.BalanceStart - wallet.Balance) != amountRate) // 700 - 150 != 560
-                        throw new BadHttpRequestException("User must pay more " + atLeaseUse + "VND to withdraw", HttpStatusCodes.BadRequest);
-                    if (request.Amount > wallet.Balance)
-                        throw new BadHttpRequestException("Balance is not enough", HttpStatusCodes.BadRequest);
-                }
-
                 //case ** package service
                 // 160 800 700
-                else
-                {
-                    amountRate = (int)(wallet.BalanceHistory * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate); // 800 * 0.8 = 640
-                    atLeaseUse = amountRate - (wallet.BalanceHistory - wallet.Balance); // 640 - (800 - 160) = 0
-                    if ((wallet.BalanceHistory - wallet.Balance) != amountRate) // 800 - 160 != 640 && 170 > 160
-                        throw new BadHttpRequestException("User must use at least " + atLeaseUse + "VND", HttpStatusCodes.BadRequest);
-                    if (request.Amount > wallet.Balance)
-                        throw new BadHttpRequestException("Balance is not enough", HttpStatusCodes.BadRequest);
-                }
-
+                int amountRate = (int)(wallet.BalanceHistory * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate); // 700 * 0.8 = 560 // 700 - 560 = 140
+                int atLeaseUse = amountRate - (wallet.BalanceHistory - wallet.Balance); // 560 - (700 - 150) = 10
+                if (request.Amount > wallet.Balance)
+                    throw new BadHttpRequestException("Balance is not enough", HttpStatusCodes.BadRequest);
+                if (atLeaseUse > 0 && wallet.BalanceHistory - wallet.Balance != amountRate) // 700 - 150 != 560
+                    throw new BadHttpRequestException("User must pay more " + atLeaseUse + "VND to withdraw", HttpStatusCodes.BadRequest);
 
                 transaction = new Transaction
                 {
@@ -442,7 +425,7 @@ namespace VegaCityApp.API.Services.Implement
         //confirm withdraw money
         public async Task<ResponseAPI> WithdrawMoneyWallet(Guid id, Guid transactionId)
         {
-            await _util.CheckUserSession(GetUserIdFromJwt());
+            var session = await _util.CheckUserSession(GetUserIdFromJwt());
             Guid cashierWebId = GetUserIdFromJwt();
             string role = GetRoleFromJwt();
             var transactionAvailable = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
@@ -514,6 +497,8 @@ namespace VegaCityApp.API.Services.Implement
                     wallet.Balance -= transactionAvailable.Amount;
                     wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+                    session.TotalWithrawCash = transactionAvailable.Amount;
+                    _unitOfWork.GetRepository<UserSession>().UpdateAsync(session);
                 }
             }
             else if (wallet.PackageOrder != null)
@@ -524,6 +509,8 @@ namespace VegaCityApp.API.Services.Implement
                 wallet.Balance -= transactionAvailable.Amount;
                 wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+                session.TotalWithrawCash = transactionAvailable.Amount;
+                _unitOfWork.GetRepository<UserSession>().UpdateAsync(session);
             }
             var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
                 (predicate: x => x.Id == cashierWeb.MarketZoneId);
@@ -566,6 +553,8 @@ namespace VegaCityApp.API.Services.Implement
                 UserId = cashierWebId
             };
             cashierWallet.BalanceHistory += transactionAvailable.Amount;
+            cashierWallet.Balance -= transactionAvailable.Amount;
+            cashierWallet.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(cashierWallet);
 
             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceHistory);

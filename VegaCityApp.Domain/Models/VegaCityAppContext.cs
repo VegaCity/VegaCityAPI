@@ -491,6 +491,8 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.EndDate).HasColumnType("datetime");
 
+                entity.Property(e => e.IsChangedInfo).HasColumnName("isChangedInfo");
+
                 entity.Property(e => e.PhoneNumber)
                     .HasMaxLength(10)
                     .IsUnicode(false)

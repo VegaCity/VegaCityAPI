@@ -780,7 +780,7 @@ namespace VegaCityApp.API.Services.Implement
                 _unitOfWork.GetRepository<PackageOrder>().UpdateAsync(order.PackageOrder);
                 ////UPDATE CASHIER WALLET
                 order.User.Wallets.SingleOrDefault().Balance += 50000;
-                order.User.Wallets.SingleOrDefault().BalanceHistory += 50000;
+                //order.User.Wallets.SingleOrDefault().BalanceHistory += 50000;
                 order.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(order.User.Wallets.SingleOrDefault());
 
@@ -833,6 +833,7 @@ namespace VegaCityApp.API.Services.Implement
                     //wallet cashier
                     var wallet = order.User.Wallets.FirstOrDefault();
                     wallet.Balance += order.TotalAmount;
+                    wallet.BalanceHistory -= order.TotalAmount;
                     wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
                     var transactionCharge = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
@@ -906,9 +907,9 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime()
                     };
                     await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionAdminBalanceHistory);
-                    walletAdmin.BalanceHistory -= order.TotalAmount + order.PromotionOrders.SingleOrDefault().DiscountAmount;
-                    walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
+                    //walletAdmin.BalanceHistory -= order.TotalAmount + order.PromotionOrders.SingleOrDefault().DiscountAmount;
+                    //walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
+                    //_unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
                     int check = await _unitOfWork.CommitAsync();
                     if (check > 0)
                     {
@@ -978,6 +979,7 @@ namespace VegaCityApp.API.Services.Implement
                     //wallet cashier
                     var wallet = order.User.Wallets.FirstOrDefault();
                     wallet.Balance += order.TotalAmount;
+                    wallet.BalanceHistory -= order.TotalAmount;
                     wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
                     var transactionCharge = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
@@ -1052,9 +1054,9 @@ namespace VegaCityApp.API.Services.Implement
                     await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionAdminBalanceHistory);
 
 
-                    walletAdmin.BalanceHistory -= order.TotalAmount;
-                    walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
+                    //walletAdmin.BalanceHistory -= order.TotalAmount;
+                    //walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
+                    //_unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
 
                     await _unitOfWork.CommitAsync();
                     return new ResponseAPI()
@@ -1194,7 +1196,7 @@ namespace VegaCityApp.API.Services.Implement
                     OrderId = order.Id
                 };
                 await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionStoreTransfer);
-                walletStore.Balance += (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate);
+                //walletStore.Balance += (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate);
                 walletStore.BalanceHistory += (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate);
                 walletStore.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletStore);
@@ -1332,7 +1334,7 @@ namespace VegaCityApp.API.Services.Implement
                 //};
                 //await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionStoreTransfer);
                 walletStore.Balance += order.TotalAmount;
-                walletStore.BalanceHistory += order.TotalAmount;
+                //walletStore.BalanceHistory += order.TotalAmount;
                 walletStore.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletStore);
                 //var transfer = new StoreMoneyTransfer()
