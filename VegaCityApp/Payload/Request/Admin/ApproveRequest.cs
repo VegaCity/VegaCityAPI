@@ -11,5 +11,6 @@ namespace VegaCityApp.API.Payload.Request.Admin
         public string PhoneNumber { get; set; }
         public string StoreEmail { get; set; }
         public string ApprovalStatus { get; set; }
+        public double StoreTransferRate { get; set; }
     }
 }

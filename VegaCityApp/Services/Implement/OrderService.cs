@@ -1117,7 +1117,7 @@ namespace VegaCityApp.API.Services.Implement
                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(g => g.PackageOrder).ThenInclude(w => w.Wallets)
                                        .Include(p => p.PromotionOrders)
-                                       .Include(t => t.Payments))
+                                       .Include(t => t.Payments).Include(r => r.Store))
                                        ?? throw new BadHttpRequestException("Order not found", HttpStatusCodes.NotFound);
             if (order.Payments.SingleOrDefault().Name == PaymentTypeEnum.QRCode.GetDescriptionFromEnum())
             {
@@ -1183,7 +1183,7 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     Id = Guid.NewGuid(),
                     Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                    Amount = (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate),
+                    Amount = (int)(order.TotalAmount - order.TotalAmount * order.Store.StoreTransferRate),
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     Description = "Transfer money from order " + order.InvoiceId + " to store",
                     IsIncrease = true,
@@ -1197,7 +1197,7 @@ namespace VegaCityApp.API.Services.Implement
                 };
                 await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionStoreTransfer);
                 //walletStore.Balance += (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate);
-                walletStore.BalanceHistory += (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate);
+                walletStore.BalanceHistory += (int)(order.TotalAmount - order.TotalAmount * order.Store.StoreTransferRate);
                 walletStore.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletStore);
                 var transfer = new StoreMoneyTransfer()
@@ -1205,7 +1205,7 @@ namespace VegaCityApp.API.Services.Implement
                     Id = Guid.NewGuid(),
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     UpsDate = TimeUtils.GetCurrentSEATime(),
-                    Amount = (int)(order.TotalAmount - order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate),
+                    Amount = (int)(order.TotalAmount - order.TotalAmount * order.Store.StoreTransferRate),
                     IsIncrease = true,
                     MarketZoneId = order.User.MarketZoneId,
                     StoreId = (Guid)order.StoreId,
@@ -1219,7 +1219,7 @@ namespace VegaCityApp.API.Services.Implement
                     Id = Guid.NewGuid(),
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                    Amount = (int)(order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate),
+                    Amount = (int)(order.TotalAmount * order.Store.StoreTransferRate),
                     Description = "Transfer money from order " + order.InvoiceId + " to Vega",
                     IsIncrease = true,
                     Status = TransactionStatus.Success,
@@ -1232,13 +1232,13 @@ namespace VegaCityApp.API.Services.Implement
                 };
                 await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionVega);
                 var walletAdmin = admin.Wallets.FirstOrDefault();
-                walletAdmin.Balance += (int)(order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate);
+                walletAdmin.Balance += (int)(order.TotalAmount * order.Store.StoreTransferRate);
                 walletAdmin.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletAdmin);
                 var transfertoVega = new StoreMoneyTransfer
                 {
                     Id = Guid.NewGuid(),
-                    Amount = (int)(order.TotalAmount * marketZone.MarketZoneConfig.StoreStranferRate),
+                    Amount = (int)(order.TotalAmount * order.Store.StoreTransferRate),
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     Description = "Transfer money from order " + order.InvoiceId + " to Vega",
                     IsIncrease = true,

@@ -906,7 +906,8 @@ namespace VegaCityApp.Service.Implement
                         UpsDate = TimeUtils.GetCurrentSEATime(),
                         MarketZoneId = apiKey,
                         Deflag = false,
-                        ZoneId = zone.Id
+                        ZoneId = zone.Id,
+                        StoreTransferRate = req.StoreTransferRate
                     };
                     await _unitOfWork.GetRepository<Store>().InsertAsync(newStore);
                     await _unitOfWork.CommitAsync();
