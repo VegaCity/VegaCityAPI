@@ -500,6 +500,8 @@ namespace VegaCityApp.API.Services.Implement
                     if (req.CusName == null)
                         throw new BadHttpRequestException("Name and PhoneNumber should not be null", HttpStatusCodes.BadRequest);
                     List<GetListPackageItemResponse> packageOrders = new List<GetListPackageItemResponse>();
+                    if (quantity > 5 )
+                        throw new BadHttpRequestException("Generate Child's Card maximum 5 Cards at a time", HttpStatusCodes.BadRequest);
                     for (var i = 0; i < quantity; i++)
                     {
                         var newPackageOrder = new PackageOrder()
