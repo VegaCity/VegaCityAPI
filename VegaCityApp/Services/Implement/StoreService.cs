@@ -506,7 +506,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 AmountPayment += payment.FinalAmount;
             }
-            int AmountTransfered = (int)(AmountPayment - AmountPayment * store.Zone.MarketZone.MarketZoneConfig.StoreStranferRate); // amount transfered to store
+            int AmountTransfered = (int)(AmountPayment - AmountPayment * store.StoreTransferRate); // amount transfered to store
             //find list orders store
             var storeMoneyTransfers = await _unitOfWork.GetRepository<StoreMoneyTransfer>().GetListAsync(
                 predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
