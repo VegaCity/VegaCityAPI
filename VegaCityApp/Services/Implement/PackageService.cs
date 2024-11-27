@@ -929,8 +929,6 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> PrepareChargeMoneyEtag(ChargeMoneyRequest req)
         {
             if (req.ChargeAmount <= 0) throw new BadHttpRequestException("The number must be more than 0", HttpStatusCodes.BadRequest);
-            if (!ValidationUtils.IsCCCD(req.CccdPassport))
-                throw new BadHttpRequestException("CCCD/Passport is invalid", HttpStatusCodes.BadRequest);
             var promotionAutos = await _unitOfWork.GetRepository<Promotion>().GetListAsync(
                 predicate: x => x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
                              && x.MarketZoneId == GetMarketZoneIdFromJwt()
