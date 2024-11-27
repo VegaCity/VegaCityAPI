@@ -635,6 +635,7 @@ namespace VegaCityApp.Service.Implement
                         Id = x.Id,
                         UserId = x.UserId,
                         UserName = x.User.FullName,
+                        Email = x.User.Email,
                         StartDate = x.StartDate,
                         EndDate = x.EndDate,
                         TotalCashReceive = x.TotalCashReceive,
