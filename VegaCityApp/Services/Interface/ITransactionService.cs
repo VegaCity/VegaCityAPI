@@ -11,5 +11,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI<IEnumerable<TransactionResponse>>> GetAllTransactionByStoreId(Guid storeId, string type, int size, int page);
         Task<ResponseAPI<IEnumerable<StoreMoneyTransferRes>>> GetAllStoreMoneyTransfer(Guid storeId, int size, int page);
         Task<ResponseAPI<IEnumerable<CustomerMoneyTransferRes>>> GetAllCustomerMoneyTransfer(Guid PackageOrderId, int size, int page);
+        Task CheckTransactionPending();
     }
 }

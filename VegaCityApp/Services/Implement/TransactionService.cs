@@ -243,5 +243,19 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
+        public async Task CheckTransactionPending()
+        {
+            var transactions = await _unitOfWork.GetRepository<Transaction>().GetListAsync
+                (predicate: x => x.Status == TransactionStatus.Pending);
+            foreach (var transaction in transactions)
+            {
+                if (TimeUtils.GetCurrentSEATime().Subtract(transaction.CrDate).TotalMinutes > 5)
+                {
+                    transaction.Status = TransactionStatus.Fail;
+                    _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+                }
+            }
+            await _unitOfWork.CommitAsync();
+        }
     }
 }

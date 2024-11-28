@@ -28,6 +28,8 @@ namespace VegaCityApp.API.Extensions
             RecurringJob.AddOrUpdate<IOrderService>(x => x.CheckOrderPending(), cornMinute, timeZone: timeZone);
 
             RecurringJob.AddOrUpdate<IAccountService>(x => x.CheckSession(), cornDaily, timeZone: timeZone);
+
+            RecurringJob.AddOrUpdate<ITransactionService>(x => x.CheckTransactionPending(), cornMinute, timeZone: timeZone);
         }
     }
 }
