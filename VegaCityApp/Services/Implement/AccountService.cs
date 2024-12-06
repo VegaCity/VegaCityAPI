@@ -1154,7 +1154,7 @@ namespace VegaCityApp.Service.Implement
         {
             await _util.CheckUserSession(GetUserIdFromJwt());
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
-                (predicate: x => x.Id == UserId && x.Status == (int)UserStatusEnum.Active,
+                (predicate: x => x.Id == UserId && x.Status == (int)UserStatusEnum.Active || x.Status == (int)UserStatusEnum.PendingVerify,
                  include: z => z.Include(a => a.UserRefreshTokens)
                                 .Include(a => a.UserSessions)
                                 .Include(a => a.UserStoreMappings)
@@ -1221,6 +1221,21 @@ namespace VegaCityApp.Service.Implement
                     {
                         StatusCode = HttpStatusCodes.BadRequest,
                         MessageResponse = UserMessage.UserDisable
+                    };
+                case (int)UserStatusEnum.PendingVerify:
+                    user.Status = (int)UserStatusEnum.Disable;
+                    user.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<User>().UpdateAsync(user);
+                    await _unitOfWork.CommitAsync();
+
+                    return new ResponseAPI()
+                    {
+                        MessageResponse = UserMessage.DeleteUserSuccess,
+                        StatusCode = HttpStatusCodes.OK,
+                        Data = new
+                        {
+                            UserId = user.Id
+                        }
                     };
             }
             return new ResponseAPI()
