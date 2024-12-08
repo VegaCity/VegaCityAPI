@@ -1367,7 +1367,7 @@ namespace VegaCityApp.Service.Implement
                                                       && x.CrDate <= endDate
                                                       && x.Status == OrderStatus.Completed,
                                                       null, null);
-
+            //List<Store> // here i need to make a list for each month, show list of stores  that have desc order from total transaction, show transaction of top 5 store and it's amount 
             List<StoreMoneyTransfer> storeMoneyTransfersListToVega = new List<StoreMoneyTransfer>();
             foreach (var storeTransfer in deposits)
             {
