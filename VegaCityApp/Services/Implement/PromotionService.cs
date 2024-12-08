@@ -113,13 +113,21 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> UpdatePromotion(Guid PromotionId, UpdatePromotionRequest req)
         {
             await _util.CheckUserSession(GetUserIdFromJwt());
-            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(predicate: x => x.Id == PromotionId && x.Status == (int)PromotionStatusEnum.Inactive); // Only Inactive Promotion can be updated
+            var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(predicate: x => x.Id == PromotionId ); // Only Inactive Promotion can be updated
             if (promotion == null)
             {
                 return new ResponseAPI
                 {
                     MessageResponse = PromotionMessage.NotFoundPromotion,
                     StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+            if(promotion.Status  != (int)PromotionStatusEnum.Inactive)
+            {
+                return new ResponseAPI
+                {
+                    MessageResponse = "Promotion Should Be InActive To Edit",
+                    StatusCode = HttpStatusCodes.BadRequest
                 };
             }
             if (req.EndDate <= TimeUtils.GetCurrentSEATime())
@@ -154,7 +162,7 @@ namespace VegaCityApp.API.Services.Implement
             promotion.StartDate = req.StartDate;
             promotion.EndDate = req.EndDate;
             promotion.Quantity = req.Quantity;
-            promotion.Status = (int)PromotionStatusEnum.Active;
+            promotion.Status = (int)PromotionStatusEnum.Automation;
             _unitOfWork.GetRepository<Promotion>().UpdateAsync(promotion);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
             {
