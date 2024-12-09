@@ -1278,16 +1278,18 @@ namespace VegaCityApp.Service.Implement
         //Dashboard
         public async Task<ResponseAPI> GetChartByDuration(AdminChartDurationRequest req)
         {
-            string roleCurrent = GetRoleFromJwt();
-            if (roleCurrent == null)
-            {
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = UserMessage.UserNotFound,
-                };
-            }
-
+            //string roleCurrent = GetRoleFromJwt();
+            //if (roleCurrent == null)
+            //{
+            //    return new ResponseAPI
+            //    {
+            //        StatusCode = HttpStatusCodes.NotFound,
+            //        MessageResponse = UserMessage.UserNotFound,
+            //    };
+            //}
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == GetUserIdFromJwt() && x.Role.Name == GetRoleFromJwt(),
+                                                                                     include: y => y.Include(n => n.Role)) ??
+                                                                                     throw new BadHttpRequestException("User Not Found", HttpStatusCodes.NotFound);
             if (!DateTime.TryParse(req.StartDate + " 00:00:00.000Z", out DateTime startDate))
             {
                 return new ResponseAPI
@@ -1315,284 +1317,516 @@ namespace VegaCityApp.Service.Implement
 
             List<Order> orders = new List<Order>();
             List<Order> ordersCash = new List<Order>();
+            //admin wallet
+            var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.UserId == user.Id);
 
+            //list account
+            var accounts = (await _unitOfWork.GetRepository<User>().GetListAsync()).ToList();
+
+            //card list
+            var vCards = (await _unitOfWork.GetRepository<PackageOrder>().GetListAsync(predicate: x => x.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum())).ToList();
+            List<Order> ordersFeeCharge = new List<Order>();
             // admin dashboard 
-            if (req.SaleType == "All")
+            //
+            var amount = 0;
+            var amountCash = 0;
+            if (user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum())
             {
-                orders = (await _unitOfWork.GetRepository<Order>()
-                    .GetListAsync(x => x.CrDate >= startDate
-                    && x.CrDate <= endDate
-                    && x.Status == OrderStatus.Completed
-                    && (x.SaleType == "PackageItem Charge" || x.SaleType == "Package"),
-                    null, null)).ToList();
-
-                ordersCash = (await _unitOfWork.GetRepository<Order>()
-                    .GetListAsync(x => x.CrDate >= startDate
-                    && x.CrDate <= endDate
-                    && x.Status == OrderStatus.Completed
-                    && (x.SaleType == "PackageItem Charge" || x.SaleType == "Package")
-                    && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
-                    null, null)).ToList();
-            }
-            else
-            {
-                orders = (await _unitOfWork.GetRepository<Order>()
-                 .GetListAsync(x => x.CrDate >= startDate
-                 && x.CrDate <= endDate
-                 && x.Status == OrderStatus.Completed
-                 && (x.SaleType == req.SaleType),
-                 null, null)).ToList();
-
-                ordersCash = (await _unitOfWork.GetRepository<Order>()
-                    .GetListAsync(x => x.CrDate >= startDate
-                    && x.CrDate <= endDate
-                    && x.Status == OrderStatus.Completed
-                    && (x.SaleType == req.SaleType)
-                    && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
-                    null, null)).ToList();
-            }
-
-            var etags = await _unitOfWork.GetRepository<PackageOrder>().GetListAsync(x => x.CrDate >= startDate
-                                                       && x.CrDate <= endDate && x.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum(), null, null);
-            var transactions = await _unitOfWork.GetRepository<Transaction>()
-                                       .GetListAsync(x => x.CrDate >= startDate
-                                                       && x.CrDate <= endDate
-                                                       && x.Status == TransactionStatus.Success
-                                                       && x.Amount > 0
-                                                       && x.Type == "EndDayCheckWalletCashier",
-                                                       null, null);
-
-            var deposits = await _unitOfWork.GetRepository<StoreMoneyTransfer>()
-                                      .GetListAsync(x => x.CrDate >= startDate
-                                                      && x.CrDate <= endDate
-                                                      && x.Status == OrderStatus.Completed,
-                                                      null, null);
-            //List<Store> // here i need to make a list for each month, show list of stores  that have desc order from total transaction, show transaction of top 5 store and it's amount 
-            List<StoreMoneyTransfer> storeMoneyTransfersListToVega = new List<StoreMoneyTransfer>();
-            foreach (var storeTransfer in deposits)
-            {
-                if (storeTransfer.Description.Split(" to ")[1].Trim() == "Vega")
-                {
-                    storeMoneyTransfersListToVega.Add(storeTransfer);
-                }
-            }
-            var packages = await _unitOfWork.GetRepository<Package>().GetListAsync(x => x.CrDate >= startDate
-                                                       && x.CrDate <= endDate,
-                                                        null, null);
-            if (transactions == null || !transactions.Any())
-            {
-                return new ResponseAPI()
-                {
-                    StatusCode = HttpStatusCodes.NotFound,
-                    MessageResponse = "Transaction not found"
-                };
-            }
-
-            if (roleCurrent == "Admin")
-            {
-                var groupedStaticsAdmin = transactions
-               .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
-               .Select(g => new
-               {
-                   Name = g.Key, // Month name
-                   TotalTransactions = transactions.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                   TotalTransactionsAmount = g.Sum(t => t.Amount),
-                   //  EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                   EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                   OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                   OrderCash = ordersCash.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                   OtherOrder = orders.Count(o => o.CrDate.ToString("MMM") == g.Key) - ordersCash.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                   VegaDepositsAmountFromStore = storeMoneyTransfersListToVega
-                                                            .Where(d => d.CrDate.ToString("MMM") == g.Key)
-                                                            .Sum(d => d.Amount)
-               }).ToList();
-                return new ResponseAPI
-                {
-                    StatusCode = HttpStatusCodes.OK,
-                    MessageResponse = "Get Admin's Dashboard Successfully!",
-                    Data = groupedStaticsAdmin
-                };
-            }
-            else if (roleCurrent == "CashierWeb" || roleCurrent == "CashierApp")
-            {
-                //var ordersCashier = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
-                //                                      && x.CrDate <= endDate && x.Status == OrderStatus.Completed && x.UserId == GetUserIdFromJwt(), null, null);
-                //var ordersCashCashier = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
-                //                                           && x.CrDate <= endDate && x.Status == OrderStatus.Completed
-                //                                           && x.UserId == GetUserIdFromJwt()
-                //                                           && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum()
-                //                                           , null, null);
-                //var transactionsCashier = await _unitOfWork.GetRepository<Transaction>()
-                //                      .GetListAsync(x => x.CrDate >= startDate
-                //                                      && x.CrDate <= endDate
-                //                                      && x.Status == TransactionStatus.Success
-                //                                      && x.Amount > 0
-                //                                      && x.Type != "WithdrawMoney"
-                //                                      && x.UserId == GetUserIdFromJwt(),
-                //                                      null, null);
-                List<Order> ordersCashierInTotal = new List<Order>();
-                List<Order> ordersCashier = new List<Order>();
-                List<Order> ordersCashCashier = new List<Order>();
-                List<Transaction> transactionsCashier = new List<Transaction>();
-
-                // admin dashboard 
                 if (req.SaleType == "All")
                 {
-                    ordersCashier = (await _unitOfWork.GetRepository<Order>()
+                    //ADMIN BEGIN
+                    orders = (await _unitOfWork.GetRepository<Order>()
                         .GetListAsync(x => x.CrDate >= startDate
                         && x.CrDate <= endDate
                         && x.Status == OrderStatus.Completed
-                        && x.UserId == GetUserIdFromJwt()
-                        && (x.SaleType == "PackageItem Charge" || x.SaleType == "Package"),
+                        && (x.SaleType == SaleType.PackageItemCharge || x.SaleType == SaleType.Package || x.SaleType == SaleType.FeeChargeCreate),
                         null, null)).ToList();
-
-                    ordersCashCashier = (await _unitOfWork.GetRepository<Order>()
+                    foreach (var order in orders)
+                    {
+                        amount += order.TotalAmount;
+                    }
+                    ordersCash = (await _unitOfWork.GetRepository<Order>()
                         .GetListAsync(x => x.CrDate >= startDate
                         && x.CrDate <= endDate
                         && x.Status == OrderStatus.Completed
-                        && (x.SaleType == "PackageItem Charge" || x.SaleType == "Package")
-                        && x.UserId == GetUserIdFromJwt()
+                        && (x.SaleType == SaleType.PackageItemCharge || x.SaleType == SaleType.Package || x.SaleType == SaleType.FeeChargeCreate)
                         && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
                         null, null)).ToList();
+                    foreach (var order in ordersCash)
+                    {
+                        amountCash += order.TotalAmount;
+                    }
 
-                    transactionsCashier = (await _unitOfWork.GetRepository<Transaction>()
-                                      .GetListAsync(x => x.CrDate >= startDate
-                                                      && x.CrDate <= endDate
-                                                      && x.Status == TransactionStatus.Success
-                                                      && x.Amount > 0
-                                                      && (x.Type == "ChargeMoney" || x.Type == "SellingPackage")
-                                                      && x.UserId == GetUserIdFromJwt(),
-                                                      null, null)).ToList();
+                    ordersFeeCharge = (await _unitOfWork.GetRepository<Order>()
+                        .GetListAsync(x => x.CrDate >= startDate
+                        && x.CrDate <= endDate
+                        && x.Status == OrderStatus.Completed
+                        && (x.SaleType == SaleType.FeeChargeCreate),
+                        null, null)).ToList();
+                    var amountFeeCharge = 0;
+                    foreach (var order in ordersFeeCharge)
+                    {
+                        amountFeeCharge += order.TotalAmount;
+                    }
+                    //return new ResponseAPI
+                    //{
+                    //    MessageResponse = "Get Admin dashboard successfully!",
+                    //    StatusCode = HttpStatusCodes.OK,
+                    //    Data = new
+                    //    {
+                    //        AdminBalance = wallet.Balance,
+                    //        AdminBalanceHistory = wallet.BalanceHistory,
+                    //        ActiveUser = accounts,
+                    //        TotalVcards = vCards.Count(),
+                    //        TotalAmountOrder = amount,
+                    //        ChargeFee = amountFeeCharge + amount,
+
+                    //    }
+                    //};
+                    //ADMIN END
+                }
+                else if (req.SaleType == SaleType.Product)
+                {
+                    //ADMIN
+                    orders = (await _unitOfWork.GetRepository<Order>()
+                      .GetListAsync(x => x.CrDate >= startDate
+                      && x.CrDate <= endDate
+                      && x.Status == OrderStatus.Completed
+                      && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.QRCode.GetDescriptionFromEnum(),
+                      null, null)).ToList();
+                    ordersCash = null;
+                    //ADMIN
                 }
                 else
                 {
-                     ordersCashierInTotal = (await _unitOfWork.GetRepository<Order>()
-                     .GetListAsync(x => x.CrDate >= startDate
-                     && x.CrDate <= endDate
-                      && x.UserId == GetUserIdFromJwt()
-                     && x.Status == OrderStatus.Completed
-                     && (x.SaleType == "Package" || x.SaleType == "PackageItem Charge"),
-                     null, null)).ToList();
-
-                    ordersCashier = (await _unitOfWork.GetRepository<Order>()
-                     .GetListAsync(x => x.CrDate >= startDate
-                     && x.CrDate <= endDate
-                      && x.UserId == GetUserIdFromJwt()
-                     && x.Status == OrderStatus.Completed
-                     && (x.SaleType == req.SaleType),
-                     null, null)).ToList();
-
-                    ordersCashCashier = (await _unitOfWork.GetRepository<Order>()
+                    //ADMIN
+                    orders = (await _unitOfWork.GetRepository<Order>()
+                       .GetListAsync(x => x.CrDate >= startDate
+                       && x.CrDate <= endDate
+                       && x.Status == OrderStatus.Completed
+                       && (x.SaleType == req.SaleType),
+                       null, null)).ToList();
+                    foreach (var order in orders)
+                    {
+                        amount += order.TotalAmount;
+                    }
+                    ordersCash = (await _unitOfWork.GetRepository<Order>()
                         .GetListAsync(x => x.CrDate >= startDate
                         && x.CrDate <= endDate
                         && x.Status == OrderStatus.Completed
-                        && (x.SaleType == req.SaleType) && x.UserId == GetUserIdFromJwt()
+                        && (x.SaleType == req.SaleType)
                         && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
                         null, null)).ToList();
-                    transactionsCashier = (await _unitOfWork.GetRepository<Transaction>()
-                                    .GetListAsync(x => x.CrDate >= startDate
-                                                    && x.CrDate <= endDate
-                                                    && x.Status == TransactionStatus.Success
-                                                    && x.Amount > 0
-                                                    && (x.Type == "ChargeMoney" || x.Type == "SellingPackage")
-                                                    && x.UserId == GetUserIdFromJwt(),
-                                                    null, null)).ToList();
+                    foreach (var order in ordersCash)
+                    {
+                        amountCash += order.TotalAmount;
+                    }
+                    //ADMIN          
+
                 }
-               
-                var groupedStaticsCashier = transactionsCashier 
-              .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
-              .Select(g => new
-              {
-                  Name = g.Key, // Month name
-                  TotalTransactions = transactionsCashier.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                  TotalAmountFromTransaction = transactionsCashier
-                                                .Where(o => o.CrDate.ToString("MMM") == g.Key)
-                                                .Sum(o => o.Amount),
-                  EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                  OrderCount = ordersCashier.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                  OrderCash = ordersCashCashier.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                  OtherOrder = ordersCashier.Count(o => o.CrDate.ToString("MMM") == g.Key) - ordersCashCashier.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                  PercentageOrder = req.SaleType == "All"
-                                  ? 100.0
-                                  : ordersCashier.Count(o => o.CrDate.ToString("MMM") == g.Key
-                                                             && o.SaleType == req.SaleType) * 100.0
-                                    / Math.Max(1, ordersCashierInTotal.Count(o => o.CrDate.ToString("MMM") == g.Key)),
-                //PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
-            }).ToList();
-                return new ResponseAPI
+
+
+                //general
+                var deposits = await _unitOfWork.GetRepository<StoreMoneyTransfer>()
+                                          .GetListAsync(x => x.CrDate >= startDate
+                                                          && x.CrDate <= endDate
+                                                          && x.Status == OrderStatus.Completed,
+                                                          null, null);
+                var depositsCashiers = await _unitOfWork.GetRepository<Transaction>()
+                                         .GetListAsync(x => x.CrDate >= startDate
+                                                         && x.CrDate <= endDate
+                                                         && x.Amount > 0
+                                                         && x.Type == "EndDayCheckWalletCashier"
+                                                         && x.Status == TransactionStatus.Success,
+                                                         null, null);
+
+                var depositsReturnedFromCashiers = await _unitOfWork.GetRepository<Transaction>()
+                                         .GetListAsync(x => x.CrDate >= startDate
+                                                         && x.CrDate <= endDate
+                                                         && x.Amount < 0
+                                                         && x.Type == "EndDayCheckWalletCashier"
+                                                         && x.Status == TransactionStatus.Success,
+                                                         null, null);
+                ////List<Store> // here i need to make a list for each month, show list of stores  that have desc order from total transaction, show transaction of top 5 store and it's amount 
+                List<StoreMoneyTransfer> storeMoneyTransfersListToVega = new List<StoreMoneyTransfer>();
+                foreach (var storeTransfer in deposits)
                 {
-                    StatusCode = HttpStatusCodes.OK,
-                    MessageResponse = "Get Cashier's Dashboard Successfully!",
-                    Data = groupedStaticsCashier
-                };
-            }
-            // case store 
-            var storeUser = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == GetUserIdFromJwt());
-            var storeId = storeUser.StoreId;
-            var storeOrders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
-                                                       && x.CrDate <= endDate && x.StoreId == storeId && x.Status == OrderStatus.Completed,
-                                                        null, null);
-            var storeCashOrders = await _unitOfWork.GetRepository<Order>().GetListAsync(x => x.CrDate >= startDate
-                                                       && x.CrDate <= endDate && x.StoreId == storeId && x.Status == OrderStatus.Completed && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
-                                                        null, null);
-            var transactionsStore = await _unitOfWork.GetRepository<Transaction>()
-                                       .GetListAsync(x => x.CrDate >= startDate
-                                                       && x.CrDate <= endDate
-                                                       && x.Amount > 0
-                                                       && x.Status == TransactionStatus.Success
-                                                       && x.Type == TransactionType.SellingProduct
-                                                       && x.UserId == storeUser.Id,
-                                                       null, null);
-            var menusStore = await _unitOfWork.GetRepository<Menu>().GetListAsync(x => x.StoreId == storeId && x.Deflag == false, null, null);
-            //find products                                                                          
-            var menuStore = menusStore.FirstOrDefault();
-            var menuIds = menusStore.Select(m => m.Id).ToList();
-            var productMappings = await _unitOfWork.GetRepository<MenuProductMapping>()
-                .GetListAsync(x => menuIds.Contains(x.MenuId), null, null);
-            var distinctProductIds = productMappings.Select(x => x.ProductId).Distinct().Count();
-
-
-            var productsStore = await _unitOfWork.GetRepository<Product>().GetListAsync(x => x.MenuId == menuStore.Id
-                                                                                         && x.Status == "Active", null, null);
-
-            //var productsStore = await _unitOfWork.GetRepository<Product>().GetListAsync(x => x.CrDate >= startDate
-            //                                                                               && x.CrDate <= endDate
-            //                                                                               && x.
-            //                                                                               && x.Status == "Active",null,null);
-            List<StoreMoneyTransfer> transfersListToVega = new List<StoreMoneyTransfer>();
-            foreach (var storeTransfer in deposits)
-            {
-                if (storeTransfer.Description.Split(" to ")[1].Trim() == "store")
-                {
-                    transfersListToVega.Add(storeTransfer);
+                    if (storeTransfer.Description.Split(" to ")[1].Trim() == "Vega")
+                    {
+                        storeMoneyTransfersListToVega.Add(storeTransfer);
+                    }
                 }
-            }
-            var groupedStaticsStore = storeOrders
+
+                //var packages = await _unitOfWork.GetRepository<Package>().GetListAsync(x => x.CrDate >= startDate
+                //                                           && x.CrDate <= endDate,
+                //                                            null, null);
+                //if (transactions == null || !transactions.Any())
+                //{
+                //    return new ResponseAPI()
+                //    {
+                //        StatusCode = HttpStatusCodes.NotFound,
+                //        MessageResponse = "Transaction not found"
+                //    };
+                //}
+                IEnumerable<object> groupedStaticsAdmin = Enumerable.Empty<object>();
+                if (req.GroupBy == "Month")
+                {
+                    groupedStaticsAdmin = orders
              .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
              .Select(g => new
              {
                  Name = g.Key, // Month name
-                 OrderCount = storeOrders.Count(o => o.CrDate.ToString("MMM") == g.Key), //package 
-                 OrderCashCount = storeCashOrders.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                 OtherOrderCount = storeOrders.Count(o => o.CrDate.ToString("MMM") == g.Key) - storeCashOrders.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                 TotalTransaction = transactionsStore.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                 TotalAmountFromTransaction = transactionsStore
-                                                .Where(o => o.CrDate.ToString("MMM") == g.Key)
-                                                .Sum(o => o.Amount),
-                 TotalMenu = menusStore.Count(),
-                 TotalProduct = distinctProductIds,
-                 ActualTransactionAmountStore = transfersListToVega
-                                                            .Where(d => d.CrDate.ToString("MMM") == g.Key)
-                                                            .Sum(d => d.Amount)
-                 //PackageCount = packages.Count(o => o.CrDate.ToString("MMM") == g.Key)
+                               //TotalTransactions = transactions.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                               //TotalTransactionsAmount = g.Sum(t => t.Amount),
+                               ////  EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                               //EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                               //OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                               //OrderCash = ordersCash.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                               //OtherOrder = orders.Count(o => o.CrDate.ToString("MMM") == g.Key) - ordersCash.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                               //VegaDepositsAmountFromStore = storeMoneyTransfersListToVega
+                               //                                         .Where(d => d.CrDate.ToString("MMM") == g.Key)
+                               //                                         .Sum(d => d.Amount)
+
+                 TotalOrder = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),  // tong so luong don hang tren SaleType
+                 TotalAmountOrder = g.Sum(d => d.TotalAmount), // tong so tien don hang tren SaleType
+                 TotalOrderCash = ordersCash != null ? ordersCash.Count(o => o.CrDate.ToString("MMM") == g.Key) : 0, //Tong so luong don Cash
+                 TotalAmountCashOrder = ordersCash != null ? ordersCash
+                          .Where(d => d.CrDate.ToString("MMM") == g.Key)
+                          .Sum(d => d.TotalAmount) : 0,                                   //Tong so tien don Cash
+                 TotalOtherOrder = ordersCash != null ? orders.Count(o => o.CrDate.ToString("MMM") == g.Key) - ordersCash.Count(o => o.CrDate.ToString("MMM") == g.Key) : orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //tong so luong don KHAC
+                 TotalAmountOtherOrder = ordersCash != null ? (orders.Where(d => d.CrDate.ToString("MMM") == g.Key)
+                            .Sum(d => d.TotalAmount))
+                          -
+                          (ordersCash.Where(d => d.CrDate.ToString("MMM") == g.Key)
+                            .Sum(d => d.TotalAmount))                           //Tong so tien don KHAC
+                            : (orders.Where(d => d.CrDate.ToString("MMM") == g.Key)
+                            .Sum(d => d.TotalAmount))
+                            ,
+
+                 VegaDepositsAmountFromStore = storeMoneyTransfersListToVega                //Tong tien hoa hong tu cac Store (3%,..)
+                                                        .Where(d => d.CrDate.ToString("MMM") == g.Key)
+                                                        .Sum(d => d.Amount),
+                 VegaDepositsAmountFromCashiers = ordersCash != null ? depositsCashiers                //Tong tien tu cashier background job
+                                                        .Where(d => d.CrDate.ToString("MMM") == g.Key)
+                                                        .Sum(d => d.Amount) : 0,
+                 CashiersHoldFromVega = ordersCash != null ? depositsReturnedFromCashiers                //Tong tien tu cashier background job
+                                                        .Where(d => d.CrDate.ToString("MMM") == g.Key)
+                                                        .Sum(d => d.Amount) : 0,
              }).ToList();
-            return new ResponseAPI
+                }
+                else if (req.GroupBy == "Date")
+                {
+                    //group by date
+                    groupedStaticsAdmin = orders
+                         .GroupBy(t => new
+                         {
+                             Month = t.CrDate.ToString("MMM"),
+                             Year = t.CrDate.Year,
+                             Date = t.CrDate.Date
+                         })
+                         .Select(g => new
+                         {
+                             Month = g.Key.Month,
+                             Year = g.Key.Year,
+                             Date = g.Key.Date,
+                             FormattedDate = g.Key.Date.ToString("dd/MM/yyyy"), // You can customize the date format
+                             TotalOrder = orders.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountOrder = g.Sum(d => d.TotalAmount),
+                             TotalOrderCash = ordersCash.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountCashOrder = ordersCash
+                                      .Where(d => d.CrDate.Date == g.Key.Date)
+                                      .Sum(d => d.TotalAmount),
+                             TotalOtherOrder = orders.Count(o => o.CrDate.Date == g.Key.Date) - ordersCash.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountOtherOrder = (orders.Where(d => d.CrDate.Date == g.Key.Date)
+                                        .Sum(d => d.TotalAmount))
+                                      -
+                                      (ordersCash.Where(d => d.CrDate.Date == g.Key.Date)
+                                        .Sum(d => d.TotalAmount)),
+                             VegaDepositsAmountFromStore = storeMoneyTransfersListToVega
+                                                                    .Where(d => d.CrDate.Date == g.Key.Date)
+                                                                    .Sum(d => d.Amount),
+                             VegaDepositsAmountFromCashiers = depositsCashiers
+                                                                    .Where(d => d.CrDate.Date == g.Key.Date)
+                                                                    .Sum(d => d.Amount),
+                             CashiersHoldFromVega = depositsReturnedFromCashiers                //Tong tien tu cashier background job
+                                                       .Where(d => d.CrDate.Date == g.Key.Date)
+                                                        .Sum(d => d.Amount),
+                         })
+                         .OrderBy(x => x.Date) // Optional: Order by date
+                         .ToList();
+                    // end group by date
+                }
+                else
+                {
+                    throw new BadHttpRequestException("GroupBy should be selects as Date or Month", HttpStatusCodes.BadRequest);
+                }
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = "Get Admin's Dashboard Successfully!",
+                    Data = new
+                    {
+                        AdminBalance = wallet.Balance,
+                        AdminBalanceHistory = wallet.BalanceHistory,
+                        //ActiveUser = accounts,
+                        TotalVcards = vCards.Count(),
+                        groupedStaticsAdmin
+                    }
+
+                };
+            }
+            else if (user.Role.Name == RoleEnum.CashierApp.GetDescriptionFromEnum() || user.Role.Name == RoleEnum.CashierWeb.GetDescriptionFromEnum())
             {
-                StatusCode = HttpStatusCodes.OK,
-                MessageResponse = "Get Store's Dashboard Successfully!",
-                Data = groupedStaticsStore
-            };
-        }
+                if (req.SaleType == "All")
+                {
+                    //Cashiers BEGIN
+                    orders = (await _unitOfWork.GetRepository<Order>()
+                        .GetListAsync(x => x.CrDate >= startDate
+                        && x.CrDate <= endDate
+                        && x.UserId == GetUserIdFromJwt()
+                        && x.Status == OrderStatus.Completed
+                        && (x.SaleType == SaleType.PackageItemCharge || x.SaleType == SaleType.Package || x.SaleType == SaleType.FeeChargeCreate),
+                        null, null)).ToList();
+                    foreach (var order in orders)
+                    {
+                        amount += order.TotalAmount;
+                    }
+                    ordersCash = (await _unitOfWork.GetRepository<Order>()
+                        .GetListAsync(x => x.CrDate >= startDate
+                        && x.CrDate <= endDate
+                        && x.Status == OrderStatus.Completed
+                        && x.UserId == GetUserIdFromJwt()
+                        && (x.SaleType == SaleType.PackageItemCharge || x.SaleType == SaleType.Package || x.SaleType == SaleType.FeeChargeCreate)
+                        && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
+                        null, null)).ToList();
+                    foreach (var order in ordersCash)
+                    {
+                        amountCash += order.TotalAmount;
+                    }
+
+                    ordersFeeCharge = (await _unitOfWork.GetRepository<Order>()
+                        .GetListAsync(x => x.CrDate >= startDate
+                        && x.CrDate <= endDate
+                        && x.UserId == GetUserIdFromJwt()
+                        && x.Status == OrderStatus.Completed
+                        && (x.SaleType == SaleType.FeeChargeCreate),
+                        null, null)).ToList();
+                    var amountFeeCharge = 0;
+                    foreach (var order in ordersFeeCharge)
+                    {
+                        amountFeeCharge += order.TotalAmount;
+                    }
+                    //return new ResponseAPI
+                    //{
+                    //    MessageResponse = "Get Admin dashboard successfully!",
+                    //    StatusCode = HttpStatusCodes.OK,
+                    //    Data = new
+                    //    {
+                    //        AdminBalance = wallet.Balance,
+                    //        AdminBalanceHistory = wallet.BalanceHistory,
+                    //        ActiveUser = accounts,
+                    //        TotalVcards = vCards.Count(),
+                    //        TotalAmountOrder = amount,
+                    //        ChargeFee = amountFeeCharge + amount,
+
+                    //    }
+                    //};
+                    //ADMIN END
+                }
+                else if (req.SaleType == SaleType.Product)
+                {
+                    throw new BadHttpRequestException("Cashier Cannot View Product Statics", HttpStatusCodes.BadRequest);
+                }
+                else
+                {
+                    //cashier
+                    orders = (await _unitOfWork.GetRepository<Order>()
+                       .GetListAsync(x => x.CrDate >= startDate
+                       && x.CrDate <= endDate
+                       && x.Status == OrderStatus.Completed
+                       && x.UserId == GetUserIdFromJwt()
+                       && (x.SaleType == req.SaleType),
+                       null, null)).ToList();
+                    foreach (var order in orders)
+                    {
+                        amount += order.TotalAmount;
+                    }
+                    ordersCash = (await _unitOfWork.GetRepository<Order>()
+                        .GetListAsync(x => x.CrDate >= startDate
+                        && x.CrDate <= endDate
+                        && x.Status == OrderStatus.Completed
+                        && x.UserId == GetUserIdFromJwt()
+                        && (x.SaleType == req.SaleType)
+                        && x.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum(),
+                        null, null)).ToList();
+                    foreach (var order in ordersCash)
+                    {
+                        amountCash += order.TotalAmount;
+                    }
+                    //cashier          
+
+                }
+
+
+                //general
+                //var deposits = await _unitOfWork.GetRepository<StoreMoneyTransfer>()
+                //                          .GetListAsync(x => x.CrDate >= startDate
+                //                                          && x.CrDate <= endDate
+                //                                          && x.Status == OrderStatus.Completed,
+                //                                          null, null);
+                var depositsCashiers = await _unitOfWork.GetRepository<Transaction>()
+                                         .GetListAsync(x => x.CrDate >= startDate
+                                                         && x.CrDate <= endDate
+                                                         && x.Amount > 0
+                                                         && x.UserId == GetUserIdFromJwt()
+                                                         && x.Type == "EndDayCheckWalletCashier"
+                                                         && x.Status == TransactionStatus.Success,
+                                                         null, null);
+
+                var depositsReturnedFromCashiers = await _unitOfWork.GetRepository<Transaction>()
+                                         .GetListAsync(x => x.CrDate >= startDate
+                                                         && x.CrDate <= endDate
+                                                         && x.Amount < 0
+                                                         && x.UserId == GetUserIdFromJwt()
+                                                         && x.Type == "EndDayCheckWalletCashier"
+                                                         && x.Status == TransactionStatus.Success,
+                                                         null, null);
+                ////List<Store> // here i need to make a list for each month, show list of stores  that have desc order from total transaction, show transaction of top 5 store and it's amount 
+                List<StoreMoneyTransfer> storeMoneyTransfersListToVega = new List<StoreMoneyTransfer>();
+                //foreach (var storeTransfer in deposits)
+                //{
+                //    if (storeTransfer.Description.Split(" to ")[1].Trim() == "Vega")
+                //    {
+                //        storeMoneyTransfersListToVega.Add(storeTransfer);
+                //    }
+                //}
+
+                //var packages = await _unitOfWork.GetRepository<Package>().GetListAsync(x => x.CrDate >= startDate
+                //                                           && x.CrDate <= endDate,
+                //                                            null, null);
+                //if (transactions == null || !transactions.Any())
+                //{
+                //    return new ResponseAPI()
+                //    {
+                //        StatusCode = HttpStatusCodes.NotFound,
+                //        MessageResponse = "Transaction not found"
+                //    };
+                //}
+                IEnumerable<object> groupedStaticsAdmin = Enumerable.Empty<object>();
+                if (req.GroupBy == "Month")
+                {
+                    groupedStaticsAdmin = orders
+             .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+             .Select(g => new
+             {
+                 Name = g.Key, // Month name
+                               //TotalTransactions = transactions.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                               //TotalTransactionsAmount = g.Sum(t => t.Amount),
+                               ////  EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                               //EtagCount = etags.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                               //OrderCount = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                               //OrderCash = ordersCash.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                               //OtherOrder = orders.Count(o => o.CrDate.ToString("MMM") == g.Key) - ordersCash.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                               //VegaDepositsAmountFromStore = storeMoneyTransfersListToVega
+                               //                                         .Where(d => d.CrDate.ToString("MMM") == g.Key)
+                               //                                         .Sum(d => d.Amount)
+
+                 TotalOrder = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),  // tong so luong don hang tren SaleType
+                 TotalAmountOrder = g.Sum(d => d.TotalAmount), // tong so tien don hang tren SaleType
+                 TotalOrderCash = ordersCash != null ? ordersCash.Count(o => o.CrDate.ToString("MMM") == g.Key) : 0, //Tong so luong don Cash
+                 TotalAmountCashOrder = ordersCash != null ? ordersCash
+                          .Where(d => d.CrDate.ToString("MMM") == g.Key)
+                          .Sum(d => d.TotalAmount) : 0,                                   //Tong so tien don Cash
+                 TotalOtherOrder = ordersCash != null ? orders.Count(o => o.CrDate.ToString("MMM") == g.Key) - ordersCash.Count(o => o.CrDate.ToString("MMM") == g.Key) : orders.Count(o => o.CrDate.ToString("MMM") == g.Key), //tong so luong don KHAC
+                 TotalAmountOtherOrder = ordersCash != null ? (orders.Where(d => d.CrDate.ToString("MMM") == g.Key)
+                            .Sum(d => d.TotalAmount))
+                          -
+                          (ordersCash.Where(d => d.CrDate.ToString("MMM") == g.Key)
+                            .Sum(d => d.TotalAmount))                           //Tong so tien don KHAC
+                            : (orders.Where(d => d.CrDate.ToString("MMM") == g.Key)
+                            .Sum(d => d.TotalAmount))
+                            ,
+
+                 //VegaDepositsAmountFromStore = storeMoneyTransfersListToVega                //Tong tien hoa hong tu cac Store (3%,..)
+                 //                                       .Where(d => d.CrDate.ToString("MMM") == g.Key)
+                 //                                       .Sum(d => d.Amount),
+                 VegaDepositsAmountFromCashiers = ordersCash != null ? depositsCashiers                //Tong tien tu cashier background job
+                                                        .Where(d => d.CrDate.ToString("MMM") == g.Key)
+                                                        .Sum(d => d.Amount) : 0,
+                 CashiersHoldFromVega = ordersCash != null ? depositsReturnedFromCashiers                //Tong tien tu cashier background job
+                                                        .Where(d => d.CrDate.ToString("MMM") == g.Key)
+                                                        .Sum(d => d.Amount) : 0,
+             }).ToList();
+                }
+                else if (req.GroupBy == "Date")
+                {
+                    //group by date
+                    groupedStaticsAdmin = orders
+                         .GroupBy(t => new
+                         {
+                             Month = t.CrDate.ToString("MMM"),
+                             Year = t.CrDate.Year,
+                             Date = t.CrDate.Date
+                         })
+                         .Select(g => new
+                         {
+                             Month = g.Key.Month,
+                             Year = g.Key.Year,
+                             Date = g.Key.Date,
+                             FormattedDate = g.Key.Date.ToString("dd/MM/yyyy"), // You can customize the date format
+                             TotalOrder = orders.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountOrder = g.Sum(d => d.TotalAmount),
+                             TotalOrderCash = ordersCash.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountCashOrder = ordersCash
+                                      .Where(d => d.CrDate.Date == g.Key.Date)
+                                      .Sum(d => d.TotalAmount),
+                             TotalOtherOrder = orders.Count(o => o.CrDate.Date == g.Key.Date) - ordersCash.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountOtherOrder = (orders.Where(d => d.CrDate.Date == g.Key.Date)
+                                        .Sum(d => d.TotalAmount))
+                                      -
+                                      (ordersCash.Where(d => d.CrDate.Date == g.Key.Date)
+                                        .Sum(d => d.TotalAmount)),
+                             VegaDepositsAmountFromStore = storeMoneyTransfersListToVega
+                                                                    .Where(d => d.CrDate.Date == g.Key.Date)
+                                                                    .Sum(d => d.Amount),
+                             VegaDepositsAmountFromCashiers = depositsCashiers
+                                                                    .Where(d => d.CrDate.Date == g.Key.Date)
+                                                                    .Sum(d => d.Amount),
+                             CashiersHoldFromVega = depositsReturnedFromCashiers                //Tong tien tu cashier background job
+                                                       .Where(d => d.CrDate.Date == g.Key.Date)
+                                                        .Sum(d => d.Amount),
+                         })
+                         .OrderBy(x => x.Date) // Optional: Order by date
+                         .ToList();
+                    // end group by date
+                }
+                else
+                {
+                    throw new BadHttpRequestException("GroupBy should be selects as Date or Month", HttpStatusCodes.BadRequest);
+                }
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = "Get Admin's Dashboard Successfully!",
+                    Data = new
+                    {
+                        AdminBalance = wallet.Balance,
+                        AdminBalanceHistory = wallet.BalanceHistory,
+                        //ActiveUser = accounts,
+                        TotalVcards = vCards.Count(),
+                        groupedStaticsAdmin
+                    }
+
+                };
+            }
+            else
+            {
+                throw new BadHttpRequestException("Invalid Role Name", HttpStatusCodes.BadRequest);
+            }
+
+  
+            }
+                
         public async Task AddRole()
         {
             var role = await _unitOfWork.GetRepository<Role>().GetListAsync();

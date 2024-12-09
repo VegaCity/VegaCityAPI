@@ -15,5 +15,7 @@ namespace VegaCityApp.API.Payload.Request.Admin
         [DefaultValue("All")]
         public string? SaleType { get; set; }  //12thang
 
+        [DefaultValue("Month")]
+        public string? GroupBy { get; set; } = "Month";
     }
 }
