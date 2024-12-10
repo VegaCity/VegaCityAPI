@@ -28,7 +28,7 @@ namespace VegaCityApp.API.Payload.Request.Admin
         
         // public String? Month { get; set; }
         [DefaultValue("All")]
-        public string? SaleType { get; set; }  //service / product
+        public string? StoreType { get; set; }  //service / product
 
         [DefaultValue("Month")]
         public string? GroupBy { get; set; } = "Month";

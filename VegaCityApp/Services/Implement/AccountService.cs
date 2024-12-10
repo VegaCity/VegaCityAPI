@@ -1471,6 +1471,7 @@ namespace VegaCityApp.Service.Implement
                 {
                     groupedStaticsAdmin = orders
                         .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+                        .OrderBy(g => DateTime.ParseExact(g.Key, "MMM", System.Globalization.CultureInfo.InvariantCulture))
                         .Select( g => new { 
                             Name = g.Key, 
                             //Orders
@@ -1668,7 +1669,9 @@ namespace VegaCityApp.Service.Implement
                 IEnumerable<object> groupedStaticsAdmin = Enumerable.Empty<object>();
                 if (req.GroupBy == "Month")
                 {
-                    groupedStaticsAdmin = orders.GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+                    groupedStaticsAdmin = orders
+                        .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+                        .OrderBy(g => DateTime.ParseExact(g.Key, "MMM", System.Globalization.CultureInfo.InvariantCulture))
                         .Select(g => new {
                                 Name = g.Key,
                                 TotalOrder = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),  // tong so luong don hang tren SaleType
@@ -1864,6 +1867,7 @@ namespace VegaCityApp.Service.Implement
                 {
                     groupedStaticsAdmin = orders
                         .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+                        .OrderBy(g => DateTime.ParseExact(g.Key, "MMM", System.Globalization.CultureInfo.InvariantCulture))
                         .Select(g => new {
                             Name = g.Key,
                             TotalOrder = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),  // tong so luong don hang tren SaleType
@@ -2013,7 +2017,9 @@ namespace VegaCityApp.Service.Implement
                 IEnumerable<object> groupedStaticsAdmin = Enumerable.Empty<object>();
                 if (req.GroupBy == "Month")
                 {
-                    groupedStaticsAdmin = orders.GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+                    groupedStaticsAdmin = orders
+                        .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
+                        .OrderBy(g => DateTime.ParseExact(g.Key, "MMM", System.Globalization.CultureInfo.InvariantCulture))
                         .Select(g => new {
                             Name = g.Key,
                             //Orders
@@ -2093,8 +2099,8 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = "Get Store's Dashboard Successfully!",
                     Data = new
                     {
-                        AdminBalance = wallet.Balance,
-                        AdminBalanceHistory = wallet.BalanceHistory,
+                        StoreBalance = wallet.Balance,
+                        StoreBalanceHistory = wallet.BalanceHistory,
                         //ActiveUser = accounts,
                         TotalVcards = vCards.Count(),
                         groupedStaticsAdmin
@@ -2135,39 +2141,109 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = "Start date must be before the end date.",
                 };
             }
+            List<Order> topStores = new List<Order>();
+            // Validate StoreType
+            
+           
 
-            // Validate SaleType
-            if (req.SaleType != "All" && req.SaleType != "Service" && req.SaleType != "Product")
+            // Validate GroupBy
+            if (req.GroupBy != "Month" && req.GroupBy != "Date")
             {
                 return new ResponseAPI
                 {
                     StatusCode = HttpStatusCodes.BadRequest,
-                    MessageResponse = "Invalid SaleType. Must be 'All', 'Service', or 'Product'.",
+                    MessageResponse = "GroupBy should be 'Date' or 'Month'.",
                 };
             }
-
-            var topStores = await _unitOfWork.GetRepository<Order>()
-                .GetListAsync(
-                    predicate: x => x.CrDate >= startDate
-                                 && x.CrDate <= endDate
-                                 && x.Status == OrderStatus.Completed
-                                 && x.SaleType == SaleType.Product,
-                                 //&& (req.SaleType == "All" || x.SaleType == req.SaleType),
-                    include: z => z.Include(a => a.Store)
-                );
-
-            var topStoreTransactions = topStores
-                .GroupBy(o => o.Store.Id)
-                .Select(g => new
+            // Query to get orders with store information
+            if (req.StoreType == "All")
+            {
+                 topStores = (await _unitOfWork.GetRepository<Order>()
+               .GetListAsync(
+                   predicate: x => x.CrDate >= startDate
+                                && x.CrDate <= endDate
+                                && x.Status == OrderStatus.Completed
+                                && (x.SaleType == SaleType.Product),
+                   include: z => z.Include(a => a.Store)
+               )).ToList();
+            }
+            else
+            {
+                if (!Enum.TryParse(typeof(StoreTypeEnum), req.StoreType, true, out _))
                 {
-                    StoreId = g.Key,
-                    StoreName = g.First().Store.Name, // Assuming Store has a Name property
-                    TotalTransactions = g.Count(),
-                    TotalAmount = g.Sum(o => o.TotalAmount)
-                })
-                .OrderByDescending(x => x.TotalAmount)
-                .Take(5)
-                .ToList();
+                    throw new BadHttpRequestException(StoreMessage.InvalidStoreType, HttpStatusCodes.BadRequest);
+                }
+                // Parse the requested StoreType
+                var storeType = (StoreTypeEnum)Enum.Parse(typeof(StoreTypeEnum), req.StoreType, true);
+
+                topStores = (await _unitOfWork.GetRepository<Order>()
+                    .GetListAsync(
+                        predicate: x => x.CrDate >= startDate
+                                     && x.CrDate <= endDate
+                                     && x.Status == OrderStatus.Completed
+                                     && (x.SaleType == SaleType.Product)
+                                     && x.Store != null && (int)x.Store.StoreType == (int)storeType,
+                        include: z => z.Include(a => a.Store)
+                    )).ToList();
+            }
+
+            //
+            IEnumerable<object> topStoreTransactions;
+
+            if (req.GroupBy == "Month")
+            {
+                topStoreTransactions = topStores
+                    .GroupBy(t => t.CrDate.ToString("MMM"))
+                    .OrderBy(g => DateTime.ParseExact(g.Key, "MMM", System.Globalization.CultureInfo.InvariantCulture))
+                     .Select(g => new
+                      {
+                        Name = g.Key,
+                        TopStores = g.Where(o => o.Store != null) 
+                            .GroupBy(o => o.Store.Id)
+                            .Select(storeGroup => new
+                            {
+                                StoreId = storeGroup.Key,
+                                StoreName = storeGroup.First().Store.Name,
+                                TotalTransactions = storeGroup.Count(),
+                                TotalAmount = storeGroup.Sum(o => o.TotalAmount)
+                            })
+                            .OrderByDescending(x => x.TotalAmount)
+                            .Take(5)
+                            .ToList()
+                    })
+                    .ToList();
+            }
+            else // Date grouping
+            {
+                topStoreTransactions = topStores
+                    .GroupBy(t => new
+                    {
+                        Month = t.CrDate.ToString("MMM"),
+                        Year = t.CrDate.Year,
+                        Date = t.CrDate.Date
+                    })
+                    .Select(g => new
+                    {
+                        Month = g.Key.Month,
+                        Year = g.Key.Year,
+                        Date = g.Key.Date,
+                        FormattedDate = g.Key.Date.ToString("dd/MM/yyyy"),
+                        TopStores = g.Where(o => o.Store != null) // Add null check
+                            .GroupBy(o => o.Store.Id)
+                            .Select(storeGroup => new
+                            {
+                                StoreId = storeGroup.Key,
+                                StoreName = storeGroup.First().Store.Name,
+                                TotalTransactions = storeGroup.Count(),
+                                TotalAmount = storeGroup.Sum(o => o.TotalAmount)
+                            })
+                            .OrderByDescending(x => x.TotalAmount)
+                            .Take(5)
+                            .ToList()
+                    })
+                    .OrderBy(x => x.Date)
+                    .ToList();
+            }
 
             return new ResponseAPI
             {
