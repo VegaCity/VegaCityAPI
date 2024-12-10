@@ -2204,6 +2204,8 @@ namespace VegaCityApp.Service.Implement
                             {
                                 StoreId = storeGroup.Key,
                                 StoreName = storeGroup.First().Store.Name,
+                                StoreEmail = storeGroup.First().Store.Email,
+                                //StoreImage = storeGroup.First().Store.UserStoreMappings.SingleOrDefault().User.ImageUrl,
                                 TotalTransactions = storeGroup.Count(),
                                 TotalAmount = storeGroup.Sum(o => o.TotalAmount)
                             })
@@ -2388,9 +2390,9 @@ namespace VegaCityApp.Service.Implement
                 {
                     storeType = StoreTypeEnum.Other.GetDescriptionFromEnum();
                 }
-                else if (store.StoreType == (int)StoreTypeEnum.Clothing)
+                else if (store.StoreType == (int)StoreTypeEnum.Product)
                 {
-                    storeType = StoreTypeEnum.Clothing.GetDescriptionFromEnum();
+                    storeType = StoreTypeEnum.Product.GetDescriptionFromEnum();
                 }
             }
             return new ResponseAPI()

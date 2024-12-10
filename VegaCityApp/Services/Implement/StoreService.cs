@@ -217,9 +217,9 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     storeType = StoreTypeEnum.Other.GetDescriptionFromEnum();
                 }
-                else if (store.StoreType == (int)StoreTypeEnum.Clothing)
+                else if (store.StoreType == (int)StoreTypeEnum.Product)
                 {
-                    storeType = StoreTypeEnum.Clothing.GetDescriptionFromEnum();
+                    storeType = StoreTypeEnum.Product.GetDescriptionFromEnum();
                 }
             }
             return new ResponseAPI()

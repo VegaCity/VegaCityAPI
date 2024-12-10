@@ -6,7 +6,7 @@ namespace VegaCityApp.API.Enums
     public enum StoreTypeEnum
     {
         Food = 0,
-        Clothing = 1,
+        Product = 1,
         Service = 2,
         Other = 3
     }
@@ -15,7 +15,7 @@ namespace VegaCityApp.API.Enums
         public static readonly int[] allowedStoreTypes =
         {
             (int)StoreTypeEnum.Food,
-            (int)StoreTypeEnum.Clothing,
+            (int)StoreTypeEnum.Product,
             (int) StoreTypeEnum.Service,
             (int) StoreTypeEnum.Other
         };
