@@ -231,6 +231,7 @@ namespace VegaCityApp.API.Services.Implement
                 predicate: x => x.Id == PackageId && x.Deflag == false,
                 include: package => package.Include(a => a.PackageDetails).ThenInclude(w => w.WalletType)
                                            .Include(b => b.PackageOrders)
+                                           .Include(z => z.Zone)
             ) ?? throw new BadHttpRequestException(PackageMessage.NotFoundPackage, HttpStatusCodes.NotFound);
 
             return new ResponseAPI<Package>()
