@@ -212,8 +212,7 @@ namespace VegaCityApp.API.Services.Implement
                     {
                         foreach (var item in admin.Wallets)
                         {
-                            item.Balance += wallet.Balance; //wallet admin
-                            wallet.Balance = 0; //wallet cashier
+                            
                             var transaction = new Transaction
                             {
                                 Id = Guid.NewGuid(),
@@ -244,7 +243,10 @@ namespace VegaCityApp.API.Services.Implement
                                 UpsDate = TimeUtils.GetCurrentSEATime()
                             };
                             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionHistory);
-
+                            //here
+                            item.Balance += wallet.Balance; //wallet admin
+                            wallet.Balance = 0; //wallet cashier
+                            //
                             item.BalanceHistory += wallet.BalanceHistory; //wallet admin
                             wallet.BalanceHistory = 0; //wallet cashier
                             item.UpsDate = TimeUtils.GetCurrentSEATime();

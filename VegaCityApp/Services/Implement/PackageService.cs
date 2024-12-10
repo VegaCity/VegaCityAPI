@@ -332,7 +332,7 @@ namespace VegaCityApp.API.Services.Implement
                                 CrDate = TimeUtils.GetCurrentSEATime(),
                                 UpsDate = TimeUtils.GetCurrentSEATime(),
                                 FinalAmount = 50000,
-                                Name = "CardPayment",
+                                Name = PaymentTypeEnum.QRCode.GetDescriptionFromEnum(),
                                 OrderId = newChargeFeeOderPAID.Id,
                                 Status = PaymentStatus.Completed,
                             };
@@ -435,7 +435,7 @@ namespace VegaCityApp.API.Services.Implement
                                 CrDate = TimeUtils.GetCurrentSEATime(),
                                 UpsDate = TimeUtils.GetCurrentSEATime(),
                                 FinalAmount = 50000,
-                                Name = "CardPayment",
+                                Name = PaymentTypeEnum.QRCode.GetDescriptionFromEnum(),
                                 OrderId = newChargeFeeOder.Id,
                                 Status = PaymentStatus.Pending
                             };
