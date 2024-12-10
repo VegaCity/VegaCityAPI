@@ -143,6 +143,14 @@ namespace VegaCityApp.API.Controllers.Admin
             var response = await _service.GetChartByDuration(req);
             return Ok(response);
         }
+        [HttpPost(UserEndpoint.GetTopSaleStore)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp, RoleEnum.Store)]
+        public async Task<IActionResult> GetTopSaleStore(TopSaleStore req)
+        {
+            var response = await _service.GetTopSaleStore(req);
+            return Ok(response);
+        }
         [HttpPost(UserEndpoint.ReAssignEmail)]
         [ProducesResponseType(typeof(string), HttpStatusCodes.OK)]
         [CustomAuthorize(RoleEnum.Admin)]

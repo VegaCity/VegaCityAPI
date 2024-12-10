@@ -2103,7 +2103,82 @@ namespace VegaCityApp.Service.Implement
                 };
             }
         }
-                
+
+        public async Task<ResponseAPI> GetTopSaleStore(TopSaleStore req)
+        {
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == GetUserIdFromJwt() && x.Role.Name == GetRoleFromJwt(),
+                                                                                    include: y => y.Include(n => n.Role)) ??
+                                                                                    throw new BadHttpRequestException("User Not Found", HttpStatusCodes.NotFound);
+
+            // Date validation remains the same
+            if (!DateTime.TryParse(req.StartDate + " 00:00:00.000Z", out DateTime startDate))
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = "Invalid start date format.",
+                };
+            }
+            if (!DateTime.TryParse(req.EndDate + " 23:59:59.999Z", out DateTime endDate))
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = "Invalid end date format.",
+                };
+            }
+            if (startDate > endDate)
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = "Start date must be before the end date.",
+                };
+            }
+
+            // Validate SaleType
+            if (req.SaleType != "All" && req.SaleType != "Service" && req.SaleType != "Product")
+            {
+                return new ResponseAPI
+                {
+                    StatusCode = HttpStatusCodes.BadRequest,
+                    MessageResponse = "Invalid SaleType. Must be 'All', 'Service', or 'Product'.",
+                };
+            }
+
+            var topStores = await _unitOfWork.GetRepository<Order>()
+                .GetListAsync(
+                    predicate: x => x.CrDate >= startDate
+                                 && x.CrDate <= endDate
+                                 && x.Status == OrderStatus.Completed
+                                 && x.SaleType == SaleType.Product,
+                                 //&& (req.SaleType == "All" || x.SaleType == req.SaleType),
+                    include: z => z.Include(a => a.Store)
+                );
+
+            var topStoreTransactions = topStores
+                .GroupBy(o => o.Store.Id)
+                .Select(g => new
+                {
+                    StoreId = g.Key,
+                    StoreName = g.First().Store.Name, // Assuming Store has a Name property
+                    TotalTransactions = g.Count(),
+                    TotalAmount = g.Sum(o => o.TotalAmount)
+                })
+                .OrderByDescending(x => x.TotalAmount)
+                .Take(5)
+                .ToList();
+
+            return new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = "Get Top 5 Stores Successfully!",
+                Data = new
+                {
+                    TopStores = topStoreTransactions
+                }
+            };
+        }
         public async Task AddRole()
         {
             var role = await _unitOfWork.GetRepository<Role>().GetListAsync();
