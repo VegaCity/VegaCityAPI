@@ -419,7 +419,7 @@ namespace VegaCityApp.API.Services.Implement
                         MarketZoneId = order.User.MarketZoneId,
                         PackageOrderId = (Guid)order.PackageOrderId,
                         IsIncrease = true,
-                        Status = TransactionStatus.Success.GetDescriptionFromEnum(),
+                        Status = OrderStatus.Completed,
                         TransactionId = transactionCharge.Id,
                     };
                     await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(deposit);
@@ -576,7 +576,7 @@ namespace VegaCityApp.API.Services.Implement
                         MarketZoneId = order.User.MarketZoneId,
                         PackageOrderId = (Guid)order.PackageOrderId,
                         IsIncrease = true,
-                        Status = TransactionStatus.Success.GetDescriptionFromEnum(),
+                        Status = OrderStatus.Completed,
                         TransactionId = transactionCharge.Id,
                     };
                     await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(deposit);
@@ -1767,7 +1767,7 @@ namespace VegaCityApp.API.Services.Implement
                         MarketZoneId = order.User.MarketZoneId,
                         PackageOrderId = (Guid)order.PackageOrderId,
                         IsIncrease = true,
-                        Status = TransactionStatus.Success.GetDescriptionFromEnum(),
+                        Status = OrderStatus.Completed,
                         TransactionId = transactionCharge.Id,
                     };
                     await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(deposit);
@@ -1926,7 +1926,7 @@ namespace VegaCityApp.API.Services.Implement
                         MarketZoneId = order.User.MarketZoneId,
                         PackageOrderId = (Guid)order.PackageOrderId,
                         IsIncrease = true,
-                        Status = TransactionStatus.Success.GetDescriptionFromEnum(),
+                        Status = OrderStatus.Completed,
                         TransactionId = transactionCharge.Id,
                     };
                     await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(deposit);
