@@ -894,6 +894,8 @@ namespace VegaCityApp.Domain.Models
                     .IsUnicode(false)
                     .HasColumnName("CCCD_Passport");
 
+                entity.Property(e => e.CountWrongPw).HasColumnName("CountWrongPW");
+
                 entity.Property(e => e.CrDate)
                     .HasColumnType("datetime")
                     .HasColumnName("crDate");

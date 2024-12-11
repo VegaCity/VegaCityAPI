@@ -164,6 +164,12 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.InvalidEmail
                 };
             }
+            var userBlocked = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
+                predicate: x => x.Email == req.Email && x.Status == (int)UserStatusEnum.Blocked );
+            if (userBlocked != null)
+            {
+                throw new BadHttpRequestException("This account has been blocked, contact Admin to solve", HttpStatusCodes.BadRequest);
+            }
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
                 predicate: x => x.Email == req.Email && x.Status == (int)UserStatusEnum.Active,
                 include: User => User.Include(y => y.Role));
@@ -220,6 +226,9 @@ namespace VegaCityApp.Service.Implement
                             _unitOfWork.GetRepository<UserRefreshToken>().UpdateAsync(refreshToken);
                             tokenRefresh = refreshToken.Token;
                         }
+                        user.CountWrongPw = 0;
+                        _unitOfWork.GetRepository<User>().UpdateAsync(user);
+                        
                         return await _unitOfWork.CommitAsync() > 0 ? new LoginResponse
                         {
                             StatusCode = HttpStatusCodes.OK,
@@ -242,11 +251,24 @@ namespace VegaCityApp.Service.Implement
                             MessageResponse = UserMessage.SaveRefreshTokenFail
                         };
                     }
-                    return new LoginResponse
+                    else
                     {
-                        StatusCode = HttpStatusCodes.BadRequest,
-                        MessageResponse = UserMessage.WrongPassword
-                    };
+                        user.CountWrongPw += 1;
+                        if (user.CountWrongPw == 5)
+                        {
+                            user.Status = (int)UserStatusEnum.Blocked;
+                        }
+
+                            _unitOfWork.GetRepository<User>().UpdateAsync(user);
+                        await _unitOfWork.CommitAsync();
+                        
+                        throw new BadHttpRequestException("Wrong Password " + user.CountWrongPw + " times.", HttpStatusCodes.BadRequest);
+                    }
+                    //return new LoginResponse
+                    //{
+                    //    StatusCode = HttpStatusCodes.BadRequest,
+                    //    MessageResponse = UserMessage.WrongPassword
+                    //};
                 case (int)UserStatusEnum.PendingVerify:
                     return new LoginResponse
                     {
@@ -478,7 +500,7 @@ namespace VegaCityApp.Service.Implement
             var user = await _unitOfWork.GetRepository<User>()
                 .SingleOrDefaultAsync(predicate: x => x.Email == req.Email.Trim()
                                               && x.MarketZoneId == req.apiKey
-                                              && x.Status == (int)UserStatusEnum.Active, include: user => user.Include(x => x.Role));
+                                              && x.Status == (int)UserStatusEnum.Active || x.Status == (int)UserStatusEnum.Blocked, include: user => user.Include(x => x.Role));
             if (user == null)
             {
                 return new ResponseAPI
@@ -546,32 +568,52 @@ namespace VegaCityApp.Service.Implement
         {
             Guid marketZoneId = GetMarketZoneIdFromJwt();
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == userId
-            && x.Status == (int)UserStatusEnum.PendingVerify && x.MarketZoneId == marketZoneId);
+            && x.MarketZoneId == marketZoneId);
             if (user == null)
             {
                 return UserMessage.UserNotFound;
             }
-            user.Email = req.Email;
-            user.Password = PasswordUtil.GenerateCharacter(10);
-            user.IsChange = false;
-            _unitOfWork.GetRepository<User>().UpdateAsync(user);
-            //send mail
-            try
+            if (user.Status == (int)UserStatusEnum.Active || user.Status == (int)UserStatusEnum.Blocked)
             {
-                var subject = UserMessage.YourPasswordToChange;
-                var body = $"<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;'>" +
-                                               $"<h1 style='color: #007bff;'>Welcome to our Vega City!</h1>" +
-                                               $"<p>Thanks for signing up our services.</p>" +
-                                               $"<p><strong>This is your password to change: {user.Password}</strong></p>" +
-                                               $"<p>Please access this website to change password: <a href='https://vegacity.id.vn/change-password'>Link Access !!</a></p>" +
-                                           $"</div>"; ;
-                await MailUtil.SendMailAsync(user.Email, subject, body);
+                user.Password = PasswordUtil.GenerateCharacter(10);
+                user.IsChange = false;
+
+                if (user.Status == (int)UserStatusEnum.Blocked)
+                {
+                    user.Status = (int)UserStatusEnum.Active;
+                    user.CountWrongPw = 0;
+                }
+                _unitOfWork.GetRepository<User>().UpdateAsync(user);
+
+                try
+                {
+                    //send mail
+                    var subject = UserMessage.YourPasswordToChange;
+                    var body = $"<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;'>" +
+                                                   $"<h1 style='color: #007bff;'>Welcome to our Vega City!</h1>" +
+                                                   $"<p>Thanks for signing up our services.</p>" +
+                                                   $"<p><strong>This is your password to change: {user.Password}</strong></p>" +
+                                                   $"<p>Please access this website to change password: <a href='https://vegacity.id.vn/change-password'>Link Access !!</a></p>" +
+                                               $"</div>"; ;
+                    await MailUtil.SendMailAsync(user.Email, subject, body);
+                    await _unitOfWork.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+                    return UserMessage.SendMailFail;
+                }
+            }
+            else if (user.Status == (int)UserStatusEnum.PendingVerify)
+            {
+                user.Email = req.Email;
+                //user.Password = PasswordUtil.GenerateCharacter(10);
+                //user.IsChange = false;
+                _unitOfWork.GetRepository<User>().UpdateAsync(user);
                 await _unitOfWork.CommitAsync();
+
             }
-            catch (Exception ex)
-            {
-                return UserMessage.SendMailFail;
-            }
+            else
+                throw new BadHttpRequestException("Invalid User Status", HttpStatusCodes.BadRequest);
             return UserMessage.ReAssignEmailSuccess;
         }
         #endregion
