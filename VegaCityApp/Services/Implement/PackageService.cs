@@ -48,6 +48,20 @@ namespace VegaCityApp.API.Services.Implement
                 ?? throw new BadHttpRequestException(ZoneMessage.SearchZoneFail, HttpStatusCodes.NotFound);
             var checkWalletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(predicate: x => x.Id == req.WalletTypeId)
                 ?? throw new BadHttpRequestException(WalletTypeMessage.NotFoundWalletType, HttpStatusCodes.NotFound);
+
+            if (EnumUtil.ParseEnum<PackageTypeEnum>(req.Type).Equals(PackageTypeEnum.SpecificPackage)){
+                if(req.Price + (int)(req.Price * 20 / 100) != req.MoneyStart)
+                {
+                    throw new BadHttpRequestException("Money Start Must Be Equal To 20% of Specific Package's Price", HttpStatusCodes.BadRequest);
+                }
+            }
+            else
+            {
+                if (req.Price + (int)(req.Price * 5 / 100) != req.MoneyStart)
+                {
+                    throw new BadHttpRequestException("Money Start Must Be Equal To 5% of Service Package's Price", HttpStatusCodes.BadRequest);
+                }
+            }
             //-------------------------------------
             var newPackage = new Package()
             {

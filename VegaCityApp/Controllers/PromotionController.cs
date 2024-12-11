@@ -47,6 +47,13 @@ namespace VegaCityApp.API.Controllers
             var result = await _promotionService.SearchPromotions(size, page);
             return Ok(result);
         }
+        [HttpGet(PromotionEndPoint.SearchAllPromotionsForCustomer)]
+        [ProducesResponseType(typeof(ResponseAPI<IEnumerable<GetZoneResponse>>), HttpStatusCodes.OK)]
+        public async Task<IActionResult> SearchPromotionsForCustomer([FromQuery] int size = 10, [FromQuery] int page = 1)
+        {
+            var result = await _promotionService.SearchPromotionsForCustomer(size, page);
+            return Ok(result);
+        }
         [HttpGet(PromotionEndPoint.SearchPromotion)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
         public async Task<IActionResult> SearchPromotion(Guid id)

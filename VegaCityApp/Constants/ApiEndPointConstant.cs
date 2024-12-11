@@ -215,6 +215,7 @@ public static class ApiEndPointConstant
         public const string CreatePromotion = ApiEndpoint + "/promotion";
         public const string UpdatePromotion = ApiEndpoint + "/promotion/{id}";
         public const string SearchAllPromotions = ApiEndpoint + "/promotions";
+        public const string SearchAllPromotionsForCustomer = ApiEndpoint + "/customer/promotions";
         public const string SearchPromotion = ApiEndpoint + "/promotion/{id}";
         public const string DeletePromotion = ApiEndpoint + "/promotion/{id}";
     }

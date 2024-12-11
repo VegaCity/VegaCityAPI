@@ -226,6 +226,60 @@ namespace VegaCityApp.API.Services.Implement
             }
 
         }
+
+        public async Task<ResponseAPI<IEnumerable<GetListPromotionResponse>>> SearchPromotionsForCustomer(int size, int page)
+        {
+            try
+            {
+                IPaginate<GetListPromotionResponse> data = await _unitOfWork.GetRepository<Promotion>().GetPagingListAsync(
+                selector: x => new GetListPromotionResponse()
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    MarketZoneId = x.MarketZoneId,
+                    Description = x.Description,
+                    DiscountPercent = x.DiscountPercent,
+                    MaxDiscount = x.MaxDiscount,
+                    RequireAmount = x.RequireAmount,
+                    PromotionCode = x.PromotionCode,
+                    Quantity = x.Quantity,
+                    Status = x.Status,
+                    StartDate = x.StartDate,
+                    EndDate = x.EndDate,
+                },
+                predicate: z => z.Status == (int)PromotionStatusEnum.Automation && z.MarketZoneId == Guid.Parse(EnvironmentVariableConstant.marketZoneId),
+                                               
+                page: page,
+                size: size,
+                orderBy: x => x.OrderByDescending(z => z.Name)
+                );
+                return new ResponseAPI<IEnumerable<GetListPromotionResponse>>
+                {
+                    StatusCode = HttpStatusCodes.OK,
+                    MessageResponse = PromotionMessage.GetPromotionsSuccessfully,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    },
+                    Data = data.Items,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI<IEnumerable<GetListPromotionResponse>>
+                {
+                    MessageResponse = PromotionMessage.GetPromotionsFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null,
+                    MetaData = null
+                };
+            }
+
+        }
+
         public async Task<ResponseAPI> SearchPromotion(Guid promotionId)
         {
             var promotion = await _unitOfWork.GetRepository<Promotion>().SingleOrDefaultAsync(

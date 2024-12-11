@@ -7,7 +7,7 @@
         public string? ImageUrl { get; set; }
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
-        public int Price { get; set; }
+        public int Price { get; set; } //20%
         public int Duration { get; set; }
         public int MoneyStart { get; set; }
         public Guid WalletTypeId { get; set; }
