@@ -172,7 +172,8 @@ namespace VegaCityApp.Service.Implement
             }
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
                 predicate: x => x.Email == req.Email && x.Status == (int)UserStatusEnum.Active,
-                include: User => User.Include(y => y.Role));
+                include: User => User.Include(y => y.Role)
+                                      .Include(t => t.UserStoreMappings).ThenInclude(s => s.Store));
             if (user == null)
             {
                 return new LoginResponse
@@ -238,6 +239,7 @@ namespace VegaCityApp.Service.Implement
                                 UserId = user.Id,
                                 Email = user.Email,
                                 RoleName = user.Role.Name,
+                                StoreType = (int)user.UserStoreMappings.SingleOrDefault().Store.StoreType,
                                 RoleId = user.Role.Id,
                                 Tokens = new Tokens
                                 {

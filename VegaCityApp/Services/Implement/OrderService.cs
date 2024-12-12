@@ -1486,5 +1486,29 @@ namespace VegaCityApp.API.Services.Implement
             }
             await _unitOfWork.CommitAsync();
         }
+
+        public async Task CheckRentingOrder()
+        {
+            var orders = (await _unitOfWork.GetRepository<Order>().GetListAsync(predicate: x => x.Status == OrderStatus.Renting,
+                                                                                 include: y => y.Include(d => d.OrderDetails))).ToList();
+            foreach(var order in orders)
+            {
+                if(order.EndRent <= TimeUtils.GetCurrentSEATime())
+                {
+                    order.Status = OrderStatus.Completed;
+                    order.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+
+                    foreach(var product in order.OrderDetails)
+                    {
+                        var productRenting = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == product.ProductId);
+                        productRenting.Quantity += product.Quantity;
+                        _unitOfWork.GetRepository<Product>().UpdateAsync(productRenting);
+
+                    }
+                }
+            }
+            await _unitOfWork.CommitAsync();
+        }
     }
 }

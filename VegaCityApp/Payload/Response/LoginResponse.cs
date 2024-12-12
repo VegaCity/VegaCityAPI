@@ -22,5 +22,6 @@ namespace VegaCityApp.API.Payload.Response
         public string RoleName { get; set; }
         public Guid RoleId { get; set; }
         public  Tokens Tokens { get; set; }
+        public int? StoreType { get; set; }
     }
 }
