@@ -239,7 +239,7 @@ namespace VegaCityApp.Service.Implement
                                 UserId = user.Id,
                                 Email = user.Email,
                                 RoleName = user.Role.Name,
-                                StoreType = (int)user.UserStoreMappings.SingleOrDefault().Store.StoreType,
+                                StoreType = user.StoreId != null ? (int)user.UserStoreMappings.SingleOrDefault().Store.StoreType : -1 ,
                                 RoleId = user.Role.Id,
                                 Tokens = new Tokens
                                 {
