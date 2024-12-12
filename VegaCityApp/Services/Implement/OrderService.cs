@@ -1489,8 +1489,8 @@ namespace VegaCityApp.API.Services.Implement
 
         public async Task CheckRentingOrder()
         {
-            var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(predicate: x => x.Status == OrderStatus.Renting && x.EndRent != null && x.StartRent != null);
-            //  include: y => y.Include(d => d.OrderDetails)
+            var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(predicate: x => x.Status == OrderStatus.Renting && x.EndRent != null && x.StartRent != null,
+                                                                                 include: y => y.Include(d => d.OrderDetails));
             foreach (var order in orders)
             {
                 if(order.EndRent <= TimeUtils.GetCurrentSEATime())
@@ -1499,10 +1499,14 @@ namespace VegaCityApp.API.Services.Implement
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
 
-                    var orderDetail = await _unitOfWork.GetRepository<OrderDetail>().SingleOrDefaultAsync(predicate: x => x.OrderId == order.Id);
-                    var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == orderDetail.ProductId);
-                    product.Quantity += orderDetail.Quantity;
-                    _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+                    var orderDetails = await _unitOfWork.GetRepository<OrderDetail>().GetListAsync(predicate: x => x.OrderId == order.Id);
+
+                    foreach(var detail in orderDetails)
+                    {
+                        var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == detail.ProductId);
+                        product.Quantity += detail.Quantity;
+                        _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+                    }
                     await _unitOfWork.CommitAsync();
                 }
             }

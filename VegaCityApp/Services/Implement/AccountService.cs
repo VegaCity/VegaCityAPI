@@ -1332,7 +1332,7 @@ namespace VegaCityApp.Service.Implement
             //    };
             //}
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == GetUserIdFromJwt() && x.Role.Name == GetRoleFromJwt(),
-                                                                                     include: y => y.Include(n => n.Role)) ??
+                                                                                     include: y => y.Include(n => n.Role).Include(w => w.Wallets)) ??
                                                                                      throw new BadHttpRequestException("User Not Found", HttpStatusCodes.NotFound);
             if (!DateTime.TryParse(req.StartDate + " 00:00:00.000Z", out DateTime startDate))
             {
@@ -1455,6 +1455,9 @@ namespace VegaCityApp.Service.Implement
                 //only get quantity of v-card
                 var activeCards = (await _unitOfWork.GetRepository<PackageOrder>().GetListAsync(
                     predicate: x => x.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum())).ToList();
+                //quantity of Users
+                var usersActive = (await _unitOfWork.GetRepository<User>().GetListAsync(
+                    predicate: x => x.Status == (int)UserStatusEnum.Active )).ToList();
                 //get order have fee charge, only get amount
                 var orderFeeCharges = (await _unitOfWork.GetRepository<Order>().GetListAsync(
                     predicate: x => x.SaleType == SaleType.FeeChargeCreate
@@ -1638,6 +1641,7 @@ namespace VegaCityApp.Service.Implement
                         AdminBalance = wallet.Balance,
                         AdminBalanceHistory = wallet.BalanceHistory,
                         VcardsCurrentActive = activeCards.Count(),
+                        UsersCurrentActive = usersActive.Count(),
                         groupedStaticsAdmin
                     }
 
@@ -1890,7 +1894,8 @@ namespace VegaCityApp.Service.Implement
                 var depositsCashiers = (await _unitOfWork.GetRepository<Transaction>().GetListAsync(
                     predicate: x => x.CrDate >= startDate
                                  && x.CrDate <= endDate
-                                 && x.UserId == GetUserIdFromJwt()
+                                 && x.WalletId == user.Wallets.SingleOrDefault().Id
+                                // && x.UserId == GetUserIdFromJwt()
                                  && x.Type == "EndDayCheckWalletCashier"
                                  && x.Status == TransactionStatus.Success)).ToList();
                 List<Transaction> EndDayCheckWalletCashierBalanceHistory = new List<Transaction>();
@@ -1905,6 +1910,27 @@ namespace VegaCityApp.Service.Implement
                     {
                         EndDayCheckWalletCashierBalance.Add(endDay);
                     }
+                }
+                //withdraw
+                var depositsWithdrawCashiers = (await _unitOfWork.GetRepository<Transaction>().GetListAsync(
+                   predicate: x => x.CrDate >= startDate
+                                && x.CrDate <= endDate
+                                && x.IsIncrease == true
+                                && x.WalletId == user.Wallets.SingleOrDefault().Id
+                                && x.Type == "WithdrawMoney"
+                                && x.Status == TransactionStatus.Success)).ToList();
+                List<Transaction> WithdrawWalletCashierBalanceHistory = new List<Transaction>();
+               // List<Transaction> WithdrawWalletCashierBalance = new List<Transaction>();
+                foreach (var endDay in depositsWithdrawCashiers)
+                {
+                    if (endDay.Description.Split(" ")[2].Trim() == "history")
+                    {
+                        WithdrawWalletCashierBalanceHistory.Add(endDay);
+                    }
+                    //else
+                    //{
+                    //    EndDayCheckWalletCashierBalance.Add(endDay);
+                    //}
                 }
                 IEnumerable<object> groupedStaticsAdmin = Enumerable.Empty<object>();
                 if (req.GroupBy == "Month")
@@ -1930,6 +1956,10 @@ namespace VegaCityApp.Service.Implement
                             //cashier
                             EndDayCheckWalletCashierBalance = EndDayCheckWalletCashierBalance.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
                             EndDayCheckWalletCashierBalanceHistory = EndDayCheckWalletCashierBalanceHistory.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+
+                            //withdrawHold
+                            TotalWithdrawRequest = depositsWithdrawCashiers.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                            TotalAmountWithdrawFromVega = depositsWithdrawCashiers.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
                         }).ToList();
                 }
                 else if (req.GroupBy == "Date")
@@ -1963,7 +1993,11 @@ namespace VegaCityApp.Service.Implement
                              TotalAmountOrderFeeCharge = orderFeeCharges.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.TotalAmount),
                              //cashier
                              EndDayCheckWalletCashierBalance = EndDayCheckWalletCashierBalance.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
-                             EndDayCheckWalletCashierBalanceHistory = EndDayCheckWalletCashierBalanceHistory.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount)
+                             EndDayCheckWalletCashierBalanceHistory = EndDayCheckWalletCashierBalanceHistory.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
+
+                             //withdrawHold
+                             TotalWithdrawRequest = depositsWithdrawCashiers.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountBalanceHistory = depositsWithdrawCashiers.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
                          })
                          .OrderBy(x => x.Date) // Optional: Order by date
                          .ToList();
