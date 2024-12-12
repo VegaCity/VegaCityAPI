@@ -8,6 +8,9 @@
         public int TotalAmount { get; set; }
         public string? PackageOrderId { get; set; }
         //public Guid PackageId { get; set; }
+        public DateTime? StartRent { get; set; }
+        public DateTime? EndRent { get; set; }
+
         public List<OrderProductFromPosRequest> ProductData { get; set; }
     }
     public class CreateOrderForCashierRequest

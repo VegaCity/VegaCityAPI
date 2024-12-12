@@ -20,6 +20,7 @@ namespace VegaCityApp.Domain.Models
         public DateTime UpsDate { get; set; }
         public string Status { get; set; } = null!;
         public string? ImageUrl { get; set; }
+        public int? Quantity { get; set; }
 
         public virtual ProductCategory ProductCategory { get; set; } = null!;
         public virtual ICollection<MenuProductMapping> MenuProductMappings { get; set; }

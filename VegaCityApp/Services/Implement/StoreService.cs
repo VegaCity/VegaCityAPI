@@ -880,6 +880,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> CreateProduct(Guid MenuId, CreateProductRequest req)
         {
             await _util.CheckUserSession(GetUserIdFromJwt());
+            if (req.Quantity <= 0) throw new BadHttpRequestException("Invalid Quantity", HttpStatusCodes.BadRequest);
             if (req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
             var menu = await _unitOfWork.GetRepository<Menu>().SingleOrDefaultAsync(
                 predicate: x => x.Id == MenuId && !x.Deflag);
@@ -902,6 +903,7 @@ namespace VegaCityApp.API.Services.Implement
             newProduct.UpsDate = TimeUtils.GetCurrentSEATime();
             newProduct.Status = "Active";
             newProduct.MenuId = menu.Id;
+            newProduct.Quantity = req.Quantity;
             await _unitOfWork.GetRepository<Product>().InsertAsync(newProduct);
             //insert mapping
             var newMenuProductMapping = new MenuProductMapping()
@@ -922,6 +924,8 @@ namespace VegaCityApp.API.Services.Implement
         public async Task<ResponseAPI> UpdateProduct(Guid ProductId, UpdateProductRequest req)
         {
             await _util.CheckUserSession(GetUserIdFromJwt());
+            if (req.Quantity <= 0) throw new BadHttpRequestException("Invalid Quantity", HttpStatusCodes.BadRequest);
+
             if (req.Price != null)
             {
                 if (req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
@@ -939,6 +943,7 @@ namespace VegaCityApp.API.Services.Implement
             product.Name = req.Name != null ? req.Name.Trim() : product.Name;
             product.ImageUrl = req.ImageUrl != null ? req.ImageUrl.Trim() : product.ImageUrl;
             product.Price = (int)(req.Price != null ? req.Price : product.Price);
+            product.Quantity = req.Quantity;
             product.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Product>().UpdateAsync(product);
             var result = await _unitOfWork.CommitAsync();
@@ -1002,6 +1007,7 @@ namespace VegaCityApp.API.Services.Implement
                         UpsDate = x.UpsDate,
                         Status = x.Status,
                         Price = x.Price,
+                        Quantity = x.Quantity,
                         ProductCategoryId = x.ProductCategoryId,
                         ProductCategoryName = x.ProductCategory.Name
                     },

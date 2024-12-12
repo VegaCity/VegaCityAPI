@@ -7,6 +7,8 @@ namespace VegaCityApp.API.Enums
         public const string Pending = "PENDING";
         public const string Completed = "COMPLETED";
         public const string Canceled = "CANCELED";
+        public const string Renting = "RENTING";
+
     }
     public class PaymentStatus
     {

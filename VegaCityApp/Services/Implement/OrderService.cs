@@ -80,6 +80,8 @@ namespace VegaCityApp.API.Services.Implement
                             UserId = userID,
                             PackageOrderId = packageOrderExist.Id,
                             PackageId = packageOrderExist.PackageId,
+                            StartRent = req.StartRent,
+                            EndRent = req.EndRent,
                         };
                         await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
                         foreach (var item in req.ProductData)
@@ -194,6 +196,8 @@ namespace VegaCityApp.API.Services.Implement
                             UserId = userID,
                             PackageOrderId = packageOrderExist.Id,
                             PackageId = packageOrderExist.PackageId,
+                            StartRent = req.StartRent,
+                            EndRent = req.EndRent,
                         };
                         await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
                         foreach (var item in req.ProductData)
@@ -298,6 +302,8 @@ namespace VegaCityApp.API.Services.Implement
                         Status = OrderStatus.Pending,
                         InvoiceId = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
                         SaleType = req.SaleType,
+                        StartRent = req.StartRent,
+                        EndRent = req.EndRent,
                         UserId = userID
                     };
                     await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
@@ -1117,14 +1123,24 @@ namespace VegaCityApp.API.Services.Implement
                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(g => g.PackageOrder).ThenInclude(w => w.Wallets)
                                        .Include(p => p.PromotionOrders)
+                                       .Include(o => o.OrderDetails)
                                        .Include(t => t.Payments).Include(r => r.Store))
                                        ?? throw new BadHttpRequestException("Order not found", HttpStatusCodes.NotFound);
             if (order.Payments.SingleOrDefault().Name == PaymentTypeEnum.QRCode.GetDescriptionFromEnum())
             {
-                order.Status = OrderStatus.Completed;
-                order.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-
+                var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == order.StoreId);
+                if(store.StoreType == (int)StoreTypeEnum.Service) //product 1, srv2
+                {
+                    order.Status = OrderStatus.Renting;
+                    order.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                }
+                else
+                {
+                    order.Status = OrderStatus.Completed;
+                    order.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                }
                 //payment
                 order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
                 order.Payments.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
@@ -1152,6 +1168,16 @@ namespace VegaCityApp.API.Services.Implement
                 packageOrderWallet.Balance -= order.TotalAmount;
                 packageOrderWallet.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderWallet);
+
+                //update product
+                foreach(var product in order.OrderDetails)
+                {
+                    var productInOrderDetail = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == product.ProductId);
+                    if (productInOrderDetail.Quantity < product.Quantity)
+                        throw new BadHttpRequestException("Not enough available item for this Order", HttpStatusCodes.BadRequest);
+                    productInOrderDetail.Quantity -= product.Quantity;
+                    _unitOfWork.GetRepository<Product>().UpdateAsync(productInOrderDetail);
+                }
 
                 var transaction = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
                     (predicate: x => x.Id == Guid.Parse(req.TransactionId))
@@ -1258,9 +1284,19 @@ namespace VegaCityApp.API.Services.Implement
             }
             else if (order.Payments.SingleOrDefault().Name == PaymentTypeEnum.Cash.GetDescriptionFromEnum())
             {
-                order.Status = OrderStatus.Completed;
-                order.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == order.StoreId);
+                if (store.StoreType == (int)StoreTypeEnum.Service) //product 1, srv2
+                {
+                    order.Status = OrderStatus.Renting;
+                    order.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                }
+                else
+                {
+                    order.Status = OrderStatus.Completed;
+                    order.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                }
 
                 //payment
                 order.Payments.SingleOrDefault().Status = PaymentStatus.Completed;
@@ -1289,6 +1325,15 @@ namespace VegaCityApp.API.Services.Implement
                 //packageOrderWallet.Balance -= order.TotalAmount;
                 //packageOrderWallet.UpsDate = TimeUtils.GetCurrentSEATime();
                 //_unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderWallet);
+                //update product
+                foreach (var product in order.OrderDetails)
+                {
+                    var productInOrderDetail = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == product.ProductId);
+                    if (productInOrderDetail.Quantity < product.Quantity)
+                        throw new BadHttpRequestException("Not enough available item for this Order", HttpStatusCodes.BadRequest);
+                    productInOrderDetail.Quantity -= product.Quantity;
+                    _unitOfWork.GetRepository<Product>().UpdateAsync(productInOrderDetail);
+                }
 
                 var transaction = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
                     (predicate: x => x.Id == Guid.Parse(req.TransactionId))

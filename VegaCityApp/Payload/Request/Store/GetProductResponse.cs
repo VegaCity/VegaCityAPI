@@ -7,6 +7,7 @@
         public Guid ProductCategoryId { get; set; }
         public Guid MenuId { get; set; }
         public int Price { get; set; }
+        public int? Quantity { get; set; }
         public DateTime CrDate { get; set; }
         public DateTime UpsDate { get; set; }
         public string Status { get; set; } = null!;
