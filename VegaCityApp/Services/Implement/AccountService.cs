@@ -2637,6 +2637,12 @@ namespace VegaCityApp.Service.Implement
                 transaction.Wallet.Balance = 0;
                 transaction.Wallet.BalanceHistory = 0;
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(transaction.Wallet);
+                if(transaction.Wallet.User.Status == (int)UserStatusEnum.Blocked)
+                {
+                    transaction.Wallet.User.Status = (int)UserStatusEnum.Active;
+                    transaction.Wallet.User.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<User>().UpdateAsync(transaction.Wallet.User);
+                }
                 await _unitOfWork.CommitAsync();
             }
             else if (status == "REJECTED")

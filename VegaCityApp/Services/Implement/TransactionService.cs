@@ -101,6 +101,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = "Get transaction successfully",
+                Data = transaction
             };
         }
         public async Task<ResponseAPI<IEnumerable<TransactionResponse>>> GetAllTransactionByStoreId(Guid storeId, string type, int size, int page)
