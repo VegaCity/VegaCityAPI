@@ -344,6 +344,9 @@ namespace VegaCityApp.API.Services.Implement
                     order.Status = OrderStatus.Completed;
                     order.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                    order.Transactions.SingleOrDefault().Status = TransactionStatus.Success;
+                    order.Transactions.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().UpdateAsync(order.Transactions.SingleOrDefault());
                     var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
                     {
                         Id = Guid.NewGuid(),
@@ -1037,6 +1040,9 @@ namespace VegaCityApp.API.Services.Implement
                 order.Status = OrderStatus.Completed;
                 order.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                order.Transactions.SingleOrDefault().Status = TransactionStatus.Success;
+                order.Transactions.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().UpdateAsync(order.Transactions.SingleOrDefault());
                 var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
                 {
                     Id = Guid.NewGuid(),
@@ -1735,6 +1741,9 @@ namespace VegaCityApp.API.Services.Implement
                 order.Status = OrderStatus.Completed;
                 order.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                order.Transactions.SingleOrDefault().Status = TransactionStatus.Success;
+                order.Transactions.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().UpdateAsync(order.Transactions.SingleOrDefault());
                 var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
                 {
                     Id = Guid.NewGuid(),
@@ -2398,6 +2407,9 @@ namespace VegaCityApp.API.Services.Implement
                 order.Status = OrderStatus.Completed;
                 order.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                order.Transactions.SingleOrDefault().Status = TransactionStatus.Success;
+                order.Transactions.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<VegaCityApp.Domain.Models.Transaction>().UpdateAsync(order.Transactions.SingleOrDefault());
                 var transactionCashierBalance = new VegaCityApp.Domain.Models.Transaction
                 {
                     Id = Guid.NewGuid(),

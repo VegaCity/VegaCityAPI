@@ -39,5 +39,7 @@ namespace VegaCityApp.Service.Interface
         Task<ResponseAPI> SearchStoreClosing(Guid StoreId);
         Task<ResponseAPI> ResolveClosingStore(GetWalletStoreRequest req);
         Task CheckSession();
+        Task<ResponseAPI<IEnumerable<GetDepositApprovalResponse>>> GetDepositApproval(int size, int page);
+        Task<string> DepositApproval(Guid transactionId, string status);
     }
 }

@@ -2025,6 +2025,7 @@ namespace VegaCityApp.Service.Implement
                 if (req.SaleType == SaleType.Product)
                 {
                     //Store BEGIN
+                    
                     orders = (await _unitOfWork.GetRepository<Order>().GetListAsync(
                         predicate: x => x.CrDate >= startDate
                                      && x.CrDate <= endDate
@@ -2075,9 +2076,11 @@ namespace VegaCityApp.Service.Implement
                     //}
                 }
                 else throw new BadHttpRequestException("Sale is invalid", HttpStatusCodes.BadRequest);
+                var owner = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == GetUserIdFromJwt(), include: t => t.Include(y => y.UserStoreMappings).ThenInclude(s => s.Store));
                 var deposits = (await _unitOfWork.GetRepository<StoreMoneyTransfer>().GetListAsync(
                     predicate: x => x.CrDate >= startDate
                                  && x.CrDate <= endDate
+                                 && x.StoreId == owner.StoreId
                                  && x.Status == OrderStatus.Completed)).ToList();
                 List<StoreMoneyTransfer> storeMoneyTransfersListToVega = new List<StoreMoneyTransfer>();
                 List<StoreMoneyTransfer> storeMoneyTransfersListToStore = new List<StoreMoneyTransfer>();
@@ -2570,6 +2573,81 @@ namespace VegaCityApp.Service.Implement
                 _unitOfWork.GetRepository<UserSession>().UpdateAsync(session);
             }
             await _unitOfWork.CommitAsync();
+        }
+        public async Task<ResponseAPI<IEnumerable<GetDepositApprovalResponse>>> GetDepositApproval(int size, int page)
+        {
+            try
+            {
+                IPaginate<GetDepositApprovalResponse> data = await _unitOfWork.GetRepository<Transaction>().GetPagingListAsync(
+
+                selector: x => new GetDepositApprovalResponse()
+                {
+                    TransactionId = x.Id,
+                    UserId = (Guid)x.Wallet.UserId,
+                    UserEmail = x.Wallet.User.Email,
+                    UserName = x.Wallet.User.FullName,
+                    Balance = x.Wallet.Balance,
+                    BalanceHistory = x.Wallet.BalanceHistory
+                },
+                page: page,
+                size: size,
+                orderBy: x => x.OrderByDescending(z => z.Type),
+                predicate: x => x.Status == TransactionStatus.Pending && x.Type == TransactionType.EndDayCheckWalletCashier,
+                include: z => z.Include(p => p.Wallet).ThenInclude(z => z.User)
+                );
+                return new ResponseAPI<IEnumerable<GetDepositApprovalResponse>>
+                {
+                    MessageResponse = StoreMessage.GetListStoreSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI<IEnumerable<GetDepositApprovalResponse>>
+                {
+                    MessageResponse = StoreMessage.GetListStoreFailed + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null,
+                    MetaData = null
+                };
+            }
+        }
+        public async Task<string> DepositApproval(Guid transactionId, string status)
+        {
+            var transaction = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync(predicate: z => z.Id == transactionId,
+                include: z => z.Include(a => a.User).ThenInclude(z => z.Wallets)
+                               .Include(a => a.Wallet).ThenInclude(a => a.User))
+                ?? throw new BadHttpRequestException(TransactionMessage.NotFoundTransaction, HttpStatusCodes.NotFound);
+            if (status == "APPROVED")
+            {
+                transaction.Status = TransactionStatus.Success;
+                transaction.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+                transaction.User.Wallets.SingleOrDefault().Balance += transaction.Wallet.Balance;
+                transaction.User.Wallets.SingleOrDefault().BalanceHistory += transaction.Wallet.BalanceHistory;
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(transaction.User.Wallets.SingleOrDefault());
+                transaction.Wallet.Balance = 0;
+                transaction.Wallet.BalanceHistory = 0;
+                _unitOfWork.GetRepository<Wallet>().UpdateAsync(transaction.Wallet);
+                await _unitOfWork.CommitAsync();
+            }
+            else if (status == "REJECTED")
+            {
+                transaction.Wallet.User.Status = (int)UserStatusEnum.Blocked;
+                transaction.Wallet.User.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<User>().UpdateAsync(transaction.Wallet.User);
+                await _unitOfWork.CommitAsync();
+            }
+            else throw new BadHttpRequestException("Error Status", HttpStatusCodes.BadRequest);
+            return "DepositApproval Successfully !";
         }
     }
 }

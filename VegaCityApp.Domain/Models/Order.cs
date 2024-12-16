@@ -28,6 +28,8 @@ namespace VegaCityApp.Domain.Models
         public Guid? CustomerId { get; set; }
         public DateTime? StartRent { get; set; }
         public DateTime? EndRent { get; set; }
+        public int? BalanceBeforePayment { get; set; }
+        public int? BalanceHistoryBeforePayment { get; set; }
 
         public virtual Customer? Customer { get; set; }
         public virtual Package? Package { get; set; }

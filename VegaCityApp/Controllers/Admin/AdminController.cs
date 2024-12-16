@@ -183,5 +183,19 @@ namespace VegaCityApp.API.Controllers.Admin
             var result = await _service.ResolveClosingStore(req);
             return StatusCode(result.StatusCode, result);
         }
+        [HttpGet(UserEndpoint.GetDepositApproval)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        public async Task<IActionResult> GetDepositApproval([FromQuery] int size = 10, [FromQuery] int page = 1)
+        {
+            var result = await _service.GetDepositApproval(size, page);
+            return Ok(result);
+        }
+        [HttpPatch(UserEndpoint.DepositApproval)]
+        [CustomAuthorize(RoleEnum.Admin)]
+        public async Task<IActionResult> DepositApproval([FromQuery]Guid transactionId,[FromQuery] string status)
+        {
+            var result = await _service.DepositApproval(transactionId, status);
+            return Ok(result);
+        }
     }
 }

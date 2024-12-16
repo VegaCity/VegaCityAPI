@@ -222,7 +222,7 @@ namespace VegaCityApp.API.Services.Implement
                                 IsIncrease = false,
                                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                                 CrDate = TimeUtils.GetCurrentSEATime(),
-                                Status = TransactionStatus.Success,
+                                Status = TransactionStatus.Pending,
                                 Description = "End day check wallet cashier: Balance " + wallet.Balance,
                                 UpsDate = TimeUtils.GetCurrentSEATime(),
                                 UserId = admin.Id
@@ -237,25 +237,25 @@ namespace VegaCityApp.API.Services.Implement
                                 IsIncrease = false,
                                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                                 CrDate = TimeUtils.GetCurrentSEATime(),
-                                Status = TransactionStatus.Success,
+                                Status = TransactionStatus.Pending,
                                 Description = "End day check wallet cashier: Balance History " + wallet.BalanceHistory,
                                 UserId = admin.Id,
                                 UpsDate = TimeUtils.GetCurrentSEATime()
                             };
                             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionHistory);
                             //here
-                            item.Balance += wallet.Balance; //wallet admin
-                            wallet.Balance = 0; //wallet cashier
+                            //item.Balance += wallet.Balance; //wallet admin
+                            //wallet.Balance = 0; //wallet cashier
                             //
-                            item.BalanceHistory += wallet.BalanceHistory; //wallet admin
-                            wallet.BalanceHistory = 0; //wallet cashier
-                            item.UpsDate = TimeUtils.GetCurrentSEATime();
-                            _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
+                            //item.BalanceHistory += wallet.BalanceHistory; //wallet admin
+                            //wallet.BalanceHistory = 0; //wallet cashier
+                            //item.UpsDate = TimeUtils.GetCurrentSEATime();
+                            //_unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
                         }
                     }
                 }
             }
-            _unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
+            //_unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
             await _unitOfWork.CommitAsync();
         }
         //withraw money wallet

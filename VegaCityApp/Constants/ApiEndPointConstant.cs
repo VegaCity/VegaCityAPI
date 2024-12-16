@@ -45,6 +45,8 @@ public static class ApiEndPointConstant
     }
     public static class UserEndpoint
     {
+        public const string GetDepositApproval = ApiEndpoint + "/user/get-deposit-approval";
+        public const string DepositApproval = ApiEndpoint + "/user/deposit-approval";
         public const string GetListUserNoSession = ApiEndpoint + "/users/no-session";
         public const string GetAllClosingRequest = ApiEndpoint + "/user/closing-requests";
         public const string GetClosingRequest = ApiEndpoint + "/user/closing-request";
@@ -146,6 +148,7 @@ public static class ApiEndPointConstant
     //order endpoit
     public static class OrderEndpoint
     {
+        public const string GetOrderDetail = ApiEndpoint + "/order/{id}/detail";
         public const string ConfirmOrderForCashier = ApiEndpoint + "/order/cashier/confirm";
         public const string GetListOrder = ApiEndpoint + "/orders";
         public const string GetOrder = ApiEndpoint + "/order";

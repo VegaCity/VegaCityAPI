@@ -18,5 +18,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI> ConfirmOrder(ConfirmOrderRequest req);
         Task CheckOrderPending();
         Task CheckRentingOrder();
+        Task<ResponseAPI> GetDetailMoneyFromOrder(Guid orderId);
     }
 }

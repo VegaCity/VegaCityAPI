@@ -82,6 +82,8 @@ namespace VegaCityApp.API.Services.Implement
                             PackageId = packageOrderExist.PackageId,
                             StartRent = req.StartRent,
                             EndRent = req.EndRent,
+                            BalanceBeforePayment = store.Wallets.SingleOrDefault().Balance,
+                            BalanceHistoryBeforePayment = store.Wallets.SingleOrDefault().BalanceHistory
                         };
                         await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
                         foreach (var item in req.ProductData)
@@ -198,6 +200,8 @@ namespace VegaCityApp.API.Services.Implement
                             PackageId = packageOrderExist.PackageId,
                             StartRent = req.StartRent,
                             EndRent = req.EndRent,
+                            BalanceBeforePayment = store.Wallets.SingleOrDefault().Balance,
+                            BalanceHistoryBeforePayment = store.Wallets.SingleOrDefault().BalanceHistory
                         };
                         await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
                         foreach (var item in req.ProductData)
@@ -304,7 +308,9 @@ namespace VegaCityApp.API.Services.Implement
                         SaleType = req.SaleType,
                         StartRent = req.StartRent,
                         EndRent = req.EndRent,
-                        UserId = userID
+                        UserId = userID,
+                        BalanceBeforePayment = store.Wallets.SingleOrDefault().Balance,
+                        BalanceHistoryBeforePayment = store.Wallets.SingleOrDefault().BalanceHistory
                     };
                     await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
                     foreach (var item in req.ProductData)
@@ -652,6 +658,7 @@ namespace VegaCityApp.API.Services.Implement
                 count += item.Quantity;
             }
             Guid userId = GetUserIdFromJwt();
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: z => z.Id == userId, include: z => z.Include(s => s.Wallets));
             var customer = await _unitOfWork.GetRepository<Customer>()
                 .SingleOrDefaultAsync(predicate: x => x.Email == req.CustomerInfo.Email
                                                    && x.Cccdpassport == req.CustomerInfo.CccdPassport
@@ -681,7 +688,9 @@ namespace VegaCityApp.API.Services.Implement
                 SaleType = req.SaleType,
                 UserId = userId,
                 PackageId = packageId,
-                CustomerId = customer.Id
+                CustomerId = customer.Id,
+                BalanceBeforePayment = user.Wallets.SingleOrDefault().Balance,
+                BalanceHistoryBeforePayment = user.Wallets.SingleOrDefault().BalanceHistory
             };
             await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
             var newOrderDetail = new OrderDetail
@@ -1486,7 +1495,6 @@ namespace VegaCityApp.API.Services.Implement
             }
             await _unitOfWork.CommitAsync();
         }
-
         public async Task CheckRentingOrder()
         {
             var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(predicate: x => x.Status == OrderStatus.Renting && x.EndRent != null && x.StartRent != null,
@@ -1510,6 +1518,75 @@ namespace VegaCityApp.API.Services.Implement
                     await _unitOfWork.CommitAsync();
                 }
             }
+        }
+        public async Task<ResponseAPI> GetDetailMoneyFromOrder(Guid orderId)
+        {
+            var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(
+                predicate: z => z.Id == orderId, 
+                include: o => o.Include(s => s.Transactions).ThenInclude(z => z.StoreMoneyTransfers)
+                               .Include(z => z.Store)
+                               .Include(z => z.Payments))
+                ?? throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
+            int PriceTransferToVega = 0;
+            int PriceStoreHandle = 0;
+
+            if(GetRoleFromJwt() == RoleEnum.Store.GetDescriptionFromEnum())
+            {
+                PriceTransferToVega = (int)(order.TotalAmount * order.Store.StoreTransferRate);
+                PriceStoreHandle = order.TotalAmount - PriceTransferToVega;
+                if(order.StoreId != null && order.Payments.SingleOrDefault().Name == PaymentTypeEnum.QRCode.GetDescriptionFromEnum())
+                {
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.OK,
+                        MessageResponse = OrderMessage.GetOrdersSuccessfully,
+                        Data = new
+                        {
+                            PriceTransferToVega,
+                            PriceStoreHandle,
+                            BalanceAtPresent = order.BalanceBeforePayment,
+                            BalanceHistoryBefore = order.BalanceHistoryBeforePayment,
+                            BalanceHistoryAfter = order.BalanceHistoryBeforePayment + PriceStoreHandle
+                        }
+                    };
+                }
+                else
+                {
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.OK,
+                        MessageResponse = OrderMessage.GetOrdersSuccessfully,
+                        Data = new
+                        {
+                            BalanceBefore = order.BalanceBeforePayment,
+                            BalanceAfter = order.BalanceBeforePayment + order.TotalAmount,
+                            BalanceHistoryAtPresent = order.BalanceHistoryBeforePayment
+                        }
+                    };
+                }
+            }
+            else if (GetRoleFromJwt() == RoleEnum.CashierWeb.GetDescriptionFromEnum() || GetRoleFromJwt() == RoleEnum.CashierApp.GetDescriptionFromEnum())
+            {
+                if (order.StoreId == null && order.Payments.SingleOrDefault().Name != PaymentTypeEnum.QRCode.GetDescriptionFromEnum())
+                {
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.OK,
+                        MessageResponse = OrderMessage.GetOrdersSuccessfully,
+                        Data = new
+                        {
+                            BalanceBefore = order.BalanceBeforePayment,
+                            BalanceAfter = order.BalanceBeforePayment + order.TotalAmount,
+                            BalanceHistoryAtPresent = order.BalanceHistoryBeforePayment
+                        }
+                    };
+                }  
+            }
+            return new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.BadRequest,
+                MessageResponse = OrderMessage.GetOrdersFail,
+            };
         }
     }
 }

@@ -88,6 +88,13 @@ namespace VegaCityApp.API.Controllers
             var result = await _orderService.ConfirmOrder(req);
             return StatusCode(result.StatusCode, result);
         }
-
+        [HttpGet(OrderEndpoint.GetOrderDetail)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        [CustomAuthorize(RoleEnum.Store, RoleEnum.CashierWeb, RoleEnum.CashierApp)]
+        public async Task<IActionResult> GetDetailMoneyFromOrder(Guid id)
+        {
+            var result = await _orderService.GetDetailMoneyFromOrder(id);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }
