@@ -7,6 +7,7 @@ namespace VegaCityApp.Domain.Models
     {
         public User()
         {
+            BalanceEndDays = new HashSet<BalanceEndDay>();
             Orders = new HashSet<Order>();
             Reports = new HashSet<Report>();
             Transactions = new HashSet<Transaction>();
@@ -40,6 +41,7 @@ namespace VegaCityApp.Domain.Models
 
         public virtual MarketZone MarketZone { get; set; } = null!;
         public virtual Role Role { get; set; } = null!;
+        public virtual ICollection<BalanceEndDay> BalanceEndDays { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<Report> Reports { get; set; }
         public virtual ICollection<Transaction> Transactions { get; set; }

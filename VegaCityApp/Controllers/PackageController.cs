@@ -181,5 +181,20 @@ namespace VegaCityApp.API.Controllers
             var result = await _packageService.GetLostPackageItem(req);
             return StatusCode(result.StatusCode, result);
         }
+        [HttpGet(PackageEndpoint.GetVcardWithdraw)]
+        [CustomAuthorize(RoleEnum.CashierWeb)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> GetVcardWithdraw([FromQuery] Guid? packageOrderId, [FromQuery] string? rfid)
+        {
+            var result = await _packageService.GetVcardWithdraw(packageOrderId, rfid);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpGet(PackageEndpoint.GetTransactionWithdraw)]
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> GetTransactionWithdrawPackageOrder([FromQuery] Guid? packageOrderId, [FromQuery] string? rfid)
+        {
+            var result = await _packageService.GetTransactionWithdrawPackageOrder(packageOrderId, rfid);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }

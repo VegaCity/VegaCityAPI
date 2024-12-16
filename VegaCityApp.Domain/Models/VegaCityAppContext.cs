@@ -17,6 +17,7 @@ namespace VegaCityApp.Domain.Models
         }
 
         public virtual DbSet<AggregatedCounter> AggregatedCounters { get; set; } = null!;
+        public virtual DbSet<BalanceEndDay> BalanceEndDays { get; set; } = null!;
         public virtual DbSet<Counter> Counters { get; set; } = null!;
         public virtual DbSet<Customer> Customers { get; set; } = null!;
         public virtual DbSet<CustomerMoneyTransfer> CustomerMoneyTransfers { get; set; } = null!;
@@ -83,6 +84,25 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.Key).HasMaxLength(100);
 
                 entity.Property(e => e.ExpireAt).HasColumnType("datetime");
+            });
+
+            modelBuilder.Entity<BalanceEndDay>(entity =>
+            {
+                entity.ToTable("BalanceEndDay");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.DateCheck).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Store)
+                    .WithMany(p => p.BalanceEndDays)
+                    .HasForeignKey(d => d.StoreId)
+                    .HasConstraintName("FK_BalanceEndDay_Store");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.BalanceEndDays)
+                    .HasForeignKey(d => d.UserId)
+                    .HasConstraintName("FK_BalanceEndDay_User");
             });
 
             modelBuilder.Entity<Counter>(entity =>

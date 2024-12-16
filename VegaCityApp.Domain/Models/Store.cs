@@ -7,6 +7,7 @@ namespace VegaCityApp.Domain.Models
     {
         public Store()
         {
+            BalanceEndDays = new HashSet<BalanceEndDay>();
             Menus = new HashSet<Menu>();
             Orders = new HashSet<Order>();
             ProductCategories = new HashSet<ProductCategory>();
@@ -34,6 +35,7 @@ namespace VegaCityApp.Domain.Models
         public double? StoreTransferRate { get; set; }
 
         public virtual Zone? Zone { get; set; }
+        public virtual ICollection<BalanceEndDay> BalanceEndDays { get; set; }
         public virtual ICollection<Menu> Menus { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<ProductCategory> ProductCategories { get; set; }

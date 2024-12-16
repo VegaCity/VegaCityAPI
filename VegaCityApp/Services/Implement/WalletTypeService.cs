@@ -596,5 +596,40 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = WalletTypeMessage.WithdrawMoneyFail
             };
         }
+        public async Task BalanceCheckEndDay()
+        {
+            var wallets = await _unitOfWork.GetRepository<Wallet>().GetListAsync(predicate: z => !z.Deflag);
+            foreach (var wallet in wallets)
+            {
+                if(wallet.UserId != null && wallet.StoreId == null)
+                {
+                    BalanceEndDay newdata = new BalanceEndDay()
+                    {
+                        Id = Guid.NewGuid(),
+                        Deflag = wallet.Deflag,
+                        Balance = wallet.Balance,
+                        BalanceHistory = wallet.BalanceHistory,
+                        DateCheck = TimeUtils.GetCurrentSEATime(),
+                        UserId = wallet.UserId
+                    };
+                    await _unitOfWork.GetRepository<BalanceEndDay>().InsertAsync(newdata);
+                }
+                else
+                {
+                    BalanceEndDay newdata = new BalanceEndDay()
+                    {
+                        Id = Guid.NewGuid(),
+                        Deflag = wallet.Deflag,
+                        Balance = wallet.Balance,
+                        BalanceHistory = wallet.BalanceHistory,
+                        DateCheck = TimeUtils.GetCurrentSEATime(),
+                        UserId = wallet.UserId,
+                        StoreId = wallet.StoreId
+                    };
+                    await _unitOfWork.GetRepository<BalanceEndDay>().InsertAsync(newdata);
+                }
+            }
+            await _unitOfWork.CommitAsync();
+        }
     }
 }

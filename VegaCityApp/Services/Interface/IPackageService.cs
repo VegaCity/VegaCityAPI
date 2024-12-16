@@ -26,5 +26,7 @@ namespace VegaCityApp.API.Services.Interface
         Task CheckPackageItemExpire();
         Task SolveWalletPackageItem(Guid apiKey);
         Task<ResponseAPI> GetLostPackageItem(GetLostPackageItemRequest req);
+        Task<ResponseAPI> GetVcardWithdraw(Guid? packageOrderId, string? rfid);
+        Task<ResponseAPI> GetTransactionWithdrawPackageOrder(Guid? packageOrderId, string? rfid);
     }
 }

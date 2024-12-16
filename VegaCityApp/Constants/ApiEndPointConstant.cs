@@ -71,6 +71,8 @@ public static class ApiEndPointConstant
 
     public static class PackageEndpoint
     {
+        public const string GetTransactionWithdraw = ApiEndpoint + "/package-item/get-transaction-withdraw";
+        public const string GetVcardWithdraw = ApiEndpoint + "/package-item/get-vcard-withdraw";
         public const string UpdateRfId = ApiEndpoint + "/package-item/{id}/rfid";
         public const string ConfirmOrder = ApiEndpoint + "/order/confirm";
         public const string PackageItemPayment = ApiEndpoint + "/package-item/payment";

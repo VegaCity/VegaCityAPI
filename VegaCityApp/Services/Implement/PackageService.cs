@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using VegaCityApp.API.Constants;
@@ -796,8 +797,8 @@ namespace VegaCityApp.API.Services.Implement
         {
             var packageOrder = await SearchPackageItem(packageOrderId, rfId);
 
-            if (packageOrder.Data.Status != PackageItemStatusEnum.Active.GetDescriptionFromEnum())
-                throw new BadHttpRequestException(PackageItemMessage.MustActivated, HttpStatusCodes.BadRequest);
+            //if (packageOrder.Data.Status != PackageItemStatusEnum.Active.GetDescriptionFromEnum())
+            //    throw new BadHttpRequestException(PackageItemMessage.MustActivated, HttpStatusCodes.BadRequest);
             #region check 
             // after done main flow, make utils service to shorten this code
             var userId = GetUserIdFromJwt();
@@ -1593,6 +1594,41 @@ namespace VegaCityApp.API.Services.Implement
             };
         }
         //assign new 
+        public async Task<ResponseAPI> GetVcardWithdraw(Guid? packageOrderId, string? rfid)
+        {
+            var cashierWeb = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
+                (predicate: x => x.Id == GetUserIdFromJwt() && x.Status == (int)UserStatusEnum.Active,
+                 include: wl => wl.Include(a => a.Role)
+                                  .Include(p => p.MarketZone).ThenInclude(m => m.MarketZoneConfig));
+            var packageOrder = await _unitOfWork.GetRepository<PackageOrder>().SingleOrDefaultAsync(
+                predicate: z => z.Id == packageOrderId || z.VcardId == rfid,
+                include: o => o.Include(t => t.Wallets)) ?? throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
+            int amountRate = (int)(packageOrder.Wallets.SingleOrDefault().BalanceHistory * cashierWeb.MarketZone.MarketZoneConfig.WithdrawRate); // 700 * 0.8 = 560 // 700 - 560 = 140
+            int atLeaseUse = amountRate - (packageOrder.Wallets.SingleOrDefault().BalanceHistory - packageOrder.Wallets.SingleOrDefault().Balance); // 560 - (700 - 150) = 10
+            return new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = PackageItemMessage.GetPackageItemsSuccess,
+                Data = new
+                {
+                    Name = packageOrder.CusName,
+                    Phone = packageOrder.PhoneNumber,
+                    CccdPassport = packageOrder.CusCccdpassport,
+                    BalanceAtPresent = packageOrder.Wallets.SingleOrDefault().Balance,
+                    BalanceCanWithdraw = (atLeaseUse > 0 && packageOrder.Wallets.SingleOrDefault().BalanceHistory - packageOrder.Wallets.SingleOrDefault().Balance != amountRate) == false ? packageOrder.Wallets.SingleOrDefault().Balance : 0,
+                    BalanceNeedToUseBeforeWithdraw = atLeaseUse > 0 && packageOrder.Wallets.SingleOrDefault().BalanceHistory - packageOrder.Wallets.SingleOrDefault().Balance != amountRate ? atLeaseUse : 0
+                }
+            };
+        }
+        public async Task<ResponseAPI> GetTransactionWithdrawPackageOrder(Guid? packageOrderId, string? rfid)
+        {
+            var transactions = await _unitOfWork.GetRepository<Transaction>().GetListAsync(predicate: s => s.Type == TransactionType.WithdrawMoney && s.Status == TransactionStatus.Success);
+            return new ResponseAPI { 
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = "Get Transaction successfully !",
+                Data = transactions
+            };
+        }
         #endregion
     }
 }
