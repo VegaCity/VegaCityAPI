@@ -1611,6 +1611,7 @@ namespace VegaCityApp.API.Services.Implement
                 MessageResponse = PackageItemMessage.GetPackageItemsSuccess,
                 Data = new
                 {
+                    WalletId = packageOrder.Wallets.SingleOrDefault().Id,
                     Name = packageOrder.CusName,
                     Phone = packageOrder.PhoneNumber,
                     CccdPassport = packageOrder.CusCccdpassport,
