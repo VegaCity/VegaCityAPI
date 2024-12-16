@@ -534,16 +534,33 @@ namespace VegaCityApp.API.Services.Implement
             {
                 amount += storeTransfer.Amount;
             }
+            int amountFinal = AmountTransfered - amoutWithdrawed;
             if (AmountTransfered != amount)
             {
-                throw new BadHttpRequestException(OrderMessage.AmountNotEqual, HttpStatusCodes.BadRequest);
+                //throw new BadHttpRequestException(OrderMessage.AmountNotEqual, HttpStatusCodes.BadRequest);
+                return new ResponseAPI
+                {
+                    MessageResponse = StoreMessage.GetStoreSuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = new { 
+                        storeTrack,
+                        AmountTransfered,
+                        amoutWithdrawed,
+                        amountCanWithdraw = AmountTransfered != amount ? 0 : amountFinal
+                    },
+                };
             }
-            int amountFinal = AmountTransfered - amoutWithdrawed;
+            
             return new ResponseAPI
             {
                 MessageResponse = StoreMessage.GetStoreSuccess,
                 StatusCode = HttpStatusCodes.OK,
-                Data = new { storeTrack, amountCanWithdraw = amountFinal },
+                Data = new { 
+                    storeTrack,
+                    AmountTransfered,
+                    amoutWithdrawed,
+                    amountCanWithdraw = amountFinal 
+                },
             };
         }
         public async Task<ResponseAPI> RequestCloseStore(Guid StoreId)
