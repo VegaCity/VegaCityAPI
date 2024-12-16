@@ -1623,7 +1623,13 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task<ResponseAPI> GetTransactionWithdrawPackageOrder(Guid? packageOrderId, string? rfid)
         {
-            var transactions = await _unitOfWork.GetRepository<Transaction>().GetListAsync(predicate: s => s.Type == TransactionType.WithdrawMoney && s.Status == TransactionStatus.Success);
+            var packageOrder = await _unitOfWork.GetRepository<PackageOrder>().SingleOrDefaultAsync(
+                predicate: z => z.Id == packageOrderId || z.VcardId == rfid,
+                include: z => z.Include(i => i.Wallets))
+                ?? throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
+
+            var transactions = await _unitOfWork.GetRepository<Transaction>().GetListAsync(
+                predicate: s => s.Type == TransactionType.WithdrawMoney && s.Status == TransactionStatus.Success && s.WalletId == packageOrder.Wallets.SingleOrDefault().Id);
             return new ResponseAPI { 
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = "Get Transaction successfully !",
