@@ -250,6 +250,10 @@ namespace VegaCityApp.API.Services.Implement
                 (predicate: x => x.Status == TransactionStatus.Pending);
             foreach (var transaction in transactions)
             {
+                if (transactions.Any(t => t.Description.Contains("Charge Fee From Lost PackageItem:")))
+                {
+                    continue;
+                }
                 if (TimeUtils.GetCurrentSEATime().Subtract(transaction.CrDate).TotalMinutes > 5)
                 {
                     transaction.Status = TransactionStatus.Fail;
