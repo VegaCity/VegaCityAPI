@@ -44,42 +44,42 @@ namespace VegaCityApp.API.Services.Implement
             {
                 var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == GetUserIdFromJwt(), 
                                                                                          include: y => y.Include(s => s.UserStoreMappings).Include(w => w.Wallets));
-                //if (user.UserStoreMappings != null)
-                //{
-                //    IPaginate<TransactionResponse> data = await _unitOfWork.GetRepository<Transaction>().GetPagingListAsync(
-                //               selector: x => new TransactionResponse()
-                //               {
-                //                   Id = x.Id,
-                //                   Amount = x.Amount,
-                //                   Description = x.Description,
-                //                   CrDate = x.CrDate,
-                //                   Currency = x.Currency,
-                //                   Status = x.Status,
-                //                   IsIncrease = x.IsIncrease,
-                //                   StoreId = x.StoreId,
-                //                   Type = x.Type,
-                //                   WalletId = x.WalletId
-                //               },
-                //                page: page,
-                //                size: size,
-                //                orderBy: x => x.OrderByDescending(z => z.CrDate),
-                //                predicate: z => z.UserId == GetUserIdFromJwt() && z.WalletId == user.Wallets.SingleOrDefault().Id);
-                //    return new ResponseAPI<IEnumerable<TransactionResponse>>
-                //    {
-                //        MessageResponse = "Get Transactions success !!",
-                //        StatusCode = HttpStatusCodes.OK,
-                //        MetaData = new MetaData
-                //        {
-                //            Size = data.Size,
-                //            Page = data.Page,
-                //            Total = data.Total,
-                //            TotalPage = data.TotalPages
-                //        },
-                //        Data = data.Items
-                //    };
-                //}
-                //else
-                //{
+                if (user.UserStoreMappings != null)
+                {
+                    IPaginate<TransactionResponse> data = await _unitOfWork.GetRepository<Transaction>().GetPagingListAsync(
+                               selector: x => new TransactionResponse()
+                               {
+                                   Id = x.Id,
+                                   Amount = x.Amount,
+                                   Description = x.Description,
+                                   CrDate = x.CrDate,
+                                   Currency = x.Currency,
+                                   Status = x.Status,
+                                   IsIncrease = x.IsIncrease,
+                                   StoreId = x.StoreId,
+                                   Type = x.Type,
+                                   WalletId = x.WalletId
+                               },
+                                page: page,
+                                size: size,
+                                orderBy: x => x.OrderByDescending(z => z.CrDate),
+                                predicate: z => z.UserId == GetUserIdFromJwt() && z.WalletId == user.Wallets.SingleOrDefault().Id);
+                    return new ResponseAPI<IEnumerable<TransactionResponse>>
+                    {
+                        MessageResponse = "Get Transactions success !!",
+                        StatusCode = HttpStatusCodes.OK,
+                        MetaData = new MetaData
+                        {
+                            Size = data.Size,
+                            Page = data.Page,
+                            Total = data.Total,
+                            TotalPage = data.TotalPages
+                        },
+                        Data = data.Items
+                    };
+                }
+                else
+                {
                     IPaginate<TransactionResponse> data = await _unitOfWork.GetRepository<Transaction>().GetPagingListAsync(
                                selector: x => new TransactionResponse()
                                {
@@ -111,7 +111,7 @@ namespace VegaCityApp.API.Services.Implement
                         },
                         Data = data.Items
                     };
-                //}
+                }
                 
             }
             catch (Exception ex)

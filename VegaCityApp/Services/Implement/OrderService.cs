@@ -138,6 +138,7 @@ namespace VegaCityApp.API.Services.Implement
                             PaymentId = newPayment.Id
                         };
                         await _unitOfWork.GetRepository<Transaction>().InsertAsync(newTransaction);
+                        //store side (packageorderId) 
                         newTransactionForStore = new Transaction
                         {
                             Id = Guid.NewGuid(),
@@ -156,6 +157,7 @@ namespace VegaCityApp.API.Services.Implement
                             PaymentId = newPayment.Id
                         };
                         await _unitOfWork.GetRepository<Transaction>().InsertAsync(newTransactionForStore); //update transaction for store
+                       
                         return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI()
                         {
                             MessageResponse = OrderMessage.CreateOrderSuccessfully,
@@ -1193,10 +1195,11 @@ namespace VegaCityApp.API.Services.Implement
                     ?? throw new BadHttpRequestException("Transaction sale was not found", HttpStatusCodes.NotFound);
                 transaction.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                 transaction.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+
                 //update another transaction
-                var OrderTransaction = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.Id == transaction.OrderId);
                 var transactionOther = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
-                    (predicate: x => x.OrderId == OrderTransaction.Id)
+                    (predicate: x => x.OrderId == order.Id && x.Status == TransactionStatus.Pending && x.Id != Guid.Parse(req.TransactionId))
                     ?? throw new BadHttpRequestException("Transaction other was not found", HttpStatusCodes.NotFound);
                 transactionOther.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                 transactionOther.UpsDate = TimeUtils.GetCurrentSEATime();
@@ -1256,6 +1259,24 @@ namespace VegaCityApp.API.Services.Implement
                     Description = "Transfer money from order " + order.InvoiceId + " to store"
                 };
                 await _unitOfWork.GetRepository<StoreMoneyTransfer>().InsertAsync(transfer);
+                //mark as store pay for % vega as transaction here 
+                var transactionVegaFromStore = new Transaction
+                {
+                    Id = Guid.NewGuid(),
+                    CrDate = TimeUtils.GetCurrentSEATime(),
+                    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                    Amount = (int)(order.TotalAmount * order.Store.StoreTransferRate),
+                    Description = "Transfer money from order " + order.InvoiceId + " to Vega",
+                    IsIncrease = false,
+                    Status = TransactionStatus.Success,
+                    StoreId = order.StoreId,
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    OrderId = order.Id,
+                    Type = TransactionType.TransferMoney,
+                    UserId = order.UserId,
+                    WalletId = walletStore.Id,
+                };
+                await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionVegaFromStore);
                 var transactionVega = new Transaction
                 {
                     Id = Guid.NewGuid(),
