@@ -1,4 +1,5 @@
-﻿using VegaCityApp.API.Payload.Response;
+﻿using Microsoft.AspNetCore.Mvc;
+using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.TransactionResponse;
 
 namespace VegaCityApp.API.Services.Interface
@@ -12,5 +13,6 @@ namespace VegaCityApp.API.Services.Interface
         Task<ResponseAPI<IEnumerable<StoreMoneyTransferRes>>> GetAllStoreMoneyTransfer(Guid storeId, int size, int page);
         Task<ResponseAPI<IEnumerable<CustomerMoneyTransferRes>>> GetAllCustomerMoneyTransfer(Guid PackageOrderId, int size, int page);
         Task CheckTransactionPending();
+        Task<ResponseAPI<IEnumerable<TransactionResponse>>> GetAllCustomerMoneyTransaction(Guid PackageOrderId, int size, int page);
     }
 }

@@ -7,6 +7,7 @@ using static VegaCityApp.API.Constants.MessageConstant;
 using VegaCityApp.API.Validators;
 using VegaCityApp.API.Enums;
 using Swashbuckle.AspNetCore.Annotations;
+using VegaCityApp.Domain.Models;
 
 namespace VegaCityApp.API.Controllers
 {
@@ -66,6 +67,14 @@ namespace VegaCityApp.API.Controllers
         public async Task<IActionResult> GetAllCustomerMoneyTransfer(Guid PackageOrderId, int size, int page)
         {
             var response = await _transactionService.GetAllCustomerMoneyTransfer(PackageOrderId, size, page);
+            return Ok(response);
+        }
+        [HttpGet(TransactionEndpoint.GetListCustomerMoneyTransaction)]
+        [ProducesResponseType(typeof(ResponseAPI<IEnumerable<TransactionResponse>>), HttpStatusCodes.OK)]
+        //[CustomAuthorize(RoleEnum.Admin, RoleEnum.CashierWeb, RoleEnum.CashierApp, RoleEnum.Store)]
+        public async Task<IActionResult> GetAllCustomerMoneyTransaction(Guid PackageOrderId, int size, int page)
+        {
+            var response = await _transactionService.GetAllCustomerMoneyTransaction(PackageOrderId, size, page);
             return Ok(response);
         }
     }

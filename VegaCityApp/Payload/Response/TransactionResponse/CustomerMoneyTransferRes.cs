@@ -3,6 +3,8 @@
     public class CustomerMoneyTransferRes
     {
         public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
         public Guid MarketZoneId { get; set; }
         public Guid PackageOrderId { get; set; }
         public Guid TransactionId { get; set; }

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Response;
 using VegaCityApp.API.Payload.Response.HouseResponse;
@@ -41,7 +42,45 @@ namespace VegaCityApp.API.Services.Implement
         {
             try
             {
-                IPaginate<TransactionResponse> data = await _unitOfWork.GetRepository<Transaction>().GetPagingListAsync(
+                var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == GetUserIdFromJwt(), 
+                                                                                         include: y => y.Include(s => s.UserStoreMappings).Include(w => w.Wallets));
+                //if (user.UserStoreMappings != null)
+                //{
+                //    IPaginate<TransactionResponse> data = await _unitOfWork.GetRepository<Transaction>().GetPagingListAsync(
+                //               selector: x => new TransactionResponse()
+                //               {
+                //                   Id = x.Id,
+                //                   Amount = x.Amount,
+                //                   Description = x.Description,
+                //                   CrDate = x.CrDate,
+                //                   Currency = x.Currency,
+                //                   Status = x.Status,
+                //                   IsIncrease = x.IsIncrease,
+                //                   StoreId = x.StoreId,
+                //                   Type = x.Type,
+                //                   WalletId = x.WalletId
+                //               },
+                //                page: page,
+                //                size: size,
+                //                orderBy: x => x.OrderByDescending(z => z.CrDate),
+                //                predicate: z => z.UserId == GetUserIdFromJwt() && z.WalletId == user.Wallets.SingleOrDefault().Id);
+                //    return new ResponseAPI<IEnumerable<TransactionResponse>>
+                //    {
+                //        MessageResponse = "Get Transactions success !!",
+                //        StatusCode = HttpStatusCodes.OK,
+                //        MetaData = new MetaData
+                //        {
+                //            Size = data.Size,
+                //            Page = data.Page,
+                //            Total = data.Total,
+                //            TotalPage = data.TotalPages
+                //        },
+                //        Data = data.Items
+                //    };
+                //}
+                //else
+                //{
+                    IPaginate<TransactionResponse> data = await _unitOfWork.GetRepository<Transaction>().GetPagingListAsync(
                                selector: x => new TransactionResponse()
                                {
                                    Id = x.Id,
@@ -59,19 +98,21 @@ namespace VegaCityApp.API.Services.Implement
                                 size: size,
                                 orderBy: x => x.OrderByDescending(z => z.CrDate),
                                 predicate: z => z.UserId == GetUserIdFromJwt());
-                return new ResponseAPI<IEnumerable<TransactionResponse>>
-                {
-                    MessageResponse = "Get Transactions success !!",
-                    StatusCode = HttpStatusCodes.OK,
-                    MetaData = new MetaData
+                    return new ResponseAPI<IEnumerable<TransactionResponse>>
                     {
-                        Size = data.Size,
-                        Page = data.Page,
-                        Total = data.Total,
-                        TotalPage = data.TotalPages
-                    },
-                    Data = data.Items
-                };
+                        MessageResponse = "Get Transactions success !!",
+                        StatusCode = HttpStatusCodes.OK,
+                        MetaData = new MetaData
+                        {
+                            Size = data.Size,
+                            Page = data.Page,
+                            Total = data.Total,
+                            TotalPage = data.TotalPages
+                        },
+                        Data = data.Items
+                    };
+                //}
+                
             }
             catch (Exception ex)
             {
@@ -244,6 +285,59 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
+        public async Task<ResponseAPI<IEnumerable<TransactionResponse>>> GetAllCustomerMoneyTransaction(Guid PackageOrderId, int size, int page)
+        {
+            try
+            {
+                var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.PackageOrderId == PackageOrderId);
+                if (wallet == null)
+                    throw new BadHttpRequestException("Not found Wallet", HttpStatusCodes.NotFound);
+                    IPaginate<TransactionResponse> data = await _unitOfWork.GetRepository<Transaction>().GetPagingListAsync(
+                               selector: x => new TransactionResponse()
+                               {
+                                   Id = x.Id,
+                                   Amount = x.Amount,
+                                   Description = x.Description,
+                                   CrDate = x.CrDate,
+                                   Currency = x.Currency,
+                                   Status = x.Status,
+                                   IsIncrease = x.IsIncrease,
+                                   StoreId = x.StoreId,
+                                   Type = x.Type,
+                                   WalletId = x.WalletId
+                               },
+                                page: page,
+                                size: size,
+                                orderBy: x => x.OrderByDescending(z => z.CrDate),
+                                predicate: z => z.WalletId == wallet.Id );
+                    return new ResponseAPI<IEnumerable<TransactionResponse>>
+                    {
+                        MessageResponse = "Get Transactions success !!",
+                        StatusCode = HttpStatusCodes.OK,
+                        MetaData = new MetaData
+                        {
+                            Size = data.Size,
+                            Page = data.Page,
+                            Total = data.Total,
+                            TotalPage = data.TotalPages
+                        },
+                        Data = data.Items
+                    };
+                
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI<IEnumerable<TransactionResponse>>
+                {
+                    MessageResponse = "Get Transactions fail" + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null,
+                    MetaData = null
+                };
+            }
+        }
+
         public async Task CheckTransactionPending()
         {
             var transactions = await _unitOfWork.GetRepository<Transaction>().GetListAsync

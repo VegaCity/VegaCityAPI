@@ -1190,10 +1190,17 @@ namespace VegaCityApp.API.Services.Implement
 
                 var transaction = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
                     (predicate: x => x.Id == Guid.Parse(req.TransactionId))
-                    ?? throw new BadHttpRequestException("Transaction sale not found", HttpStatusCodes.NotFound);
+                    ?? throw new BadHttpRequestException("Transaction sale was not found", HttpStatusCodes.NotFound);
                 transaction.Status = TransactionStatus.Success.GetDescriptionFromEnum();
                 transaction.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+                //update another transaction
+                var OrderTransaction = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.Id == transaction.OrderId);
+                var transactionOther = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync
+                    (predicate: x => x.OrderId == OrderTransaction.Id)
+                    ?? throw new BadHttpRequestException("Transaction other was not found", HttpStatusCodes.NotFound);
+                transactionOther.Status = TransactionStatus.Success.GetDescriptionFromEnum();
+                transactionOther.UpsDate = TimeUtils.GetCurrentSEATime();
+                _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionOther);
 
                 var newCusTransfer = new CustomerMoneyTransfer()
                 {
