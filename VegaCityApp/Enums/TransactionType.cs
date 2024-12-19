@@ -7,13 +7,14 @@
         public const string ChargeMoney = "ChargeMoney";
         public const string Payment = "Payment";
         public const string StoreTransfer = "StoreTransfer";
-        public const string ReceiveMoney = "ReceiveMoney";
+        public const string ReceiveMoneyToCashier = "ReceiveMoneyToCashier";
         public const string RefundMoney = "RefundMoney";
         public const string SellingPackage = "SellingPackage";
         public const string SellingProduct = "SellingProduct";
         public const string SellingService = "SellingService";
         public const string TransferMoneyToVega = "TransferMoneyToVega";
         public const string TransferMoneyToStore = "TransferMoneyToStore";
+        public const string FeeLost = "FeeLost";
     }
     public class TransactionStatus
     {
