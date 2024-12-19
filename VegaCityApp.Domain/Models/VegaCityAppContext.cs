@@ -380,7 +380,7 @@ namespace VegaCityApp.Domain.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.Name).HasMaxLength(100);
+                entity.Property(e => e.Name).HasMaxLength(500);
 
                 entity.Property(e => e.SaleType)
                     .HasMaxLength(50)
