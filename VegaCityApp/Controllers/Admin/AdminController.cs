@@ -29,7 +29,7 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpPost(UserEndpoint.CreateSession)]
         [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.Created)]
-        [CustomAuthorize(RoleEnum.Admin)]
+        [CustomAuthorize(RoleEnum.Admin,RoleEnum.AdminSystem)]
         [SwaggerOperation(Summary = "Create new session for user")]
         public async Task<IActionResult> CreateSession(Guid id, [FromBody] SessionRequest request)
         {
@@ -93,7 +93,7 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpGet(UserEndpoint.GetListUserNoSession)]
         [ProducesResponseType(typeof(ResponseAPI<IEnumerable<GetUserResponse>>), HttpStatusCodes.OK)]
-        [CustomAuthorize(RoleEnum.Admin)]
+        [CustomAuthorize(RoleEnum.Admin,RoleEnum.AdminSystem)]
         public async Task<IActionResult> SearchAllUserNoSession([FromQuery] int size = 10, [FromQuery] int page = 1)
         {
             var result = await _service.SearchAllUserNoSession(size, page);

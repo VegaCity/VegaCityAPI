@@ -999,7 +999,8 @@ namespace VegaCityApp.API.Services.Implement
                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(x => x.PackageOrder).ThenInclude(r => r.Wallets)
                                        .Include(s => s.PromotionOrders).ThenInclude(a => a.Promotion)
-                                       .Include(a => a.Payments));
+                                       .Include(a => a.Payments)
+                                       .Include(t => t.Transactions));
                 var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
                     (predicate: x => x.UserId == order.UserId)
                     ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
@@ -1140,8 +1141,8 @@ namespace VegaCityApp.API.Services.Implement
                     else throw new BadHttpRequestException("Error when commit", HttpStatusCodes.BadRequest);
                     return new ResponseAPI()
                     {
-                        StatusCode = HttpStatusCodes.OK,
-                        MessageResponse = OrderMessage.ConfirmOrderSuccessfully,
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentZaloPay.ipnUrl + order.Id
                     };
                 }
                 else
@@ -1225,8 +1226,8 @@ namespace VegaCityApp.API.Services.Implement
                     await _unitOfWork.CommitAsync();
                     return new ResponseAPI()
                     {
-                        StatusCode = HttpStatusCodes.OK,
-                        MessageResponse = OrderMessage.ConfirmOrderSuccessfully,
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentZaloPay.ipnUrl + order.Id
                     };
                 }
             }
@@ -2177,7 +2178,8 @@ namespace VegaCityApp.API.Services.Implement
                 include: order => order.Include(a => a.User).ThenInclude(b => b.Wallets)
                                        .Include(x => x.PackageOrder).ThenInclude(r => r.Wallets)
                                        .Include(s => s.PromotionOrders).ThenInclude(a => a.Promotion)
-                                       .Include(a => a.Payments));
+                                       .Include(a => a.Payments)
+                                       .Include(t => t.Transactions));
                 var sessionUser = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync
                     (predicate: x => x.UserId == order.UserId)
                     ?? throw new BadHttpRequestException("User session not found", HttpStatusCodes.NotFound);
@@ -2318,8 +2320,8 @@ namespace VegaCityApp.API.Services.Implement
                     else throw new BadHttpRequestException("Error when commit", HttpStatusCodes.BadRequest);
                     return new ResponseAPI()
                     {
-                        StatusCode = HttpStatusCodes.OK,
-                        MessageResponse = OrderMessage.ConfirmOrderSuccessfully,
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentZaloPay.ipnUrl + order.Id
                     };
                 }
                 else
@@ -2403,8 +2405,8 @@ namespace VegaCityApp.API.Services.Implement
                     await _unitOfWork.CommitAsync();
                     return new ResponseAPI()
                     {
-                        StatusCode = HttpStatusCodes.OK,
-                        MessageResponse = OrderMessage.ConfirmOrderSuccessfully,
+                        StatusCode = HttpStatusCodes.NoContent,
+                        MessageResponse = PaymentZaloPay.ipnUrl + order.Id
                     };
                 }
             }

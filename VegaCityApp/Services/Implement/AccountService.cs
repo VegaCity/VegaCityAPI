@@ -1071,6 +1071,64 @@ namespace VegaCityApp.Service.Implement
         }
         public async Task<ResponseAPI<IEnumerable<GetUserResponse>>> SearchAllUserNoSession(int size, int page)
         {
+            if(GetRoleFromJwt() == RoleEnum.AdminSystem.GetDescriptionFromEnum())
+            {
+                try
+                {
+                    IPaginate<GetUserResponse> data = await _unitOfWork.GetRepository<User>().GetPagingListAsync(
+                    selector: x => new GetUserResponse()
+                    {
+                        Id = x.Id,
+                        FullName = x.FullName,
+                        Email = x.Email,
+                        Address = x.Address,
+                        PhoneNumber = x.PhoneNumber,
+                        Birthday = x.Birthday,
+                        Description = x.Description,
+                        CccdPassport = x.CccdPassport,
+                        Gender = x.Gender,
+                        ImageUrl = x.ImageUrl,
+                        StoreId = x.StoreId,
+                        CrDate = x.CrDate,
+                        UpsDate = x.UpsDate,
+                        RoleId = x.RoleId,
+                        Status = x.Status,
+                        RegisterStoreType = x.RegisterStoreType == (int)StoreTypeEnum.Food ? "Store Product" : "Store Service",
+                        RoleName = x.Role.Name
+                    },
+                    page: page,
+                    size: size,
+                    orderBy: x => x.OrderByDescending(z => z.FullName),
+                    predicate: x => x.Status == (int)UserStatusEnum.Active
+                                 && x.UserSessions.Any(z => z.Status == SessionStatusEnum.Active.GetDescriptionFromEnum()) == false,
+                    //&& x.Role.Name != RoleEnum.Admin.GetDescriptionFromEnum(),
+                    include: z => z.Include(z => z.Role).Include(z => z.UserSessions));
+
+                    return new ResponseAPI<IEnumerable<GetUserResponse>>
+                    {
+                        MessageResponse = UserMessage.GetListSuccess,
+                        StatusCode = HttpStatusCodes.OK,
+                        Data = data.Items,
+                        MetaData = new MetaData
+                        {
+                            Size = data.Size,
+                            Page = data.Page,
+                            Total = data.Total,
+                            TotalPage = data.TotalPages
+                        }
+                    };
+                }
+                catch (Exception ex)
+                {
+                    return new ResponseAPI<IEnumerable<GetUserResponse>>
+                    {
+                        MessageResponse = UserMessage.GetAllUserFail + ex.Message,
+                        StatusCode = HttpStatusCodes.InternalServerError,
+                        Data = null,
+                        MetaData = null
+                    };
+                }
+            }
             try
             {
                 Guid apiKey = GetMarketZoneIdFromJwt();
