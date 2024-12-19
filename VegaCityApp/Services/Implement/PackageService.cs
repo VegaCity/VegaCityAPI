@@ -360,10 +360,25 @@ namespace VegaCityApp.API.Services.Implement
 
                             ////UPDATE CASHIER WALLET
                             wallet.Balance += 50000;
-                            wallet.BalanceHistory += 50000;
+                            //wallet.BalanceHistory += 50000;
                             wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                             _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
-
+                            var transactionFeePackageOrder = new Transaction
+                            {
+                                Id = Guid.NewGuid(),
+                                Amount = 50000,
+                                CrDate = TimeUtils.GetCurrentSEATime(),
+                                Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                                Description = "Fee Get lost packageOrder: " + packageOrderExist.Id,
+                                IsIncrease = false,
+                                OrderId = newChargeFeeOderPAID.Id,
+                                PaymentId = newPayment.Id,
+                                Status = TransactionStatus.Success,
+                                Type = TransactionType.FeeLost,
+                                UpsDate = TimeUtils.GetCurrentSEATime(),
+                                UserId = userId
+                            };
+                            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionFeePackageOrder);
                             //session update
                             session.TotalQuantityOrder += 1;
                             session.TotalCashReceive += 50000;
@@ -1524,14 +1539,14 @@ namespace VegaCityApp.API.Services.Implement
             {
                 Id = Guid.NewGuid(),
                 WalletId = packageOrderLost.Wallets.SingleOrDefault().Id,
-                IsIncrease = false,
+                IsIncrease = true,
                 Amount = 50000,
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 Description = "Charge Fee From Lost PackageItem: " + packageOrderLost.CusName,
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 Status = TransactionStatus.Pending,
-                Type = TransactionType.TransferMoneyToVega,
+                Type = TransactionType.ReceiveMoneyToCashier,
                 UserId = userId,
                 //need to update with status is success & add deposit id above
             };
