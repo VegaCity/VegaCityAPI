@@ -12,7 +12,8 @@
         public const string SellingPackage = "SellingPackage";
         public const string SellingProduct = "SellingProduct";
         public const string SellingService = "SellingService";
-        public const string TransferMoney = "TransferMoney";
+        public const string TransferMoneyToVega = "TransferMoneyToVega";
+        public const string TransferMoneyToStore = "TransferMoneyToStore";
     }
     public class TransactionStatus
     {

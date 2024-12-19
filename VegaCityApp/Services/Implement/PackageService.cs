@@ -1531,7 +1531,7 @@ namespace VegaCityApp.API.Services.Implement
                 Description = "Charge Fee From Lost PackageItem: " + packageOrderLost.CusName,
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 Status = TransactionStatus.Pending,
-                Type = TransactionType.TransferMoney,
+                Type = TransactionType.TransferMoneyToVega,
                 UserId = userId,
                 //need to update with status is success & add deposit id above
             };
