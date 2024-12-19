@@ -413,7 +413,8 @@ namespace VegaCityApp.API.Services.Implement
                     throw new BadHttpRequestException("Balance is not enough", HttpStatusCodes.BadRequest);
                 if (atLeaseUse > 0 && wallet.BalanceHistory - wallet.Balance != amountRate) // 700 - 150 != 560
                     throw new BadHttpRequestException("User must pay more " + atLeaseUse + "VND to withdraw", HttpStatusCodes.BadRequest);
-
+                //transaction of package order
+                // might balance of package order
                 transaction = new Transaction
                 {
                     Id = Guid.NewGuid(),
@@ -535,36 +536,11 @@ namespace VegaCityApp.API.Services.Implement
                 session.TotalWithrawCash = transactionAvailable.Amount;
                 _unitOfWork.GetRepository<UserSession>().UpdateAsync(session);
             }
-            var marketZone = await _unitOfWork.GetRepository<MarketZone>().SingleOrDefaultAsync
-                (predicate: x => x.Id == cashierWeb.MarketZoneId);
-            var admin = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync
-                (predicate: x => x.Email == marketZone.Email && x.Status == (int)UserStatusEnum.Active,
-                    include: wallet => wallet.Include(z => z.Wallets));
-            Wallet adminWallet = admin.Wallets.SingleOrDefault();
-            string name = wallet.User != null ? wallet.User.FullName : wallet.PackageOrder.CusName;
-            var transactionBalanceAdmin = new Transaction
-            {
-                Id = Guid.NewGuid(),
-                WalletId = adminWallet.Id,
-                Type = TransactionType.WithdrawMoney,
-                Amount = transactionAvailable.Amount,
-                IsIncrease = false,
-                Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                UserId = admin.Id,
-                CrDate = TimeUtils.GetCurrentSEATime(),
-                UpsDate = TimeUtils.GetCurrentSEATime(),
-                Status = TransactionStatus.Success,
-                Description = "Withdraw money for: " + name
-            };
-            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceAdmin);
-            //admin wallet
-            adminWallet.Balance -= transactionAvailable.Amount;
-            _unitOfWork.GetRepository<Wallet>().UpdateAsync(adminWallet);
             Wallet cashierWallet = cashierWeb.Wallets.SingleOrDefault();
             var transactionBalanceHistory = new Transaction
             {
                 Id = Guid.NewGuid(),
-                Type = TransactionType.WithdrawMoney,
+                Type = TransactionType.ReceiveMoneyToCashier,
                 WalletId = cashierWallet.Id,
                 Amount = transactionAvailable.Amount, //cashierWeb.Wallets.SingleOrDefault().BalanceHistory +
                 IsIncrease = true,
@@ -575,12 +551,26 @@ namespace VegaCityApp.API.Services.Implement
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 UserId = cashierWebId
             };
+            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceHistory);
+            var transactionBalance = new Transaction
+            {
+                Id = Guid.NewGuid(),
+                Type = TransactionType.RefundMoney,
+                WalletId = cashierWallet.Id,
+                Amount = transactionAvailable.Amount,
+                IsIncrease = false,
+                Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                CrDate = TimeUtils.GetCurrentSEATime(),
+                Status = TransactionStatus.Success,
+                Description = "Refund balance to customer with v-card: " + wallet.PackageOrderId,
+                UpsDate = TimeUtils.GetCurrentSEATime(),
+                UserId = cashierWebId
+            };
+            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalance);
             cashierWallet.BalanceHistory += transactionAvailable.Amount;
             cashierWallet.Balance -= transactionAvailable.Amount;
             cashierWallet.UpsDate = TimeUtils.GetCurrentSEATime();
             _unitOfWork.GetRepository<Wallet>().UpdateAsync(cashierWallet);
-
-            await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionBalanceHistory);
             return await _unitOfWork.CommitAsync() > 0 ? new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.OK,
