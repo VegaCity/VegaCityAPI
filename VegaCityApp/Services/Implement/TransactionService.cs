@@ -136,7 +136,8 @@ namespace VegaCityApp.API.Services.Implement
                                              || z.Type == TransactionType.ReceiveMoneyToCashier 
                                              || z.Type == TransactionType.RefundMoney 
                                              || z.Type == TransactionType.ChargeMoney 
-                                             || z.Type == TransactionType.EndDayCheckWalletCashier 
+                                             || z.Type == TransactionType.EndDayCheckWalletCashierBalance
+                                             || z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory
                                              || z.Type == TransactionType.WithdrawMoney
                                              && z.StoreId != null);
                     return new ResponseAPI<IEnumerable<TransactionResponse>>

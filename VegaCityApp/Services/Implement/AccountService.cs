@@ -2591,8 +2591,8 @@ namespace VegaCityApp.Service.Implement
                 },
                 page: page,
                 size: size,
-                orderBy: x => x.OrderByDescending(z => z.Type),
-                predicate: x => x.Status == TransactionStatus.Pending && x.Type == TransactionType.EndDayCheckWalletCashier,
+                orderBy: x => x.OrderByDescending(z => z.CrDate),
+                predicate: x => x.Status == TransactionStatus.Pending && x.Type == TransactionType.EndDayCheckWalletCashierBalance || x.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory,
                 include: z => z.Include(p => p.Wallet).ThenInclude(z => z.User)
                 );
                 return new ResponseAPI<IEnumerable<GetDepositApprovalResponse>>
@@ -2628,22 +2628,42 @@ namespace VegaCityApp.Service.Implement
                 ?? throw new BadHttpRequestException(TransactionMessage.NotFoundTransaction, HttpStatusCodes.NotFound);
             if (status == "APPROVED")
             {
-                transaction.Status = TransactionStatus.Success;
-                transaction.UpsDate = TimeUtils.GetCurrentSEATime();
-                _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
-                transaction.User.Wallets.SingleOrDefault().Balance += transaction.Wallet.Balance;
-                transaction.User.Wallets.SingleOrDefault().BalanceHistory += transaction.Wallet.BalanceHistory;
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(transaction.User.Wallets.SingleOrDefault());
-                transaction.Wallet.Balance = 0;
-                transaction.Wallet.BalanceHistory = 0;
-                _unitOfWork.GetRepository<Wallet>().UpdateAsync(transaction.Wallet);
-                if(transaction.Wallet.User.Status == (int)UserStatusEnum.Blocked)
+                if (transaction.Type == TransactionType.EndDayCheckWalletCashierBalance)
                 {
-                    transaction.Wallet.User.Status = (int)UserStatusEnum.Active;
-                    transaction.Wallet.User.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<User>().UpdateAsync(transaction.Wallet.User);
+                    transaction.Status = TransactionStatus.Success;
+                    transaction.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+                    transaction.User.Wallets.SingleOrDefault().Balance += transaction.Wallet.Balance;
+                    transaction.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(transaction.User.Wallets.SingleOrDefault());
+                    transaction.Wallet.Balance = 0;
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(transaction.Wallet);
+                    if (transaction.Wallet.User.Status == (int)UserStatusEnum.Blocked)
+                    {
+                        transaction.Wallet.User.Status = (int)UserStatusEnum.Active;
+                        transaction.Wallet.User.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<User>().UpdateAsync(transaction.Wallet.User);
+                    }
+                    await _unitOfWork.CommitAsync();
                 }
-                await _unitOfWork.CommitAsync();
+                else
+                {
+                    transaction.Status = TransactionStatus.Success;
+                    transaction.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+                    transaction.User.Wallets.SingleOrDefault().BalanceHistory += transaction.Wallet.BalanceHistory;
+                    transaction.User.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(transaction.User.Wallets.SingleOrDefault());
+                    transaction.Wallet.BalanceHistory = 0;
+                    _unitOfWork.GetRepository<Wallet>().UpdateAsync(transaction.Wallet);
+                    if (transaction.Wallet.User.Status == (int)UserStatusEnum.Blocked)
+                    {
+                        transaction.Wallet.User.Status = (int)UserStatusEnum.Active;
+                        transaction.Wallet.User.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<User>().UpdateAsync(transaction.Wallet.User);
+                    }
+                    await _unitOfWork.CommitAsync();
+                }             
             }
             else if (status == "REJECTED")
             {

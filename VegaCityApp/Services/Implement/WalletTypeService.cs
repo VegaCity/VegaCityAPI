@@ -220,7 +220,7 @@ namespace VegaCityApp.API.Services.Implement
                                 var transaction = new Transaction
                                 {
                                     Id = Guid.NewGuid(),
-                                    Type = TransactionType.EndDayCheckWalletCashier,
+                                    Type = TransactionType.EndDayCheckWalletCashierBalance,
                                     WalletId = wallet.Id,
                                     Amount = wallet.Balance,
                                     IsIncrease = false,
@@ -235,7 +235,7 @@ namespace VegaCityApp.API.Services.Implement
                                 var transactionHistory = new Transaction
                                 {
                                     Id = Guid.NewGuid(),
-                                    Type = TransactionType.EndDayCheckWalletCashier,
+                                    Type = TransactionType.EndDayCheckWalletCashierBalanceHistory,
                                     WalletId = wallet.Id,
                                     Amount = wallet.BalanceHistory,
                                     IsIncrease = false,
@@ -266,7 +266,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task CheckPendingEndDayCheckWalletCashier()
         {
             var transactions = await _unitOfWork.GetRepository<Transaction>().GetListAsync(
-                predicate: z => z.Status == TransactionStatus.Pending && z.Type == TransactionType.EndDayCheckWalletCashier,
+                predicate: z => z.Status == TransactionStatus.Pending && z.Type == TransactionType.EndDayCheckWalletCashierBalance || z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory,
                 include: z => z.Include(a => a.Wallet).ThenInclude(z => z.User));
             foreach(var item in transactions)
             {
@@ -591,20 +591,7 @@ namespace VegaCityApp.API.Services.Implement
             var wallets = await _unitOfWork.GetRepository<Wallet>().GetListAsync(predicate: z => !z.Deflag);
             foreach (var wallet in wallets)
             {
-                if(wallet.UserId != null && wallet.StoreId == null)
-                {
-                    BalanceEndDay newdata = new BalanceEndDay()
-                    {
-                        Id = Guid.NewGuid(),
-                        Deflag = wallet.Deflag,
-                        Balance = wallet.Balance,
-                        BalanceHistory = wallet.BalanceHistory,
-                        DateCheck = TimeUtils.GetCurrentSEATime(),
-                        UserId = wallet.UserId
-                    };
-                    await _unitOfWork.GetRepository<BalanceEndDay>().InsertAsync(newdata);
-                }
-                else
+                if (wallet.UserId != null && wallet.StoreId != null)
                 {
                     BalanceEndDay newdata = new BalanceEndDay()
                     {
@@ -618,6 +605,20 @@ namespace VegaCityApp.API.Services.Implement
                     };
                     await _unitOfWork.GetRepository<BalanceEndDay>().InsertAsync(newdata);
                 }
+                if (wallet.UserId != null && wallet.StoreId == null)
+                {
+                    BalanceEndDay newdata = new BalanceEndDay()
+                    {
+                        Id = Guid.NewGuid(),
+                        Deflag = wallet.Deflag,
+                        Balance = wallet.Balance,
+                        BalanceHistory = wallet.BalanceHistory,
+                        DateCheck = TimeUtils.GetCurrentSEATime(),
+                        UserId = wallet.UserId
+                    };
+                    await _unitOfWork.GetRepository<BalanceEndDay>().InsertAsync(newdata);
+                }
+                
             }
             await _unitOfWork.CommitAsync();
         }

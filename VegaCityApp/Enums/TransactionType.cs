@@ -2,7 +2,8 @@
 {
     public class TransactionType
     {
-        public const string EndDayCheckWalletCashier = "EndDayCheckWalletCashier";
+        public const string EndDayCheckWalletCashierBalance = "EndDayCheckWalletCashierBalance";
+        public const string EndDayCheckWalletCashierBalanceHistory = "EndDayCheckWalletCashierBalanceHistory";
         public const string WithdrawMoney = "WithdrawMoney";
         public const string ChargeMoney = "ChargeMoney";
         public const string Payment = "Payment";
