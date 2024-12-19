@@ -182,6 +182,7 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.UserNotFound
                 };
             }
+            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(predicate: x => x.UserId == user.Id && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum());
             switch (user.Status)
             {
                 case (int)UserStatusEnum.Active:
@@ -241,6 +242,7 @@ namespace VegaCityApp.Service.Implement
                                 RoleName = user.Role.Name,
                                 StoreType = user.StoreId != null ? (int)user.UserStoreMappings.SingleOrDefault().Store.StoreType : -1 ,
                                 RoleId = user.Role.Id,
+                                IsSession = session == null? false : true,
                                 Tokens = new Tokens
                                 {
                                     AccessToken = token,
