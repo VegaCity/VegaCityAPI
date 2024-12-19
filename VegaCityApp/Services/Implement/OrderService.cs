@@ -1315,7 +1315,7 @@ namespace VegaCityApp.API.Services.Implement
                     WalletId = walletStore.Id,
                     OrderId = order.Id
                 };
-                await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionStoreTransfer);
+                await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionStoreTransferToVega);
                 var walletAdmin = admin.Wallets.FirstOrDefault();
                 walletAdmin.Balance -= (int)(order.TotalAmount - order.TotalAmount * order.Store.StoreTransferRate);
                 walletAdmin.Balance += (int)(order.TotalAmount * order.Store.StoreTransferRate);
