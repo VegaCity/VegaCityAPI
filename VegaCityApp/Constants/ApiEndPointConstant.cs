@@ -206,6 +206,8 @@ public static class ApiEndPointConstant
         public const string GetListTransaction = ApiEndpoint + "/transactions";
         public const string GetTransaction = ApiEndpoint + "/transaction/{id}";
         public const string DeleteTransaction = ApiEndpoint + "/transaction/{id}";
+        public const string GetTransactionComponents = ApiEndpoint + "/transaction/components/{TransactionId}/transactions";
+
     }
     public static class ReportEndpoint
     {

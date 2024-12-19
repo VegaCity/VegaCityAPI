@@ -77,5 +77,13 @@ namespace VegaCityApp.API.Controllers
             var response = await _transactionService.GetAllCustomerMoneyTransaction(PackageOrderId, size, page);
             return Ok(response);
         }
+        [HttpGet(TransactionEndpoint.GetTransactionComponents)]
+        [CustomAuthorize(RoleEnum.Admin)] //, RoleEnum.CashierWeb, RoleEnum.CashierApp, RoleEnum.Store
+        [ProducesResponseType(typeof(ResponseAPI), HttpStatusCodes.OK)]
+        public async Task<IActionResult> GetTransactionComponents(Guid TransactionId)
+        {
+            var response = await _transactionService.GetTransactionComponents(TransactionId);
+            return Ok(response);
+        }
     }
 }
