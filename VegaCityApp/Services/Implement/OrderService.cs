@@ -1231,7 +1231,7 @@ namespace VegaCityApp.API.Services.Implement
                     Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                     Amount = (int)(order.TotalAmount - order.TotalAmount * order.Store.StoreTransferRate),
                     CrDate = TimeUtils.GetCurrentSEATime(),
-                    Description = "Transfer money from order " + order.InvoiceId + " to store",
+                    Description = "Transfer money from order at Store: " + store.Name + " with invoiceId: " + order.InvoiceId + " to store",
                     IsIncrease = true,
                     Status = TransactionStatus.Success,
                     StoreId = order.StoreId,
@@ -1262,23 +1262,23 @@ namespace VegaCityApp.API.Services.Implement
                 };
                 await _unitOfWork.GetRepository<StoreMoneyTransfer>().InsertAsync(transfer);
                 //mark as store pay for % vega as transaction here 
-                var transactionVegaFromStore = new Transaction
-                {
-                    Id = Guid.NewGuid(),
-                    CrDate = TimeUtils.GetCurrentSEATime(),
-                    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                    Amount = (int)(order.TotalAmount * order.Store.StoreTransferRate),
-                    Description = "Transfer money from order " + order.InvoiceId + " to Vega",
-                    IsIncrease = false,
-                    Status = TransactionStatus.Success,
-                    StoreId = order.StoreId,
-                    UpsDate = TimeUtils.GetCurrentSEATime(),
-                    OrderId = order.Id,
-                    Type = TransactionType.TransferMoney,
-                    UserId = order.UserId,
-                    WalletId = walletStore.Id,
-                };
-                await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionVegaFromStore);
+                //var transactionVegaFromStore = new Transaction
+                //{
+                //    Id = Guid.NewGuid(),
+                //    CrDate = TimeUtils.GetCurrentSEATime(),
+                //    Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                //    Amount = (int)(order.TotalAmount * order.Store.StoreTransferRate),
+                //    Description = "Transfer money from order " + order.InvoiceId + " to Vega",
+                //    IsIncrease = false,
+                //    Status = TransactionStatus.Success,
+                //    StoreId = order.StoreId,
+                //    UpsDate = TimeUtils.GetCurrentSEATime(),
+                //    OrderId = order.Id,
+                //    Type = TransactionType.TransferMoney,
+                //    UserId = order.UserId,
+                //    WalletId = walletStore.Id,
+                //};
+                //await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionVegaFromStore);
                 //transaction transfer to vega
                 var transactionVega = new Transaction
                 {
@@ -1286,7 +1286,7 @@ namespace VegaCityApp.API.Services.Implement
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                     Amount = (int)(order.TotalAmount * order.Store.StoreTransferRate),
-                    Description = "Transfer money from order " + order.InvoiceId + " to Vega",
+                    Description = "Transfer money from order at Store: " + store.Name + " with invoiceId: " + order.InvoiceId + " to Vega",
                     IsIncrease = true,
                     Status = TransactionStatus.Success,
                     StoreId = order.StoreId,
