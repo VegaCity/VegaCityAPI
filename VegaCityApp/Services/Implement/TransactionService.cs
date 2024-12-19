@@ -330,8 +330,8 @@ namespace VegaCityApp.API.Services.Implement
             {
                 StatusCode = HttpStatusCodes.OK,
                 MessageResponse = "Get Transaction Components Successfully!",
-                Data = {}
-            }
+                Data = { }
+            };
         }
     }
 }

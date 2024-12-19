@@ -246,7 +246,7 @@ namespace VegaCityApp.API.Services.Implement
                             Amount = req.TotalAmount,
                             CrDate = TimeUtils.GetCurrentSEATime(),
                             Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
-                            Description = "Transaction selling " + req.SaleType + "with InvoiceId: " + newOrder.InvoiceId + " at Vega",
+                            Description = "Transaction selling At Store: " + store.Name + "with sale type: "  + req.SaleType + "with InvoiceId: " + newOrder.InvoiceId + " at Vega",
                             IsIncrease = false,
                             Status = TransactionStatus.Pending.GetDescriptionFromEnum(),
                             OrderId = newOrder.Id,
