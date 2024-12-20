@@ -16,6 +16,8 @@ namespace VegaCityApp.Domain.Models
         public int Quantity { get; set; }
         public int Amount { get; set; }
         public Guid? PackageId { get; set; }
+        public DateTime? StartRent { get; set; }
+        public DateTime? EndRent { get; set; }
 
         public virtual Order Order { get; set; } = null!;
         public virtual Package? Package { get; set; }

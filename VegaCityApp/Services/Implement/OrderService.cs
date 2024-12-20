@@ -80,8 +80,6 @@ namespace VegaCityApp.API.Services.Implement
                             UserId = userID,
                             PackageOrderId = packageOrderExist.Id,
                             PackageId = packageOrderExist.PackageId,
-                            StartRent = req.StartRent,
-                            EndRent = req.EndRent,
                             BalanceBeforePayment = store.Wallets.SingleOrDefault().Balance,
                             BalanceHistoryBeforePayment = store.Wallets.SingleOrDefault().BalanceHistory
                         };
@@ -90,8 +88,9 @@ namespace VegaCityApp.API.Services.Implement
                         {
                             if (item.Quantity <= 0)
                                 throw new BadHttpRequestException(OrderMessage.QuantityInvalid, HttpStatusCodes.BadRequest);
-                            products.Add(await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == Guid.Parse(item.Id))
-                                ?? throw new BadHttpRequestException("ProductId: " + item.Id + " is not found", HttpStatusCodes.NotFound));
+                            var prExist = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == Guid.Parse(item.Id))
+                                ?? throw new BadHttpRequestException("ProductId: " + item.Id + " is not found", HttpStatusCodes.NotFound);
+                            products.Add(prExist);
                             var orderDetail = new OrderDetail()
                             {
                                 Id = Guid.NewGuid(),
@@ -103,7 +102,9 @@ namespace VegaCityApp.API.Services.Implement
                                 FinalAmount = item.Price * item.Quantity,
                                 PromotionAmount = 0,
                                 Vatamount = (int)(EnvironmentVariableConstant.VATRate * item.Price * item.Quantity),
-                                ProductId = Guid.Parse(item.Id)
+                                ProductId = Guid.Parse(item.Id),
+                                StartRent = TimeUtils.GetCurrentSEATime(),
+                                EndRent = prExist.Unit == UnitEnum.Hour.GetDescriptionFromEnum() ? TimeUtils.GetCurrentSEATime().AddHours((double)prExist.Duration) : TimeUtils.GetCurrentSEATime().AddMinutes((double)prExist.Duration),
                             };
                             await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
                         }
@@ -180,8 +181,6 @@ namespace VegaCityApp.API.Services.Implement
                             UserId = userID,
                             PackageOrderId = packageOrderExist.Id,
                             PackageId = packageOrderExist.PackageId,
-                            StartRent = req.StartRent,
-                            EndRent = req.EndRent,
                             BalanceBeforePayment = store.Wallets.SingleOrDefault().Balance,
                             BalanceHistoryBeforePayment = store.Wallets.SingleOrDefault().BalanceHistory
                         };
@@ -190,8 +189,9 @@ namespace VegaCityApp.API.Services.Implement
                         {
                             if (item.Quantity <= 0)
                                 throw new BadHttpRequestException(OrderMessage.QuantityInvalid, HttpStatusCodes.BadRequest);
-                            products.Add(await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == Guid.Parse(item.Id))
-                                ?? throw new BadHttpRequestException("ProductId: " + item.Id + " is not found", HttpStatusCodes.NotFound));
+                            var prExist = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == Guid.Parse(item.Id))
+                                ?? throw new BadHttpRequestException("ProductId: " + item.Id + " is not found", HttpStatusCodes.NotFound);
+                            products.Add(prExist);
                             var orderDetail = new OrderDetail()
                             {
                                 Id = Guid.NewGuid(),
@@ -203,7 +203,9 @@ namespace VegaCityApp.API.Services.Implement
                                 FinalAmount = item.Price * item.Quantity,
                                 PromotionAmount = 0,
                                 Vatamount = (int)(EnvironmentVariableConstant.VATRate * item.Price * item.Quantity),
-                                ProductId = Guid.Parse(item.Id)
+                                ProductId = Guid.Parse(item.Id),
+                                StartRent = TimeUtils.GetCurrentSEATime(),
+                                EndRent = prExist.Unit == UnitEnum.Hour.GetDescriptionFromEnum() ? TimeUtils.GetCurrentSEATime().AddHours((double)prExist.Duration) : TimeUtils.GetCurrentSEATime().AddMinutes((double)prExist.Duration),
                             };
                             await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
                         }
@@ -269,8 +271,6 @@ namespace VegaCityApp.API.Services.Implement
                         Status = OrderStatus.Pending,
                         InvoiceId = TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
                         SaleType = req.SaleType,
-                        StartRent = req.StartRent,
-                        EndRent = req.EndRent,
                         UserId = userID,
                         BalanceBeforePayment = store.Wallets.SingleOrDefault().Balance,
                         BalanceHistoryBeforePayment = store.Wallets.SingleOrDefault().BalanceHistory
@@ -280,8 +280,9 @@ namespace VegaCityApp.API.Services.Implement
                     {
                         if (item.Quantity <= 0)
                             throw new BadHttpRequestException(OrderMessage.QuantityInvalid, HttpStatusCodes.BadRequest);
-                        products.Add(await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == Guid.Parse(item.Id))
-                            ?? throw new BadHttpRequestException("ProductId: " + item.Id + " is not found", HttpStatusCodes.NotFound));
+                        var prExist = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == Guid.Parse(item.Id))
+                            ?? throw new BadHttpRequestException("ProductId: " + item.Id + " is not found", HttpStatusCodes.NotFound);
+                        products.Add(prExist);
                         var orderDetail = new OrderDetail()
                         {
                             Id = Guid.NewGuid(),
@@ -293,7 +294,9 @@ namespace VegaCityApp.API.Services.Implement
                             FinalAmount = item.Price * item.Quantity,
                             PromotionAmount = 0,
                             Vatamount = (int)(EnvironmentVariableConstant.VATRate * item.Price * item.Quantity),
-                            ProductId = Guid.Parse(item.Id)
+                            ProductId = Guid.Parse(item.Id),
+                            StartRent = TimeUtils.GetCurrentSEATime(),
+                            EndRent = prExist.Unit == UnitEnum.Hour.GetDescriptionFromEnum() ? TimeUtils.GetCurrentSEATime().AddHours((double)prExist.Duration) : TimeUtils.GetCurrentSEATime().AddMinutes((double)prExist.Duration),
                         };
                         await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
                     }
@@ -1409,25 +1412,22 @@ namespace VegaCityApp.API.Services.Implement
         }
         public async Task CheckRentingOrder()
         {
-            var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(predicate: x => x.Status == OrderStatus.Renting && x.EndRent != null && x.StartRent != null,
+            var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(predicate: x => x.Status == OrderStatus.Renting,
                                                                                  include: y => y.Include(d => d.OrderDetails));
             foreach (var order in orders)
             {
-                if(order.EndRent <= TimeUtils.GetCurrentSEATime())
+                foreach (var detail in order.OrderDetails)
                 {
-                    order.Status = OrderStatus.Completed;
-                    order.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<Order>().UpdateAsync(order);
-
-                    var orderDetails = await _unitOfWork.GetRepository<OrderDetail>().GetListAsync(predicate: x => x.OrderId == order.Id);
-
-                    foreach(var detail in orderDetails)
+                    if (detail.EndRent <= TimeUtils.GetCurrentSEATime())
                     {
                         var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync(predicate: x => x.Id == detail.ProductId);
                         product.Quantity += detail.Quantity;
                         _unitOfWork.GetRepository<Product>().UpdateAsync(product);
+                        order.Status = OrderStatus.Completed;
+                        order.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Order>().UpdateAsync(order);
+                        await _unitOfWork.CommitAsync();
                     }
-                    await _unitOfWork.CommitAsync();
                 }
             }
         }

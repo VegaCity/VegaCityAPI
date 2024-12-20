@@ -13,5 +13,7 @@
         public string Status { get; set; } = null!;
         public string? ImageUrl { get; set; }
         public string ProductCategoryName { get; set; } = null!;
+        public int? Duration { get; set; }
+        public string? Unit { get; set; }
     }
 }

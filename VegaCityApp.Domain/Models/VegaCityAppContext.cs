@@ -374,8 +374,6 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.CrDate).HasColumnType("datetime");
 
-                entity.Property(e => e.EndRent).HasColumnType("datetime");
-
                 entity.Property(e => e.InvoiceId)
                     .HasMaxLength(50)
                     .IsUnicode(false);
@@ -385,8 +383,6 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.SaleType)
                     .HasMaxLength(50)
                     .IsUnicode(false);
-
-                entity.Property(e => e.StartRent).HasColumnType("datetime");
 
                 entity.Property(e => e.Status).HasMaxLength(20);
 
@@ -426,6 +422,10 @@ namespace VegaCityApp.Domain.Models
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.CrDate).HasColumnType("datetime");
+
+                entity.Property(e => e.EndRent).HasColumnType("datetime");
+
+                entity.Property(e => e.StartRent).HasColumnType("datetime");
 
                 entity.Property(e => e.UpsDate).HasColumnType("datetime");
 
@@ -587,6 +587,10 @@ namespace VegaCityApp.Domain.Models
 
                 entity.Property(e => e.Status)
                     .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Unit)
+                    .HasMaxLength(10)
                     .IsUnicode(false);
 
                 entity.Property(e => e.UpsDate).HasColumnType("datetime");
