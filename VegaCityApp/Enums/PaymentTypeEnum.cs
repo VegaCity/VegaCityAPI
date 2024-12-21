@@ -32,7 +32,8 @@ namespace VegaCityApp.API.Enums
             "PackageItem Charge",
             "StoreService",
             "PackageItem Payment",
-            "Product"
+            "Product",
+            "Service"
         };
     }
     public class PaymentMomo

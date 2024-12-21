@@ -36,8 +36,10 @@ namespace VegaCityApp.API.Services.Implement
                 throw new BadHttpRequestException(OrderMessage.PaymentTypeInvalid, HttpStatusCodes.BadRequest);
             var store = await _unitOfWork.GetRepository<Store>()
                 .SingleOrDefaultAsync(predicate: x => x.Id == req.StoreId && !x.Deflag && x.Status == (int)StoreStatusEnum.Opened,
-                                      include: z => z.Include(a => a.Wallets))
-                ?? throw new BadHttpRequestException("Store is not opened", HttpStatusCodes.NotFound);
+                                      include: z => z.Include(a => a.Wallets).Include(u => u.UserStoreMappings))
+                            ?? throw new BadHttpRequestException("Store is not opened", HttpStatusCodes.NotFound);
+
+            int? storeType = store.UserStoreMappings.SingleOrDefault().Store.StoreType;
             if (req.TotalAmount <= 0)
                 throw new BadHttpRequestException(OrderMessage.TotalAmountInvalid, HttpStatusCodes.BadRequest);
             Guid userID = GetUserIdFromJwt();
@@ -48,7 +50,7 @@ namespace VegaCityApp.API.Services.Implement
             string vcardcode = null;
             //create order Detail
             List<Product> products = new List<Product>();
-            if (req.SaleType == SaleType.Product)
+            if (req.SaleType == SaleType.Product || req.SaleType == SaleType.Service)
             {
                 if (req.PackageOrderId != null)
                 {
@@ -70,7 +72,7 @@ namespace VegaCityApp.API.Services.Implement
                         {
                             Id = Guid.NewGuid(),
                             StoreId = store.Id,
-                            Name = "Order Sale " + req.SaleType + " At Vega City: " + TimeUtils.GetCurrentSEATime() + " " + "with V-Card: " + packageOrderExist.Id,
+                            Name = "Order Sale " + req.SaleType + " At Vega City: " + TimeUtils.GetCurrentSEATime() + " " + " with V-Card: " + packageOrderExist.Id,
                             TotalAmount = req.TotalAmount,
                             CrDate = TimeUtils.GetCurrentSEATime(),
                             UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -103,8 +105,8 @@ namespace VegaCityApp.API.Services.Implement
                                 PromotionAmount = 0,
                                 Vatamount = (int)(EnvironmentVariableConstant.VATRate * item.Price * item.Quantity),
                                 ProductId = Guid.Parse(item.Id),
-                                StartRent = TimeUtils.GetCurrentSEATime(),
-                                EndRent = prExist.Unit == UnitEnum.Hour.GetDescriptionFromEnum() ? TimeUtils.GetCurrentSEATime().AddHours((double)prExist.Duration) : TimeUtils.GetCurrentSEATime().AddMinutes((double)prExist.Duration),
+                                StartRent = storeType == (int)StoreTypeEnum.Service ? req.StartRent : null, //TimeUtils.GetCurrentSEATime()
+                                EndRent = storeType == (int)StoreTypeEnum.Service ? (prExist.Unit == UnitEnum.Hour.GetDescriptionFromEnum() ? TimeUtils.GetCurrentSEATime().AddHours((double)prExist.Duration) : TimeUtils.GetCurrentSEATime().AddMinutes((double)prExist.Duration)) : null,
                             };
                             await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
                         }
@@ -171,7 +173,7 @@ namespace VegaCityApp.API.Services.Implement
                         {
                             Id = Guid.NewGuid(),
                             StoreId = store.Id,
-                            Name = "Order Sale " + req.SaleType + " At Vega City: " + TimeUtils.GetCurrentSEATime() + " " + "with V-Card: " + packageOrderExist.Id,
+                            Name = "Order Sale " + req.SaleType + " At Vega City: " + TimeUtils.GetCurrentSEATime() + " " + " with V-Card: " + packageOrderExist.Id,
                             TotalAmount = req.TotalAmount,
                             CrDate = TimeUtils.GetCurrentSEATime(),
                             UpsDate = TimeUtils.GetCurrentSEATime(),
@@ -204,8 +206,8 @@ namespace VegaCityApp.API.Services.Implement
                                 PromotionAmount = 0,
                                 Vatamount = (int)(EnvironmentVariableConstant.VATRate * item.Price * item.Quantity),
                                 ProductId = Guid.Parse(item.Id),
-                                StartRent = TimeUtils.GetCurrentSEATime(),
-                                EndRent = prExist.Unit == UnitEnum.Hour.GetDescriptionFromEnum() ? TimeUtils.GetCurrentSEATime().AddHours((double)prExist.Duration) : TimeUtils.GetCurrentSEATime().AddMinutes((double)prExist.Duration),
+                                StartRent = storeType == (int)StoreTypeEnum.Service ? req.StartRent : null,
+                                EndRent = storeType == (int)StoreTypeEnum.Service ? (prExist.Unit == UnitEnum.Hour.GetDescriptionFromEnum() ? TimeUtils.GetCurrentSEATime().AddHours((double)prExist.Duration) : TimeUtils.GetCurrentSEATime().AddMinutes((double)prExist.Duration)) : null,
                             };
                             await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
                         }
@@ -295,8 +297,8 @@ namespace VegaCityApp.API.Services.Implement
                             PromotionAmount = 0,
                             Vatamount = (int)(EnvironmentVariableConstant.VATRate * item.Price * item.Quantity),
                             ProductId = Guid.Parse(item.Id),
-                            StartRent = TimeUtils.GetCurrentSEATime(),
-                            EndRent = prExist.Unit == UnitEnum.Hour.GetDescriptionFromEnum() ? TimeUtils.GetCurrentSEATime().AddHours((double)prExist.Duration) : TimeUtils.GetCurrentSEATime().AddMinutes((double)prExist.Duration),
+                            StartRent = storeType == (int)StoreTypeEnum.Service ? req.StartRent : null,
+                            EndRent = storeType == (int)StoreTypeEnum.Service ? (prExist.Unit == UnitEnum.Hour.GetDescriptionFromEnum() ? TimeUtils.GetCurrentSEATime().AddHours((double)prExist.Duration) : TimeUtils.GetCurrentSEATime().AddMinutes((double)prExist.Duration)) : null,
                         };
                         await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
                     }

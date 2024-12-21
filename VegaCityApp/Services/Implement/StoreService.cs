@@ -956,7 +956,8 @@ namespace VegaCityApp.API.Services.Implement
                 if (req.Price <= 0) throw new BadHttpRequestException(StoreMessage.InvalidProductPrice, HttpStatusCodes.BadRequest);
             }
             var product = await _unitOfWork.GetRepository<Product>().SingleOrDefaultAsync
-                (predicate: x => x.Id == ProductId && x.Status == "Active");
+                (predicate: x => x.Id == ProductId && x.Status == "Active",
+                 include: y => y.Include(t => t.ProductCategory).ThenInclude(m => m.Store));
             if (product == null)
             {
                 return new ResponseAPI()
@@ -965,8 +966,14 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = StoreMessage.NotFoundProduct
                 };
             }
-            product.Duration = req.Duration;
-            product.Unit = req.Unit.Trim();
+            if(product.ProductCategory.Store.StoreType ==  (int)StoreTypeEnum.Service)
+            {
+                if (req.Duration <= 0) throw new BadHttpRequestException("Invalid Duration", HttpStatusCodes.BadRequest);
+                if (!(req.Unit.Equals(UnitEnum.Hour.GetDescriptionFromEnum()) || req.Unit.Equals(UnitEnum.Minute.GetDescriptionFromEnum()))) throw new BadHttpRequestException("Invalid Unit, The valid Unit is: Hour, Minute", HttpStatusCodes.BadRequest);
+                req.Unit = req.Unit.Trim();
+            }
+           // product.Duration = req.Duration;
+           // product.Unit = req.Unit.Trim();
             product.Name = req.Name != null ? req.Name.Trim() : product.Name;
             product.ImageUrl = req.ImageUrl != null ? req.ImageUrl.Trim() : product.ImageUrl;
             product.Price = (int)(req.Price != null ? req.Price : product.Price);

@@ -1536,23 +1536,46 @@ namespace VegaCityApp.Service.Implement
                     }
                 }
                 // lam them customer money transfer(tien rut)
+                //withdraw
+                var depositsCustomerWithdraw = (await _unitOfWork.GetRepository<Transaction>().GetListAsync(
+                    predicate: x => x.CrDate >= startDate
+                                 && x.CrDate <= endDate
+                                 && x.Type == TransactionType.WithdrawMoney)).ToList();
+                 List<Transaction> customerMoneyWithdraw = new List<Transaction>();
+                //List<CustomerMoneyTransfer> customerMoneyTransferVega = new List<CustomerMoneyTransfer>();
+
+                foreach (var cusTransfer in depositsCustomerWithdraw)
+                {
+                    if (cusTransfer.Status == TransactionStatus.Success)
+                    {
+                        //customerMoneyWithdraw.Add(cusTransfer);
+                        customerMoneyWithdraw.Add(cusTransfer);
+
+                    }
+                    //else
+                    //{
+                    //    customerMoneyTransferVega.Add(cusTransfer);
+                    //}
+                }
                 var depositsCustomer = (await _unitOfWork.GetRepository<CustomerMoneyTransfer>().GetListAsync(
                     predicate: x => x.CrDate >= startDate
                                  && x.CrDate <= endDate
                                  && x.Status == OrderStatus.Completed)).ToList();
-                List<CustomerMoneyTransfer> customerMoneyWithdraw = new List<CustomerMoneyTransfer>();
+               // List<CustomerMoneyTransfer> customerMoneyWithdraw = new List<CustomerMoneyTransfer>();
                 List<CustomerMoneyTransfer> customerMoneyTransferVega = new List<CustomerMoneyTransfer>();
 
                 foreach (var cusTransfer in depositsCustomer)
                 {
-                    if (cusTransfer.IsIncrease == false)
+                    if (cusTransfer.IsIncrease == true)
                     {
-                        customerMoneyWithdraw.Add(cusTransfer);
-                    }
-                    else
-                    {
+                        //customerMoneyWithdraw.Add(cusTransfer);
                         customerMoneyTransferVega.Add(cusTransfer);
+
                     }
+                    //else
+                    //{
+                    //    customerMoneyTransferVega.Add(cusTransfer);
+                    //}
                 }
                 var depositsCashiers = (await _unitOfWork.GetRepository<Transaction>().GetListAsync(
                     predicate: x => x.CrDate >= startDate
@@ -1975,9 +1998,9 @@ namespace VegaCityApp.Service.Implement
                 var depositsWithdrawCashiers = (await _unitOfWork.GetRepository<Transaction>().GetListAsync(
                    predicate: x => x.CrDate >= startDate
                                 && x.CrDate <= endDate
-                                && x.IsIncrease == true
+                                && x.IsIncrease == false
                                 && x.WalletId == user.Wallets.SingleOrDefault().Id
-                                && x.Type == "WithdrawMoney"
+                                && x.Type == TransactionType.WithdrawMoney
                                 && x.Status == TransactionStatus.Success)).ToList();
                 List<Transaction> WithdrawWalletCashierBalanceHistory = new List<Transaction>();
                // List<Transaction> WithdrawWalletCashierBalance = new List<Transaction>();
@@ -2082,7 +2105,7 @@ namespace VegaCityApp.Service.Implement
             }
             else
             {
-                if (req.SaleType == SaleType.Product)
+                if (req.SaleType == SaleType.Product || req.SaleType == SaleType.Service)
                 {
                     //Store BEGIN
                     
