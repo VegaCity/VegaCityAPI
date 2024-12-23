@@ -465,26 +465,36 @@ namespace VegaCityApp.API.Services.Implement
         {
             if (!ValidationUtils.IsPhoneNumber(req.PhoneNumber))
                 throw new BadHttpRequestException(PackageItemMessage.PhoneNumberInvalid, HttpStatusCodes.BadRequest);
-            if (req.StoreName == null)
+
+            //var searchName = NormalizeString(req.StoreName);
+            var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.PhoneNumber == req.PhoneNumber
+                                                                                        && (x.Status == (int)StoreStatusEnum.Opened || x.Status == (int)UserStatusEnum.Active || x.Status == (int)StoreStatusEnum.Blocked)
+                                                                                       ,include: w => w.Include(w => w.Wallets)
+                                                                                                       .Include(u => u.UserStoreMappings)
+                                                                                                       .ThenInclude(z => z.Store))
+            ?? throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
+
+            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == user.StoreId && (x.Status == (int)StoreStatusEnum.Opened || x.Status == (int)StoreStatusEnum.Closed || x.Status == (int)StoreStatusEnum.Blocked)
+                                                                                       ,include: w => w.Include(u => u.Wallets)
+                                                                                       .Include(z => z.Zone)
+                                                                                       .ThenInclude(z => z.MarketZone)
+                                                                                       .ThenInclude(a => a.MarketZoneConfig));
+            //var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name) == searchName || NormalizeString(x.ShortName) == searchName);
+            if (user.StoreId == null)
             {
                 throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
             }
-            var searchName = NormalizeString(req.StoreName);
-            var stores = await _unitOfWork.GetRepository<Store>().GetListAsync(predicate: x => x.PhoneNumber == req.PhoneNumber && (x.Status == (int)StoreStatusEnum.Opened || x.Status == (int)StoreStatusEnum.Closed || x.Status == (int)StoreStatusEnum.Blocked)
-                                                                               , include: w => w.Include(u => u.Wallets).Include(z => z.Zone));
-            var storeTrack = stores.SingleOrDefault(x => NormalizeString(x.Name) == searchName || NormalizeString(x.ShortName) == searchName);
-            if (storeTrack == null)
+            if(user.Wallets.SingleOrDefault().StoreId == null)
             {
-                throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
+                throw new BadHttpRequestException(WalletTypeMessage.NotFoundWallet, HttpStatusCodes.NotFound);
             }
-            if (storeTrack.Wallets.SingleOrDefault().Deflag == true)
+            if (store.Wallets.SingleOrDefault().Deflag == true)
             {
                 throw new BadHttpRequestException(StoreMessage.StoreWalletIsPendingClose, HttpStatusCodes.BadRequest);
             }
-            var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(
-                predicate: x => x.Id == storeTrack.Id,
-                include: z => z.Include(z => z.Zone).ThenInclude(z => z.MarketZone).ThenInclude(a => a.MarketZoneConfig))
-                ?? throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
+            var storeTrack = store;
+            //    predicate: x => x.Id == storeTrack.Id,
+            //    include: z => z)
             //find order list store
             var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(
                 predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
