@@ -44,7 +44,7 @@ namespace VegaCityApp.API.Services.Implement
             {
                 var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
                     predicate: x => x.Id == GetUserIdFromJwt(), 
-                    include: y => y.Include(s => s.UserStoreMappings).Include(w => w.Wallets).Include(a => a.Role));
+                    include: y => y.Include(s => s.UserStoreMappings).ThenInclude(s => s.Store).Include(w => w.Wallets).Include(a => a.Role));
                 if (user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum())
                 {
                     IPaginate<TransactionResponse> data = await _unitOfWork.GetRepository<Transaction>().GetPagingListAsync(
@@ -64,7 +64,7 @@ namespace VegaCityApp.API.Services.Implement
                                 page: page,
                                 size: size,
                                 orderBy: x => x.OrderByDescending(z => z.CrDate),
-                                predicate: z => z.Type == TransactionType.SellingProduct || z.Type == TransactionType.TransferMoneyToVega && z.StoreId != null);
+                                predicate: z => z.Type == TransactionType.SellingProduct || z.Type == TransactionType.SellingService || z.Type == TransactionType.TransferMoneyToVega && z.StoreId != null);
                     return new ResponseAPI<IEnumerable<TransactionResponse>>
                     {
                         MessageResponse = "Get Transactions success !!",
@@ -81,6 +81,8 @@ namespace VegaCityApp.API.Services.Implement
                 }
                 else if (user.Role.Name == RoleEnum.Store.GetDescriptionFromEnum())
                 {
+                    int? storeType = user.UserStoreMappings.SingleOrDefault().Store.StoreType;
+
                     IPaginate<TransactionResponse> data = await _unitOfWork.GetRepository<Transaction>().GetPagingListAsync(
                                 selector: x => new TransactionResponse()
                                 {
@@ -98,7 +100,11 @@ namespace VegaCityApp.API.Services.Implement
                                 page: page,
                                 size: size,
                                 orderBy: x => x.OrderByDescending(z => z.CrDate),
-                                predicate: z => z.Type == TransactionType.SellingProduct || z.Type == TransactionType.TransferMoneyToStore && z.StoreId != null);
+                                predicate: z => ((storeType == (int)StoreTypeEnum.Service
+                              ? z.Type == TransactionType.SellingService
+                              : z.Type == TransactionType.SellingProduct)
+                              || z.Type == TransactionType.TransferMoneyToStore)
+                              && z.StoreId == user.StoreId);
                     return new ResponseAPI<IEnumerable<TransactionResponse>>
                     {
                         MessageResponse = "Get Transactions success !!",

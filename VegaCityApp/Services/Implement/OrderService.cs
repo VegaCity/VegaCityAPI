@@ -105,7 +105,7 @@ namespace VegaCityApp.API.Services.Implement
                                 PromotionAmount = 0,
                                 Vatamount = (int)(EnvironmentVariableConstant.VATRate * item.Price * item.Quantity),
                                 ProductId = Guid.Parse(item.Id),
-                                StartRent = storeType == (int)StoreTypeEnum.Service ? req.StartRent : null, //TimeUtils.GetCurrentSEATime()
+                                StartRent = storeType == (int)StoreTypeEnum.Service ? TimeUtils.GetCurrentSEATime()  : null, //req.StartRent
                                 EndRent = storeType == (int)StoreTypeEnum.Service ? (prExist.Unit == UnitEnum.Hour.GetDescriptionFromEnum() ? TimeUtils.GetCurrentSEATime().AddHours((double)prExist.Duration) : TimeUtils.GetCurrentSEATime().AddMinutes((double)prExist.Duration)) : null,
                             };
                             await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
@@ -133,7 +133,7 @@ namespace VegaCityApp.API.Services.Implement
                             IsIncrease = false,
                             Status = TransactionStatus.Pending.GetDescriptionFromEnum(),
                             OrderId = newOrder.Id,
-                            Type = TransactionType.SellingProduct.GetDescriptionFromEnum(),
+                            Type = storeType == (int)StoreTypeEnum.Service ?  TransactionType.SellingService.GetDescriptionFromEnum() : TransactionType.SellingProduct.GetDescriptionFromEnum(),
                             WalletId = packageOrderExist.Wallets.SingleOrDefault().Id,
                             UpsDate = TimeUtils.GetCurrentSEATime(),
                             UserId = userID,
@@ -206,7 +206,7 @@ namespace VegaCityApp.API.Services.Implement
                                 PromotionAmount = 0,
                                 Vatamount = (int)(EnvironmentVariableConstant.VATRate * item.Price * item.Quantity),
                                 ProductId = Guid.Parse(item.Id),
-                                StartRent = storeType == (int)StoreTypeEnum.Service ? req.StartRent : null,
+                                StartRent = storeType == (int)StoreTypeEnum.Service ? TimeUtils.GetCurrentSEATime() : null, //req.StartRent
                                 EndRent = storeType == (int)StoreTypeEnum.Service ? (prExist.Unit == UnitEnum.Hour.GetDescriptionFromEnum() ? TimeUtils.GetCurrentSEATime().AddHours((double)prExist.Duration) : TimeUtils.GetCurrentSEATime().AddMinutes((double)prExist.Duration)) : null,
                             };
                             await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
@@ -234,7 +234,7 @@ namespace VegaCityApp.API.Services.Implement
                             IsIncrease = false,
                             Status = TransactionStatus.Pending.GetDescriptionFromEnum(),
                             OrderId = newOrder.Id,
-                            Type = TransactionType.SellingProduct.GetDescriptionFromEnum(),
+                            Type = storeType == (int)StoreTypeEnum.Service ? TransactionType.SellingService.GetDescriptionFromEnum() : TransactionType.SellingProduct.GetDescriptionFromEnum(),
                             WalletId = packageOrderExist.Wallets.SingleOrDefault().Id,
                             UpsDate = TimeUtils.GetCurrentSEATime(),
                             UserId = userID,
@@ -297,7 +297,7 @@ namespace VegaCityApp.API.Services.Implement
                             PromotionAmount = 0,
                             Vatamount = (int)(EnvironmentVariableConstant.VATRate * item.Price * item.Quantity),
                             ProductId = Guid.Parse(item.Id),
-                            StartRent = storeType == (int)StoreTypeEnum.Service ? req.StartRent : null,
+                            StartRent = storeType == (int)StoreTypeEnum.Service ? TimeUtils.GetCurrentSEATime()  : null, //req.StartRent
                             EndRent = storeType == (int)StoreTypeEnum.Service ? (prExist.Unit == UnitEnum.Hour.GetDescriptionFromEnum() ? TimeUtils.GetCurrentSEATime().AddHours((double)prExist.Duration) : TimeUtils.GetCurrentSEATime().AddMinutes((double)prExist.Duration)) : null,
                         };
                         await _unitOfWork.GetRepository<OrderDetail>().InsertAsync(orderDetail);
@@ -324,7 +324,7 @@ namespace VegaCityApp.API.Services.Implement
                         IsIncrease = true,
                         Status = TransactionStatus.Pending.GetDescriptionFromEnum(),
                         OrderId = newOrder.Id,
-                        Type = TransactionType.SellingProduct.GetDescriptionFromEnum(),
+                        Type = storeType == (int)StoreTypeEnum.Service ? TransactionType.SellingService.GetDescriptionFromEnum() : TransactionType.SellingProduct.GetDescriptionFromEnum(),
                         WalletId = store.Wallets.SingleOrDefault().Id,
                         UpsDate = TimeUtils.GetCurrentSEATime(),
                         UserId = userID,
