@@ -2706,7 +2706,7 @@ namespace VegaCityApp.Service.Implement
                 };
             }
         }
-        public async Task<string> DepositApproval(Guid transactionId, string status)
+        public async Task<ResponseAPI> DepositApproval(Guid transactionId, string status)
         {
             var transaction = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync(predicate: z => z.Id == transactionId,
                 include: z => z.Include(a => a.User).ThenInclude(z => z.Wallets)
@@ -2759,7 +2759,11 @@ namespace VegaCityApp.Service.Implement
                 await _unitOfWork.CommitAsync();
             }
             else throw new BadHttpRequestException("Error Status", HttpStatusCodes.BadRequest);
-            return "DepositApproval Successfully !";
+            return new ResponseAPI
+            {
+                StatusCode = HttpStatusCodes.OK,
+                MessageResponse = "Deposit Approval Successfully!"
+            };
         }
     }
 }
