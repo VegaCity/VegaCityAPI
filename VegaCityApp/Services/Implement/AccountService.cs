@@ -2666,6 +2666,7 @@ namespace VegaCityApp.Service.Implement
                 selector: x => new GetDepositApprovalResponse()
                 {
                     TransactionId = x.Id,
+                    TypeTransaction = x.Type,
                     UserId = (Guid)x.Wallet.UserId,
                     UserEmail = x.Wallet.User.Email,
                     UserName = x.Wallet.User.FullName,
@@ -2680,7 +2681,7 @@ namespace VegaCityApp.Service.Implement
                 );
                 return new ResponseAPI<IEnumerable<GetDepositApprovalResponse>>
                 {
-                    MessageResponse = StoreMessage.GetListStoreSuccess,
+                    MessageResponse = "Get List DepositApproval Successfully !",
                     StatusCode = HttpStatusCodes.OK,
                     Data = data.Items,
                     MetaData = new MetaData

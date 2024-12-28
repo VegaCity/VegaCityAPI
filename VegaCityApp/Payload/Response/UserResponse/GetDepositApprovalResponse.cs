@@ -3,6 +3,7 @@
     public class GetDepositApprovalResponse
     {
         public Guid TransactionId { get; set; }
+        public string TypeTransaction { get; set; }
         public Guid UserId { get; set; }
         public string UserName { get; set; }
         public string UserEmail { get; set; }

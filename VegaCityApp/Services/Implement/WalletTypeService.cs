@@ -206,8 +206,9 @@ namespace VegaCityApp.API.Services.Implement
                 //wallet cashier
                 var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync
                     (predicate: x => x.UserId == user.Id && !x.Deflag);
-                var transactionCheck = await _unitOfWork.GetRepository<Transaction>().GetListAsync(predicate: z => z.WalletId == wallet.Id && z.Status == TransactionStatus.Pending);
-                if(transactionCheck.Count() != 0)
+                var transactionCheckBalance = await _unitOfWork.GetRepository<Transaction>().GetListAsync(predicate: z => z.WalletId == wallet.Id && z.Status == TransactionStatus.Pending && z.Type == TransactionType.EndDayCheckWalletCashierBalance);
+                var transactionCheckBalanceHistory = await _unitOfWork.GetRepository<Transaction>().GetListAsync(predicate: z => z.WalletId == wallet.Id && z.Status == TransactionStatus.Pending && z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory);
+                if (transactionCheckBalance.Count() == 0)
                 {
                     if (wallet != null)
                     {
@@ -226,12 +227,27 @@ namespace VegaCityApp.API.Services.Implement
                                     IsIncrease = false,
                                     Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                                     CrDate = TimeUtils.GetCurrentSEATime(),
-                                    Status = TransactionStatus.Pending,
+                                    Status = wallet.Balance == 0 ? TransactionStatus.Success : TransactionStatus.Pending,
                                     Description = "End day check wallet cashier: Balance " + wallet.Balance,
                                     UpsDate = TimeUtils.GetCurrentSEATime(),
                                     UserId = admin.Id
                                 };
                                 await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
+                                
+                            }
+                        }
+                    }
+                }
+                if (transactionCheckBalanceHistory.Count() == 0)
+                {
+                    if (wallet != null)
+                    {
+
+                        if (admin.Wallets.Count() > 0)
+                        {
+                            foreach (var item in admin.Wallets)
+                            {
+
                                 var transactionHistory = new Transaction
                                 {
                                     Id = Guid.NewGuid(),
@@ -241,26 +257,17 @@ namespace VegaCityApp.API.Services.Implement
                                     IsIncrease = false,
                                     Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                                     CrDate = TimeUtils.GetCurrentSEATime(),
-                                    Status = TransactionStatus.Pending,
+                                    Status = wallet.BalanceHistory == 0 ? TransactionStatus.Success : TransactionStatus.Pending,
                                     Description = "End day check wallet cashier: Balance History " + wallet.BalanceHistory,
                                     UserId = admin.Id,
                                     UpsDate = TimeUtils.GetCurrentSEATime()
                                 };
                                 await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionHistory);
-                                //here
-                                //item.Balance += wallet.Balance; //wallet admin
-                                //wallet.Balance = 0; //wallet cashier
-                                //
-                                //item.BalanceHistory += wallet.BalanceHistory; //wallet admin
-                                //wallet.BalanceHistory = 0; //wallet cashier
-                                //item.UpsDate = TimeUtils.GetCurrentSEATime();
-                                //_unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
                             }
                         }
                     }
                 }
             }
-            //_unitOfWork.GetRepository<Wallet>().UpdateRange(admin.Wallets);
             await _unitOfWork.CommitAsync();
         }
         public async Task CheckPendingEndDayCheckWalletCashier()
