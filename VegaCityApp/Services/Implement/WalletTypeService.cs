@@ -273,7 +273,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task CheckPendingEndDayCheckWalletCashier()
         {
             var transactions = await _unitOfWork.GetRepository<Transaction>().GetListAsync(
-                predicate: z => z.Status == TransactionStatus.Pending && z.Type == TransactionType.EndDayCheckWalletCashierBalance || z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory,
+                predicate: z => z.Status == TransactionStatus.Pending && (z.Type == TransactionType.EndDayCheckWalletCashierBalance || z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory),
                 include: z => z.Include(a => a.Wallet).ThenInclude(z => z.User));
             foreach(var item in transactions)
             {

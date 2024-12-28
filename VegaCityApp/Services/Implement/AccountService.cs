@@ -2676,7 +2676,9 @@ namespace VegaCityApp.Service.Implement
                 page: page,
                 size: size,
                 orderBy: x => x.OrderByDescending(z => z.CrDate),
-                predicate: x => x.Status == TransactionStatus.Pending && x.Type == TransactionType.EndDayCheckWalletCashierBalance || x.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory,
+                predicate: x => (x.Type == TransactionType.EndDayCheckWalletCashierBalance 
+                             || x.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory) 
+                             && x.Status == TransactionStatus.Pending,
                 include: z => z.Include(p => p.Wallet).ThenInclude(z => z.User)
                 );
                 return new ResponseAPI<IEnumerable<GetDepositApprovalResponse>>
