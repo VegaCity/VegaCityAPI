@@ -160,7 +160,45 @@ namespace VegaCityApp.API.Services.Implement
                         Data = data.Items
                     };
                 }
-                else throw new BadHttpRequestException("aaa");
+                else if(user.Role.Name == RoleEnum.CashierApp.GetDescriptionFromEnum())
+                {
+                    IPaginate<TransactionResponse> data = await _unitOfWork.GetRepository<Transaction>().GetPagingListAsync(
+                                selector: x => new TransactionResponse()
+                                {
+                                    Id = x.Id,
+                                    Amount = x.Amount,
+                                    Description = x.Description,
+                                    CrDate = x.CrDate,
+                                    Currency = x.Currency,
+                                    Status = x.Status,
+                                    IsIncrease = x.IsIncrease,
+                                    StoreId = x.StoreId,
+                                    Type = x.Type,
+                                    WalletId = x.WalletId
+                                },
+                                page: page,
+                                size: size,
+                                orderBy: x => x.OrderByDescending(z => z.CrDate),
+                                predicate: z => z.Type == TransactionType.ReceiveMoneyToCashier
+                                             || z.Type == TransactionType.ChargeMoney
+                                             || z.Type == TransactionType.EndDayCheckWalletCashierBalance
+                                             || z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory
+                                             && z.StoreId != null);
+                    return new ResponseAPI<IEnumerable<TransactionResponse>>
+                    {
+                        MessageResponse = "Get Transactions success !!",
+                        StatusCode = HttpStatusCodes.OK,
+                        MetaData = new MetaData
+                        {
+                            Size = data.Size,
+                            Page = data.Page,
+                            Total = data.Total,
+                            TotalPage = data.TotalPages
+                        },
+                        Data = data.Items
+                    };
+                }
+                else throw new BadHttpRequestException("Your role is not permission", HttpStatusCodes.Forbidden);
             }
             catch (Exception ex)
             {
