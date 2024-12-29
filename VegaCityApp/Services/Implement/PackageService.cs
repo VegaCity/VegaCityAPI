@@ -1012,7 +1012,7 @@ namespace VegaCityApp.API.Services.Implement
                     Id = Guid.NewGuid(),
                     CrDate = TimeUtils.GetCurrentSEATime(),
                     InvoiceId = "VGC" + TimeUtils.GetTimestamp(TimeUtils.GetCurrentSEATime()),
-                    Name = "Charge Money for: " + packageOrderExsit.CusName + "with balance: " + req.ChargeAmount,
+                    Name = "Charge Money for: " + packageOrderExsit.CusName + " with balance: " + req.ChargeAmount,
                     Status = OrderStatus.Pending,
                     PackageOrderId = req.PackageOrderId,
                     UserId = userId,

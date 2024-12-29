@@ -497,8 +497,8 @@ namespace VegaCityApp.API.Services.Implement
             //    include: z => z)
             //find order list store
             var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(
-                predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
-                x.UpsDate <= TimeUtils.GetCurrentSEATime() && x.SaleType == SaleType.Product, include: z => z.Include(z => z.Payments));
+                predicate: x => x.StoreId == store.Id && (x.Status == OrderStatus.Completed || x.Status == OrderStatus.Renting) &&
+                x.UpsDate <= TimeUtils.GetCurrentSEATime(), include: z => z.Include(z => z.Payments));
             if (orders.Count <= 0) throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
             List<Payment> payments = new List<Payment>(); //list payment QRCode
             foreach (var order in orders)
@@ -1307,7 +1307,7 @@ namespace VegaCityApp.API.Services.Implement
             //find order list store
             var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(
                 predicate: x => x.StoreId == store.Id && x.Status == OrderStatus.Completed &&
-                x.UpsDate <= TimeUtils.GetCurrentSEATime() && x.SaleType == SaleType.Product, include: z => z.Include(z => z.Payments));
+                x.UpsDate <= TimeUtils.GetCurrentSEATime() && (x.SaleType == SaleType.Product || x.SaleType == SaleType.Service), include: z => z.Include(z => z.Payments));
             if (orders.Count <= 0) throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
             List<Payment> payments = new List<Payment>(); //list payment QRCode
             foreach (var order in orders)

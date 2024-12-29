@@ -202,7 +202,7 @@ public static class MessageConstant
         public const string NotFoundOrderDetail = "Order Detail Not Found";
         public const string CreateOrderSuccessfully = "Create Order Successfully !!";
         public const string CreateOrderFail = "Create Order Fail !!";
-        public const string NotFoundOrder = "Order was canceled!!";
+        public const string NotFoundOrder = "Order not found!!";
         public const string GetOrdersSuccessfully = "Get Orders Successfully !!";
         public const string GetOrdersFail = "Get Orders Fail !!";
         public const string NotFoundStore = "Store was not found!";

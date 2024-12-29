@@ -1459,8 +1459,8 @@ namespace VegaCityApp.API.Services.Implement
                             PriceTransferToVega,
                             PriceStoreHandle,
                             BalanceAtPresent = order.BalanceBeforePayment,
-                            BalanceHistoryBefore = order.BalanceHistoryBeforePayment,
-                            BalanceHistoryAfter = order.BalanceHistoryBeforePayment + PriceStoreHandle
+                            BalanceAfter = order.BalanceBeforePayment + PriceStoreHandle,
+                            BalanceHistoryBefore = order.BalanceHistoryBeforePayment
                         }
                     };
                 }
@@ -1472,9 +1472,9 @@ namespace VegaCityApp.API.Services.Implement
                         MessageResponse = OrderMessage.GetOrdersSuccessfully,
                         Data = new
                         {
-                            BalanceBefore = order.BalanceBeforePayment,
-                            BalanceAfter = order.BalanceBeforePayment + order.TotalAmount,
-                            BalanceHistoryAtPresent = order.BalanceHistoryBeforePayment
+                            BalanceHistoryBefore = order.BalanceHistoryBeforePayment,
+                            BalanceHistoryAfter = order.BalanceHistoryBeforePayment + order.TotalAmount,
+                            BalanceAtPresent = order.BalanceBeforePayment
                         }
                     };
                 }
