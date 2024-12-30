@@ -991,6 +991,8 @@ namespace VegaCityApp.API.Services.Implement
             #region check session
             // after done main flow, make utils service to shorten this code
             var userId = GetUserIdFromJwt();
+            var wallet = await _unitOfWork.GetRepository<Wallet>().SingleOrDefaultAsync(predicate: x => x.UserId == userId)
+                ?? throw new BadHttpRequestException(WalletTypeMessage.NotFoundWallet, HttpStatusCodes.NotFound);
             var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(
                 predicate: x => x.UserId == userId && x.ZoneId == packageOrderExsit.Package.ZoneId
                                && x.StartDate <= TimeUtils.GetCurrentSEATime() && x.EndDate >= TimeUtils.GetCurrentSEATime()
@@ -1022,7 +1024,9 @@ namespace VegaCityApp.API.Services.Implement
                     UserId = userId,
                     SaleType = SaleType.PackageItemCharge,
                     TotalAmount = req.ChargeAmount,
-                    UpsDate = TimeUtils.GetCurrentSEATime()
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    BalanceBeforePayment = wallet.Balance,
+                    BalanceHistoryBeforePayment = wallet.BalanceHistory
                 };
                 await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
                 var newPayment = new Payment
@@ -1111,7 +1115,9 @@ namespace VegaCityApp.API.Services.Implement
                     UserId = userId,
                     SaleType = SaleType.PackageItemCharge,
                     TotalAmount = req.ChargeAmount - amountPromo,
-                    UpsDate = TimeUtils.GetCurrentSEATime()
+                    UpsDate = TimeUtils.GetCurrentSEATime(),
+                    BalanceBeforePayment = wallet.Balance,
+                    BalanceHistoryBeforePayment = wallet.BalanceHistory
                 };
                 await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
                 var newPayment = new Payment
