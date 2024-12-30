@@ -1494,6 +1494,21 @@ namespace VegaCityApp.API.Services.Implement
                             BalanceHistoryAtPresent = order.BalanceHistoryBeforePayment
                         }
                     };
+                }
+                else
+                {
+                    return new ResponseAPI()
+                    {
+                        StatusCode = HttpStatusCodes.OK,
+                        MessageResponse = OrderMessage.GetOrdersSuccessfully,
+                        Data = new
+                        {
+                            BalanceBefore = order.BalanceBeforePayment,
+                            BalanceAfter = order.BalanceBeforePayment + order.TotalAmount,
+                            BalanceHistoryAtPresent = order.BalanceHistoryBeforePayment,
+                            BalanceHistoryAfter = order.BalanceHistoryBeforePayment - order.TotalAmount,
+                        }
+                    };
                 }  
             }
             return new ResponseAPI
