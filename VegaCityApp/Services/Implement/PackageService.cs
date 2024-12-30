@@ -458,6 +458,8 @@ namespace VegaCityApp.API.Services.Implement
                                 PackageId = packageOrderExist.PackageId,
                                 UserId = userId,
                                 SaleType = SaleType.FeeChargeCreate,
+                                BalanceBeforePayment = wallet.Balance,
+                                BalanceHistoryBeforePayment = wallet.BalanceHistory
                             };
                             await _unitOfWork.GetRepository<Order>().InsertAsync(newChargeFeeOder);
                             //new payment 
