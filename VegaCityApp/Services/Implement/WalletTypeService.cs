@@ -257,12 +257,19 @@ namespace VegaCityApp.API.Services.Implement
                                     IsIncrease = false,
                                     Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                                     CrDate = TimeUtils.GetCurrentSEATime(),
-                                    Status = wallet.BalanceHistory == 0 ? TransactionStatus.Success : TransactionStatus.Pending,
+                                    Status = TransactionStatus.Success,
                                     Description = "End day check wallet cashier: Balance History " + wallet.BalanceHistory,
                                     UserId = admin.Id,
                                     UpsDate = TimeUtils.GetCurrentSEATime()
                                 };
                                 await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionHistory);
+                                //update wallet admin
+                                admin.Wallets.SingleOrDefault().BalanceHistory += wallet.BalanceHistory;
+                                admin.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
+                                wallet.BalanceHistory = 0;
+                                wallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                                _unitOfWork.GetRepository<Wallet>().UpdateAsync(admin.Wallets.SingleOrDefault());
+                                _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
                             }
                         }
                     }
@@ -273,7 +280,7 @@ namespace VegaCityApp.API.Services.Implement
         public async Task CheckPendingEndDayCheckWalletCashier()
         {
             var transactions = await _unitOfWork.GetRepository<Transaction>().GetListAsync(
-                predicate: z => z.Status == TransactionStatus.Pending && (z.Type == TransactionType.EndDayCheckWalletCashierBalance || z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory),
+                predicate: z => z.Status == TransactionStatus.Pending && z.Type == TransactionType.EndDayCheckWalletCashierBalance,
                 include: z => z.Include(a => a.Wallet).ThenInclude(z => z.User));
             foreach(var item in transactions)
             {
