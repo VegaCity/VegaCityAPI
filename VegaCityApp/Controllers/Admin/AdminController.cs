@@ -192,9 +192,9 @@ namespace VegaCityApp.API.Controllers.Admin
         }
         [HttpPatch(UserEndpoint.DepositApproval)]
         [CustomAuthorize(RoleEnum.Admin)]
-        public async Task<IActionResult> DepositApproval([FromQuery]Guid transactionId,[FromQuery] string status)
+        public async Task<IActionResult> DepositApproval(Guid id,[FromBody] DepositApproval status)
         {
-            var result = await _service.DepositApproval(transactionId, status);
+            var result = await _service.DepositApproval(id, status);
             return Ok(result);
         }
     }

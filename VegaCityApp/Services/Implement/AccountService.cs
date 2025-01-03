@@ -2706,13 +2706,13 @@ namespace VegaCityApp.Service.Implement
                 };
             }
         }
-        public async Task<ResponseAPI> DepositApproval(Guid transactionId, string status)
+        public async Task<ResponseAPI> DepositApproval(Guid transactionId, DepositApproval req)
         {
             var transaction = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync(predicate: z => z.Id == transactionId,
                 include: z => z.Include(a => a.User).ThenInclude(z => z.Wallets)
                                .Include(a => a.Wallet).ThenInclude(a => a.User))
                 ?? throw new BadHttpRequestException(TransactionMessage.NotFoundTransaction, HttpStatusCodes.NotFound);
-            if (status == "APPROVED")
+            if (req.Status == "APPROVED")
             {
                 if (transaction.Type == TransactionType.EndDayCheckWalletCashierBalance)
                 {
@@ -2751,7 +2751,7 @@ namespace VegaCityApp.Service.Implement
                     await _unitOfWork.CommitAsync();
                 }             
             }
-            else if (status == "REJECTED")
+            else if (req.Status == "REJECTED")
             {
                 transaction.Wallet.User.Status = (int)UserStatusEnum.Blocked;
                 transaction.Wallet.User.UpsDate = TimeUtils.GetCurrentSEATime();
