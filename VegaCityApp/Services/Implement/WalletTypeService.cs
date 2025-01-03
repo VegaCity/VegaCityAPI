@@ -284,7 +284,7 @@ namespace VegaCityApp.API.Services.Implement
                 include: z => z.Include(a => a.Wallet).ThenInclude(z => z.User));
             foreach(var item in transactions)
             {
-                if (TimeUtils.GetCurrentSEATime().Subtract(item.CrDate).TotalMinutes >= 1)
+                if (TimeUtils.GetCurrentSEATime().Subtract(item.CrDate).TotalHours >= 3)
                 {
                     item.Wallet.User.Status = (int)UserStatusEnum.Blocked;
                     item.Wallet.User.UpsDate = TimeUtils.GetCurrentSEATime();
