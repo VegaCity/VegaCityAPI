@@ -277,13 +277,13 @@ namespace VegaCityApp.API.Services.Implement
                 include: z => z.Include(a => a.Wallet).ThenInclude(z => z.User));
             foreach(var item in transactions)
             {
-                if (TimeUtils.GetCurrentSEATime().Subtract(item.CrDate).TotalHours >= 3)
+                if (TimeUtils.GetCurrentSEATime().Subtract(item.CrDate).TotalMinutes >= 1)
                 {
                     item.Wallet.User.Status = (int)UserStatusEnum.Blocked;
                     item.Wallet.User.UpsDate = TimeUtils.GetCurrentSEATime();
-                    _unitOfWork.GetRepository<User>().UpdateAsync(item.Wallet.User);
                 }
             }
+            _unitOfWork.GetRepository<Transaction>().UpdateRange(transactions);
             await _unitOfWork.CommitAsync();
         }
         //withraw money wallet
