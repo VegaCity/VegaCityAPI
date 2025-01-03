@@ -281,9 +281,10 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     item.Wallet.User.Status = (int)UserStatusEnum.Blocked;
                     item.Wallet.User.UpsDate = TimeUtils.GetCurrentSEATime();
+                    _unitOfWork.GetRepository<User>().UpdateAsync(item.Wallet.User);
                 }
             }
-            _unitOfWork.GetRepository<Transaction>().UpdateRange(transactions);
+           
             await _unitOfWork.CommitAsync();
         }
         //withraw money wallet
