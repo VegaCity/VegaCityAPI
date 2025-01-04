@@ -1016,7 +1016,52 @@ namespace VegaCityApp.API.Services.Implement
                     wallet.BalanceHistory -= order.TotalAmount;
                     wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
-                    await _unitOfWork.CommitAsync();
+                    int check = await _unitOfWork.CommitAsync();
+                    if (check > 0)
+                    {
+                        try
+                        {
+                            string subject = "Charge Money VCard Vega City Successfully";
+                            string body = $@"
+                            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                                <div style='background-color: #007bff; color: white; padding: 20px; text-align: center;'>
+                                    <h1 style='margin: 0;'>Welcome to our Vega City!</h1>
+                                </div>
+                                <div style='padding: 20px; background-color: #f9f9f9;'>
+                                    <p style='font-size: 16px; color: #333;'>Hello, <strong>{order.PackageOrder.CusName}</strong>,</p>
+                                    <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                        Thanks for charging Money to V-Card our service. We are happy to accompany you on the upcoming journey.
+                                    </p>
+                                    <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                        Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
+                                    </p>
+                                    <div style='margin-top: 20px; text-align: center;'>
+                                        <a style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                            Your VCard {order.PackageOrder.CusName} is charging money with {order.TotalAmount} successfully !!
+                                        </a>
+                                    </div>
+                                    <div style='margin-top: 20px; text-align: center;'>
+                                        <a href='https://vegacity.id.vn/etagEdit/{order.PackageOrder.Id}' style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-size: 16px;'>
+                                             Click here to see your balance
+                                        </a>
+                                    </div>
+                                </div>
+                                <div style='background-color: #333; color: white; padding: 10px; text-align: center; font-size: 14px;'>
+                                    <p style='margin: 0;'>© 2024 Vega City. All rights reserved.</p>
+                                </div>
+                            </div>";
+                            await MailUtil.SendMailAsync(order.PackageOrder.CusEmail, subject, body);
+                        }
+                        catch (Exception ex)
+                        {
+                            return new ResponseAPI
+                            {
+                                StatusCode = HttpStatusCodes.OK,
+                                MessageResponse = UserMessage.SendEmailChargeError
+                            };
+                        }
+                    }
+                    else throw new BadHttpRequestException("Error when commit", HttpStatusCodes.BadRequest);
                     return new ResponseAPI()
                     {
                         StatusCode = HttpStatusCodes.OK,
