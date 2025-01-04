@@ -1204,7 +1204,9 @@ namespace VegaCityApp.API.Services.Implement
             _unitOfWork.GetRepository<PackageOrder>().UpdateRange(packageOrders);
             await _unitOfWork.CommitAsync();
             // if the package item is near the end date, send email to customer
-            foreach (var item in packageOrders)
+            var packageOrderss = (List<PackageOrder>)await _unitOfWork.GetRepository<PackageOrder>().GetListAsync
+                (predicate: x => x.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum());
+            foreach (var item in packageOrderss)
             {
                 if (item.EndDate == null) break;
                 if((item.EndDate.Value - currentDate).Hours == 6 || (item.EndDate.Value - currentDate).Hours == 3)
