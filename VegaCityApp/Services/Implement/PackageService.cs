@@ -1209,7 +1209,7 @@ namespace VegaCityApp.API.Services.Implement
             foreach (var item in packageOrderss)
             {
                 if (item.EndDate == null) break;
-                if((item.EndDate.Value - currentDate).Hours == 6 || (item.EndDate.Value - currentDate).Hours == 3)
+                if(item.EndDate.Value.Hour - currentDate.Hour <= 3 && item.EndDate.Value.Hour - currentDate.Hour != 0)
                 {
                     try
                     {
@@ -1222,7 +1222,7 @@ namespace VegaCityApp.API.Services.Implement
                                 <div style='padding: 20px; background-color: #f9f9f9;'>
                                     <p style='font-size: 16px; color: #333;'>Hello, <strong>{item.CusName}</strong>,</p>
                                     <p style='font-size: 16px; color: #333; line-height: 1.5;'>
-                                        Your VCard is about to expire. Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
+                                        Your VCard has {(item.EndDate.Value - currentDate).Hours}(Hour) about to expire. Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
                                     </p>
                                     <div style='margin-top: 20px; text-align: center;'>
                                         <a style='display: inline-block; background-color: #28a745; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); font-weight: bold;'>

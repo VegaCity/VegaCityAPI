@@ -12,7 +12,6 @@ namespace VegaCityApp.API.Extensions
             var cornDaily = Cron.Daily();
             var cornHour = Cron.HourInterval(1);
             var cornMinute = Cron.MinuteInterval(3);
-            var cornMinute5 = Cron.MinuteInterval(5);
             var timeZone = TimeUtils.GetSEATimeZone();
             RecurringJob.AddOrUpdate<IWalletTypeService>(x => x.CheckExpireWallet(), cornHour, timeZone: timeZone);
 
@@ -21,7 +20,7 @@ namespace VegaCityApp.API.Extensions
 
             RecurringJob.AddOrUpdate<IWalletTypeService>(x => x.CheckPendingEndDayCheckWalletCashier(), cornHour, timeZone: timeZone);
 
-            RecurringJob.AddOrUpdate<IPackageService>(x => x.CheckPackageItemExpire(), cornMinute5, timeZone: timeZone);
+            RecurringJob.AddOrUpdate<IPackageService>(x => x.CheckPackageItemExpire(), cornHour, timeZone: timeZone);
 
             RecurringJob.AddOrUpdate<IWalletTypeService>(x => x.BalanceCheckEndDay(), cornDaily, timeZone: timeZone);
 
