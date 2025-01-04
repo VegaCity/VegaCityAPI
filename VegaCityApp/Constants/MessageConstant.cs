@@ -138,6 +138,7 @@ public static class MessageConstant
         public const string CCCDExist = "CCCD already exist !!";
         public const string SendMailFail = "Send Mail Fail !!";
         public const string SendMailError = "Send Mail Fail !! But don't worry it, your V-Card is still activated !";
+        public const string SendMailError1 = "Send Mail Fail !! But don't worry it, your V-Card is working !";
         public const string SendMailLostError = "Send Mail Fail !! But don't worry it, your V-Card is still mark lost !";
         public const string SendEmailChargeError = "Send Mail Fail !! But don't worry it, your V-Card is still charged money !";
         public const string UserHadToken = "User Had Token !!";

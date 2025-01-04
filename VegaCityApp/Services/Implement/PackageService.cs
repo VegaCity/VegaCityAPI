@@ -1203,7 +1203,52 @@ namespace VegaCityApp.API.Services.Implement
             }
             _unitOfWork.GetRepository<PackageOrder>().UpdateRange(packageOrders);
             await _unitOfWork.CommitAsync();
+            // if the package item is near the end date, send email to customer
+            foreach (var item in packageOrders)
+            {
+                if (item.EndDate == null) break;
+                if((item.EndDate.Value - item.CrDate).Hours == 6 || (item.EndDate.Value - item.CrDate).Hours == 3)
+                {
+                    try
+                    {
+                        string subject = "Your VCard is about to expire";
+                        string body = $@"
+                            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                                <div style='background-color: #007bff; color: white; padding: 20px; text-align: center;'>
+                                    <h1 style='margin: 0;'>Welcome to our Vega City!</h1>
+                                </div>
+                                <div style='padding: 20px; background-color: #f9f9f9;'>
+                                    <p style='font-size: 16px; color: #333;'>Hello, <strong>{item.CusName}</strong>,</p>
+                                    <p style='font-size: 16px; color: #333; line-height: 1.5;'>
+                                        Your VCard is about to expire. Please access link to know more about us <a href='https://vega-city-landing-page.vercel.app/' style='color: #007bff; text-decoration: none;'>our website</a> to learn more about special offers just for you.
+                                    </p>
+                                    <div style='margin-top: 20px; text-align: center;'>
+                                        <a style='display: inline-block; background-color: #28a745; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); font-weight: bold;'>
+                                            Your VCard is about to expire, please use money before expire, after expire you cannot withraw or complaint something about the v-card!
+                                        </a>
+                                    </div>
+                                    <div style='margin-top: 20px; text-align: center;'>
+                                        <a href='https://vegacity.id.vn/etagEdit/{item.Id}' style='display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration:
+                                        none; font-size: 16px;'>
+                                            Click here to see more
+                                        </a>
+                                    </div>
+                                </div>
+                                <div style='background-color: #333; color: white; padding: 10px; text-align: center; font-size: 14px;'>
+                                    <p style='margin: 0;'>© 2024 Vega City. All rights reserved.</p>
+                                </div>
+                            </div>";
+                        await MailUtil.SendMailAsync(item.CusEmail, subject, body);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        continue;
+                    }
+                }
+            }
         }
+
         public async Task<ResponseAPI> PackageItemPayment(Guid packageOrderId, int totalPrice, Guid storeId, List<OrderProduct> products)
         {
 
