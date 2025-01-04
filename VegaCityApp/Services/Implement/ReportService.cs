@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using VegaCityApp.API.Enums;
 using VegaCityApp.API.Payload.Request.Report;
 using VegaCityApp.API.Payload.Response;
@@ -66,8 +67,8 @@ namespace VegaCityApp.API.Services.Implement
             Guid userSolve = GetUserIdFromJwt();
             var report = await _unitOfWork.GetRepository<Report>().SingleOrDefaultAsync
                 (predicate: x => x.Id == id
-                        && x.Status != (int)ReportStatus.Done
-                       );
+                        && x.Status != (int)ReportStatus.Done,
+                 include: x => x.Include(z => z.IssueType));
             if (report == null)
             {
                 return new ResponseAPI
@@ -90,6 +91,26 @@ namespace VegaCityApp.API.Services.Implement
             report.SolveUserId = userSolve;
             _unitOfWork.GetRepository<Report>().UpdateAsync(report);
             await _unitOfWork.CommitAsync();
+            if (req.Status == (int)ReportStatus.Done)
+            {
+                var packageOrder = await _unitOfWork.GetRepository<PackageOrder>().SingleOrDefaultAsync(predicate: x => x.Id == report.CreatorPackageOrderId);
+                if (packageOrder != null)
+                {
+                    //send email to customer
+                    try
+                    {
+
+                        var email = packageOrder.CusEmail;
+                        var subject = $"VegaCity - Report {report.IssueType.Name}";
+                        var body = report.Solution;
+                        await MailUtil.SendMailAsync(email, subject, body);
+                    }
+                    catch (Exception ex)
+                    {
+                        
+                    }
+                }
+            }
             return new ResponseAPI
             {
                 StatusCode = HttpStatusCodes.OK,
