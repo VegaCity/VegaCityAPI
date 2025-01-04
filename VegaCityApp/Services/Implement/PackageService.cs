@@ -1207,7 +1207,7 @@ namespace VegaCityApp.API.Services.Implement
             foreach (var item in packageOrders)
             {
                 if (item.EndDate == null) break;
-                if((item.EndDate.Value - item.CrDate).Hours == 6 || (item.EndDate.Value - item.CrDate).Hours == 3)
+                if((item.EndDate.Value - currentDate).Hours == 6 || (item.EndDate.Value - currentDate).Hours == 3)
                 {
                     try
                     {
