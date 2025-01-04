@@ -1432,6 +1432,24 @@ namespace VegaCityApp.API.Services.Implement
                             UserId = admin.Id
                         };
                         await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
+                        //new trans
+                        var transactionAdmin = new Transaction
+                        {
+                            Id = Guid.NewGuid(),
+                            WalletId = item.Wallets.SingleOrDefault().Id,
+                            IsIncrease = true,
+                            Amount = item.Wallets.SingleOrDefault().Balance,
+                            CrDate = TimeUtils.GetCurrentSEATime(),
+                            UpsDate = TimeUtils.GetCurrentSEATime(),
+                            Description = "Refund for: " + item.CusName,
+                            Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
+                            Status = TransactionStatus.Success,
+                            Type = TransactionType.RefundMoneyFromExpired,
+                            UserId = admin.Id
+                        };
+
+                        //new transaction
+                        await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionAdmin);
 
                         var transactionTransfer = new CustomerMoneyTransfer
                         {

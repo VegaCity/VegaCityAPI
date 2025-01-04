@@ -64,7 +64,11 @@ namespace VegaCityApp.API.Services.Implement
                                 page: page,
                                 size: size,
                                 orderBy: x => x.OrderByDescending(z => z.CrDate),
-                                predicate: z => z.Type == TransactionType.SellingProduct || z.Type == TransactionType.SellingService || z.Type == TransactionType.TransferMoneyToVega && z.StoreId != null);
+                                predicate: z => z.Type == TransactionType.SellingProduct 
+                                             || z.Type == TransactionType.SellingService 
+                                             || z.Type == TransactionType.TransferMoneyToVega && z.StoreId != null
+                                             || z.Type == TransactionType.RefundMoneyFromExpired && z.UserId == user.Id
+                                             );
                     return new ResponseAPI<IEnumerable<TransactionResponse>>
                     {
                         MessageResponse = "Get Transactions success !!",

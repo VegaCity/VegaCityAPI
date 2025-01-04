@@ -10,6 +10,7 @@
         public const string StoreTransfer = "StoreTransfer";
         public const string ReceiveMoneyToCashier = "ReceiveMoneyToCashier";
         public const string RefundMoney = "RefundMoney";
+        public const string RefundMoneyFromExpired = "RefundMoneyFromExpired";
         public const string SellingPackage = "SellingPackage";
         public const string SellingProduct = "SellingProduct";
         public const string SellingService = "SellingService";
