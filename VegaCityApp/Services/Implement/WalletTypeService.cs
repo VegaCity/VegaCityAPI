@@ -462,7 +462,7 @@ namespace VegaCityApp.API.Services.Implement
                         AmountPayment += payment.FinalAmount;
                     }
                     int AmountTransfered = (int)(AmountPayment - AmountPayment * store.StoreTransferRate);
-                    if (wallet.BalanceHistory < request.Amount)
+                    if (wallet.Balance < request.Amount)
                     {
                         return new ResponseAPI
                         {
