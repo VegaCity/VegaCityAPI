@@ -441,7 +441,7 @@ namespace VegaCityApp.API.Services.Implement
                 {
                     var orders = await _unitOfWork.GetRepository<Order>().GetListAsync(
                          predicate: x => x.StoreId == wallet.StoreId && x.Status == OrderStatus.Completed &&
-                           x.UpsDate <= TimeUtils.GetCurrentSEATime() && x.SaleType == SaleType.Product, include: z => z.Include(z => z.Payments));
+                           x.UpsDate <= TimeUtils.GetCurrentSEATime() && x.SaleType == SaleType.Product || x.SaleType == SaleType.Service, include: z => z.Include(z => z.Payments));
                     if (orders.Count <= 0) throw new BadHttpRequestException(OrderMessage.NotFoundOrder, HttpStatusCodes.NotFound);
                     var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == wallet.StoreId,
                             include: z => z.Include(a => a.Zone).ThenInclude(a => a.MarketZone).ThenInclude(z => z.MarketZoneConfig));
