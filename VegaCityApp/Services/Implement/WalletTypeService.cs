@@ -604,7 +604,7 @@ namespace VegaCityApp.API.Services.Implement
                 }
                 else if (wallet.User.StoreId == wallet.StoreId)
                 {
-                    if (wallet.BalanceHistory < transactionAvailable.Amount)
+                    if (wallet.Balance < transactionAvailable.Amount)
                     {
                         return new ResponseAPI
                         {
