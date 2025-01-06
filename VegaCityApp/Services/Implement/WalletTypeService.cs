@@ -129,6 +129,89 @@ namespace VegaCityApp.API.Services.Implement
                 };
             }
         }
+
+        public async Task<ResponseAPI<IEnumerable<GetBalanceEndDayResponse>>> GetAllBalanceEndDay(int size, int page)
+        {
+            try
+            {
+                var userId = GetUserIdFromJwt();
+                var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(
+                    predicate: x => x.Id == GetUserIdFromJwt(),
+                    include: y => y.Include(s => s.UserStoreMappings).ThenInclude(s => s.Store).Include(w => w.Wallets).Include(a => a.Role));
+                if (user.Role.Name == RoleEnum.Admin.GetDescriptionFromEnum())
+                {
+                    IPaginate<GetBalanceEndDayResponse> dataAdmin = await _unitOfWork.GetRepository<BalanceEndDay>().GetPagingListAsync(
+                predicate: x => x.Deflag == false ,
+                selector: z => new GetBalanceEndDayResponse
+                {
+                    Id = z.Id,
+                    UserId = z.UserId,
+                    UserName = z.User.FullName,
+                    StoreId = z.StoreId,
+                    DateCheck = z.DateCheck,
+                    Balance = z.Balance,
+                    BalanceHistory = z.BalanceHistory,
+                    // Deflag = z.Deflag
+                },
+                page: page,
+                size: size,
+                orderBy: x => x.OrderByDescending(z => z.DateCheck));
+                    return new ResponseAPI<IEnumerable<GetBalanceEndDayResponse>>
+                    {
+                        MessageResponse = WalletTypeMessage.GetBalanceEndDaySuccess,
+                        StatusCode = HttpStatusCodes.OK,
+                        Data = dataAdmin.Items,
+                        MetaData = new MetaData
+                        {
+                            Size = dataAdmin.Size,
+                            Page = dataAdmin.Page,
+                            Total = dataAdmin.Total,
+                            TotalPage = dataAdmin.TotalPages
+                        }
+                    };
+                }
+                IPaginate<GetBalanceEndDayResponse> data = await _unitOfWork.GetRepository<BalanceEndDay>().GetPagingListAsync(
+                predicate: x => x.Deflag == false && x.UserId == userId,
+                selector: z => new GetBalanceEndDayResponse
+                {
+                    Id = z.Id,
+                    UserId = z.UserId,
+                    UserName = z.User.FullName,
+                    StoreId = z.StoreId,
+                    DateCheck = z.DateCheck,
+                    Balance = z.Balance,    
+                    BalanceHistory = z.BalanceHistory,
+                   // Deflag = z.Deflag
+                },
+                page: page,
+                size: size,
+                orderBy: x => x.OrderByDescending(z => z.DateCheck));
+                return new ResponseAPI<IEnumerable<GetBalanceEndDayResponse>>
+                {
+                    MessageResponse = WalletTypeMessage.GetBalanceEndDaySuccess,
+                    StatusCode = HttpStatusCodes.OK,
+                    Data = data.Items,
+                    MetaData = new MetaData
+                    {
+                        Size = data.Size,
+                        Page = data.Page,
+                        Total = data.Total,
+                        TotalPage = data.TotalPages
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseAPI<IEnumerable<GetBalanceEndDayResponse>>
+                {
+                    MessageResponse = WalletTypeMessage.GetBalanceEndDayFail + ex.Message,
+                    StatusCode = HttpStatusCodes.InternalServerError,
+                    Data = null,
+                    MetaData = null
+                };
+            }
+        }
+
         public async Task<ResponseAPI> GetWalletTypeById(Guid id)
         {
             var walletType = await _unitOfWork.GetRepository<WalletType>().SingleOrDefaultAsync(

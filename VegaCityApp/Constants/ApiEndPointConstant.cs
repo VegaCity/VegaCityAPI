@@ -188,6 +188,7 @@ public static class ApiEndPointConstant
         public const string DeleteWalletType = ApiEndpoint + "/wallet-type/{id}";
         public const string GetWalletTypeById = ApiEndpoint + "/wallet-type/{id}";
         public const string GetAllWalletType = ApiEndpoint + "/wallet-types";
+        public const string GetAllBalanceEndDay = ApiEndpoint + "/wallet/end-day-check";
     }
     public static class ServiceStoreEndpoint
     {

@@ -100,5 +100,13 @@ namespace VegaCityApp.API.Controllers
             var result = await _walletTypeService.WithdrawMoneyWallet(walletid, transactionId);
             return StatusCode(result.StatusCode, result);
         }
+
+        [HttpGet(WalletTypeEndpoint.GetAllBalanceEndDay)]
+        [ProducesResponseType(typeof(ResponseAPI<IEnumerable<GetBalanceEndDayResponse>>), HttpStatusCodes.OK)]
+        public async Task<IActionResult> GetAllBalanceEndDay(int size = 10, int page = 1)
+        {
+            var result = await _walletTypeService.GetAllBalanceEndDay(size, page);
+            return Ok(result);
+        }
     }
 }

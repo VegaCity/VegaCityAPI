@@ -480,6 +480,8 @@ public static class MessageConstant
         public const string DeleteWalletTypeSuccess = "Delete WalletType Successfully!";
         public const string DeleteWalletTypeFail = "Delete WalletType Failed!";
         public const string WalletExpired = "Wallet has Expired!";
+        public const string GetBalanceEndDaySuccess = "Get Balance End Day Successfully!";
+        public const string GetBalanceEndDayFail = "Failed To Get Balance End Day!";
     }
 
     public static class TransactionMessage
