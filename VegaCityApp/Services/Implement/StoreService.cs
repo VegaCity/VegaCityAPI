@@ -342,6 +342,22 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = StoreMessage.NotFoundMenu
                 };
             }
+            var menus = await _unitOfWork.GetRepository<Menu>().GetListAsync(
+                predicate: x => x.StoreId == menu.StoreId && !x.Deflag);
+            if (menus.Count > 0)
+            {
+                foreach (var item in menus)
+                {
+                    if (item.DateFilter == req.DateFilter)
+                    {
+                        return new ResponseAPI()
+                        {
+                            StatusCode = HttpStatusCodes.BadRequest,
+                            MessageResponse = StoreMessage.MenuExist
+                        };
+                    }
+                }
+            }
             if (req.DateFilter != null)
             {
                 if (!Enum.IsDefined(typeof(DateFilterEnum), req.DateFilter))

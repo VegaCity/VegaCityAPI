@@ -399,7 +399,7 @@ namespace VegaCityApp.API.Services.Implement
                                 page: page,
                                 size: size,
                                 orderBy: x => x.OrderByDescending(z => z.CrDate),
-                                predicate: z => z.WalletId == wallet.Id );
+                                predicate: z => z.WalletId == wallet.Id && z.Type != TransactionType.ReceiveMoneyToCashier);
                     return new ResponseAPI<IEnumerable<TransactionResponse>>
                     {
                         MessageResponse = "Get Transactions success !!",
