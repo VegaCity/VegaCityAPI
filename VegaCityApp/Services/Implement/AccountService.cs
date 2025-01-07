@@ -1999,7 +1999,7 @@ namespace VegaCityApp.Service.Implement
                    predicate: x => x.CrDate >= startDate
                                 && x.CrDate <= endDate
                                 && x.IsIncrease == false
-                                && x.WalletId == user.Wallets.SingleOrDefault().Id
+                                && x.UserId == user.Id
                                 && x.Type == TransactionType.WithdrawMoney
                                 && x.Status == TransactionStatus.Success)).ToList();
                 List<Transaction> WithdrawWalletCashierBalanceHistory = new List<Transaction>();

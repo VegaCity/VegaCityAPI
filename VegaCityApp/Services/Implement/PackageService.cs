@@ -273,6 +273,8 @@ namespace VegaCityApp.API.Services.Implement
                                    .Include(tr => tr.Wallets).ThenInclude(t => t.Transactions)); //may defect
                 if (packageOrderExist.Status == PackageItemStatusEnum.InActive.GetDescriptionFromEnum())
                     throw new BadHttpRequestException(PackageItemMessage.MustActivated, HttpStatusCodes.NotFound);
+                if (packageOrderExist.PhoneNumber == "0000000000")
+                    throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
 
                 var package = await SearchPackage(packageOrderExist.Package.Id);
                 #region check 
@@ -1563,6 +1565,10 @@ namespace VegaCityApp.API.Services.Implement
                 x => NormalizeString(x.CusName) == searchName
                );
             if (packageOrderLost == null)
+            {
+                throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
+            }
+            if (packageOrderLost.PhoneNumber == "0000000000")
             {
                 throw new BadHttpRequestException(PackageItemMessage.NotFoundPackageItem, HttpStatusCodes.NotFound);
             }
