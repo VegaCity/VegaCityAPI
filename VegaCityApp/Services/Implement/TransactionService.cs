@@ -68,6 +68,8 @@ namespace VegaCityApp.API.Services.Implement
                                              || z.Type == TransactionType.SellingService 
                                              || z.Type == TransactionType.TransferMoneyToVega && z.StoreId != null
                                              || z.Type == TransactionType.RefundMoneyFromExpired && z.UserId == user.Id
+                                             || z.Type == TransactionType.EndDayCheckWalletCashierBalance
+                                             || z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory
                                              );
                     return new ResponseAPI<IEnumerable<TransactionResponse>>
                     {
