@@ -380,7 +380,8 @@ namespace VegaCityApp.API.Services.Implement
                                 Status = TransactionStatus.Success,
                                 Type = TransactionType.FeeLost,
                                 UpsDate = TimeUtils.GetCurrentSEATime(),
-                                UserId = userId
+                                UserId = userId,
+                                WalletId = packageOrderExist.Wallets.SingleOrDefault().Id
                             };
                             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionFeePackageOrder);
                             //session update
