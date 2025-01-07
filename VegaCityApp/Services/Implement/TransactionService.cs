@@ -56,7 +56,7 @@ namespace VegaCityApp.API.Services.Implement
                                     CrDate = x.CrDate,
                                     Currency = x.Currency,
                                     Status = x.Status,
-                                    IsIncrease = x.IsIncrease,
+                                    IsIncrease = x.Type == TransactionType.EndDayCheckWalletCashierBalance || x.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory? true : x.IsIncrease,
                                     StoreId = x.StoreId,
                                     Type = x.Type,
                                     WalletId = x.WalletId
