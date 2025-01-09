@@ -56,7 +56,7 @@ namespace VegaCityApp.API.Services.Implement
                                     CrDate = x.CrDate,
                                     Currency = x.Currency,
                                     Status = x.Status,
-                                    IsIncrease = x.IsIncrease,
+                                    IsIncrease = x.Type == TransactionType.EndDayCheckWalletCashierBalance || x.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory? true : x.IsIncrease,
                                     StoreId = x.StoreId,
                                     Type = x.Type,
                                     WalletId = x.WalletId
@@ -68,6 +68,8 @@ namespace VegaCityApp.API.Services.Implement
                                              || z.Type == TransactionType.SellingService 
                                              || z.Type == TransactionType.TransferMoneyToVega && z.StoreId != null
                                              || z.Type == TransactionType.RefundMoneyFromExpired && z.UserId == user.Id
+                                             || z.Type == TransactionType.EndDayCheckWalletCashierBalance
+                                             || z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory
                                              );
                     return new ResponseAPI<IEnumerable<TransactionResponse>>
                     {
@@ -399,7 +401,7 @@ namespace VegaCityApp.API.Services.Implement
                                 page: page,
                                 size: size,
                                 orderBy: x => x.OrderByDescending(z => z.CrDate),
-                                predicate: z => z.WalletId == wallet.Id );
+                                predicate: z => z.WalletId == wallet.Id && z.Type != TransactionType.ReceiveMoneyToCashier);
                     return new ResponseAPI<IEnumerable<TransactionResponse>>
                     {
                         MessageResponse = "Get Transactions success !!",

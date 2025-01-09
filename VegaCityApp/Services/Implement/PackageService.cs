@@ -380,7 +380,8 @@ namespace VegaCityApp.API.Services.Implement
                                 Status = TransactionStatus.Success,
                                 Type = TransactionType.FeeLost,
                                 UpsDate = TimeUtils.GetCurrentSEATime(),
-                                UserId = userId
+                                UserId = userId,
+                                WalletId = packageOrderExist.Wallets.SingleOrDefault().Id
                             };
                             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionFeePackageOrder);
                             //session update
@@ -798,7 +799,7 @@ namespace VegaCityApp.API.Services.Implement
             packageOrder.Data.CusName = req.CusName != null ? req.CusName.Trim() : packageOrder.Data.CusName;
             packageOrder.Data.CusEmail = req.CusEmail != null ? req.CusEmail.Trim() : packageOrder.Data.CusEmail;
             packageOrder.Data.CusCccdpassport = req.CusCccdPassport != null ? req.CusCccdPassport.Trim() : packageOrder.Data.CusCccdpassport;
-            packageOrder.Data.PhoneNumber = req.CusPhone != null ? req.CusPhone.Trim() : packageOrder.Data.PhoneNumber;
+            packageOrder.Data.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : packageOrder.Data.PhoneNumber;
             packageOrder.Data.Status = req.Status != null ? req.Status.Trim() : packageOrder.Data.Status;
             packageOrder.Data.UpsDate = TimeUtils.GetCurrentSEATime();
             packageOrder.Data.IsChangedInfo = true;

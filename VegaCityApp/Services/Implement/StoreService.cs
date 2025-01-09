@@ -290,6 +290,22 @@ namespace VegaCityApp.API.Services.Implement
                     MessageResponse = StoreMessage.NotFoundStore
                 };
             }
+            var menus = await _unitOfWork.GetRepository<Menu>().GetListAsync(
+                predicate: x => x.StoreId == StoreId && !x.Deflag);
+            if (menus.Count > 0)
+            {
+                foreach (var menu in menus)
+                {
+                    if (menu.DateFilter ==(int) req.DateFilter)
+                    {
+                        return new ResponseAPI()
+                        {
+                            StatusCode = HttpStatusCodes.BadRequest,
+                            MessageResponse = StoreMessage.MenuExist
+                        };
+                    }
+                }
+            }
             if (!Enum.IsDefined(typeof(DateFilterEnum), req.DateFilter))
             {
                 return new ResponseAPI()
@@ -325,6 +341,22 @@ namespace VegaCityApp.API.Services.Implement
                     StatusCode = HttpStatusCodes.NotFound,
                     MessageResponse = StoreMessage.NotFoundMenu
                 };
+            }
+            var menus = await _unitOfWork.GetRepository<Menu>().GetListAsync(
+                predicate: x => x.StoreId == menu.StoreId && !x.Deflag);
+            if (menus.Count > 0)
+            {
+                foreach (var item in menus)
+                {
+                    if (item.DateFilter == req.DateFilter)
+                    {
+                        return new ResponseAPI()
+                        {
+                            StatusCode = HttpStatusCodes.BadRequest,
+                            MessageResponse = StoreMessage.MenuExist
+                        };
+                    }
+                }
             }
             if (req.DateFilter != null)
             {
@@ -468,11 +500,11 @@ namespace VegaCityApp.API.Services.Implement
 
             //var searchName = NormalizeString(req.StoreName);
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.PhoneNumber == req.PhoneNumber
-                                                                                        && (x.Status == (int)StoreStatusEnum.Opened || x.Status == (int)UserStatusEnum.Active || x.Status == (int)StoreStatusEnum.Blocked)
+                                                                                        && (x.Status == (int)UserStatusEnum.Active || x.Status == (int)UserStatusEnum.Disable)
                                                                                        ,include: w => w.Include(w => w.Wallets)
                                                                                                        .Include(u => u.UserStoreMappings)
                                                                                                        .ThenInclude(z => z.Store))
-            ?? throw new BadHttpRequestException(StoreMessage.NotFoundStore, HttpStatusCodes.NotFound);
+            ?? throw new BadHttpRequestException(UserMessage.NotFoundUser, HttpStatusCodes.NotFound);
 
             var store = await _unitOfWork.GetRepository<Store>().SingleOrDefaultAsync(predicate: x => x.Id == user.StoreId && (x.Status == (int)StoreStatusEnum.Opened || x.Status == (int)StoreStatusEnum.Closed || x.Status == (int)StoreStatusEnum.Blocked)
                                                                                        ,include: w => w.Include(u => u.Wallets)

@@ -361,6 +361,7 @@ public static class MessageConstant
     }
     public static class StoreMessage
     {
+        public const string MenuExist = "Menu already exist !!";
         public const string FinalSettlementSuccess = "Final Settlement Successfully!";
         public const string GetProductCategorySuccess = "Get Product Category Successfully!";
         public const string GetListProductCategorySuccess = "Get List Product Category Successfully!";
