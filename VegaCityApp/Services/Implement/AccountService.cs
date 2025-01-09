@@ -1581,13 +1581,14 @@ namespace VegaCityApp.Service.Implement
                     predicate: x => x.CrDate >= startDate
                                  && x.CrDate <= endDate
                                  && x.UserId == GetUserIdFromJwt()
-                                 && x.Type == "EndDayCheckWalletCashier"
+                                 && x.Type == TransactionType.EndDayCheckWalletCashierBalance || x.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory
                                  && x.Status == TransactionStatus.Success)).ToList();
                 List<Transaction> EndDayCheckWalletCashierBalanceHistory = new List<Transaction>();
                 List<Transaction> EndDayCheckWalletCashierBalance = new List<Transaction>();
                 foreach (var endDay in depositsCashiers)
                 {
-                    if (endDay.Description.Split(" ")[6].Trim() == "History")
+                    // if (endDay.Description.Split(" ")[6].Trim() == "History")
+                    if (endDay.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory)
                     {
                         EndDayCheckWalletCashierBalanceHistory.Add(endDay);
                     }
@@ -1603,7 +1604,9 @@ namespace VegaCityApp.Service.Implement
                         .GroupBy(t => t.CrDate.ToString("MMM")) // Group by month name (e.g., "Oct")
                         .OrderBy(g => DateTime.ParseExact(g.Key, "MMM", System.Globalization.CultureInfo.InvariantCulture))
                         .Select( g => new { 
-                            Name = g.Key, 
+                            Name = g.Key,
+                            FormattedDate = DateTime.ParseExact(g.Key, "MMM", System.Globalization.CultureInfo.InvariantCulture)
+                                     .ToString("dd/MM/yyyy"),
                             //Orders
                             TotalOrder = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),  // tong so luong don hang tren SaleType
                             TotalAmountOrder = g.Sum(d => d.TotalAmount), // tong so tien don hang tren SaleType
