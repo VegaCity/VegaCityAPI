@@ -267,8 +267,8 @@ namespace VegaCityApp.API.Services.Implement
                     //    OrderId = order.Id
                     //};
                     //await _unitOfWork.GetRepository<Domain.Models.Transaction>().InsertAsync(transactionStoreTransfer);
-                    walletStore.Balance += order.TotalAmount;
-                    //walletStore.BalanceHistory += order.TotalAmount;
+                    //walletStore.Balance += order.TotalAmount;
+                    walletStore.BalanceHistory += order.TotalAmount;
                     walletStore.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletStore);
 
@@ -1475,8 +1475,8 @@ namespace VegaCityApp.API.Services.Implement
                 //     OrderId = order.Id
                 // };
                 // await _unitOfWork.GetRepository<Domain.Models.Transaction>().InsertAsync(transactionStoreTransfer);
-                walletStore.Balance += order.TotalAmount;
-                //walletStore.BalanceHistory += order.TotalAmount;
+                //walletStore.Balance += order.TotalAmount;
+                walletStore.BalanceHistory += order.TotalAmount;
                 walletStore.UpsDate = TimeUtils.GetCurrentSEATime();
                 _unitOfWork.GetRepository<Wallet>().UpdateAsync(walletStore);
 
