@@ -64,13 +64,14 @@ namespace VegaCityApp.API.Services.Implement
                                 page: page,
                                 size: size,
                                 orderBy: x => x.OrderByDescending(z => z.CrDate),
-                                predicate: z => z.Type == TransactionType.SellingProduct 
+                                predicate: z => z.UserId == user.Id
+                                             && (z.Type == TransactionType.SellingProduct 
                                              || z.Type == TransactionType.SellingService 
                                              || z.Type == TransactionType.TransferMoneyToVega && z.StoreId != null
                                              || z.Type == TransactionType.RefundMoneyFromExpired && z.UserId == user.Id
                                              || z.Type == TransactionType.EndDayCheckWalletCashierBalance
                                              || z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory
-                                             );
+                                             ));
                     return new ResponseAPI<IEnumerable<TransactionResponse>>
                     {
                         MessageResponse = "Get Transactions success !!",
@@ -144,14 +145,15 @@ namespace VegaCityApp.API.Services.Implement
                                 page: page,
                                 size: size,
                                 orderBy: x => x.OrderByDescending(z => z.CrDate),
-                                predicate: z => z.Type == TransactionType.SellingPackage 
+                                predicate: z => z.UserId == user.Id
+                                             && (z.Type == TransactionType.SellingPackage 
                                              || z.Type == TransactionType.ReceiveMoneyToCashier 
                                              || z.Type == TransactionType.RefundMoney 
                                              || z.Type == TransactionType.ChargeMoney 
                                              || z.Type == TransactionType.EndDayCheckWalletCashierBalance
                                              || z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory
                                              || z.Type == TransactionType.WithdrawMoney
-                                             && z.StoreId != null);
+                                             && z.StoreId != null));
                     return new ResponseAPI<IEnumerable<TransactionResponse>>
                     {
                         MessageResponse = "Get Transactions success !!",
@@ -185,11 +187,12 @@ namespace VegaCityApp.API.Services.Implement
                                 page: page,
                                 size: size,
                                 orderBy: x => x.OrderByDescending(z => z.CrDate),
-                                predicate: z => z.Type == TransactionType.ReceiveMoneyToCashier
+                                predicate: z => z.UserId == user.Id
+                                             && (z.Type == TransactionType.ReceiveMoneyToCashier
                                              || z.Type == TransactionType.ChargeMoney
                                              || z.Type == TransactionType.EndDayCheckWalletCashierBalance
                                              || z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory
-                                             && z.StoreId != null);
+                                             && z.StoreId != null));
                     return new ResponseAPI<IEnumerable<TransactionResponse>>
                     {
                         MessageResponse = "Get Transactions success !!",
