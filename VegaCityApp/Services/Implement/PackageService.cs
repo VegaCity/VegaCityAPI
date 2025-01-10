@@ -363,8 +363,8 @@ namespace VegaCityApp.API.Services.Implement
                             _unitOfWork.GetRepository<Wallet>().UpdateAsync(packageOrderExist.Wallets.SingleOrDefault());
 
                             ////UPDATE CASHIER WALLET
-                            wallet.Balance += 50000;
-                            //wallet.BalanceHistory += 50000;
+                            //wallet.Balance += 50000;
+                            wallet.BalanceHistory += 50000;
                             wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                             _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
                             var transactionFeePackageOrder = new Transaction
@@ -386,8 +386,8 @@ namespace VegaCityApp.API.Services.Implement
                             await _unitOfWork.GetRepository<Transaction>().InsertAsync(transactionFeePackageOrder);
                             //session update
                             session.TotalQuantityOrder += 1;
-                            session.TotalCashReceive += 50000;
-                            session.TotalFinalAmountOrder += 50000;
+                            //session.TotalCashReceive += 50000;
+                            //session.TotalFinalAmountOrder += 50000;
                             _unitOfWork.GetRepository<UserSession>().UpdateAsync(session);
 
                             var transactionIds = packageOrderExist.Wallets.SingleOrDefault().Transactions;

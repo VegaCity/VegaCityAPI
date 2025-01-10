@@ -1521,7 +1521,26 @@ namespace VegaCityApp.Service.Implement
                 //get order have fee charge, only get amount
                 var orderFeeCharges = (await _unitOfWork.GetRepository<Order>().GetListAsync(
                     predicate: x => x.SaleType == SaleType.FeeChargeCreate
-                                   && x.Status == OrderStatus.Completed)).ToList();
+                                   && x.Status == OrderStatus.Completed, 
+                    include: t => t.Include(p => p.Payments))).ToList();
+                List<Order> orderFeeChargesCash = new List<Order>();
+                List<Order> orderFeeChargesVirtualCurrency = new List<Order>();
+
+                //List<CustomerMoneyTransfer> customerMoneyTransferVega = new List<CustomerMoneyTransfer>();
+
+                foreach (var type in orderFeeCharges)
+                {
+                    if (type.Payments.SingleOrDefault().Name == PaymentTypeHelper.allowedPaymentTypes[5])
+                    {
+                        //customerMoneyWithdraw.Add(cusTransfer);
+                        orderFeeChargesVirtualCurrency.Add(type);
+
+                    }
+                    else
+                    {
+                        orderFeeChargesCash.Add(type);
+                    }
+                }
                 //general
                 var deposits = (await _unitOfWork.GetRepository<StoreMoneyTransfer>().GetListAsync(
                     predicate: x => x.CrDate >= startDate
@@ -1540,22 +1559,25 @@ namespace VegaCityApp.Service.Implement
                 var depositsCustomerWithdraw = (await _unitOfWork.GetRepository<Transaction>().GetListAsync(
                     predicate: x => x.CrDate >= startDate
                                  && x.CrDate <= endDate
+                                 && x.Status == TransactionStatus.Success
                                  && x.Type == TransactionType.WithdrawMoney)).ToList();
                  List<Transaction> customerMoneyWithdraw = new List<Transaction>();
+                List<Transaction> storeOwnerMoneyWithdraw = new List<Transaction>();
+
                 //List<CustomerMoneyTransfer> customerMoneyTransferVega = new List<CustomerMoneyTransfer>();
 
                 foreach (var cusTransfer in depositsCustomerWithdraw)
                 {
-                    if (cusTransfer.Status == TransactionStatus.Success)
+                    if (cusTransfer.StoreId == null)
                     {
                         //customerMoneyWithdraw.Add(cusTransfer);
                         customerMoneyWithdraw.Add(cusTransfer);
 
                     }
-                    //else
-                    //{
-                    //    customerMoneyTransferVega.Add(cusTransfer);
-                    //}
+                    else
+                    {
+                        storeOwnerMoneyWithdraw.Add(cusTransfer);
+                    }
                 }
                 var depositsCustomer = (await _unitOfWork.GetRepository<CustomerMoneyTransfer>().GetListAsync(
                     predicate: x => x.CrDate >= startDate
@@ -1621,6 +1643,12 @@ namespace VegaCityApp.Service.Implement
                             //fee charge
                             TotalOrderFeeCharge = orderFeeCharges.Count(o => o.CrDate.ToString("MMM") == g.Key), //Tong so luong don Online
                             TotalAmountOrderFeeCharge = orderFeeCharges.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount),   //Tong so tien don Online methods
+                            //tien that
+                             TotalOrderFeeChargeCash = orderFeeChargesCash.Count(o => o.CrDate.ToString("MMM") == g.Key), //Tong so luong don Online
+                            TotalAmountOrderFeeChargeCash = orderFeeChargesCash.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount),
+                            //tien ao
+                            TotalOrderFeeChargeVirtualMoney = orderFeeChargesVirtualCurrency.Count(o => o.CrDate.ToString("MMM") == g.Key), //Tong so luong don Online
+                            TotalAmountOrderFeeChargeVirtualMoney = orderFeeChargesVirtualCurrency.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount),
 
                             ////vcard order
                             //TotalOtherOrder =  orders.Count(o => o.CrDate.ToString("MMM") == g.Key) 
@@ -1641,7 +1669,7 @@ namespace VegaCityApp.Service.Implement
                             //                        - (ordersCash.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount))
                             //                         - ordersMethodOnline.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount)
                             //                          - orderFeeCharges.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount)
-                                                      
+
                             //TotalFeeChargeCreateNew = orderFeeCharges.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount),
 
                             //cashier
@@ -1653,7 +1681,7 @@ namespace VegaCityApp.Service.Implement
                                                                 .Sum(d => d.Amount),
                             //CustomerMoney
                             TotalAmountCustomerMoneyWithdraw = customerMoneyWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
-                            TotalAmountCustomerMoneyTransfer = customerMoneyTransferVega.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+                            TotalAmountStoreMoneyWithdraw = storeOwnerMoneyWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
                         }).ToList();
                 }
                 else if (req.GroupBy == "Date")
@@ -1687,6 +1715,12 @@ namespace VegaCityApp.Service.Implement
                              TotalOrderFeeCharge = orderFeeCharges.Count(o => o.CrDate.Date == g.Key.Date), //Tong so luong don Online
                              TotalAmountOrderFeeCharge = orderFeeCharges.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.TotalAmount),   //Tong so tien don Online methods
 
+                             //tien that
+                             TotalOrderFeeChargeCash = orderFeeChargesCash.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountOrderFeeChargeCash = orderFeeChargesCash.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.TotalAmount),
+                             //tien ao
+                             TotalOrderFeeChargeVirtualMoney = orderFeeChargesVirtualCurrency.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountOrderFeeChargeVirtualMoney = orderFeeChargesVirtualCurrency.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.TotalAmount),
                              ////vcard order
                              //TotalOtherOrder = orders.Count(o => o.CrDate.Date == g.Key.Date)
                              //                  - ordersCash.Count(o => o.CrDate.Date == g.Key.Date) //tong so luong don KHAC
@@ -1708,7 +1742,7 @@ namespace VegaCityApp.Service.Implement
                                                                 .Sum(d => d.Amount),
                             //CustomerMoney
                             TotalAmountCustomerMoneyWithdraw = customerMoneyWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
-                             TotalAmountCustomerMoneyTransfer = customerMoneyTransferVega.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
+                             TotalAmountStoreMoneyWithdraw = storeOwnerMoneyWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
                          })
                          .OrderBy(x => x.Date) // Optional: Order by date
                          .ToList();
@@ -1974,8 +2008,27 @@ namespace VegaCityApp.Service.Implement
                     predicate: x => x.Status == PackageItemStatusEnum.Active.GetDescriptionFromEnum())).ToList();
                 //get order have fee charge, only get amount
                 var orderFeeCharges = (await _unitOfWork.GetRepository<Order>().GetListAsync(
-                    predicate: x => x.SaleType == SaleType.FeeChargeCreate
-                                     && x.UserId == GetUserIdFromJwt())).ToList();
+                                                          predicate: x => x.SaleType == SaleType.FeeChargeCreate
+                                                                         && x.Status == OrderStatus.Completed,
+                                                          include: t => t.Include(p => p.Payments))).ToList();
+                List<Order> orderFeeChargesCash = new List<Order>();
+                List<Order> orderFeeChargesVirtualCurrency = new List<Order>();
+
+                //List<CustomerMoneyTransfer> customerMoneyTransferVega = new List<CustomerMoneyTransfer>();
+
+                foreach (var type in orderFeeCharges)
+                {
+                    if (type.Payments.SingleOrDefault().Name == PaymentTypeHelper.allowedPaymentTypes[5])
+                    {
+                        //customerMoneyWithdraw.Add(cusTransfer);
+                        orderFeeChargesVirtualCurrency.Add(type);
+
+                    }
+                    else
+                    {
+                        orderFeeChargesCash.Add(type);
+                    }
+                }
                 //general
                 var depositsCashiers = (await _unitOfWork.GetRepository<Transaction>().GetListAsync(
                     predicate: x => x.CrDate >= startDate
@@ -2036,9 +2089,15 @@ namespace VegaCityApp.Service.Implement
                             TotalOrderOnlineMethods = ordersMethodOnline.Count(o => o.CrDate.ToString("MMM") == g.Key), //Tong so luong don Online
                             TotalAmountOrderOnlineMethod = ordersMethodOnline.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount),   //Tong so tien don Online methods
 
-                            ////fee charge
+                            //fee charge
                             TotalOrderFeeCharge = orderFeeCharges.Count(o => o.CrDate.ToString("MMM") == g.Key), //Tong so luong don Online
-                            TotalAmountOrderFeeCharge = orderFeeCharges.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount),
+                            TotalAmountOrderFeeCharge = orderFeeCharges.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount),   //Tong so tien don Online methods
+                                                                                                                                                 //tien that
+                            TotalOrderFeeChargeCash = orderFeeChargesCash.Count(o => o.CrDate.ToString("MMM") == g.Key), //Tong so luong don Online
+                            TotalAmountOrderFeeChargeCash = orderFeeChargesCash.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount),
+                            //tien ao
+                            TotalOrderFeeChargeVirtualMoney = orderFeeChargesVirtualCurrency.Count(o => o.CrDate.ToString("MMM") == g.Key), //Tong so luong don Online
+                            TotalAmountOrderFeeChargeVirtualMoney = orderFeeChargesVirtualCurrency.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount),
                             //cashier
                             EndDayCheckWalletCashierBalance = EndDayCheckWalletCashierBalance.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
                             EndDayCheckWalletCashierBalanceHistory = EndDayCheckWalletCashierBalanceHistory.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
@@ -2076,7 +2135,14 @@ namespace VegaCityApp.Service.Implement
 
                              //////fee charge
                              TotalOrderFeeCharge = orderFeeCharges.Count(o => o.CrDate.Date == g.Key.Date), //Tong so luong don Online
-                             TotalAmountOrderFeeCharge = orderFeeCharges.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.TotalAmount),
+                             TotalAmountOrderFeeCharge = orderFeeCharges.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.TotalAmount),   //Tong so tien don Online methods
+
+                             //tien that
+                             TotalOrderFeeChargeCash = orderFeeChargesCash.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountOrderFeeChargeCash = orderFeeChargesCash.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.TotalAmount),
+                             //tien ao
+                             TotalOrderFeeChargeVirtualMoney = orderFeeChargesVirtualCurrency.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountOrderFeeChargeVirtualMoney = orderFeeChargesVirtualCurrency.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.TotalAmount),
                              //cashier
                              EndDayCheckWalletCashierBalance = EndDayCheckWalletCashierBalance.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
                              EndDayCheckWalletCashierBalanceHistory = EndDayCheckWalletCashierBalanceHistory.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
