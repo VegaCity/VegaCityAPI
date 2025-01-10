@@ -1680,8 +1680,15 @@ namespace VegaCityApp.Service.Implement
                                                                 .Where(d => d.CrDate.ToString("MMM") == g.Key)
                                                                 .Sum(d => d.Amount),
                             //CustomerMoney
-                            TotalAmountCustomerMoneyWithdraw = customerMoneyWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
-                            TotalAmountStoreMoneyWithdraw = storeOwnerMoneyWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+                            TotalWithdrawRequest = depositsCustomerWithdraw.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                            TotalAmountWithdrawFromVega = depositsCustomerWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+
+                            TotalWithdrawFromCustomer = customerMoneyWithdraw.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                            TotalWithdrawAmountFromCustomer = customerMoneyWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+
+                            TotalWithdrawFomStoreOwner = storeOwnerMoneyWithdraw.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                            TotalWithdrawAmountFomStoreOwner = storeOwnerMoneyWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+
                         }).ToList();
                 }
                 else if (req.GroupBy == "Date")
@@ -1740,9 +1747,15 @@ namespace VegaCityApp.Service.Implement
                              VegaDepositsAmountFromStore = storeMoneyTransfersListToVega                //Tong tien hoa hong tu cac Store (3%,..)
                                                                 .Where(d => d.CrDate.Date == g.Key.Date)
                                                                 .Sum(d => d.Amount),
-                            //CustomerMoney
-                            TotalAmountCustomerMoneyWithdraw = customerMoneyWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
-                             TotalAmountStoreMoneyWithdraw = storeOwnerMoneyWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
+                             //CustomerMoney
+                             TotalWithdrawRequest = depositsCustomerWithdraw.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountWithdrawFromVega = depositsCustomerWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
+
+                             TotalWithdrawFromCustomer = customerMoneyWithdraw.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalWithdrawAmountFromCustomer = customerMoneyWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
+
+                             TotalWithdrawFomStoreOwner = storeOwnerMoneyWithdraw.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalWithdrawAmountFomStoreOwner = storeOwnerMoneyWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
                          })
                          .OrderBy(x => x.Date) // Optional: Order by date
                          .ToList();
@@ -2057,19 +2070,20 @@ namespace VegaCityApp.Service.Implement
                                 && x.IsIncrease == false
                                 && x.UserId == user.Id
                                 && x.Type == TransactionType.WithdrawMoney
-                                && x.Status == TransactionStatus.Success)).ToList();
-                List<Transaction> WithdrawWalletCashierBalanceHistory = new List<Transaction>();
-               // List<Transaction> WithdrawWalletCashierBalance = new List<Transaction>();
-                foreach (var endDay in depositsWithdrawCashiers)
+                                && x.Status == TransactionStatus.Success,
+                   include: t => t.Include(n => n.User))).ToList();
+                List<Transaction> WithdrawWalletCustomer = new List<Transaction>();
+                List<Transaction> WithdrawWalletStoreOwner = new List<Transaction>();
+                foreach (var withdrawn in depositsWithdrawCashiers)
                 {
-                    if (endDay.Description.Split(" ")[2].Trim() == "history")
+                    if (withdrawn.User.StoreId != null)
                     {
-                        WithdrawWalletCashierBalanceHistory.Add(endDay);
+                        WithdrawWalletStoreOwner.Add(withdrawn);
                     }
-                    //else
-                    //{
-                    //    EndDayCheckWalletCashierBalance.Add(endDay);
-                    //}
+                    else
+                    {
+                        WithdrawWalletCustomer.Add(withdrawn);
+                    }
                 }
                 IEnumerable<object> groupedStaticsAdmin = Enumerable.Empty<object>();
                 if (req.GroupBy == "Month")
@@ -2079,6 +2093,8 @@ namespace VegaCityApp.Service.Implement
                         .OrderBy(g => DateTime.ParseExact(g.Key, "MMM", System.Globalization.CultureInfo.InvariantCulture))
                         .Select(g => new {
                             Name = g.Key,
+                            FormattedDate = DateTime.ParseExact(g.Key, "MMM", System.Globalization.CultureInfo.InvariantCulture)
+                                     .ToString("dd/MM/yyyy"),
                             TotalOrder = orders.Count(o => o.CrDate.ToString("MMM") == g.Key),  // tong so luong don hang tren SaleType
                             TotalAmountOrder = g.Sum(d => d.TotalAmount), // tong so tien don hang tren SaleType
                                                                           //cash
@@ -2105,6 +2121,13 @@ namespace VegaCityApp.Service.Implement
                             //withdrawHold
                             TotalWithdrawRequest = depositsWithdrawCashiers.Count(o => o.CrDate.ToString("MMM") == g.Key),
                             TotalAmountWithdrawFromVega = depositsWithdrawCashiers.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+                            //Customer withdraw
+                            TotalWithdrawFromCustomer = WithdrawWalletCustomer.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                            TotalAmountWithdrawFromCustomer = WithdrawWalletCustomer.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+                            //StoreOnwer withdraw
+                            TotalWithdrawFomStoreOwner = WithdrawWalletStoreOwner.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                            TotalWithdrawAmountFomStoreOwner = WithdrawWalletStoreOwner.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+
                         }).ToList();
                 }
                 else if (req.GroupBy == "Date")
@@ -2150,6 +2173,12 @@ namespace VegaCityApp.Service.Implement
                              //withdrawHold
                              TotalWithdrawRequest = depositsWithdrawCashiers.Count(o => o.CrDate.Date == g.Key.Date),
                              TotalAmountBalanceHistory = depositsWithdrawCashiers.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
+                             //Customer withdraw
+                             TotalWithdrawFromCustomer = WithdrawWalletCustomer.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountWithdrawFromCustomer = WithdrawWalletCustomer.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
+                             //StoreOnwer withdraw
+                             TotalWithdrawFomStoreOwner = WithdrawWalletStoreOwner.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalWithdrawAmountFomStoreOwner = WithdrawWalletStoreOwner.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
                          })
                          .OrderBy(x => x.Date) // Optional: Order by date
                          .ToList();
