@@ -2425,7 +2425,7 @@ namespace VegaCityApp.Service.Implement
                    predicate: x => x.CrDate >= startDate
                                 && x.CrDate <= endDate
                                 && x.Status == OrderStatus.Completed
-                                && (x.SaleType == SaleType.Product),
+                               ,
                    include: z => z.Include(a => a.Store)
                )).ToList();
             }
@@ -2443,7 +2443,7 @@ namespace VegaCityApp.Service.Implement
                         predicate: x => x.CrDate >= startDate
                                      && x.CrDate <= endDate
                                      && x.Status == OrderStatus.Completed
-                                     && (x.SaleType == SaleType.Product)
+                                     && (x.SaleType == SaleType.Product || x.SaleType == SaleType.Service)
                                      && x.Store != null && (int)x.Store.StoreType == (int)storeType,
                         include: z => z.Include(a => a.Store)
                     )).ToList();
