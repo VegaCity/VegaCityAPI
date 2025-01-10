@@ -797,6 +797,10 @@ namespace VegaCityApp.API.Services.Implement
             #endregion
             //update
             packageOrder.Data.CusName = req.CusName != null ? req.CusName.Trim() : packageOrder.Data.CusName;
+            if(req.CusName != null)
+            {
+                packageOrder.Data.Wallets.SingleOrDefault().Name = req.CusName.Trim();
+            }
             packageOrder.Data.CusEmail = req.CusEmail != null ? req.CusEmail.Trim() : packageOrder.Data.CusEmail;
             packageOrder.Data.CusCccdpassport = req.CusCccdPassport != null ? req.CusCccdPassport.Trim() : packageOrder.Data.CusCccdpassport;
             packageOrder.Data.PhoneNumber = req.PhoneNumber != null ? req.PhoneNumber.Trim() : packageOrder.Data.PhoneNumber;

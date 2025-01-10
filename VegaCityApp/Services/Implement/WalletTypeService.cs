@@ -660,7 +660,7 @@ namespace VegaCityApp.API.Services.Implement
                 Currency = CurrencyEnum.VND.GetDescriptionFromEnum(),
                 CrDate = TimeUtils.GetCurrentSEATime(),
                 Status = TransactionStatus.Success,
-                Description = "Refund balance to customer with v-card: " + wallet.PackageOrderId,
+                Description = $"Refund balance to {(wallet.PackageOrderId == null ? "store" : "customer")}: {wallet.Name}",
                 UpsDate = TimeUtils.GetCurrentSEATime(),
                 UserId = cashierWebId
             };

@@ -152,8 +152,7 @@ namespace VegaCityApp.API.Services.Implement
                                              || z.Type == TransactionType.ChargeMoney 
                                              || z.Type == TransactionType.EndDayCheckWalletCashierBalance
                                              || z.Type == TransactionType.EndDayCheckWalletCashierBalanceHistory
-                                             || z.Type == TransactionType.WithdrawMoney
-                                             && z.StoreId != null));
+                                             || z.Type == TransactionType.WithdrawMoney));
                     return new ResponseAPI<IEnumerable<TransactionResponse>>
                     {
                         MessageResponse = "Get Transactions success !!",
