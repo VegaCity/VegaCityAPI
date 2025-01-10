@@ -182,7 +182,7 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = UserMessage.UserNotFound
                 };
             }
-            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(predicate: x => x.UserId == user.Id && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum());
+            var session = await _unitOfWork.GetRepository<UserSession>().SingleOrDefaultAsync(predicate: x => x.UserId == user.Id && x.Status == SessionStatusEnum.Active.GetDescriptionFromEnum() && x.StartDate <= TimeUtils.GetCurrentSEATime());
             switch (user.Status)
             {
                 case (int)UserStatusEnum.Active:
