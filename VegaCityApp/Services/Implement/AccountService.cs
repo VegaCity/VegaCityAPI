@@ -1644,7 +1644,7 @@ namespace VegaCityApp.Service.Implement
                             TotalOrderFeeCharge = orderFeeCharges.Count(o => o.CrDate.ToString("MMM") == g.Key), //Tong so luong don Online
                             TotalAmountOrderFeeCharge = orderFeeCharges.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount),   //Tong so tien don Online methods
                             //tien that
-                             TotalOrderFeeChargeCash = orderFeeChargesCash.Count(o => o.CrDate.ToString("MMM") == g.Key), //Tong so luong don Online
+                            TotalOrderFeeChargeCash = orderFeeChargesCash.Count(o => o.CrDate.ToString("MMM") == g.Key), //Tong so luong don Online
                             TotalAmountOrderFeeChargeCash = orderFeeChargesCash.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.TotalAmount),
                             //tien ao
                             TotalOrderFeeChargeVirtualMoney = orderFeeChargesVirtualCurrency.Count(o => o.CrDate.ToString("MMM") == g.Key), //Tong so luong don Online
@@ -1684,10 +1684,10 @@ namespace VegaCityApp.Service.Implement
                             TotalAmountWithdrawFromVega = depositsCustomerWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
 
                             TotalWithdrawFromCustomer = customerMoneyWithdraw.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                            TotalWithdrawAmountFromCustomer = customerMoneyWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+                            TotalWithdrawAmoutFromCustomer = customerMoneyWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
 
-                            TotalWithdrawFomStoreOwner = storeOwnerMoneyWithdraw.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                            TotalWithdrawAmountFomStoreOwner = storeOwnerMoneyWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+                            TotalWithdrawFromStoreOwner = storeOwnerMoneyWithdraw.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                            TotalWithdrawAmountFromStoreOwner = storeOwnerMoneyWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
 
                         }).ToList();
                 }
@@ -1752,10 +1752,10 @@ namespace VegaCityApp.Service.Implement
                              TotalAmountWithdrawFromVega = depositsCustomerWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
 
                              TotalWithdrawFromCustomer = customerMoneyWithdraw.Count(o => o.CrDate.Date == g.Key.Date),
-                             TotalWithdrawAmountFromCustomer = customerMoneyWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
+                             TotalWithdrawAmoutFromCustomer = customerMoneyWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
 
-                             TotalWithdrawFomStoreOwner = storeOwnerMoneyWithdraw.Count(o => o.CrDate.Date == g.Key.Date),
-                             TotalWithdrawAmountFomStoreOwner = storeOwnerMoneyWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
+                             TotalWithdrawFromStoreOwner = storeOwnerMoneyWithdraw.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalWithdrawAmountFromStoreOwner = storeOwnerMoneyWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
                          })
                          .OrderBy(x => x.Date) // Optional: Order by date
                          .ToList();
@@ -2022,6 +2022,7 @@ namespace VegaCityApp.Service.Implement
                 //get order have fee charge, only get amount
                 var orderFeeCharges = (await _unitOfWork.GetRepository<Order>().GetListAsync(
                                                           predicate: x => x.SaleType == SaleType.FeeChargeCreate
+                                                                         && x.UserId == user.Id
                                                                          && x.Status == OrderStatus.Completed,
                                                           include: t => t.Include(p => p.Payments))).ToList();
                 List<Order> orderFeeChargesCash = new List<Order>();
@@ -2064,25 +2065,28 @@ namespace VegaCityApp.Service.Implement
                     }
                 }
                 //withdraw
-                var depositsWithdrawCashiers = (await _unitOfWork.GetRepository<Transaction>().GetListAsync(
-                   predicate: x => x.CrDate >= startDate
-                                && x.CrDate <= endDate
-                                && x.IsIncrease == false
-                                && x.UserId == user.Id
-                                && x.Type == TransactionType.WithdrawMoney
-                                && x.Status == TransactionStatus.Success,
-                   include: t => t.Include(n => n.User))).ToList();
-                List<Transaction> WithdrawWalletCustomer = new List<Transaction>();
-                List<Transaction> WithdrawWalletStoreOwner = new List<Transaction>();
-                foreach (var withdrawn in depositsWithdrawCashiers)
+                var depositsCustomerWithdraw = (await _unitOfWork.GetRepository<Transaction>().GetListAsync(
+                    predicate: x => x.CrDate >= startDate
+                                 && x.CrDate <= endDate
+                                 && x.UserId == user.Id
+                                 && x.Status == TransactionStatus.Success
+                                 && x.Type == TransactionType.WithdrawMoney)).ToList();
+                List<Transaction> customerMoneyWithdraw = new List<Transaction>();
+                List<Transaction> storeOwnerMoneyWithdraw = new List<Transaction>();
+
+                //List<CustomerMoneyTransfer> customerMoneyTransferVega = new List<CustomerMoneyTransfer>();
+
+                foreach (var cusTransfer in depositsCustomerWithdraw)
                 {
-                    if (withdrawn.User.StoreId != null)
+                    if (cusTransfer.StoreId == null)
                     {
-                        WithdrawWalletStoreOwner.Add(withdrawn);
+                        //customerMoneyWithdraw.Add(cusTransfer);
+                        customerMoneyWithdraw.Add(cusTransfer);
+
                     }
                     else
                     {
-                        WithdrawWalletCustomer.Add(withdrawn);
+                        storeOwnerMoneyWithdraw.Add(cusTransfer);
                     }
                 }
                 IEnumerable<object> groupedStaticsAdmin = Enumerable.Empty<object>();
@@ -2119,14 +2123,14 @@ namespace VegaCityApp.Service.Implement
                             EndDayCheckWalletCashierBalanceHistory = EndDayCheckWalletCashierBalanceHistory.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
 
                             //withdrawHold
-                            TotalWithdrawRequest = depositsWithdrawCashiers.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                            TotalAmountWithdrawFromVega = depositsWithdrawCashiers.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+                            TotalWithdrawRequest = depositsCustomerWithdraw.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                            TotalAmountWithdrawFromVega = depositsCustomerWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
                             //Customer withdraw
-                            TotalWithdrawFromCustomer = WithdrawWalletCustomer.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                            TotalAmountWithdrawFromCustomer = WithdrawWalletCustomer.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+                            TotalWithdrawFromCustomer = customerMoneyWithdraw.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                            TotalWithdrawAmoutFromCustomer = customerMoneyWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
                             //StoreOnwer withdraw
-                            TotalWithdrawFomStoreOwner = WithdrawWalletStoreOwner.Count(o => o.CrDate.ToString("MMM") == g.Key),
-                            TotalWithdrawAmountFomStoreOwner = WithdrawWalletStoreOwner.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
+                            TotalWithdrawFromStoreOwner = storeOwnerMoneyWithdraw.Count(o => o.CrDate.ToString("MMM") == g.Key),
+                            TotalWithdrawAmountFromStoreOwner = storeOwnerMoneyWithdraw.Where(d => d.CrDate.ToString("MMM") == g.Key).Sum(d => d.Amount),
 
                         }).ToList();
                 }
@@ -2171,14 +2175,14 @@ namespace VegaCityApp.Service.Implement
                              EndDayCheckWalletCashierBalanceHistory = EndDayCheckWalletCashierBalanceHistory.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
 
                              //withdrawHold
-                             TotalWithdrawRequest = depositsWithdrawCashiers.Count(o => o.CrDate.Date == g.Key.Date),
-                             TotalAmountBalanceHistory = depositsWithdrawCashiers.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
+                             TotalWithdrawRequest = depositsCustomerWithdraw.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalAmountBalanceHistory = depositsCustomerWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
                              //Customer withdraw
-                             TotalWithdrawFromCustomer = WithdrawWalletCustomer.Count(o => o.CrDate.Date == g.Key.Date),
-                             TotalAmountWithdrawFromCustomer = WithdrawWalletCustomer.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
+                             TotalWithdrawFromCustomer = customerMoneyWithdraw.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalWithdrawAmoutFromCustomer = customerMoneyWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
                              //StoreOnwer withdraw
-                             TotalWithdrawFomStoreOwner = WithdrawWalletStoreOwner.Count(o => o.CrDate.Date == g.Key.Date),
-                             TotalWithdrawAmountFomStoreOwner = WithdrawWalletStoreOwner.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
+                             TotalWithdrawFromStoreOwner = storeOwnerMoneyWithdraw.Count(o => o.CrDate.Date == g.Key.Date),
+                             TotalWithdrawAmountFromStoreOwner = storeOwnerMoneyWithdraw.Where(d => d.CrDate.Date == g.Key.Date).Sum(d => d.Amount),
                          })
                          .OrderBy(x => x.Date) // Optional: Order by date
                          .ToList();
@@ -2372,6 +2376,160 @@ namespace VegaCityApp.Service.Implement
             }
         }
 
+        //public async Task<ResponseAPI> GetTopSaleStore(TopSaleStore req)
+        //{
+        //    var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == GetUserIdFromJwt() && x.Role.Name == GetRoleFromJwt(),
+        //                                                                            include: y => y.Include(n => n.Role)) ??
+        //                                                                            throw new BadHttpRequestException("User Not Found", HttpStatusCodes.NotFound);
+
+        //    // Date validation remains the same
+        //    if (!DateTime.TryParse(req.StartDate + " 00:00:00.000Z", out DateTime startDate))
+        //    {
+        //        return new ResponseAPI
+        //        {
+        //            StatusCode = HttpStatusCodes.BadRequest,
+        //            MessageResponse = "Invalid start date format.",
+        //        };
+        //    }
+        //    if (!DateTime.TryParse(req.EndDate + " 23:59:59.999Z", out DateTime endDate))
+        //    {
+        //        return new ResponseAPI
+        //        {
+        //            StatusCode = HttpStatusCodes.BadRequest,
+        //            MessageResponse = "Invalid end date format.",
+        //        };
+        //    }
+        //    if (startDate > endDate)
+        //    {
+        //        return new ResponseAPI
+        //        {
+        //            StatusCode = HttpStatusCodes.BadRequest,
+        //            MessageResponse = "Start date must be before the end date.",
+        //        };
+        //    }
+        //    List<Order> topStores = new List<Order>();
+        //    // Validate StoreType
+
+
+
+        //    // Validate GroupBy
+        //    if (req.GroupBy != "Month" && req.GroupBy != "Date")
+        //    {
+        //        return new ResponseAPI
+        //        {
+        //            StatusCode = HttpStatusCodes.BadRequest,
+        //            MessageResponse = "GroupBy should be 'Date' or 'Month'.",
+        //        };
+        //    }
+        //    // Query to get orders with store information
+        //    if (req.StoreType == "All")
+        //    {
+        //         topStores = (await _unitOfWork.GetRepository<Order>()
+        //       .GetListAsync(
+        //           predicate: x => x.CrDate >= startDate
+        //                        && x.CrDate <= endDate
+        //                        && x.Status == OrderStatus.Completed
+        //                        && x.SaleType == SaleType.Product || x.SaleType == SaleType.Service
+        //                       ,
+        //           include: z => z.Include(a => a.Store)
+        //       )).ToList();
+        //    }
+        //    else
+        //    {
+        //        if (!Enum.TryParse(typeof(StoreTypeEnum), req.StoreType, true, out _))
+        //        {
+        //            throw new BadHttpRequestException(StoreMessage.InvalidStoreType, HttpStatusCodes.BadRequest);
+        //        }
+        //        // Parse the requested StoreType
+        //        var storeType = (StoreTypeEnum)Enum.Parse(typeof(StoreTypeEnum), req.StoreType, true);
+
+        //        topStores = (await _unitOfWork.GetRepository<Order>()
+        //            .GetListAsync(
+        //                predicate: x => x.CrDate >= startDate
+        //                             && x.CrDate <= endDate
+        //                             && x.Status == OrderStatus.Completed
+        //                             && (x.SaleType == SaleType.Product || x.SaleType == SaleType.Service)
+        //                             && x.Store != null && (int)x.Store.StoreType == (int)storeType,
+        //                include: z => z.Include(a => a.Store).Include(p => p.Payments)
+        //            )).ToList();
+        //    }
+
+        //    //
+        //    IEnumerable<object> topStoreTransactions;
+
+        //    if (req.GroupBy == "Month")
+        //    {
+        //        topStoreTransactions = topStores
+        //            .GroupBy(t => t.CrDate.ToString("MMM"))
+        //            .OrderBy(g => DateTime.ParseExact(g.Key, "MMM", System.Globalization.CultureInfo.InvariantCulture))
+        //             .Select(g => new
+        //              {
+        //                Name = g.Key,
+        //                TopStores = g.Where(o => o.Store != null) 
+        //                    .GroupBy(o => o.Store.Id)
+        //                    .Select(storeGroup => new
+        //                    {
+        //                        StoreId = storeGroup.Key,
+        //                        StoreName = storeGroup.First().Store.Name,
+        //                        StoreEmail = storeGroup.First().Store.Email,
+        //                        //StoreImage = storeGroup.First().Store.UserStoreMappings.SingleOrDefault().User.ImageUrl,
+        //                        TotalTransactions = storeGroup.Count(),
+        //                        TotalAmount = storeGroup.Sum(o => o.TotalAmount),
+        //                        TotalCashAmount = storeGroup.Sum(o => o.Payments
+        //                    .Where(p => p.Name == "QRCode" && p.Order.StoreId == storeGroup.Key)
+        //                    .Sum(p => p.FinalAmount))
+        //                    })
+        //                    .OrderByDescending(x => x.TotalAmount)
+        //                    .Take(5)
+        //                    .ToList()
+        //            })
+        //            .ToList();
+        //    }
+        //    else // Date grouping
+        //    {
+        //        topStoreTransactions = topStores
+        //            .GroupBy(t => new
+        //            {
+        //                Month = t.CrDate.ToString("MMM"),
+        //                Year = t.CrDate.Year,
+        //                Date = t.CrDate.Date
+        //            })
+        //            .Select(g => new
+        //            {
+        //                Month = g.Key.Month,
+        //                Year = g.Key.Year,
+        //                Date = g.Key.Date,
+        //                FormattedDate = g.Key.Date.ToString("dd/MM/yyyy"),
+        //                TopStores = g.Where(o => o.Store != null) // Add null check
+        //                    .GroupBy(o => o.Store.Id)
+        //                    .Select(storeGroup => new
+        //                    {
+        //                        StoreId = storeGroup.Key,
+        //                        StoreName = storeGroup.First().Store.Name,
+        //                        TotalTransactions = storeGroup.Count(),
+        //                        TotalAmount = storeGroup.Sum(o => o.TotalAmount),
+        //                        TotalCashAmount = storeGroup.Sum(o => o.Payments
+        //                    .Where(p => p.Name == "QRCode" && p.Order.StoreId == storeGroup.Key)
+        //                    .Sum(p => p.FinalAmount))
+        //                    })
+        //                    .OrderByDescending(x => x.TotalAmount)
+        //                    .Take(5)
+        //                    .ToList()
+        //            })
+        //            .OrderBy(x => x.Date)
+        //            .ToList();
+        //    }
+
+        //    return new ResponseAPI
+        //    {
+        //        StatusCode = HttpStatusCodes.OK,
+        //        MessageResponse = "Get Top 5 Stores Successfully!",
+        //        Data = new
+        //        {
+        //            TopStores = topStoreTransactions
+        //        }
+        //    };
+        //}
         public async Task<ResponseAPI> GetTopSaleStore(TopSaleStore req)
         {
             var user = await _unitOfWork.GetRepository<User>().SingleOrDefaultAsync(predicate: x => x.Id == GetUserIdFromJwt() && x.Role.Name == GetRoleFromJwt(),
@@ -2404,9 +2562,6 @@ namespace VegaCityApp.Service.Implement
                 };
             }
             List<Order> topStores = new List<Order>();
-            // Validate StoreType
-            
-           
 
             // Validate GroupBy
             if (req.GroupBy != "Month" && req.GroupBy != "Date")
@@ -2417,18 +2572,19 @@ namespace VegaCityApp.Service.Implement
                     MessageResponse = "GroupBy should be 'Date' or 'Month'.",
                 };
             }
+
             // Query to get orders with store information
             if (req.StoreType == "All")
             {
-                 topStores = (await _unitOfWork.GetRepository<Order>()
-               .GetListAsync(
-                   predicate: x => x.CrDate >= startDate
-                                && x.CrDate <= endDate
-                                && x.Status == OrderStatus.Completed
-                                && x.SaleType == SaleType.Product || x.SaleType == SaleType.Service
-                               ,
-                   include: z => z.Include(a => a.Store)
-               )).ToList();
+                topStores = (await _unitOfWork.GetRepository<Order>()
+                    .GetListAsync(
+                        predicate: x => x.CrDate >= startDate
+                                    && x.CrDate <= endDate
+                                    && x.Status == OrderStatus.Completed
+                                    && (x.SaleType == SaleType.Product || x.SaleType == SaleType.Service),
+                        include: z => z.Include(a => a.Store)
+                                     .Include(p => p.Payments)  // Added Payments include
+                    )).ToList();
             }
             else
             {
@@ -2436,7 +2592,6 @@ namespace VegaCityApp.Service.Implement
                 {
                     throw new BadHttpRequestException(StoreMessage.InvalidStoreType, HttpStatusCodes.BadRequest);
                 }
-                // Parse the requested StoreType
                 var storeType = (StoreTypeEnum)Enum.Parse(typeof(StoreTypeEnum), req.StoreType, true);
 
                 topStores = (await _unitOfWork.GetRepository<Order>()
@@ -2447,10 +2602,10 @@ namespace VegaCityApp.Service.Implement
                                      && (x.SaleType == SaleType.Product || x.SaleType == SaleType.Service)
                                      && x.Store != null && (int)x.Store.StoreType == (int)storeType,
                         include: z => z.Include(a => a.Store)
+                                     .Include(p => p.Payments)
                     )).ToList();
             }
 
-            //
             IEnumerable<object> topStoreTransactions;
 
             if (req.GroupBy == "Month")
@@ -2458,19 +2613,30 @@ namespace VegaCityApp.Service.Implement
                 topStoreTransactions = topStores
                     .GroupBy(t => t.CrDate.ToString("MMM"))
                     .OrderBy(g => DateTime.ParseExact(g.Key, "MMM", System.Globalization.CultureInfo.InvariantCulture))
-                     .Select(g => new
-                      {
+                    .Select(g => new
+                    {
                         Name = g.Key,
-                        TopStores = g.Where(o => o.Store != null) 
+                        TopStores = g.Where(o => o.Store != null)
                             .GroupBy(o => o.Store.Id)
                             .Select(storeGroup => new
                             {
                                 StoreId = storeGroup.Key,
                                 StoreName = storeGroup.First().Store.Name,
                                 StoreEmail = storeGroup.First().Store.Email,
-                                //StoreImage = storeGroup.First().Store.UserStoreMappings.SingleOrDefault().User.ImageUrl,
                                 TotalTransactions = storeGroup.Count(),
-                                TotalAmount = storeGroup.Sum(o => o.TotalAmount)
+                                TotalAmount = storeGroup.Sum(o => o.TotalAmount),
+                                TotalQRAmount = storeGroup.Sum(o =>
+                                    o.Payments != null ?
+                                    o.Payments.Where(p => p.Name == "QRCode")
+                                             .Sum(p => p.FinalAmount) : 0),
+                                TotalOthersAmount = storeGroup.Sum(o =>
+                                   o.Payments != null ?
+                                   o.Payments.Where(p => p.Name != "QRCode")
+                                            .Sum(p => p.FinalAmount) : 0),
+                                AmountTransferdToVega = (storeGroup.Sum(o =>
+                                    o.Payments != null ?
+                                    o.Payments.Where(p => p.Name == "QRCode")
+                                             .Sum(p => p.FinalAmount) : 0)) * (storeGroup.First().Store.StoreTransferRate)
                             })
                             .OrderByDescending(x => x.TotalAmount)
                             .Take(5)
@@ -2493,14 +2659,27 @@ namespace VegaCityApp.Service.Implement
                         Year = g.Key.Year,
                         Date = g.Key.Date,
                         FormattedDate = g.Key.Date.ToString("dd/MM/yyyy"),
-                        TopStores = g.Where(o => o.Store != null) // Add null check
+                        TopStores = g.Where(o => o.Store != null)
                             .GroupBy(o => o.Store.Id)
                             .Select(storeGroup => new
                             {
                                 StoreId = storeGroup.Key,
                                 StoreName = storeGroup.First().Store.Name,
+                                StoreEmail = storeGroup.First().Store.Email,
                                 TotalTransactions = storeGroup.Count(),
-                                TotalAmount = storeGroup.Sum(o => o.TotalAmount)
+                                TotalAmount = storeGroup.Sum(o => o.TotalAmount),
+                                TotalQRAmount = storeGroup.Sum(o =>
+                                    o.Payments != null ?
+                                    o.Payments.Where(p => p.Name == "QRCode")
+                                             .Sum(p => p.FinalAmount) : 0),
+                                TotalOthersAmount = storeGroup.Sum(o =>
+                                   o.Payments != null ?
+                                   o.Payments.Where(p => p.Name != "QRCode")
+                                            .Sum(p => p.FinalAmount) : 0),
+                                AmountTransferdToVega = (storeGroup.Sum(o =>
+                                    o.Payments != null ?
+                                    o.Payments.Where(p => p.Name == "QRCode")
+                                             .Sum(p => p.FinalAmount) : 0)) * (storeGroup.First().Store.StoreTransferRate)
                             })
                             .OrderByDescending(x => x.TotalAmount)
                             .Take(5)

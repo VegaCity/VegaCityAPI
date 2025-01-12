@@ -615,7 +615,7 @@ namespace VegaCityApp.API.Services.Implement
                     transactionAvailable.Status = TransactionStatus.Success;
                     transactionAvailable.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Transaction>().UpdateAsync(transactionAvailable);
-                    wallet.BalanceHistory -= transactionAvailable.Amount;
+                    //wallet.BalanceHistory -= transactionAvailable.Amount;
                     wallet.Balance -= transactionAvailable.Amount;
                     wallet.UpsDate = TimeUtils.GetCurrentSEATime();
                     _unitOfWork.GetRepository<Wallet>().UpdateAsync(wallet);
