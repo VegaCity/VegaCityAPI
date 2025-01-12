@@ -1519,13 +1519,15 @@ namespace VegaCityApp.API.Services.Implement
                         };
                         await _unitOfWork.GetRepository<CustomerMoneyTransfer>().InsertAsync(transactionTransfer);
 
+                        adminWallet.BalanceHistory += item.Wallets.SingleOrDefault().Balance;
+                        adminWallet.UpsDate = TimeUtils.GetCurrentSEATime();
+                        _unitOfWork.GetRepository<Wallet>().UpdateAsync(adminWallet);
+
                         item.Wallets.SingleOrDefault().Balance = 0;
                         item.Wallets.SingleOrDefault().UpsDate = TimeUtils.GetCurrentSEATime();
                         _unitOfWork.GetRepository<Wallet>().UpdateAsync(item.Wallets.SingleOrDefault());
 
-                        adminWallet.BalanceHistory += item.Wallets.SingleOrDefault().Balance;
-                        adminWallet.UpsDate = TimeUtils.GetCurrentSEATime();
-                        _unitOfWork.GetRepository<Wallet>().UpdateAsync(adminWallet);
+                        
                     }
                 }
             }
